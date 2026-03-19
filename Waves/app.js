@@ -3264,6 +3264,7 @@ function renderMathLesson(lessonId) {
       </div>
     </div>
   `;
+  setTimeout(renderMath, 0);
 }
 
 function closeMathLesson() {
@@ -3478,6 +3479,7 @@ function renderChapter() {
 
   prevChapter.disabled = state.chapterIndex === 0;
   nextChapter.disabled = state.chapterIndex === chapters.length - 1;
+  setTimeout(renderMath, 0);
 }
 
 function showTooltip(target, text) {
@@ -3706,8 +3708,23 @@ function attachEvents() {
   });
 })();
 
+function renderMath() {
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+        { left: "\\(", right: "\\)", display: false },
+        { left: "\\[", right: "\\]", display: true }
+      ],
+      throwOnError: false
+    });
+  }
+}
+
 syncSidebarDrawer();
 renderModes();
 renderNav();
 renderChapter();
+renderMath();
 attachEvents();
