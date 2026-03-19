@@ -3441,7 +3441,6 @@ function renderLearnMode(chapter) {
       </div>
       ${tocHtml}
       ${prereqsHtml}
-      ${chapterSceneHtml}
       <div class="lecture-sections">
         ${sectionsHtml}
       </div>
