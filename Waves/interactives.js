@@ -45,6 +45,53 @@ function initSceneInteractives() {
   initHarmonicAlignment();
   initCircleOfFifths();
   initScaleComparison();
+  // Chapter 17 - Color
+  initColorMatchingMetamers();
+  initCieTristimulusCurves();
+  initCieColorSpaceGamut();
+  initBlackbodyPlanckianLocus();
+  initHsvColorExplorer();
+  initAdditiveSubtractiveMixing();
+  initRodConeSensitivity();
+  // Chapter 18 - Antennas
+  initMonopoleRadiationPattern();
+  initTwoSourceInterference();
+  initPhasedArrayRadiation();
+  initInterferometerResolution();
+  // Chapter 19 - Diffraction
+  initHuygensPrincipleDemo();
+  initDiffractionGratingPattern();
+  initSingleSlitDiffraction();
+  initFourierOpticsDemo();
+  // Chapter 20 - Quantum Mechanics
+  initPhotoelectricEffectDemo();
+  initDoubleSiltPhotonBuildup();
+  initHydrogenEnergyLevels();
+  initQuantumWavepacketDispersion();
+  // Chapter 21 - Doppler Effect
+  initDopplerMovingSource();
+  initDopplerAngle();
+  initSonicBoomMachCone();
+  initRelativisticDopplerRedshift();
+  initDopplerSpectroscopyExoplanet();
+  // Chapter 12 - Waves (Muller)
+  initWaveTransportEnergy();
+  initTransverseLongitudinalDemo();
+  initSoundRefractionAtmosphere();
+  // Chapter 13 - Light
+  initEmPlaneWave();
+  // Chapter 14 - Polarization
+  initLinearPolarization();
+  initCircularPolarization();
+  initMalusLaw();
+  // Chapter 15 - Refraction
+  initSnellsLawDemo();
+  initTotalInternalReflection();
+  initThinFilmInterference();
+  initBrewsterAngle();
+  // Chapter 16 - Prisms & Scattering
+  initRayleighScattering();
+  initPrismDispersion();
 }
 
 // Color palette matching WavesC theme
@@ -5506,5 +5553,1881 @@ function initScaleComparison() {
     }
   }
 
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 12 - WAVES (MULLER)
+// =========================================================================
+
+function initWaveTransportEnergy() {
+  const canvas = document.getElementById('scene-wave-transport-energy');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const N = 40;
+  const spacing = (W - 80) / (N - 1);
+  const baseY = H / 2;
+  const amp = 40;
+  let t = 0;
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Energy transport by a wave pulse', W / 2, 18);
+
+    // Pulse center moves across canvas and wraps
+    const pulseSpeed = 0.8;
+    const pulseX = ((t * pulseSpeed * (W - 80) / (2 * Math.PI)) % (W + 100)) - 50;
+    const pulseWidth = 60;
+
+    // Draw equilibrium line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(30, baseY); ctx.lineTo(W - 30, baseY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw particles
+    for (let i = 0; i < N; i++) {
+      const px = 40 + i * spacing;
+      const dist = px - pulseX;
+      const envelope = Math.exp(-(dist * dist) / (2 * pulseWidth * pulseWidth));
+      const dy = amp * envelope * Math.sin(dist * 0.08);
+
+      // Particle
+      const radius = 5;
+      ctx.fillStyle = envelope > 0.05 ? WCOLORS.teal : WCOLORS.textDim;
+      ctx.globalAlpha = 0.3 + 0.7 * Math.max(envelope, 0.2);
+      ctx.beginPath(); ctx.arc(px, baseY + dy, radius, 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Vertical displacement line
+      if (Math.abs(dy) > 1) {
+        ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
+        ctx.beginPath(); ctx.moveTo(px, baseY); ctx.lineTo(px, baseY + dy); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Draw envelope curve
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    let started = false;
+    for (let x = 30; x < W - 30; x += 2) {
+      const dist = x - pulseX;
+      const env = amp * Math.exp(-(dist * dist) / (2 * pulseWidth * pulseWidth));
+      if (env > 0.5) {
+        if (!started) { ctx.moveTo(x, baseY - env); started = true; }
+        else ctx.lineTo(x, baseY - env);
+      }
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Energy arrow
+    const arrowY = H - 35;
+    if (pulseX > 30 && pulseX < W - 50) {
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(pulseX - 30, arrowY); ctx.lineTo(pulseX + 30, arrowY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.red;
+      ctx.beginPath();
+      ctx.moveTo(pulseX + 30, arrowY);
+      ctx.lineTo(pulseX + 22, arrowY - 5);
+      ctx.lineTo(pulseX + 22, arrowY + 5);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Energy →', pulseX, arrowY - 10);
+    }
+
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Particles oscillate in place', 10, H - 8);
+    ctx.textAlign = 'right';
+    ctx.fillText('Energy moves forward with pulse', W - 10, H - 8);
+  }
+
+  tick();
+}
+
+// =========================================================================
+function initTransverseLongitudinalDemo() {
+  const canvas = document.getElementById('scene-transverse-longitudinal-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const N = 30;
+  const spacing = (W - 140) / (N - 1);
+  const amp = 18;
+  let t = 0;
+
+  const transY = H * 0.28;
+  const longY = H * 0.72;
+
+  function tick() {
+    t += 0.04;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    // Dividing line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(20, H / 2); ctx.lineTo(W - 20, H / 2); ctx.stroke();
+
+    // Section labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Transverse wave (e.g. rope)', 20, 18);
+    ctx.fillText('Longitudinal wave (e.g. sound)', 20, H / 2 + 18);
+
+    const k = 0.3;
+    const omega = 2;
+
+    // --- Transverse ---
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(60, transY); ctx.lineTo(W - 60, transY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Particles & wave curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const px = 70 + i * spacing;
+      const dy = amp * Math.sin(k * px - omega * t);
+      if (i === 0) ctx.moveTo(px, transY + dy);
+      else ctx.lineTo(px, transY + dy);
+    }
+    ctx.stroke();
+
+    for (let i = 0; i < N; i++) {
+      const px = 70 + i * spacing;
+      const dy = amp * Math.sin(k * px - omega * t);
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(px, transY + dy, 4, 0, 2 * Math.PI); ctx.fill();
+    }
+
+    // Displacement arrow (vertical)
+    const arrowX1 = W - 50;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(arrowX1, transY - 20); ctx.lineTo(arrowX1, transY + 20); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.moveTo(arrowX1, transY - 20); ctx.lineTo(arrowX1 - 4, transY - 14); ctx.lineTo(arrowX1 + 4, transY - 14); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(arrowX1, transY + 20); ctx.lineTo(arrowX1 - 4, transY + 14); ctx.lineTo(arrowX1 + 4, transY + 14); ctx.closePath(); ctx.fill();
+    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('disp.', arrowX1, transY - 24);
+
+    // Propagation arrow (horizontal)
+    const propArrowY = transY + 35;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY); ctx.lineTo(W / 2 + 40, propArrowY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
+    ctx.font = '9px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
+
+    // --- Longitudinal ---
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(60, longY); ctx.lineTo(W - 60, longY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    for (let i = 0; i < N; i++) {
+      const eqX = 70 + i * spacing;
+      const dx = amp * 0.7 * Math.sin(k * eqX - omega * t);
+      const px = eqX + dx;
+
+      // Color by compression/rarefaction
+      const density = -amp * 0.7 * k * Math.cos(k * eqX - omega * t);
+      const c = density > 0 ? WCOLORS.blue : WCOLORS.red;
+      ctx.fillStyle = c;
+      ctx.globalAlpha = 0.4 + 0.6 * Math.min(Math.abs(density) / (amp * 0.7 * k), 1);
+      ctx.beginPath(); ctx.arc(px, longY, 4, 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Displacement arrow (horizontal)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(arrowX1 - 15, longY); ctx.lineTo(arrowX1 + 15, longY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.moveTo(arrowX1 + 15, longY); ctx.lineTo(arrowX1 + 9, longY - 4); ctx.lineTo(arrowX1 + 9, longY + 4); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(arrowX1 - 15, longY); ctx.lineTo(arrowX1 - 9, longY - 4); ctx.lineTo(arrowX1 - 9, longY + 4); ctx.closePath(); ctx.fill();
+    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('disp.', arrowX1, longY - 10);
+
+    // Propagation arrow
+    const propArrowY2 = longY + 25;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY2); ctx.lineTo(W / 2 + 34, propArrowY2 - 4); ctx.lineTo(W / 2 + 34, propArrowY2 + 4); ctx.closePath(); ctx.fill();
+    ctx.font = '9px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
+
+    // Compression/rarefaction labels
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('● compression', 20, H - 8);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('● rarefaction', 120, H - 8);
+  }
+
+  tick();
+}
+
+// =========================================================================
+function initSoundRefractionAtmosphere() {
+  const canvas = document.getElementById('scene-sound-refraction-atmosphere');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const panelW = W / 2 - 15;
+    const panelH = H - 40;
+    const panelT = 30;
+    const groundY = panelT + panelH - 20;
+
+    // --- Daytime panel (left) ---
+    const lx = 10;
+
+    // Temperature gradient (hot at bottom, cold at top)
+    for (let y = panelT; y < groundY; y++) {
+      const frac = (y - panelT) / (groundY - panelT);
+      const r = Math.round(255 * (0.3 + 0.5 * frac));
+      const g = Math.round(200 * (0.5 + 0.3 * frac));
+      const b = Math.round(255 * (0.8 - 0.3 * frac));
+      ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
+      ctx.fillRect(lx, y, panelW, 1);
+    }
+
+    // Ground
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(lx, groundY, panelW, 5);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Daytime (hot ground)', lx + panelW / 2, 18);
+
+    // Temperature labels
+    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Hot', lx + 3, groundY - 5);
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillText('Cold', lx + 3, panelT + 15);
+
+    // Speed labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('v fast', lx + panelW - 3, groundY - 5);
+    ctx.fillText('v slow', lx + panelW - 3, panelT + 15);
+
+    // Sound rays bending UPWARD (away from ground) - daytime
+    const srcX = lx + 20;
+    const srcY = groundY - 10;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    const angles = [0.15, 0.35, 0.55, 0.75, 0.95];
+    for (const a of angles) {
+      ctx.beginPath();
+      ctx.moveTo(srcX, srcY);
+      const steps = 40;
+      for (let s = 1; s <= steps; s++) {
+        const frac = s / steps;
+        const x = srcX + frac * (panelW - 40);
+        // Ray curves upward in daytime
+        const y = srcY - frac * a * (groundY - panelT) * 0.6 - frac * frac * a * 30;
+        if (y < panelT) break;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Shadow zone
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.1)';
+    ctx.fillRect(lx + panelW * 0.55, groundY - 40, panelW * 0.4, 40);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Shadow zone', lx + panelW * 0.75, groundY - 15);
+
+    // Source marker
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(srcX, srcY, 5, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('src', srcX, srcY + 14);
+
+    // --- Evening panel (right) ---
+    const rx = W / 2 + 5;
+
+    // Temperature gradient (cool at bottom, warm at top)
+    for (let y = panelT; y < groundY; y++) {
+      const frac = (y - panelT) / (groundY - panelT);
+      const r = Math.round(255 * (0.5 - 0.2 * frac));
+      const g = Math.round(200 * (0.5 + 0.1 * frac));
+      const b = Math.round(255 * (0.5 + 0.4 * frac));
+      ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
+      ctx.fillRect(rx, y, panelW, 1);
+    }
+
+    // Ground
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(rx, groundY, panelW, 5);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Evening (cool ground)', rx + panelW / 2, 18);
+
+    // Temperature labels
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Cool', rx + 3, groundY - 5);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('Warm', rx + 3, panelT + 15);
+
+    // Speed labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('v slow', rx + panelW - 3, groundY - 5);
+    ctx.fillText('v fast', rx + panelW - 3, panelT + 15);
+
+    // Sound rays bending DOWNWARD (toward ground) - evening
+    const srcX2 = rx + 20;
+    const srcY2 = groundY - 10;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    for (const a of angles) {
+      ctx.beginPath();
+      ctx.moveTo(srcX2, srcY2);
+      const steps = 40;
+      for (let s = 1; s <= steps; s++) {
+        const frac = s / steps;
+        const x = srcX2 + frac * (panelW - 40);
+        // Ray initially goes up then curves back down
+        const yUp = -a * (groundY - panelT) * 0.4 * frac;
+        const yCurve = a * 0.6 * (groundY - panelT) * frac * frac;
+        const y = srcY2 + yUp + yCurve;
+        if (y > groundY) break;
+        ctx.lineTo(x, Math.min(y, groundY));
+      }
+      ctx.stroke();
+    }
+
+    // Source marker
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(srcX2, srcY2, 5, 0, 2 * Math.PI); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('src', srcX2, srcY2 + 14);
+
+    // Sound travels far label
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Sound carried far', rx + panelW * 0.65, groundY - 5);
+
+    // Bottom note
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Sound bends toward regions of slower wave speed', W / 2, H - 5);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 13 - LIGHT
+// =========================================================================
+
+function initEmPlaneWave() {
+  const canvas = document.getElementById('scene-em-plane-wave');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+  const cx = W / 2, cy = H / 2;
+
+  // 3D-like projection parameters
+  const axisLen = W * 0.38;
+  const projX = { x: 0.85, y: 0.35 };  // k direction (propagation)
+  const projY = { x: 0, y: -1 };        // E direction (vertical)
+  const projZ = { x: -0.5, y: 0.2 };    // B direction (horizontal-ish)
+
+  function to2D(kk, e, b) {
+    return {
+      x: cx + kk * projX.x * axisLen + e * projY.x * 50 + b * projZ.x * 50,
+      y: cy + kk * projX.y * axisLen + e * projY.y * 50 + b * projZ.y * 50
+    };
+  }
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function drawArrow(x1, y1, x2, y2, color, lw) {
+    ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 3) return;
+    const ux = dx / len, uy = dy / len;
+    const hs = 6;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - ux * hs - uy * hs * 0.4, y2 - uy * hs + ux * hs * 0.4);
+    ctx.lineTo(x2 - ux * hs + uy * hs * 0.4, y2 - uy * hs - ux * hs * 0.4);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function draw() {
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Electromagnetic plane wave', W / 2, 16);
+
+    // k axis (propagation)
+    const kStart = to2D(-1, 0, 0);
+    const kEnd = to2D(1.15, 0, 0);
+    drawArrow(kStart.x, kStart.y, kEnd.x, kEnd.y, WCOLORS.textDim, 1.5);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k', kEnd.x + 5, kEnd.y - 2);
+
+    // Draw E field wave (blue, vertical oscillations)
+    const nPts = 100;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const kk = -1 + 2 * i / nPts;
+      const eVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const p = to2D(kk, eVal * 0.7, 0);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // E field arrows at intervals
+    const nArrows = 16;
+    for (let i = 0; i <= nArrows; i++) {
+      const kk = -1 + 2 * i / nArrows;
+      const eVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const base = to2D(kk, 0, 0);
+      const tip = to2D(kk, eVal * 0.7, 0);
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw B field wave (red, horizontal oscillations, 90deg from E but in phase)
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const kk = -1 + 2 * i / nPts;
+      const bVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const p = to2D(kk, 0, bVal * 0.7);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // B field arrows at intervals
+    for (let i = 0; i <= nArrows; i++) {
+      const kk = -1 + 2 * i / nArrows;
+      const bVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const base = to2D(kk, 0, 0);
+      const tip = to2D(kk, 0, bVal * 0.7);
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Labels
+    const eLabel = to2D(0, 1, 0);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('E', eLabel.x - 15, eLabel.y - 5);
+
+    const bLabel = to2D(0, 0, 1);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('B', bLabel.x - 15, bLabel.y + 15);
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.blue; ctx.fillText('E field (vertical)', 10, H - 20);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('B field (horizontal)', 10, H - 6);
+    ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
+    ctx.fillText('E ⊥ B ⊥ k', W - 10, H - 6);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 14 - POLARIZATION
+// =========================================================================
+
+function initLinearPolarization() {
+  const canvas = document.getElementById('scene-linear-polarization');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let angleSlider = document.getElementById('linear-pol-angle');
+  if (!angleSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>Polarization angle θ: <input type="range" id="linear-pol-angle" min="0" max="180" step="1" value="0"><span class="scene-val" id="linear-pol-angle-val">0°</span></label>';
+      parent.appendChild(controls);
+      angleSlider = document.getElementById('linear-pol-angle');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    t += 0.04;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    const theta = parseFloat(angleSlider?.value || 0) * Math.PI / 180;
+    document.getElementById('linear-pol-angle-val')?.replaceChildren(document.createTextNode((theta * 180 / Math.PI).toFixed(0) + '°'));
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Linear polarization', W / 2, 16);
+
+    // --- Wave view (left side) ---
+    const waveL = 30, waveR = W * 0.6, waveY = H / 2;
+    const nPts = 80;
+    const amp = 35;
+    const k = 0.12;
+
+    // Propagation axis
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(waveL, waveY); ctx.lineTo(waveR, waveY); ctx.stroke();
+
+    // E-field arrows along wave
+    const cosT = Math.cos(theta), sinT = Math.sin(theta);
+    const nArrows = 20;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    for (let i = 0; i <= nArrows; i++) {
+      const x = waveL + i * (waveR - waveL) / nArrows;
+      const val = amp * Math.sin(k * x - t * 2);
+      const ey = val * cosT;
+      // For the wave view, show only vertical component visually
+      ctx.beginPath(); ctx.moveTo(x, waveY); ctx.lineTo(x, waveY - ey); ctx.stroke();
+    }
+
+    // Wave curve (projected vertical component)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const x = waveL + i * (waveR - waveL) / nPts;
+      const val = amp * Math.sin(k * x - t * 2) * cosT;
+      if (i === 0) ctx.moveTo(x, waveY - val); else ctx.lineTo(x, waveY - val);
+    }
+    ctx.stroke();
+
+    // Propagation arrow
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('propagation →', (waveL + waveR) / 2, waveY + 25);
+
+    // --- Cross-section view (right side) ---
+    const cxPos = W * 0.8, cyPos = H / 2;
+    const radius = Math.min(H / 2 - 30, 50);
+
+    // Circle outline
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cxPos, cyPos, radius, 0, 2 * Math.PI); ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(cxPos - radius - 10, cyPos); ctx.lineTo(cxPos + radius + 10, cyPos); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cxPos, cyPos - radius - 10); ctx.lineTo(cxPos, cyPos + radius + 10); ctx.stroke();
+
+    // E-vector direction line (the fixed direction of oscillation)
+    const lineLen = radius + 5;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(cxPos - lineLen * Math.sin(theta), cyPos - lineLen * Math.cos(theta));
+    ctx.lineTo(cxPos + lineLen * Math.sin(theta), cyPos + lineLen * Math.cos(theta));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Current E-vector tip
+    const eNow = Math.sin(-t * 2);
+    const tipX = cxPos + eNow * radius * Math.sin(theta);
+    const tipY = cyPos - eNow * radius * Math.cos(theta);
+
+    // E arrow from center
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cxPos, cyPos); ctx.lineTo(tipX, tipY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI); ctx.fill();
+
+    // Labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('E', tipX + 12, tipY - 5);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('End-on view', cxPos, cyPos + radius + 25);
+    ctx.fillText('(tip traces a line)', cxPos, cyPos + radius + 38);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('θ = ' + (theta * 180 / Math.PI).toFixed(0) + '°', cxPos - radius, cyPos - radius - 12);
+  }
+
+  tick();
+}
+
+// =========================================================================
+function initCircularPolarization() {
+  const canvas = document.getElementById('scene-circular-polarization');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let handedness = 1; // 1 = RCP, -1 = LCP
+  let t = 0;
+
+  // Toggle button
+  const parent = canvas.parentElement;
+  let toggleBtn = document.getElementById('circ-pol-toggle');
+  if (!toggleBtn && parent) {
+    const controls = document.createElement('div');
+    controls.className = 'scene-controls';
+    controls.innerHTML = '<button id="circ-pol-toggle" style="padding:3px 14px;font-size:11px;cursor:pointer;">RCP (right-circular)</button>';
+    parent.appendChild(controls);
+    toggleBtn = document.getElementById('circ-pol-toggle');
+  }
+  toggleBtn?.addEventListener('click', () => {
+    handedness *= -1;
+    toggleBtn.textContent = handedness > 0 ? 'RCP (right-circular)' : 'LCP (left-circular)';
+  });
+
+  // 3D projection
+  const cx = W * 0.35, cy = H / 2;
+  const axisLen = W * 0.28;
+  const projK = { x: 0.85, y: 0.3 };
+  const projE = { x: 0, y: -1 };
+  const projB = { x: -0.45, y: 0.2 };
+
+  function to2D(kk, e, b) {
+    return {
+      x: cx + kk * projK.x * axisLen + e * projE.x * 40 + b * projB.x * 40,
+      y: cy + kk * projK.y * axisLen + e * projE.y * 40 + b * projB.y * 40
+    };
+  }
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Circular polarization', W / 2, 16);
+
+    // k axis
+    const kStart = to2D(-1.1, 0, 0);
+    const kEnd = to2D(1.2, 0, 0);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k', kEnd.x + 5, kEnd.y);
+
+    // Helical path of E-field tip
+    const nPts = 200;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const kk = -1 + 2 * i / nPts;
+      const phase = 2 * Math.PI * kk * 1.5 - t * 2;
+      const eVal = Math.cos(phase);
+      const bVal = handedness * Math.sin(phase);
+      const p = to2D(kk, eVal * 0.8, bVal * 0.8);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // E-field arrows at intervals
+    const nArrows = 20;
+    for (let i = 0; i <= nArrows; i++) {
+      const kk = -1 + 2 * i / nArrows;
+      const phase = 2 * Math.PI * kk * 1.5 - t * 2;
+      const eVal = Math.cos(phase);
+      const bVal = handedness * Math.sin(phase);
+      const base = to2D(kk, 0, 0);
+      const tip = to2D(kk, eVal * 0.8, bVal * 0.8);
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 0.8; ctx.globalAlpha = 0.35;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // --- Cross-section circle (right side) ---
+    const cxR = W * 0.78, cyR = H / 2;
+    const radius = Math.min(H / 2 - 35, 50);
+
+    // Circle
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cxR, cyR, radius, 0, 2 * Math.PI); ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(cxR - radius - 8, cyR); ctx.lineTo(cxR + radius + 8, cyR); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cxR, cyR - radius - 8); ctx.lineTo(cxR, cyR + radius + 8); ctx.stroke();
+
+    // Trail of tip positions
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    for (let i = 0; i <= 60; i++) {
+      const phase = -t * 2 - i * 0.1;
+      const ex = radius * 0.8 * Math.cos(phase);
+      const ey = radius * 0.8 * handedness * Math.sin(phase);
+      if (i === 0) ctx.moveTo(cxR + ex, cyR - ey); else ctx.lineTo(cxR + ex, cyR - ey);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Current E vector
+    const phase0 = -t * 2;
+    const tipEx = radius * 0.8 * Math.cos(phase0);
+    const tipEy = radius * 0.8 * handedness * Math.sin(phase0);
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(cxR + tipEx, cyR - tipEy); ctx.stroke();
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(cxR + tipEx, cyR - tipEy, 4, 0, 2 * Math.PI); ctx.fill();
+
+    // Rotation arrow hint
+    const arrPhase = phase0 + 0.3 * handedness;
+    const arrX = cxR + radius * 0.4 * Math.cos(arrPhase);
+    const arrY = cyR - radius * 0.4 * handedness * Math.sin(arrPhase);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(handedness > 0 ? '↻' : '↺', arrX, arrY);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui';
+    ctx.fillText('E', cxR + tipEx + 10, cyR - tipEy);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('End-on view', cxR, cyR + radius + 22);
+    ctx.fillText(handedness > 0 ? 'Right-circular' : 'Left-circular', cxR, cyR + radius + 36);
+  }
+
+  tick();
+}
+
+// =========================================================================
+function initMalusLaw() {
+  const canvas = document.getElementById('scene-malus-law');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let thetaSlider = document.getElementById('malus-theta');
+  if (!thetaSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>Polarizer angle θ: <input type="range" id="malus-theta" min="0" max="90" step="1" value="0"><span class="scene-val" id="malus-theta-val">0°</span></label>';
+      parent.appendChild(controls);
+      thetaSlider = document.getElementById('malus-theta');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    const thetaDeg = parseFloat(thetaSlider?.value || 0);
+    const theta = thetaDeg * Math.PI / 180;
+    document.getElementById('malus-theta-val')?.replaceChildren(document.createTextNode(thetaDeg + '°'));
+
+    const I = Math.cos(theta) * Math.cos(theta);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("Malus' law: I = I₀ cos²θ", W / 2, 16);
+
+    // --- Left: Polarizer diagram ---
+    const diagCx = W * 0.22, diagCy = H * 0.48;
+
+    // Incident light (vertical polarization)
+    const waveX = 30;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    for (let y = diagCy - 30; y <= diagCy + 30; y += 15) {
+      const osc = 8 * Math.sin(y * 0.2 - t * 3);
+      ctx.beginPath(); ctx.moveTo(waveX, y); ctx.lineTo(waveX + osc, y); ctx.stroke();
+    }
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('E₀ (vertical)', waveX + 5, diagCy - 40);
+
+    // Polarizer
+    const polX = diagCx;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 3;
+    const polH = 55;
+    ctx.beginPath();
+    ctx.moveTo(polX + polH * Math.sin(theta), diagCy - polH * Math.cos(theta));
+    ctx.lineTo(polX - polH * Math.sin(theta), diagCy + polH * Math.cos(theta));
+    ctx.stroke();
+
+    // Transmission axis
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(polX - polH * 0.8 * Math.sin(theta), diagCy + polH * 0.8 * Math.cos(theta));
+    ctx.lineTo(polX + polH * 0.8 * Math.sin(theta), diagCy - polH * 0.8 * Math.cos(theta));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('axis', polX + polH * 0.8 * Math.sin(theta) + 4, diagCy - polH * 0.8 * Math.cos(theta));
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Polarizer', polX, diagCy + polH + 15);
+
+    // Transmitted light
+    const txX = polX + 40;
+    const txAmp = 8 * Math.cos(theta);
+    if (Math.abs(txAmp) > 0.5) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.globalAlpha = I;
+      for (let y = diagCy - 30; y <= diagCy + 30; y += 15) {
+        const osc = txAmp * Math.sin(y * 0.2 - t * 3);
+        ctx.beginPath(); ctx.moveTo(txX + 10, y); ctx.lineTo(txX + 10 + osc, y); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Intensity bar
+    const barL = W * 0.05, barR = W * 0.38, barY = H - 30, barH2 = 12;
+    ctx.fillStyle = WCOLORS.grid;
+    ctx.fillRect(barL, barY, barR - barL, barH2);
+    const iColor = `rgba(15, 118, 110, ${0.3 + 0.7 * I})`;
+    ctx.fillStyle = iColor;
+    ctx.fillRect(barL, barY, (barR - barL) * I, barH2);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.strokeRect(barL, barY, barR - barL, barH2);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('I/I₀ = ' + I.toFixed(3), (barL + barR) / 2, barY - 4);
+
+    // --- Right: I(θ) plot ---
+    const plotL = W * 0.52, plotR = W - 20, plotT = 35, plotB = H - 20;
+    const plotW = plotR - plotL, plotH2 = plotB - plotT;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('θ (degrees)', (plotL + plotR) / 2, plotB + 14);
+    ctx.save(); ctx.translate(plotL - 14, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('I / I₀', 0, 0); ctx.restore();
+
+    // Tick marks
+    for (let deg = 0; deg <= 90; deg += 30) {
+      const x = plotL + (deg / 90) * plotW;
+      ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 4); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
+      ctx.fillText(deg + '°', x, plotB + 14);
+    }
+    for (let iv = 0; iv <= 1; iv += 0.5) {
+      const y = plotB - iv * plotH2;
+      ctx.beginPath(); ctx.moveTo(plotL - 3, y); ctx.lineTo(plotL, y); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(iv.toFixed(1), plotL - 5, y + 3);
+    }
+
+    // cos²θ curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let deg = 0; deg <= 90; deg += 1) {
+      const x = plotL + (deg / 90) * plotW;
+      const y = plotB - Math.cos(deg * Math.PI / 180) ** 2 * plotH2;
+      if (deg === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Current point
+    const currX = plotL + (thetaDeg / 90) * plotW;
+    const currY = plotB - I * plotH2;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(currX, currY, 5, 0, 2 * Math.PI); ctx.fill();
+
+    // Dashed lines to point
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(currX, plotB); ctx.lineTo(currX, currY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, currY); ctx.lineTo(currX, currY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('I = I₀cos²(' + thetaDeg + '°) = ' + I.toFixed(3) + ' I₀', plotL + 5, plotT + 12);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 15 - REFRACTION
+// =========================================================================
+
+function initSnellsLawDemo() {
+  const canvas = document.getElementById('scene-snells-law-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let theta1Slider = document.getElementById('snell-theta1');
+  let nRatioSlider = document.getElementById('snell-nratio');
+  if (!theta1Slider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>θ₁: <input type="range" id="snell-theta1" min="0" max="85" step="1" value="30"><span class="scene-val" id="snell-theta1-val">30°</span></label>' +
+        '<label style="margin-left:15px;">n₂/n₁: <input type="range" id="snell-nratio" min="0.5" max="3" step="0.05" value="1.5"><span class="scene-val" id="snell-nratio-val">1.50</span></label>';
+      parent.appendChild(controls);
+      theta1Slider = document.getElementById('snell-theta1');
+      nRatioSlider = document.getElementById('snell-nratio');
+    }
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const theta1Deg = parseFloat(theta1Slider?.value || 30);
+    const nRatio = parseFloat(nRatioSlider?.value || 1.5);
+    document.getElementById('snell-theta1-val')?.replaceChildren(document.createTextNode(theta1Deg + '°'));
+    document.getElementById('snell-nratio-val')?.replaceChildren(document.createTextNode(nRatio.toFixed(2)));
+
+    const theta1 = theta1Deg * Math.PI / 180;
+    const sinTheta2 = Math.sin(theta1) / nRatio;
+    const tir = Math.abs(sinTheta2) > 1;
+    const theta2 = tir ? Math.PI / 2 : Math.asin(sinTheta2);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("Snell's law: n₁ sin θ₁ = n₂ sin θ₂", W / 2, 16);
+
+    const intfY = H / 2;
+    const hitX = W * 0.45;
+
+    // Medium 1 (top)
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.06)';
+    ctx.fillRect(0, 28, W, intfY - 28);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n₁ = 1.00', 10, 45);
+
+    // Medium 2 (bottom)
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.14)';
+    ctx.fillRect(0, intfY, W, H - intfY);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui';
+    ctx.fillText('n₂ = ' + nRatio.toFixed(2), 10, intfY + 20);
+
+    // Interface
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, intfY); ctx.lineTo(W, intfY); ctx.stroke();
+
+    // Normal (dashed)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(hitX, intfY - 100); ctx.lineTo(hitX, intfY + 100); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('normal', hitX + 4, intfY - 92);
+
+    // Incident ray
+    const rayLen = 100;
+    const incX = hitX - rayLen * Math.sin(theta1);
+    const incY = intfY - rayLen * Math.cos(theta1);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(incX, incY); ctx.lineTo(hitX, intfY); ctx.stroke();
+    // Arrowhead
+    ctx.fillStyle = WCOLORS.teal;
+    const aDir = Math.atan2(intfY - incY, hitX - incX);
+    ctx.beginPath();
+    ctx.moveTo(hitX - 15 * Math.cos(aDir), intfY - 15 * Math.sin(aDir));
+    ctx.lineTo(hitX - 15 * Math.cos(aDir) - 6 * Math.cos(aDir - 0.4), intfY - 15 * Math.sin(aDir) - 6 * Math.sin(aDir - 0.4));
+    ctx.lineTo(hitX - 15 * Math.cos(aDir) - 6 * Math.cos(aDir + 0.4), intfY - 15 * Math.sin(aDir) - 6 * Math.sin(aDir + 0.4));
+    ctx.closePath(); ctx.fill();
+
+    // Refracted ray
+    if (!tir) {
+      const refX = hitX + rayLen * Math.sin(theta2);
+      const refY = intfY + rayLen * Math.cos(theta2);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(hitX, intfY); ctx.lineTo(refX, refY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      const rDir = Math.atan2(refY - intfY, refX - hitX);
+      ctx.beginPath();
+      ctx.moveTo(refX, refY);
+      ctx.lineTo(refX - 8 * Math.cos(rDir - 0.3), refY - 8 * Math.sin(rDir - 0.3));
+      ctx.lineTo(refX - 8 * Math.cos(rDir + 0.3), refY - 8 * Math.sin(rDir + 0.3));
+      ctx.closePath(); ctx.fill();
+    }
+
+    // Reflected ray (always present, stronger at TIR)
+    const reflX = hitX + rayLen * Math.sin(theta1);
+    const reflY = intfY - rayLen * Math.cos(theta1);
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = tir ? 2.5 : 1.5;
+    ctx.globalAlpha = tir ? 1 : 0.4;
+    ctx.beginPath(); ctx.moveTo(hitX, intfY); ctx.lineTo(reflX, reflY); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Angle arcs
+    const arcR = 30;
+    // θ₁ arc
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hitX, intfY, arcR, -Math.PI / 2, -Math.PI / 2 + theta1); ctx.stroke();
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('θ₁=' + theta1Deg + '°', hitX + arcR + 5, intfY - arcR + 10);
+
+    // θ₂ arc
+    if (!tir) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(hitX, intfY, arcR, Math.PI / 2 - theta2, Math.PI / 2); ctx.stroke();
+      const theta2Deg = (theta2 * 180 / Math.PI).toFixed(1);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui';
+      ctx.fillText('θ₂=' + theta2Deg + '°', hitX + arcR + 5, intfY + arcR + 5);
+    }
+
+    // Equation
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    if (tir) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.fillText('Total internal reflection! sin θ₂ > 1', W / 2, H - 10);
+    } else {
+      const t2d = (theta2 * 180 / Math.PI).toFixed(1);
+      ctx.fillText('n₁ sin(' + theta1Deg + '°) = n₂ sin(' + t2d + '°)  →  ' +
+        (Math.sin(theta1)).toFixed(3) + ' = ' + (nRatio * Math.sin(theta2)).toFixed(3), W / 2, H - 10);
+    }
+
+    // Labels
+    ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('incident', incX + 40, incY + 5);
+    if (!tir) {
+      ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'left';
+      const refX = hitX + rayLen * Math.sin(theta2);
+      const refY = intfY + rayLen * Math.cos(theta2);
+      ctx.fillText('refracted', refX - 30, refY - 5);
+    }
+    ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'left'; ctx.globalAlpha = tir ? 1 : 0.5;
+    ctx.fillText('reflected', reflX - 20, reflY + 5);
+    ctx.globalAlpha = 1;
+  }
+
+  theta1Slider?.addEventListener('input', draw);
+  nRatioSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+function initTotalInternalReflection() {
+  const canvas = document.getElementById('scene-total-internal-reflection');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let angleSlider = document.getElementById('tir-angle');
+  if (!angleSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>Angle of incidence: <input type="range" id="tir-angle" min="0" max="85" step="0.5" value="30"><span class="scene-val" id="tir-angle-val">30°</span></label>';
+      parent.appendChild(controls);
+      angleSlider = document.getElementById('tir-angle');
+    }
+  }
+
+  const n1 = 1.5, n2 = 1.0; // glass to air
+  const critAngle = Math.asin(n2 / n1);
+  const critDeg = (critAngle * 180 / Math.PI).toFixed(1);
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const angleDeg = parseFloat(angleSlider?.value || 30);
+    const theta1 = angleDeg * Math.PI / 180;
+    document.getElementById('tir-angle-val')?.replaceChildren(document.createTextNode(angleDeg + '°'));
+
+    const sinTheta2 = n1 * Math.sin(theta1) / n2;
+    const isTIR = sinTheta2 > 1;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Total internal reflection', W / 2, 16);
+
+    const intfY = H * 0.45;
+    const hitX = W * 0.4;
+
+    // Dense medium (bottom, glass)
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.12)';
+    ctx.fillRect(0, intfY, W, H - intfY);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n₁ = ' + n1.toFixed(1) + ' (glass)', 8, intfY + 18);
+
+    // Light medium (top, air)
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.03)';
+    ctx.fillRect(0, 28, W, intfY - 28);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui';
+    ctx.fillText('n₂ = ' + n2.toFixed(1) + ' (air)', 8, 42);
+
+    // Interface
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, intfY); ctx.lineTo(W, intfY); ctx.stroke();
+
+    // Normal
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(hitX, intfY - 90); ctx.lineTo(hitX, intfY + 90); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const rayLen = 85;
+
+    // Incident ray (from below)
+    const incX = hitX - rayLen * Math.sin(theta1);
+    const incY = intfY + rayLen * Math.cos(theta1);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(incX, incY); ctx.lineTo(hitX, intfY); ctx.stroke();
+
+    // Reflected ray
+    const reflX = hitX + rayLen * Math.sin(theta1);
+    const reflY = intfY + rayLen * Math.cos(theta1);
+    const reflAlpha = isTIR ? 1 : 0.2 + 0.8 * (angleDeg / 90);
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = isTIR ? 2.5 : 1.5;
+    ctx.globalAlpha = reflAlpha;
+    ctx.beginPath(); ctx.moveTo(hitX, intfY); ctx.lineTo(reflX, reflY); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Refracted ray (if not TIR)
+    if (!isTIR) {
+      const theta2 = Math.asin(sinTheta2);
+      const refX = hitX + rayLen * Math.sin(theta2);
+      const refY = intfY - rayLen * Math.cos(theta2);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      ctx.globalAlpha = 1 - (angleDeg / (critAngle * 180 / Math.PI));
+      ctx.beginPath(); ctx.moveTo(hitX, intfY); ctx.lineTo(refX, refY); ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else {
+      // Evanescent wave hint
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([2, 3]);
+      ctx.globalAlpha = 0.4;
+      for (let d = 0; d < 40; d += 2) {
+        const decay = Math.exp(-d * 0.08);
+        ctx.globalAlpha = 0.4 * decay;
+        ctx.beginPath();
+        ctx.moveTo(hitX - 25 + d, intfY - d);
+        ctx.lineTo(hitX + 25 + d, intfY - d);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1; ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('evanescent wave', hitX + 30, intfY - 20);
+    }
+
+    // Angle arcs
+    const arcR = 25;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hitX, intfY, arcR, Math.PI / 2, Math.PI / 2 + theta1); ctx.stroke();
+
+    // Critical angle indicator
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(hitX, intfY, arcR + 8, Math.PI / 2, Math.PI / 2 + critAngle); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Info box (right side)
+    const boxX = W * 0.58, boxY = intfY + 15;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('θ₁ = ' + angleDeg + '°', boxX, boxY + 15);
+    ctx.fillText('θ_c = ' + critDeg + '° = arcsin(n₂/n₁)', boxX, boxY + 32);
+
+    if (isTIR) {
+      ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui';
+      ctx.fillText('θ₁ > θ_c → Total internal reflection!', boxX, boxY + 52);
+    } else {
+      const theta2 = Math.asin(sinTheta2);
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('θ₂ = ' + (theta2 * 180 / Math.PI).toFixed(1) + '°', boxX, boxY + 52);
+    }
+
+    // Progress bar showing how close to TIR
+    const barX = boxX, barW2 = W - boxX - 20, barY2 = boxY + 62, barH2 = 8;
+    ctx.fillStyle = WCOLORS.grid; ctx.fillRect(barX, barY2, barW2, barH2);
+    const frac = angleDeg / (critAngle * 180 / Math.PI);
+    const barColor = frac >= 1 ? WCOLORS.red : WCOLORS.teal;
+    ctx.fillStyle = barColor;
+    ctx.fillRect(barX, barY2, Math.min(frac, 1) * barW2, barH2);
+    // Critical angle marker
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(barX + barW2, barY2 - 2); ctx.lineTo(barX + barW2, barY2 + barH2 + 2); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('θ_c', barX + barW2, barY2 - 4);
+  }
+
+  angleSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+function initThinFilmInterference() {
+  const canvas = document.getElementById('scene-thin-film-interference');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let thickSlider = document.getElementById('thinfilm-thickness');
+  if (!thickSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>Film thickness d (nm): <input type="range" id="thinfilm-thickness" min="50" max="800" step="5" value="250"><span class="scene-val" id="thinfilm-thickness-val">250</span></label>';
+      parent.appendChild(controls);
+      thickSlider = document.getElementById('thinfilm-thickness');
+    }
+  }
+
+  const nFilm = 1.4;
+
+  function wavelengthToRGB(wl) {
+    // Approximate visible spectrum to RGB
+    let r = 0, g = 0, b = 0;
+    if (wl >= 380 && wl < 440) { r = -(wl - 440) / 60; b = 1; }
+    else if (wl >= 440 && wl < 490) { g = (wl - 440) / 50; b = 1; }
+    else if (wl >= 490 && wl < 510) { g = 1; b = -(wl - 510) / 20; }
+    else if (wl >= 510 && wl < 580) { r = (wl - 510) / 70; g = 1; }
+    else if (wl >= 580 && wl < 645) { r = 1; g = -(wl - 645) / 65; }
+    else if (wl >= 645 && wl <= 780) { r = 1; }
+    // Intensity falloff at edges
+    let factor = 1;
+    if (wl >= 380 && wl < 420) factor = 0.3 + 0.7 * (wl - 380) / 40;
+    else if (wl > 700 && wl <= 780) factor = 0.3 + 0.7 * (780 - wl) / 80;
+    else if (wl < 380 || wl > 780) factor = 0;
+    return [Math.round(r * factor * 255), Math.round(g * factor * 255), Math.round(b * factor * 255)];
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const d = parseFloat(thickSlider?.value || 250);
+    document.getElementById('thinfilm-thickness-val')?.replaceChildren(document.createTextNode(d.toFixed(0)));
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Thin film interference', W / 2, 16);
+
+    // --- Film diagram (left) ---
+    const filmL = 30, filmR = W * 0.42;
+    const filmT = 70, filmB = 160;
+    const filmH = filmB - filmT;
+
+    // Air above
+    ctx.fillStyle = 'rgba(200,220,255,0.1)';
+    ctx.fillRect(filmL, 30, filmR - filmL, filmT - 30);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n = 1.0 (air)', filmL + 3, 45);
+
+    // Film
+    ctx.fillStyle = 'rgba(15, 118, 110, 0.15)';
+    ctx.fillRect(filmL, filmT, filmR - filmL, filmH);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.strokeRect(filmL, filmT, filmR - filmL, filmH);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('n = ' + nFilm.toFixed(1), (filmL + filmR) / 2, (filmT + filmB) / 2 + 4);
+    ctx.fillText('d = ' + d.toFixed(0) + ' nm', (filmL + filmR) / 2, (filmT + filmB) / 2 + 18);
+
+    // Substrate below
+    ctx.fillStyle = 'rgba(100,100,120,0.1)';
+    ctx.fillRect(filmL, filmB, filmR - filmL, 30);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n = 1.5 (glass)', filmL + 3, filmB + 20);
+
+    // Thickness dimension
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(filmR + 8, filmT); ctx.lineTo(filmR + 8, filmB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(filmR + 4, filmT); ctx.lineTo(filmR + 12, filmT); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(filmR + 4, filmB); ctx.lineTo(filmR + 12, filmB); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d', filmR + 14, (filmT + filmB) / 2 + 3);
+
+    // Incident ray
+    const rayInX = filmL + 60;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(rayInX - 20, 30); ctx.lineTo(rayInX, filmT); ctx.stroke();
+
+    // Reflected ray 1 (from top surface, with phase flip)
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(rayInX, filmT); ctx.lineTo(rayInX + 20, 30); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('R₁ (π shift)', rayInX + 22, 38);
+
+    // Ray into film
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6;
+    ctx.beginPath(); ctx.moveTo(rayInX, filmT); ctx.lineTo(rayInX + 15, filmB); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Reflected ray 2 (from bottom surface)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(rayInX + 15, filmB); ctx.lineTo(rayInX + 35, filmT); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rayInX + 35, filmT); ctx.lineTo(rayInX + 55, 30); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '8px system-ui';
+    ctx.fillText('R₂ (no shift)', rayInX + 57, 38);
+
+    // Path difference info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Path diff ≈ 2n·d = ' + (2 * nFilm * d).toFixed(0) + ' nm', filmL, filmB + 50);
+    ctx.fillText('+ λ/2 shift (reflection from n₂ > n₁)', filmL, filmB + 65);
+
+    // --- Color/spectrum view (right) ---
+    const specL = W * 0.52, specR = W - 15;
+    const specT = 35, specB = H - 20;
+    const specW = specR - specL;
+
+    // For each visible wavelength, compute constructive/destructive interference
+    // Condition: 2*n*d + λ/2 = m*λ for constructive (including phase flip)
+    // Reflectance: R ~ sin²(2πnd/λ) approximately
+    const wlMin = 380, wlMax = 780;
+
+    // Spectrum bar
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Reflected color', (specL + specR) / 2, specT - 5);
+
+    // Draw spectrum with reflectance modulation
+    let totalR = 0, totalG = 0, totalB = 0, totalW = 0;
+    for (let i = 0; i < specW; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW;
+      const x = specL + i;
+      // Phase difference including π shift from top reflection
+      const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
+      const reflectance = Math.sin(delta / 2) ** 2;
+      const [r, g, b] = wavelengthToRGB(wl);
+
+      // Unmodulated spectrum
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x, specT, 1, 15);
+
+      // Modulated (reflected)
+      const mr = Math.round(r * reflectance);
+      const mg = Math.round(g * reflectance);
+      const mb = Math.round(b * reflectance);
+      ctx.fillStyle = `rgb(${mr},${mg},${mb})`;
+      ctx.fillRect(x, specT + 20, 1, 25);
+
+      totalR += mr; totalG += mg; totalB += mb; totalW++;
+    }
+
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('380nm', specL, specT + 55); ctx.textAlign = 'right';
+    ctx.fillText('780nm', specR, specT + 55);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('all λ', specL - 5, specT + 10);
+    ctx.fillText('reflected', specL - 5, specT + 36);
+
+    // Perceived reflected color swatch
+    const avgR = Math.min(255, Math.round(totalR / totalW * 2.5));
+    const avgG = Math.min(255, Math.round(totalG / totalW * 2.5));
+    const avgB = Math.min(255, Math.round(totalB / totalW * 2.5));
+    ctx.fillStyle = `rgb(${avgR},${avgG},${avgB})`;
+    ctx.fillRect(specL, specT + 65, specW, 30);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.strokeRect(specL, specT + 65, specW, 30);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('perceived', specL - 5, specT + 84);
+
+    // Reflectance curve
+    const plotT2 = specT + 110, plotB2 = specB;
+    const plotH = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(specL, plotT2); ctx.lineTo(specL, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(specL, plotB2); ctx.lineTo(specR, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Wavelength (nm)', (specL + specR) / 2, plotB2 + 12);
+    ctx.save(); ctx.translate(specL - 10, (plotT2 + plotB2) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('R', 0, 0); ctx.restore();
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= specW; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW;
+      const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
+      const R = Math.sin(delta / 2) ** 2;
+      const x = specL + i;
+      const y = plotB2 - R * plotH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Constructive peaks
+    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    for (let m = 1; m <= 10; m++) {
+      // 2nd = mλ → λ = 2nd/m
+      const wlPeak = 2 * nFilm * d / m;
+      if (wlPeak >= wlMin && wlPeak <= wlMax) {
+        const x = specL + (wlPeak - wlMin) / (wlMax - wlMin) * specW;
+        ctx.fillStyle = WCOLORS.red;
+        ctx.beginPath(); ctx.arc(x, plotT2 + 3, 3, 0, 2 * Math.PI); ctx.fill();
+        ctx.fillText(Math.round(wlPeak), x, plotT2 - 3);
+      }
+    }
+  }
+
+  thickSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+function initBrewsterAngle() {
+  const canvas = document.getElementById('scene-brewster-angle');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let nSlider = document.getElementById('brewster-n');
+  if (!nSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>n₂/n₁: <input type="range" id="brewster-n" min="1.0" max="3.0" step="0.05" value="1.5"><span class="scene-val" id="brewster-n-val">1.50</span></label>';
+      parent.appendChild(controls);
+      nSlider = document.getElementById('brewster-n');
+    }
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const n = parseFloat(nSlider?.value || 1.5);
+    document.getElementById('brewster-n-val')?.replaceChildren(document.createTextNode(n.toFixed(2)));
+
+    const brewsterAngle = Math.atan(n) * 180 / Math.PI;
+    const critAngle = n > 1 ? null : Math.asin(n) * 180 / Math.PI;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Fresnel reflection coefficients', W / 2, 16);
+
+    // Plot region
+    const plotL = 55, plotR = W - 20, plotT = 35, plotB = H - 30;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Angle of incidence (degrees)', (plotL + plotR) / 2, plotB + 20);
+    ctx.save(); ctx.translate(15, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Reflection coefficient', 0, 0); ctx.restore();
+
+    // Grid and tick marks
+    for (let deg = 0; deg <= 90; deg += 15) {
+      const x = plotL + (deg / 90) * plotW;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(deg + '°', x, plotB + 12);
+    }
+    for (let v = -1; v <= 1; v += 0.5) {
+      const y = plotB - ((v + 1) / 2) * plotH;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(v.toFixed(1), plotL - 5, y + 3);
+    }
+
+    // Zero line
+    const zeroY = plotB - plotH / 2;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, zeroY); ctx.lineTo(plotR, zeroY); ctx.stroke();
+
+    // Fresnel equations
+    // rs = (n1 cosθ1 - n2 cosθ2) / (n1 cosθ1 + n2 cosθ2)
+    // rp = (n2 cosθ1 - n1 cosθ2) / (n2 cosθ1 + n1 cosθ2)
+    // where n1=1, n2=n, sinθ2 = sinθ1/n
+
+    function fresnel(thetaDeg) {
+      const theta = thetaDeg * Math.PI / 180;
+      const cosT1 = Math.cos(theta);
+      const sinT1 = Math.sin(theta);
+      const sinT2 = sinT1 / n;
+      if (Math.abs(sinT2) > 1) return { rs: 1, rp: 1, tir: true };
+      const cosT2 = Math.sqrt(1 - sinT2 * sinT2);
+      const rs = (cosT1 - n * cosT2) / (cosT1 + n * cosT2);
+      const rp = (n * cosT1 - cosT2) / (n * cosT1 + cosT2);
+      return { rs, rp, tir: false };
+    }
+
+    // Plot rs (s-polarization)
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let deg = 0; deg <= 90; deg += 0.5) {
+      const { rs } = fresnel(deg);
+      const x = plotL + (deg / 90) * plotW;
+      const y = plotB - ((rs + 1) / 2) * plotH;
+      if (deg === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Plot rp (p-polarization)
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let deg = 0; deg <= 90; deg += 0.5) {
+      const { rp } = fresnel(deg);
+      const x = plotL + (deg / 90) * plotW;
+      const y = plotB - ((rp + 1) / 2) * plotH;
+      if (deg === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Brewster angle marker
+    const bx = plotL + (brewsterAngle / 90) * plotW;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(bx, plotT); ctx.lineTo(bx, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('θ_B = ' + brewsterAngle.toFixed(1) + '°', bx, plotT - 5);
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(bx, zeroY, 5, 0, 2 * Math.PI); ctx.fill();
+
+    // Critical angle marker (for n < 1 going from dense to less dense)
+    if (critAngle !== null) {
+      const cx = plotL + (critAngle / 90) * plotW;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(cx, plotT); ctx.lineTo(cx, plotB); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 10px system-ui';
+      ctx.fillText('θ_c = ' + critAngle.toFixed(1) + '°', cx, plotT - 5);
+    }
+
+    // Legend
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.blue; ctx.fillText('── rₛ (s-polarization)', plotL + 10, plotT + 15);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('── rₚ (p-polarization)', plotL + 10, plotT + 30);
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('⬤ Brewster angle (rₚ = 0)', plotL + 10, plotT + 45);
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('n₂/n₁ = ' + n.toFixed(2), plotR, plotT + 15);
+    ctx.fillText('θ_B = arctan(n₂/n₁) = ' + brewsterAngle.toFixed(1) + '°', plotR, plotT + 30);
+  }
+
+  nSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 16 - PRISMS & SCATTERING
+// =========================================================================
+
+function initRayleighScattering() {
+  const canvas = document.getElementById('scene-rayleigh-scattering');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  function wavelengthToRGB(wl) {
+    let r = 0, g = 0, b = 0;
+    if (wl >= 380 && wl < 440) { r = -(wl - 440) / 60; b = 1; }
+    else if (wl >= 440 && wl < 490) { g = (wl - 440) / 50; b = 1; }
+    else if (wl >= 490 && wl < 510) { g = 1; b = -(wl - 510) / 20; }
+    else if (wl >= 510 && wl < 580) { r = (wl - 510) / 70; g = 1; }
+    else if (wl >= 580 && wl < 645) { r = 1; g = -(wl - 645) / 65; }
+    else if (wl >= 645 && wl <= 780) { r = 1; }
+    let factor = 1;
+    if (wl >= 380 && wl < 420) factor = 0.3 + 0.7 * (wl - 380) / 40;
+    else if (wl > 700 && wl <= 780) factor = 0.3 + 0.7 * (780 - wl) / 80;
+    else if (wl < 380 || wl > 780) factor = 0;
+    return [Math.round(r * factor * 255), Math.round(g * factor * 255), Math.round(b * factor * 255)];
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Rayleigh scattering: intensity ~ 1/λ⁴', W / 2, 16);
+
+    // --- Top: scattering intensity plot ---
+    const plotL = 60, plotR = W - 20, plotT = 35, plotB = H * 0.45;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Wavelength (nm)', (plotL + plotR) / 2, plotB + 14);
+    ctx.save(); ctx.translate(plotL - 18, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Scattering intensity', 0, 0); ctx.restore();
+
+    // 1/λ⁴ curve with spectrum coloring
+    const wlMin = 380, wlMax = 780;
+    const maxIntensity = 1 / (380 ** 4); // normalize to blue end
+
+    // Fill under curve with spectrum colors
+    for (let i = 0; i < plotW; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / plotW;
+      const intensity = (1 / (wl ** 4)) / maxIntensity;
+      const [r, g, b] = wavelengthToRGB(wl);
+      const x = plotL + i;
+      const barTop = plotB - intensity * plotH;
+      ctx.fillStyle = `rgba(${r},${g},${b},0.4)`;
+      ctx.fillRect(x, barTop, 1, plotB - barTop);
+    }
+
+    // 1/λ⁴ curve
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= plotW; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / plotW;
+      const intensity = (1 / (wl ** 4)) / maxIntensity;
+      const x = plotL + i;
+      const y = plotB - intensity * plotH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Wavelength ticks
+    for (let wl = 400; wl <= 750; wl += 50) {
+      const x = plotL + (wl - wlMin) / (wlMax - wlMin) * plotW;
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 4); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '7px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(wl, x, plotB + 22);
+    }
+
+    // Blue/red annotations
+    ctx.fillStyle = WCOLORS.blue; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Blue scatters ~5.5x', plotL + 5, plotT + 15);
+    ctx.fillText('more than red', plotL + 5, plotT + 27);
+
+    // --- Bottom: sky explanation ---
+    const secT = H * 0.55;
+
+    // Visible spectrum bar
+    const barL = 60, barR = W - 20, barY = secT + 10, barH2 = 20;
+    for (let i = 0; i < barR - barL; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / (barR - barL);
+      const [r, g, b] = wavelengthToRGB(wl);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(barL + i, barY, 1, barH2);
+    }
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.strokeRect(barL, barY, barR - barL, barH2);
+
+    // Scattering strength overlay
+    for (let i = 0; i < barR - barL; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / (barR - barL);
+      const intensity = (1 / (wl ** 4)) / maxIntensity;
+      const dotH = intensity * 15;
+      ctx.fillStyle = WCOLORS.axis; ctx.globalAlpha = 0.3;
+      ctx.fillRect(barL + i, barY - dotH, 1, dotH);
+    }
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('violet/blue', barL, barY + barH2 + 12);
+    ctx.textAlign = 'right';
+    ctx.fillText('red', barR, barY + barH2 + 12);
+    ctx.textAlign = 'center';
+    ctx.fillText('← strongly scattered                     weakly scattered →', (barL + barR) / 2, barY + barH2 + 25);
+
+    // Sky blue / sunset explanation
+    const expY = secT + 75;
+    // Blue sky swatch
+    ctx.fillStyle = '#6BB3E0';
+    ctx.fillRect(barL, expY, 60, 25);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.strokeRect(barL, expY, 60, 25);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Blue sky: scattered blue light', barL + 68, expY + 10);
+    ctx.fillText('reaches your eyes from all directions', barL + 68, expY + 22);
+
+    // Sunset swatch
+    const sunY = expY + 35;
+    ctx.fillStyle = '#E8723A';
+    ctx.fillRect(barL, sunY, 60, 25);
+    ctx.strokeRect(barL, sunY, 60, 25);
+    ctx.fillStyle = WCOLORS.text;
+    ctx.fillText('Red sunset: blue scattered away', barL + 68, sunY + 10);
+    ctx.fillText('along long path, red light remains', barL + 68, sunY + 22);
+  }
+
+  draw();
+}
+
+// =========================================================================
+function initPrismDispersion() {
+  const canvas = document.getElementById('scene-prism-dispersion');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let apexSlider = document.getElementById('prism-apex');
+  if (!apexSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>Apex angle: <input type="range" id="prism-apex" min="30" max="75" step="1" value="60"><span class="scene-val" id="prism-apex-val">60°</span></label>';
+      parent.appendChild(controls);
+      apexSlider = document.getElementById('prism-apex');
+    }
+  }
+
+  function wavelengthToRGB(wl) {
+    let r = 0, g = 0, b = 0;
+    if (wl >= 380 && wl < 440) { r = -(wl - 440) / 60; b = 1; }
+    else if (wl >= 440 && wl < 490) { g = (wl - 440) / 50; b = 1; }
+    else if (wl >= 490 && wl < 510) { g = 1; b = -(wl - 510) / 20; }
+    else if (wl >= 510 && wl < 580) { r = (wl - 510) / 70; g = 1; }
+    else if (wl >= 580 && wl < 645) { r = 1; g = -(wl - 645) / 65; }
+    else if (wl >= 645 && wl <= 780) { r = 1; }
+    let factor = 1;
+    if (wl >= 380 && wl < 420) factor = 0.3 + 0.7 * (wl - 380) / 40;
+    else if (wl > 700 && wl <= 780) factor = 0.3 + 0.7 * (780 - wl) / 80;
+    else if (wl < 380 || wl > 780) factor = 0;
+    return `rgb(${Math.round(r * factor * 255)},${Math.round(g * factor * 255)},${Math.round(b * factor * 255)})`;
+  }
+
+  // Cauchy dispersion: n(λ) ≈ A + B/λ²
+  function cauchyN(wlNm) {
+    const A = 1.52, B = 4500;
+    return A + B / (wlNm * wlNm);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const apexDeg = parseFloat(apexSlider?.value || 60);
+    const apex = apexDeg * Math.PI / 180;
+    document.getElementById('prism-apex-val')?.replaceChildren(document.createTextNode(apexDeg + '°'));
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Prism dispersion', W / 2, 16);
+
+    // Prism geometry (equilateral-ish triangle)
+    const prismCx = W * 0.38, prismCy = H * 0.52;
+    const prismSize = Math.min(W, H) * 0.28;
+
+    // Triangle vertices: top, bottom-left, bottom-right
+    const topX = prismCx, topY = prismCy - prismSize * Math.cos(apex / 2) * 0.8;
+    const blX = prismCx - prismSize * Math.sin(apex / 2);
+    const blY = prismCy + prismSize * 0.4;
+    const brX = prismCx + prismSize * Math.sin(apex / 2);
+    const brY = prismCy + prismSize * 0.4;
+
+    // Draw prism
+    ctx.fillStyle = 'rgba(200, 220, 255, 0.3)';
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(topX, topY);
+    ctx.lineTo(blX, blY);
+    ctx.lineTo(brX, brY);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Entry point on left face
+    const entryFrac = 0.5;
+    const entryX = topX + (blX - topX) * entryFrac;
+    const entryY = topY + (blY - topY) * entryFrac;
+
+    // Incident white beam
+    const beamLen = 80;
+    const incidentAngle = Math.PI * 0.15;
+    const beamStartX = entryX - beamLen * Math.cos(incidentAngle);
+    const beamStartY = entryY - beamLen * Math.sin(incidentAngle);
+
+    ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(beamStartX, beamStartY); ctx.lineTo(entryX, entryY); ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(beamStartX, beamStartY); ctx.lineTo(entryX, entryY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('White light', beamStartX + 5, beamStartY - 8);
+
+    // Exit point on right face
+    const exitFrac = 0.5;
+    const exitX = topX + (brX - topX) * exitFrac;
+    const exitY = topY + (brY - topY) * exitFrac;
+
+    // Right face normal direction
+    const rfDx = brX - topX, rfDy = brY - topY;
+    const rfLen = Math.sqrt(rfDx * rfDx + rfDy * rfDy);
+    const normalX = rfDy / rfLen, normalY = -rfDx / rfLen;
+
+    // Dispersed rays
+    const colors = [
+      { wl: 400, name: 'Violet', label: '400nm' },
+      { wl: 450, name: 'Blue',   label: '450nm' },
+      { wl: 500, name: 'Cyan',   label: '500nm' },
+      { wl: 550, name: 'Green',  label: '550nm' },
+      { wl: 580, name: 'Yellow', label: '580nm' },
+      { wl: 620, name: 'Orange', label: '620nm' },
+      { wl: 700, name: 'Red',    label: '700nm' },
+    ];
+
+    // Draw path through prism (simplified) and exit rays
+    const rayLen2 = 120;
+    const baseDeviation = apex * 0.6; // approximate minimum deviation
+
+    for (let i = 0; i < colors.length; i++) {
+      const c = colors[i];
+      const n = cauchyN(c.wl);
+      // More dispersion for shorter wavelengths
+      const deviation = baseDeviation + (n - 1.52) * 8;
+      const spread = (i - 3) * 0.035 * (apexDeg / 60);
+
+      // Exit direction
+      const exitAngle = -0.3 + spread + deviation * 0.15;
+      const endX = exitX + rayLen2 * Math.cos(exitAngle);
+      const endY = exitY + rayLen2 * Math.sin(exitAngle);
+
+      const color = wavelengthToRGB(c.wl);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(exitX, exitY); ctx.lineTo(endX, endY); ctx.stroke();
+
+      // Label
+      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(c.name + ' ' + c.label, endX + 5, endY + 3);
+    }
+
+    // Internal beam (white fanning into colors)
+    ctx.strokeStyle = 'rgba(150,150,150,0.4)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(entryX, entryY); ctx.lineTo(exitX, exitY); ctx.stroke();
+
+    // Apex angle arc
+    const arcR = 20;
+    const leftAngle = Math.atan2(blY - topY, blX - topX);
+    const rightAngle = Math.atan2(brY - topY, brX - topX);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(topX, topY, arcR, leftAngle, rightAngle); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(apexDeg + '°', topX, topY + arcR + 14);
+
+    // Note
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Shorter wavelengths refract more (higher n)', W / 2, H - 8);
+  }
+
+  apexSlider?.addEventListener('input', draw);
   draw();
 }
