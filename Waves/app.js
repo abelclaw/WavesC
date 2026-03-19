@@ -3552,9 +3552,13 @@ function sceneMarkup(type) {
     case "fourier-magnitude-phase":
       return `
         <div class="scene-label">Magnitude vs Phase</div>
-        <p class="scene-caption">Phase carries most of the structural information in a Fourier transform. Swapping magnitudes preserves structure.</p>
+        <p class="scene-caption">Phase carries most of the structural information. Pick two signals and swap their magnitudes to see.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-magnitude-phase" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Signal A: <select id="fmp-sigA"><option value="square">Square</option><option value="triangle">Triangle</option><option value="sawtooth">Sawtooth</option><option value="pulse">Pulse</option></select></label>
+            <label>Signal B: <select id="fmp-sigB"><option value="square">Square</option><option value="triangle" selected>Triangle</option><option value="sawtooth">Sawtooth</option><option value="pulse">Pulse</option></select></label>
+          </div>
         </div>
       `;
     case "fourier-filtering":
@@ -3608,9 +3612,13 @@ function sceneMarkup(type) {
     case "phase-flip-demo":
       return `
         <div class="scene-label">Phase Flip on Reflection</div>
-        <p class="scene-caption">Top: light&rarr;heavy string (reflected pulse inverts). Bottom: heavy&rarr;light (no inversion).</p>
+        <p class="scene-caption">Adjust impedance ratio to see how reflection and transmission change. Z<sub>2</sub>/Z<sub>1</sub> &gt; 1 &rarr; phase flip; &lt; 1 &rarr; no flip.</p>
         <div class="interactive-scene">
           <canvas id="scene-phase-flip-demo" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="pfd-zratio" min="0.1" max="5" step="0.1" value="3"><span class="scene-val" id="pfd-zratio-val">3.0</span></label>
+            <button id="pfd-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
+          </div>
         </div>
       `;
     case "mass-collision-impedance":
@@ -3655,6 +3663,10 @@ function sceneMarkup(type) {
         <p class="scene-caption">For a traveling wave, kinetic and potential energy densities are equal everywhere and move with the wave.</p>
         <div class="interactive-scene">
           <canvas id="scene-wave-energy-string" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&omega;: <input type="range" id="wes-omega" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-omega-val">4.0</span></label>
+            <label>k: <input type="range" id="wes-k" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-k-val">4.0</span></label>
+          </div>
         </div>
       `;
     case "power-reflection-transmission":
@@ -3745,6 +3757,10 @@ function sceneMarkup(type) {
         <p class="scene-caption">In a dispersive medium, different Fourier components travel at different phase velocities v<sub>p</sub> = &omega;/k.</p>
         <div class="interactive-scene">
           <canvas id="scene-phase-velocity-demo" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>k<sub>0</sub>: <input type="range" id="pvd-k0" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="pvd-k0-val">3.0</span></label>
+            <label>&Delta;k: <input type="range" id="pvd-dk" min="0.1" max="1.5" step="0.1" value="0.4"><span class="scene-val" id="pvd-dk-val">0.4</span></label>
+          </div>
         </div>
       `;
     case "group-velocity-demo":
@@ -3779,6 +3795,10 @@ function sceneMarkup(type) {
         <p class="scene-caption">Medium particles oscillate in place while the wave pulse carries energy forward.</p>
         <div class="interactive-scene">
           <canvas id="scene-wave-transport-energy" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Pulse speed: <input type="range" id="wte-speed" min="0.2" max="2" step="0.1" value="0.8"><span class="scene-val" id="wte-speed-val">0.8</span></label>
+            <label>Pulse width: <input type="range" id="wte-width" min="20" max="120" step="5" value="60"><span class="scene-val" id="wte-width-val">60</span></label>
+          </div>
         </div>
       `;
     case "transverse-longitudinal-demo":
@@ -3787,6 +3807,10 @@ function sceneMarkup(type) {
         <p class="scene-caption">Top: transverse wave (displacement perpendicular to propagation). Bottom: longitudinal (displacement parallel).</p>
         <div class="interactive-scene">
           <canvas id="scene-transverse-longitudinal-demo" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&omega;: <input type="range" id="tld-omega" min="0.5" max="6" step="0.1" value="2"><span class="scene-val" id="tld-omega-val">2.0</span></label>
+            <label>k: <input type="range" id="tld-k" min="0.1" max="1" step="0.05" value="0.3"><span class="scene-val" id="tld-k-val">0.30</span></label>
+          </div>
         </div>
       `;
     case "sound-refraction-atmosphere":
@@ -3807,6 +3831,10 @@ function sceneMarkup(type) {
         <p class="scene-caption">E (blue, vertical) and B (red, horizontal) oscillate perpendicular to each other and to the propagation direction k.</p>
         <div class="interactive-scene">
           <canvas id="scene-em-plane-wave" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Frequency: <input type="range" id="empw-freq" min="0.5" max="4" step="0.1" value="1.5"><span class="scene-val" id="empw-freq-val">1.5</span></label>
+            <label>Amplitude: <input type="range" id="empw-amp" min="0.2" max="1" step="0.05" value="0.7"><span class="scene-val" id="empw-amp-val">0.70</span></label>
+          </div>
         </div>
       `;
 
@@ -3985,9 +4013,12 @@ function sceneMarkup(type) {
     case "monopole-radiation-pattern":
       return `
         <div class="scene-label">Dipole Radiation Pattern</div>
-        <p class="scene-caption">An oscillating dipole radiates with a sin&sup2;&theta; pattern: maximum perpendicular to the axis, zero along it.</p>
+        <p class="scene-caption">An oscillating dipole radiates with a sin<sup>n</sup>&theta; pattern. Adjust the exponent to see how directivity changes.</p>
         <div class="interactive-scene">
           <canvas id="scene-monopole-radiation-pattern" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Exponent n: <input type="range" id="mrp-exp" min="1" max="6" step="1" value="2"><span class="scene-val" id="mrp-exp-val">2</span></label>
+          </div>
         </div>
       `;
     case "two-source-interference":
@@ -4073,9 +4104,12 @@ function sceneMarkup(type) {
     case "hydrogen-energy-levels":
       return `
         <div class="scene-label">Hydrogen Energy Levels</div>
-        <p class="scene-caption">Energy levels at E<sub>n</sub> = &minus;13.6/n&sup2; eV. Balmer series transitions to n=2 produce visible light.</p>
+        <p class="scene-caption">Energy levels at E<sub>n</sub> = &minus;13.6/n&sup2; eV. Select a spectral series to see transitions.</p>
         <div class="interactive-scene">
           <canvas id="scene-hydrogen-energy-levels" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Series: <select id="hel-series"><option value="lyman">Lyman (n&rarr;1, UV)</option><option value="balmer" selected>Balmer (n&rarr;2, visible)</option><option value="paschen">Paschen (n&rarr;3, IR)</option><option value="brackett">Brackett (n&rarr;4, IR)</option></select></label>
+          </div>
         </div>
       `;
     case "quantum-wavepacket-dispersion":
@@ -4104,6 +4138,9 @@ function sceneMarkup(type) {
         <p class="scene-caption">As a source passes an observer, the received frequency drops from high (approach) to low (recession).</p>
         <div class="interactive-scene">
           <canvas id="scene-doppler-angle" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>v/v<sub>sound</sub>: <input type="range" id="da-speed" min="0.1" max="0.9" step="0.05" value="0.5"><span class="scene-val" id="da-speed-val">0.50</span></label>
+          </div>
         </div>
       `;
     case "sonic-boom-mach-cone":

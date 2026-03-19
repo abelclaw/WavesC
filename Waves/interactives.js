@@ -5811,6 +5811,20 @@ function initWaveTransportEnergy() {
   const amp = 40;
   let t = 0;
 
+  let pulseSpeed = 0.8, pulseWidth = 60;
+  const speedSlider = document.getElementById('wte-speed');
+  const widthSlider = document.getElementById('wte-width');
+  const speedVal = document.getElementById('wte-speed-val');
+  const widthVal = document.getElementById('wte-width-val');
+  function onWteInput() {
+    pulseSpeed = parseFloat(speedSlider.value);
+    pulseWidth = parseFloat(widthSlider.value);
+    speedVal.textContent = pulseSpeed.toFixed(1);
+    widthVal.textContent = pulseWidth.toFixed(0);
+  }
+  if (speedSlider) speedSlider.addEventListener('input', onWteInput);
+  if (widthSlider) widthSlider.addEventListener('input', onWteInput);
+
   function tick() {
     t += 0.03;
     wClear(ctx, W, H);
@@ -5824,9 +5838,7 @@ function initWaveTransportEnergy() {
     ctx.fillText('Energy transport by a wave pulse', W / 2, 18);
 
     // Pulse center moves across canvas and wraps
-    const pulseSpeed = 0.8;
     const pulseX = ((t * pulseSpeed * (W - 80) / (2 * Math.PI)) % (W + 100)) - 50;
-    const pulseWidth = 60;
 
     // Draw equilibrium line
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
@@ -5908,6 +5920,20 @@ function initTransverseLongitudinalDemo() {
   const amp = 18;
   let t = 0;
 
+  let omega = 2, k = 0.3;
+  const omegaSlider = document.getElementById('tld-omega');
+  const kSlider = document.getElementById('tld-k');
+  const omegaVal = document.getElementById('tld-omega-val');
+  const kVal = document.getElementById('tld-k-val');
+  function onTldInput() {
+    omega = parseFloat(omegaSlider.value);
+    k = parseFloat(kSlider.value);
+    omegaVal.textContent = omega.toFixed(1);
+    kVal.textContent = k.toFixed(2);
+  }
+  if (omegaSlider) omegaSlider.addEventListener('input', onTldInput);
+  if (kSlider) kSlider.addEventListener('input', onTldInput);
+
   const transY = H * 0.28;
   const longY = H * 0.72;
 
@@ -5927,9 +5953,6 @@ function initTransverseLongitudinalDemo() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Transverse wave (e.g. rope)', 20, 18);
     ctx.fillText('Longitudinal wave (e.g. sound)', 20, H / 2 + 18);
-
-    const k = 0.3;
-    const omega = 2;
 
     // --- Transverse ---
     // Equilibrium line
@@ -6181,6 +6204,20 @@ function initEmPlaneWave() {
   const { ctx, W, H } = setup;
 
   let t = 0;
+  let emFreq = 1.5, emAmp = 0.7;
+  const freqSlider = document.getElementById('empw-freq');
+  const ampSlider = document.getElementById('empw-amp');
+  const freqVal = document.getElementById('empw-freq-val');
+  const ampVal = document.getElementById('empw-amp-val');
+  function onEmpwInput() {
+    emFreq = parseFloat(freqSlider.value);
+    emAmp = parseFloat(ampSlider.value);
+    freqVal.textContent = emFreq.toFixed(1);
+    ampVal.textContent = emAmp.toFixed(2);
+  }
+  if (freqSlider) freqSlider.addEventListener('input', onEmpwInput);
+  if (ampSlider) ampSlider.addEventListener('input', onEmpwInput);
+
   const cx = W / 2, cy = H / 2;
 
   // 3D-like projection parameters
@@ -6237,8 +6274,8 @@ function initEmPlaneWave() {
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const kk = -1 + 2 * i / nPts;
-      const eVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
-      const p = to2D(kk, eVal * 0.7, 0);
+      const eVal = Math.sin(2 * Math.PI * kk * emFreq - t * 2);
+      const p = to2D(kk, eVal * emAmp, 0);
       if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
@@ -6247,9 +6284,9 @@ function initEmPlaneWave() {
     const nArrows = 16;
     for (let i = 0; i <= nArrows; i++) {
       const kk = -1 + 2 * i / nArrows;
-      const eVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const eVal = Math.sin(2 * Math.PI * kk * emFreq - t * 2);
       const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, eVal * 0.7, 0);
+      const tip = to2D(kk, eVal * emAmp, 0);
       ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
       ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
       ctx.globalAlpha = 1;
@@ -6260,8 +6297,8 @@ function initEmPlaneWave() {
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const kk = -1 + 2 * i / nPts;
-      const bVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
-      const p = to2D(kk, 0, bVal * 0.7);
+      const bVal = Math.sin(2 * Math.PI * kk * emFreq - t * 2);
+      const p = to2D(kk, 0, bVal * emAmp);
       if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
@@ -6269,9 +6306,9 @@ function initEmPlaneWave() {
     // B field arrows at intervals
     for (let i = 0; i <= nArrows; i++) {
       const kk = -1 + 2 * i / nArrows;
-      const bVal = Math.sin(2 * Math.PI * kk * 1.5 - t * 2);
+      const bVal = Math.sin(2 * Math.PI * kk * emFreq - t * 2);
       const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, 0, bVal * 0.7);
+      const tip = to2D(kk, 0, bVal * emAmp);
       ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
       ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
       ctx.globalAlpha = 1;
@@ -8084,28 +8121,22 @@ function initFourierMagnitudePhase() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // Generate two signals: square wave and triangle wave
   const N = 128;
-  function squareWave(n) {
+
+  function makeSignal(type) {
     const arr = new Array(N);
     for (let i = 0; i < N; i++) {
-      arr[i] = (i < N / 2) ? 1 : -1;
-    }
-    return arr;
-  }
-  function triangleWave(n) {
-    const arr = new Array(N);
-    for (let i = 0; i < N; i++) {
-      arr[i] = 1 - 4 * Math.abs(i / N - 0.5);
+      if (type === 'square') arr[i] = (i < N / 2) ? 1 : -1;
+      else if (type === 'triangle') arr[i] = 1 - 4 * Math.abs(i / N - 0.5);
+      else if (type === 'sawtooth') arr[i] = 2 * i / N - 1;
+      else if (type === 'pulse') arr[i] = (i > N * 0.4 && i < N * 0.6) ? 1 : 0;
     }
     return arr;
   }
 
-  // Simple DFT
   function dft(signal) {
     const n = signal.length;
-    const re = new Array(n).fill(0);
-    const im = new Array(n).fill(0);
+    const re = new Array(n).fill(0), im = new Array(n).fill(0);
     for (let k = 0; k < n; k++) {
       for (let j = 0; j < n; j++) {
         const angle = -2 * Math.PI * k * j / n;
@@ -8129,12 +8160,6 @@ function initFourierMagnitudePhase() {
     return signal;
   }
 
-  const sq = squareWave(N);
-  const tr = triangleWave(N);
-  const sqFT = dft(sq);
-  const trFT = dft(tr);
-
-  // Compute magnitudes and phases
   function magPhase(ft) {
     const mag = [], phase = [];
     for (let k = 0; k < ft.re.length; k++) {
@@ -8144,24 +8169,32 @@ function initFourierMagnitudePhase() {
     return { mag, phase };
   }
 
-  const sqMP = magPhase(sqFT);
-  const trMP = magPhase(trFT);
+  const sigASelect = document.getElementById('fmp-sigA');
+  const sigBSelect = document.getElementById('fmp-sigB');
 
-  // Swap: square magnitude + triangle phase
-  const swapRe = [], swapIm = [];
-  for (let k = 0; k < N; k++) {
-    swapRe.push(sqMP.mag[k] * Math.cos(trMP.phase[k]));
-    swapIm.push(sqMP.mag[k] * Math.sin(trMP.phase[k]));
+  function compute() {
+    const typeA = sigASelect ? sigASelect.value : 'square';
+    const typeB = sigBSelect ? sigBSelect.value : 'triangle';
+    const sigA = makeSignal(typeA);
+    const sigB = makeSignal(typeB);
+    const ftA = dft(sigA);
+    const ftB = dft(sigB);
+    const mpA = magPhase(ftA);
+    const mpB = magPhase(ftB);
+    const swapRe = [], swapIm = [];
+    for (let k = 0; k < N; k++) {
+      swapRe.push(mpA.mag[k] * Math.cos(mpB.phase[k]));
+      swapIm.push(mpA.mag[k] * Math.sin(mpB.phase[k]));
+    }
+    const swapped = idft(swapRe, swapIm);
+    return { sigA, sigB, mpA, mpB, swapped, typeA, typeB };
   }
-  const swapped = idft(swapRe, swapIm);
 
   function drawSignal(arr, x0, y0, w, h, color, label) {
     const maxV = Math.max(...arr.map(Math.abs), 0.001);
     const mid = y0 + h / 2;
-    // Axis
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke();
-
     ctx.strokeStyle = color; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < arr.length; i++) {
@@ -8170,42 +8203,36 @@ function initFourierMagnitudePhase() {
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke();
-
     ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText(label, x0 + 2, y0 + 12);
   }
 
   function draw() {
+    const d = compute();
     wClear(ctx, W, H);
 
     const col1 = 20, col2 = W / 3 + 10, col3 = 2 * W / 3;
     const colW = W / 3 - 25;
     const rowH = H / 3 - 10;
 
-    // Headers
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Original Signals', col1 + colW / 2, 14);
     ctx.fillText('Magnitudes', col2 + colW / 2, 14);
-    ctx.fillText('Mag swap + Phase keep', col3 + colW / 2, 14);
+    ctx.fillText('Mag(A) + Phase(B)', col3 + colW / 2, 14);
 
-    // Row 1: square wave
-    drawSignal(sq, col1, 20, colW, rowH, WCOLORS.teal, 'Square');
-    drawSignal(sqMP.mag.slice(0, N / 2), col2, 20, colW, rowH, WCOLORS.teal, '|F| square');
+    drawSignal(d.sigA, col1, 20, colW, rowH, WCOLORS.teal, 'A: ' + d.typeA);
+    drawSignal(d.mpA.mag.slice(0, N / 2), col2, 20, colW, rowH, WCOLORS.teal, '|F| A');
+    drawSignal(d.sigB, col1, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'B: ' + d.typeB);
+    drawSignal(d.mpB.mag.slice(0, N / 2), col2, 20 + rowH + 5, colW, rowH, WCOLORS.amber, '|F| B');
+    drawSignal(d.swapped, col3, 20, colW, rowH, WCOLORS.blue, 'A mag + B phase');
+    drawSignal(d.sigB, col3, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Original B');
 
-    // Row 2: triangle wave
-    drawSignal(tr, col1, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Triangle');
-    drawSignal(trMP.mag.slice(0, N / 2), col2, 20 + rowH + 5, colW, rowH, WCOLORS.amber, '|F| triangle');
-
-    // Row 3: swapped result
-    drawSignal(swapped, col3, 20, colW, rowH, WCOLORS.blue, 'Sq mag + Tri phase');
-    drawSignal(tr, col3, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Original triangle');
-
-    // Explanation
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Swapping magnitudes but keeping triangle phase \u2192 result resembles triangle', W / 2, H - 10);
-    ctx.fillText('Phase carries structural information!', W / 2, H - 25);
+    ctx.fillText('Result resembles B \u2192 phase carries structural information!', W / 2, H - 10);
   }
 
+  if (sigASelect) sigASelect.addEventListener('change', draw);
+  if (sigBSelect) sigBSelect.addEventListener('change', draw);
   draw();
 }
 
@@ -8695,6 +8722,18 @@ function initPhaseFlipDemo() {
   const { ctx, W, H } = setup;
 
   let t = 0;
+  let zRatio = 3;
+
+  const zSlider = document.getElementById('pfd-zratio');
+  const zVal = document.getElementById('pfd-zratio-val');
+  const restartBtn = document.getElementById('pfd-restart');
+  function onPfdInput() {
+    zRatio = parseFloat(zSlider.value);
+    zVal.textContent = zRatio.toFixed(1);
+    t = 0;
+  }
+  if (zSlider) zSlider.addEventListener('input', onPfdInput);
+  if (restartBtn) restartBtn.addEventListener('click', () => { t = 0; });
 
   function tick() {
     t += 0.025;
@@ -8704,80 +8743,74 @@ function initPhaseFlipDemo() {
     const jx = W * 0.45;
     const sigma = 20;
     const speed = 60;
-    const amp = 25;
+    const amp = 35;
+    const midY = H / 2;
 
     function gaussPulse(x, center, s) {
       return Math.exp(-(x - center) * (x - center) / (2 * s * s));
     }
 
-    const panels = [
-      { label: 'Light \u2192 Heavy (Z\u2082 > Z\u2081): phase flip', zRatio: 3, y0: 10, h: H / 2 - 15 },
-      { label: 'Heavy \u2192 Light (Z\u2082 < Z\u2081): no flip', zRatio: 0.33, y0: H / 2 + 5, h: H / 2 - 15 },
-    ];
+    const r = (zRatio - 1) / (zRatio + 1);
+    const tr = 2 / (zRatio + 1);
 
-    panels.forEach(p => {
-      const midY = p.y0 + p.h / 2;
-      const r = (p.zRatio - 1) / (p.zRatio + 1);
-      const tr = 2 / (p.zRatio + 1);
+    // Label
+    const flipLabel = zRatio > 1 ? 'Z\u2082/Z\u2081 > 1: reflected pulse inverts' : zRatio < 1 ? 'Z\u2082/Z\u2081 < 1: no inversion' : 'Matched impedance: no reflection';
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(flipLabel, stringL, 18);
 
-      // Panel label
-      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(p.label, stringL, p.y0 + 14);
+    // Junction line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(jx, 22); ctx.lineTo(jx, H - 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('junction', jx, H - 8);
 
-      // Junction line
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(jx, p.y0 + 18); ctx.lineTo(jx, p.y0 + p.h); ctx.stroke();
-      ctx.setLineDash([]);
+    const pulseCenter = stringL - sigma * 2 + speed * t;
+    const hitTime = (jx - stringL + sigma * 2) / speed;
+    const hasHit = t > hitTime;
 
-      const pulseCenter = stringL - sigma * 2 + speed * t;
-      const hitTime = (jx - stringL + sigma * 2) / speed;
-      const hasHit = t > hitTime;
+    // String thicknesses
+    const thick1 = zRatio > 1 ? 2 : Math.min(4, 2 + 2 / zRatio);
+    const thick2 = zRatio > 1 ? Math.min(6, 2 + zRatio) : 2;
 
-      // String 1 (left)
-      const thick1 = p.zRatio > 1 ? 2 : 4;
-      const thick2 = p.zRatio > 1 ? 4 : 2;
-
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
-      ctx.beginPath();
-      for (let x = stringL; x <= jx; x++) {
-        let y = midY;
-        if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
-        if (hasHit) {
-          const refCenter = 2 * jx - pulseCenter;
-          y -= amp * r * gaussPulse(x, refCenter, sigma);
-        }
-        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    // String 1 (left)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
+    ctx.beginPath();
+    for (let x = stringL; x <= jx; x++) {
+      let y = midY;
+      if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
+      if (hasHit) {
+        const refCenter = 2 * jx - pulseCenter;
+        y -= amp * r * gaussPulse(x, refCenter, sigma);
       }
-      ctx.stroke();
+      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
 
-      // String 2 (right)
-      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = thick2;
-      ctx.beginPath();
-      for (let x = jx; x <= stringR; x++) {
-        let y = midY;
-        if (hasHit) {
-          const transSpeed = speed / Math.sqrt(p.zRatio);
-          const transCenter = jx + transSpeed * (t - hitTime);
-          y -= amp * tr * gaussPulse(x, transCenter, sigma);
-        }
-        x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    // String 2 (right)
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = thick2;
+    ctx.beginPath();
+    for (let x = jx; x <= stringR; x++) {
+      let y = midY;
+      if (hasHit) {
+        const transSpeed = speed / Math.sqrt(Math.max(zRatio, 0.01));
+        const transCenter = jx + transSpeed * (t - hitTime);
+        y -= amp * tr * gaussPulse(x, transCenter, sigma);
       }
-      ctx.stroke();
+      x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
 
-      // Phase flip annotation
-      if (hasHit && r < 0) {
-        ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
-        ctx.fillText('Phase flip!', jx - 10, midY - amp - 5);
-      }
-      if (hasHit && r > 0) {
-        ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
-        ctx.fillText('No flip', jx - 10, midY - amp - 5);
-      }
-    });
+    // Phase flip annotation
+    if (hasHit && Math.abs(r) > 0.01) {
+      ctx.fillStyle = r < 0 ? WCOLORS.red : WCOLORS.teal;
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(r < 0 ? 'Phase flip!' : 'No flip', jx - 10, midY - amp - 8);
+    }
 
-    // Divider
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(20, H / 2); ctx.lineTo(W - 20, H / 2); ctx.stroke();
+    // R, T coefficients
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('R = ' + r.toFixed(3) + '   T = ' + tr.toFixed(3), W - 15, 18);
 
     // Reset
     if (t > 8) t = 0;
@@ -9142,6 +9175,20 @@ function initWaveEnergyString() {
   const { ctx, W, H } = setup;
 
   let t = 0;
+  let omega = 4, k = 4;
+
+  const omegaSlider = document.getElementById('wes-omega');
+  const kSlider = document.getElementById('wes-k');
+  const omegaVal = document.getElementById('wes-omega-val');
+  const kVal = document.getElementById('wes-k-val');
+  function onWesInput() {
+    omega = parseFloat(omegaSlider.value);
+    k = parseFloat(kSlider.value);
+    omegaVal.textContent = omega.toFixed(1);
+    kVal.textContent = k.toFixed(1);
+  }
+  if (omegaSlider) omegaSlider.addEventListener('input', onWesInput);
+  if (kSlider) kSlider.addEventListener('input', onWesInput);
 
   function tick() {
     t += 0.03;
@@ -9149,7 +9196,6 @@ function initWaveEnergyString() {
 
     const plotL = 40, plotR = W - 20;
     const plotW = plotR - plotL;
-    const k = 4, omega = 4;
     const amp = 1;
 
     // Top: traveling wave
@@ -10126,6 +10172,20 @@ function initPhaseVelocityDemo() {
   const { ctx, W, H } = setup;
 
   let t = 0;
+  let k0 = 3, dk = 0.4;
+
+  const k0Slider = document.getElementById('pvd-k0');
+  const dkSlider = document.getElementById('pvd-dk');
+  const k0Val = document.getElementById('pvd-k0-val');
+  const dkVal = document.getElementById('pvd-dk-val');
+  function onPvdInput() {
+    k0 = parseFloat(k0Slider.value);
+    dk = parseFloat(dkSlider.value);
+    k0Val.textContent = k0.toFixed(1);
+    dkVal.textContent = dk.toFixed(1);
+  }
+  if (k0Slider) k0Slider.addEventListener('input', onPvdInput);
+  if (dkSlider) dkSlider.addEventListener('input', onPvdInput);
 
   function tick() {
     t += 0.02;
@@ -10141,9 +10201,7 @@ function initPhaseVelocityDemo() {
 
     // Superpose waves with deep-water dispersion: ω = √(gk)
     const g = 9.8;
-    const k0 = 3;
     const nComponents = 7;
-    const dk = 0.4;
 
     // Draw individual components lightly
     for (let n = 0; n < nComponents; n++) {
@@ -11535,8 +11593,17 @@ function initMonopoleRadiationPattern() {
   const { ctx, W, H } = setup;
 
   let time = 0;
+  let patExp = 2;
   const cx = W * 0.4, cy = H * 0.5;
   const maxR = Math.min(W * 0.35, H * 0.42);
+
+  const expSlider = document.getElementById('mrp-exp');
+  const expVal = document.getElementById('mrp-exp-val');
+  function onMrpInput() {
+    patExp = parseInt(expSlider.value);
+    expVal.textContent = patExp;
+  }
+  if (expSlider) expSlider.addEventListener('input', onMrpInput);
 
   function tick() {
     time += 0.03;
@@ -11548,7 +11615,7 @@ function initMonopoleRadiationPattern() {
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
     }
 
-    // Expanding wavefronts (sin^2 theta modulated)
+    // Expanding wavefronts (sin^n theta modulated)
     for (let wf = 0; wf < 5; wf++) {
       const phase = (time * 50 + wf * 60) % (maxR * 1.3);
       if (phase > maxR * 1.2) continue;
@@ -11559,7 +11626,7 @@ function initMonopoleRadiationPattern() {
       for (let a = 0; a <= 360; a += 2) {
         const rad = a * Math.PI / 180;
         const sinTheta = Math.abs(Math.sin(rad));
-        const r = phase * sinTheta * sinTheta;
+        const r = phase * Math.pow(sinTheta, patExp);
         const px = cx + Math.cos(rad) * r;
         const py = cy + Math.sin(rad) * r;
         if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
@@ -11568,13 +11635,13 @@ function initMonopoleRadiationPattern() {
       ctx.stroke();
     }
 
-    // sin^2(theta) radiation pattern
+    // sin^n(theta) radiation pattern
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
     ctx.beginPath();
     for (let a = 0; a <= 360; a += 1) {
       const rad = a * Math.PI / 180;
       const sinTheta = Math.sin(rad);
-      const r = maxR * sinTheta * sinTheta;
+      const r = maxR * Math.pow(Math.abs(sinTheta), patExp);
       const px = cx + Math.cos(rad) * r;
       const py = cy + Math.sin(rad) * r;
       if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
@@ -11588,7 +11655,7 @@ function initMonopoleRadiationPattern() {
     for (let a = 0; a <= 360; a += 1) {
       const rad = a * Math.PI / 180;
       const sinTheta = Math.sin(rad);
-      const r = maxR * sinTheta * sinTheta;
+      const r = maxR * Math.pow(Math.abs(sinTheta), patExp);
       if (a === 0) ctx.moveTo(cx + r, cy); else ctx.lineTo(cx + Math.cos(rad) * r, cy + Math.sin(rad) * r);
     }
     ctx.closePath();
@@ -11614,7 +11681,8 @@ function initMonopoleRadiationPattern() {
 
     // Formula
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('P(\u03B8) \u221D sin\u00B2\u03B8', W * 0.75, 25);
+    const supDigits = ['\u2070','\u00B9','\u00B2','\u00B3','\u2074','\u2075','\u2076'];
+    ctx.fillText('P(\u03B8) \u221D sin' + (supDigits[patExp] || patExp) + '\u03B8', W * 0.75, 25);
 
     // Angle label
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -11622,7 +11690,7 @@ function initMonopoleRadiationPattern() {
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Dipole Radiation Pattern', 10, 18);
+    ctx.fillText('Radiation Pattern', 10, 18);
 
     requestAnimationFrame(tick);
   }
@@ -12871,24 +12939,41 @@ function initHydrogenEnergyLevels() {
   const plotL2 = 60, plotR2 = W * 0.55, plotT2 = 25, plotB2 = H - 25;
   const pH = plotB2 - plotT2;
 
-  // Energy levels: E_n = -13.6 / n^2 eV
   function energy(n) { return -13.6 / (n * n); }
 
-  // Balmer series: transitions to n=2
-  const balmerTransitions = [
-    { from: 3, to: 2, name: 'H\u03B1', wl: 656 },
-    { from: 4, to: 2, name: 'H\u03B2', wl: 486 },
-    { from: 5, to: 2, name: 'H\u03B3', wl: 434 },
-    { from: 6, to: 2, name: 'H\u03B4', wl: 410 }
-  ];
+  function wavelengthFromTransition(nFrom, nTo) {
+    const dE = Math.abs(energy(nFrom) - energy(nTo));
+    return Math.round(1240 / dE); // eV·nm / eV = nm
+  }
+
+  const seriesData = {
+    lyman:    { to: 1, label: 'Lyman', names: ['L\u03B1','L\u03B2','L\u03B3','L\u03B4'], region: 'UV' },
+    balmer:   { to: 2, label: 'Balmer', names: ['H\u03B1','H\u03B2','H\u03B3','H\u03B4'], region: 'visible' },
+    paschen:  { to: 3, label: 'Paschen', names: ['P\u03B1','P\u03B2','P\u03B3','P\u03B4'], region: 'IR' },
+    brackett: { to: 4, label: 'Brackett', names: ['Br\u03B1','Br\u03B2','Br\u03B3','Br\u03B4'], region: 'IR' },
+  };
+
+  const seriesSelect = document.getElementById('hel-series');
+
+  function getTransitions() {
+    const key = seriesSelect ? seriesSelect.value : 'balmer';
+    const s = seriesData[key];
+    const trans = [];
+    for (let i = 0; i < 4; i++) {
+      const from = s.to + 1 + i;
+      if (from > 7) break;
+      trans.push({ from, to: s.to, name: s.names[i], wl: wavelengthFromTransition(from, s.to) });
+    }
+    return { transitions: trans, series: s, key };
+  }
 
   function energyToY(E) {
-    // Map -13.6 to 0 eV onto plot
     return plotB2 - ((E + 13.6) / 14.5) * pH;
   }
 
   function draw() {
     wClear(ctx, W, H);
+    const { transitions, series, key } = getTransitions();
 
     // Energy axis
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
@@ -12903,7 +12988,9 @@ function initHydrogenEnergyLevels() {
     }
 
     // Draw energy levels
-    const levels = [1, 2, 3, 4, 5];
+    const maxN = Math.max(5, transitions[transitions.length - 1].from);
+    const levels = [];
+    for (let n = 1; n <= Math.min(maxN, 7); n++) levels.push(n);
     levels.forEach(function(n) {
       const E = energy(n);
       const y = energyToY(E);
@@ -12916,7 +13003,7 @@ function initHydrogenEnergyLevels() {
       ctx.fillText(E.toFixed(2) + ' eV', plotR2 + 5, y + 4);
     });
 
-    // Ionization level (n=infinity)
+    // Ionization level
     const yInf = energyToY(0);
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(plotL2, yInf); ctx.lineTo(plotR2, yInf); ctx.stroke();
@@ -12924,20 +13011,18 @@ function initHydrogenEnergyLevels() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('n = \u221E (ionization)', plotR2 + 5, yInf + 4);
 
-    // Draw Balmer series transitions
+    // Draw transitions
     const arrowX = plotL2 + (plotR2 - plotL2) * 0.3;
     const spacing = (plotR2 - plotL2) * 0.12;
 
-    balmerTransitions.forEach(function(trans, i) {
+    transitions.forEach(function(trans, i) {
       const yFrom = energyToY(energy(trans.from));
       const yTo = energyToY(energy(trans.to));
       const x = arrowX + i * spacing;
-      const color = wavelengthToCSS(trans.wl);
+      const color = (trans.wl >= 380 && trans.wl <= 780) ? wavelengthToCSS(trans.wl) : WCOLORS.textDim;
 
-      // Arrow
       ctx.strokeStyle = color; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(x, yFrom); ctx.lineTo(x, yTo); ctx.stroke();
-      // Arrowhead
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(x, yTo);
@@ -12945,28 +13030,32 @@ function initHydrogenEnergyLevels() {
       ctx.lineTo(x + 4, yTo - 10);
       ctx.closePath(); ctx.fill();
 
-      // Label
       ctx.fillStyle = color; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(trans.name, x, yFrom + 12);
       ctx.fillText(trans.wl + ' nm', x, yFrom + 22);
     });
 
-    // Spectrum bar showing Balmer lines
+    // Spectrum bar (only for visible lines)
     const specY = H - 20;
     drawSpectrumBar(ctx, plotL2, specY, plotR2 - plotL2, 10);
-    balmerTransitions.forEach(function(trans) {
-      const px = plotL2 + ((trans.wl - 380) / 400) * (plotR2 - plotL2);
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(px, specY); ctx.lineTo(px, specY + 10); ctx.stroke();
+    transitions.forEach(function(trans) {
+      if (trans.wl >= 380 && trans.wl <= 780) {
+        const px = plotL2 + ((trans.wl - 380) / 400) * (plotR2 - plotL2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(px, specY); ctx.lineTo(px, specY + 10); ctx.stroke();
+      }
     });
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Visible spectrum with Balmer lines', (plotL2 + plotR2) / 2, specY - 3);
+    const specLabel = series.region === 'visible' ? 'Visible spectrum with ' + series.label + ' lines' :
+      series.label + ' series (' + series.region + ') — lines outside visible range';
+    ctx.fillText(specLabel, (plotL2 + plotR2) / 2, specY - 3);
 
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Hydrogen Energy Levels & Balmer Series', 10, 18);
+    ctx.fillText('Hydrogen Energy Levels \u2014 ' + series.label + ' Series', 10, 18);
   }
 
+  if (seriesSelect) seriesSelect.addEventListener('change', draw);
   draw();
 }
 
@@ -13238,9 +13327,19 @@ function initDopplerAngle() {
   const { ctx, W, H } = setup;
 
   let time = 0;
-  const sourceSpeed = 0.5; // fraction of wave speed
+  let sourceSpeed = 0.5; // fraction of wave speed
   const observerX = W * 0.5, observerY = H * 0.25;
   let freqHistory = [];
+
+  const speedSlider = document.getElementById('da-speed');
+  const speedVal = document.getElementById('da-speed-val');
+  function onDaInput() {
+    sourceSpeed = parseFloat(speedSlider.value);
+    speedVal.textContent = sourceSpeed.toFixed(2);
+    freqHistory = [];
+    time = 0;
+  }
+  if (speedSlider) speedSlider.addEventListener('input', onDaInput);
 
   function tick() {
     time += 0.03;
