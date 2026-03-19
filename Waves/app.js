@@ -3173,6 +3173,7 @@ function sceneMarkup(type) {
           <canvas id="scene-damping-regimes" width="580" height="380"></canvas>
           <div class="scene-controls">
             <label>&omega;<sub>0</sub>: <input type="range" id="regime-omega0" min="1" max="10" step="0.5" value="5"><span class="scene-val" id="regime-omega0-val">5.0</span></label>
+            <button id="regime-go" class="scene-btn">&#9654; Go</button>
           </div>
         </div>
       `;

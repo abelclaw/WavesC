@@ -678,8 +678,11 @@ function initDampingRegimes() {
   const { ctx, W, H } = setup;
 
   const omega0Slider = document.getElementById('regime-omega0');
+  const goBtn = document.getElementById('regime-go');
 
   let t = 0;
+  let running = false;
+  let done = false;
   const tMax = 5;
   const nPts = 500;
   const x0 = 1;
@@ -768,8 +771,15 @@ function initDampingRegimes() {
   }
 
   function tick() {
-    t += 0.02;
-    if (t > tMax) t = 0;
+    if (running) {
+      t += 0.012;
+      if (t >= tMax) {
+        t = tMax;
+        running = false;
+        done = true;
+        if (goBtn) goBtn.textContent = '\u25B6 Go';
+      }
+    }
     draw();
     requestAnimationFrame(tick);
   }
@@ -849,6 +859,11 @@ function initDampingRegimes() {
     ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(1), plotR, plotT - 2);
   }
 
-  omega0Slider?.addEventListener('input', () => { t = 0; });
+  goBtn?.addEventListener('click', () => {
+    t = 0; running = true; done = false;
+    goBtn.textContent = '\u23F8 Stop';
+  });
+  omega0Slider?.addEventListener('input', () => { t = 0; running = false; done = false; if (goBtn) goBtn.textContent = '\u25B6 Go'; });
+  draw();
   tick();
 }

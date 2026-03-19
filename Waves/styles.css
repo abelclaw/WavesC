@@ -4604,3 +4604,19 @@ a {
   color: var(--muted);
   min-width: 32px;
 }
+
+.scene-btn {
+  padding: 4px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--body);
+}
+
+.scene-btn:hover {
+  opacity: 0.85;
+}
