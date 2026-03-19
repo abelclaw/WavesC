@@ -10225,3 +10225,3219 @@ function initWavepacketDispersion() {
 
   tick();
 }
+
+// =========================================================================
+// CHAPTER 17 - COLOR
+// =========================================================================
+
+// Helper: wavelength (nm) to approximate RGB color
+function wavelengthToRGB(wavelength) {
+  let r = 0, g = 0, b = 0;
+  if (wavelength >= 380 && wavelength < 440) {
+    r = -(wavelength - 440) / (440 - 380);
+    g = 0;
+    b = 1;
+  } else if (wavelength >= 440 && wavelength < 490) {
+    r = 0;
+    g = (wavelength - 440) / (490 - 440);
+    b = 1;
+  } else if (wavelength >= 490 && wavelength < 510) {
+    r = 0;
+    g = 1;
+    b = -(wavelength - 510) / (510 - 490);
+  } else if (wavelength >= 510 && wavelength < 580) {
+    r = (wavelength - 510) / (580 - 510);
+    g = 1;
+    b = 0;
+  } else if (wavelength >= 580 && wavelength < 645) {
+    r = 1;
+    g = -(wavelength - 645) / (645 - 580);
+    b = 0;
+  } else if (wavelength >= 645 && wavelength <= 780) {
+    r = 1;
+    g = 0;
+    b = 0;
+  }
+  // Intensity falloff at edges
+  let factor = 1.0;
+  if (wavelength >= 380 && wavelength < 420) factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+  else if (wavelength >= 700 && wavelength <= 780) factor = 0.3 + 0.7 * (780 - wavelength) / (780 - 700);
+  else if (wavelength < 380 || wavelength > 780) factor = 0;
+  return [Math.round(r * factor * 255), Math.round(g * factor * 255), Math.round(b * factor * 255)];
+}
+
+function wavelengthToCSS(wl) {
+  const [r, g, b] = wavelengthToRGB(wl);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+// Draw a visible spectrum bar on a canvas context
+function drawSpectrumBar(ctx, x, y, w, h) {
+  for (let i = 0; i < w; i++) {
+    const wl = 380 + (i / w) * 400;
+    ctx.fillStyle = wavelengthToCSS(wl);
+    ctx.fillRect(x + i, y, 1, h);
+  }
+}
+
+// CIE 1931 color matching functions (sampled every 10nm, 380-780)
+function getCIEData() {
+  const wavelengths = [];
+  for (let w = 380; w <= 780; w += 5) wavelengths.push(w);
+  // Approximate CIE 1931 x-bar, y-bar, z-bar (sampled)
+  const xbar = [], ybar = [], zbar = [];
+  for (let i = 0; i < wavelengths.length; i++) {
+    const w = wavelengths[i];
+    // Gaussian approximation to CIE curves
+    const x1 = 1.056 * Math.exp(-0.5 * Math.pow((w - 599.8) / 37.9, 2));
+    const x2 = 0.362 * Math.exp(-0.5 * Math.pow((w - 442.0) / 16.0, 2));
+    const x3 = -0.065 * Math.exp(-0.5 * Math.pow((w - 501.1) / 20.4, 2));
+    xbar.push(x1 + x2 + x3);
+    const y1 = 0.821 * Math.exp(-0.5 * Math.pow((w - 568.8) / 46.9, 2));
+    const y2 = 0.286 * Math.exp(-0.5 * Math.pow((w - 530.9) / 16.3, 2));
+    ybar.push(y1 + y2);
+    const z1 = 1.217 * Math.exp(-0.5 * Math.pow((w - 437.0) / 11.8, 2));
+    const z2 = 0.681 * Math.exp(-0.5 * Math.pow((w - 459.0) / 26.0, 2));
+    zbar.push(z1 + z2);
+  }
+  return { wavelengths, xbar, ybar, zbar };
+}
+
+// =========================================================================
+// 1. Color Matching Metamers
+// =========================================================================
+function initColorMatchingMetamers() {
+  const canvas = document.getElementById('scene-color-matching-metamers');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let rVal = 128, gVal = 128, bVal = 128;
+  let targetWL = 550;
+  let draggingSlider = null;
+
+  const sliderX = 30, sliderW = W * 0.4 - 50;
+  const sliderY = [40, 75, 110, 170];
+  const swatchW = 120, swatchH = 100;
+
+  function getSliderVal(mx, minV, maxV) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    return minV + t * (maxV - minV);
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (let i = 0; i < 4; i++) {
+      if (Math.abs(my - sliderY[i]) < 12 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+        draggingSlider = i;
+        break;
+      }
+    }
+    if (draggingSlider !== null) handleSliderDrag(mx);
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (draggingSlider === null) return;
+    const rect = canvas.getBoundingClientRect();
+    handleSliderDrag(e.clientX - rect.left);
+  });
+  canvas.addEventListener('mouseup', function() { draggingSlider = null; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = null; });
+
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    for (let i = 0; i < 4; i++) {
+      if (Math.abs(my - sliderY[i]) < 15 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+        draggingSlider = i;
+        break;
+      }
+    }
+    if (draggingSlider !== null) handleSliderDrag(mx);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (draggingSlider === null) return;
+    e.preventDefault();
+    handleSliderDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = null; });
+
+  function handleSliderDrag(mx) {
+    if (draggingSlider === 0) rVal = Math.round(getSliderVal(mx, 0, 255));
+    else if (draggingSlider === 1) gVal = Math.round(getSliderVal(mx, 0, 255));
+    else if (draggingSlider === 2) bVal = Math.round(getSliderVal(mx, 0, 255));
+    else if (draggingSlider === 3) targetWL = Math.round(getSliderVal(mx, 380, 700));
+    draw();
+  }
+
+  function drawSlider(y, val, minV, maxV, color, label) {
+    const t = (val - minV) / (maxV - minV);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, y); ctx.lineTo(sliderX + sliderW, y); ctx.stroke();
+    // Fill bar with color
+    ctx.fillStyle = color;
+    ctx.fillRect(sliderX, y - 3, sliderW * t, 6);
+    // Thumb
+    ctx.beginPath();
+    ctx.arc(sliderX + sliderW * t, y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    // Label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(label + ': ' + Math.round(val), sliderX + sliderW + 45, y + 4);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('RGB Mixer', sliderX, 22);
+
+    drawSlider(sliderY[0], rVal, 0, 255, '#dc2626', 'R');
+    drawSlider(sliderY[1], gVal, 0, 255, '#16a34a', 'G');
+    drawSlider(sliderY[2], bVal, 0, 255, '#2563eb', 'B');
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Target wavelength', sliderX, sliderY[3] - 15);
+
+    // Draw spectrum track for wavelength slider
+    for (let i = 0; i < sliderW; i++) {
+      const wl = 380 + (i / sliderW) * 320;
+      ctx.fillStyle = wavelengthToCSS(wl);
+      ctx.fillRect(sliderX + i, sliderY[3] - 3, 1, 6);
+    }
+    const wlT = (targetWL - 380) / 320;
+    ctx.beginPath();
+    ctx.arc(sliderX + sliderW * wlT, sliderY[3], 7, 0, Math.PI * 2);
+    ctx.fillStyle = wavelengthToCSS(targetWL); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(targetWL + ' nm', sliderX + sliderW + 45, sliderY[3] + 4);
+
+    // Swatches
+    const sxLeft = W * 0.5;
+    const sxRight = W * 0.5 + swatchW + 20;
+    const sy = 30;
+
+    // Mixed color swatch
+    ctx.fillStyle = 'rgb(' + rVal + ',' + gVal + ',' + bVal + ')';
+    ctx.fillRect(sxLeft, sy, swatchW, swatchH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(sxLeft, sy, swatchW, swatchH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Your Mix', sxLeft + swatchW / 2, sy + swatchH + 16);
+
+    // Target swatch
+    ctx.fillStyle = wavelengthToCSS(targetWL);
+    ctx.fillRect(sxRight, sy, swatchW, swatchH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(sxRight, sy, swatchW, swatchH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Target (' + targetWL + ' nm)', sxRight + swatchW / 2, sy + swatchH + 16);
+
+    // Check if close match
+    const [tr, tg, tb] = wavelengthToRGB(targetWL);
+    const dist = Math.sqrt(Math.pow(rVal - tr, 2) + Math.pow(gVal - tg, 2) + Math.pow(bVal - tb, 2));
+    if (dist < 40) {
+      ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Metamer! Different spectra, same perceived color', W * 0.65, sy + swatchH + 40);
+    }
+
+    // Explanation
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Mix RGB to visually match the monochromatic target', W / 2, H - 10);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 2. CIE Tristimulus Curves
+// =========================================================================
+function initCieTristimulusCurves() {
+  const canvas = document.getElementById('scene-cie-tristimulus-curves');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const cie = getCIEData();
+  const plotL = 55, plotR = W - 20, plotT = 25, plotB = H - 40;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Spectrum bar on x-axis
+    drawSpectrumBar(ctx, plotL, plotB, plotW, 12);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    // Y-axis labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    const maxVal = 2.0;
+    for (let v = 0; v <= maxVal; v += 0.5) {
+      const py = plotB - (v / maxVal) * plotH;
+      ctx.fillText(v.toFixed(1), plotL - 5, py + 3);
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, py); ctx.lineTo(plotR, py); ctx.stroke();
+    }
+
+    // X-axis labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    for (let wl = 400; wl <= 750; wl += 50) {
+      const px = plotL + ((wl - 380) / 400) * plotW;
+      ctx.fillText(wl, px, plotB + 26);
+    }
+    ctx.fillText('Wavelength (nm)', (plotL + plotR) / 2, H - 4);
+
+    // Plot curves
+    const curves = [
+      { data: cie.xbar, color: '#dc2626', label: 'x\u0304(\u03BB)', peakIdx: 0 },
+      { data: cie.ybar, color: '#16a34a', label: 'y\u0304(\u03BB)', peakIdx: 0 },
+      { data: cie.zbar, color: '#2563eb', label: 'z\u0304(\u03BB)', peakIdx: 0 }
+    ];
+
+    curves.forEach(function(curve) {
+      ctx.strokeStyle = curve.color; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      let maxV = 0, maxI = 0;
+      for (let i = 0; i < cie.wavelengths.length; i++) {
+        const px = plotL + ((cie.wavelengths[i] - 380) / 400) * plotW;
+        const py = plotB - (Math.max(0, curve.data[i]) / maxVal) * plotH;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        if (curve.data[i] > maxV) { maxV = curve.data[i]; maxI = i; }
+      }
+      ctx.stroke();
+
+      // Label at peak
+      const peakX = plotL + ((cie.wavelengths[maxI] - 380) / 400) * plotW;
+      const peakY = plotB - (maxV / maxVal) * plotH;
+      ctx.fillStyle = curve.color; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(curve.label, peakX, peakY - 8);
+    });
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('CIE 1931 Color Matching Functions', plotL, plotT - 8);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 3. CIE Color Space with Gamut
+// =========================================================================
+function initCieColorSpaceGamut() {
+  const canvas = document.getElementById('scene-cie-color-space-gamut');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const cie = getCIEData();
+  // Compute chromaticity coords for spectral locus
+  const spectralX = [], spectralY = [];
+  for (let i = 0; i < cie.wavelengths.length; i++) {
+    const X = cie.xbar[i], Y = cie.ybar[i], Z = cie.zbar[i];
+    const sum = X + Y + Z;
+    if (sum > 0.001) {
+      spectralX.push(X / sum);
+      spectralY.push(Y / sum);
+    } else {
+      spectralX.push(0);
+      spectralY.push(0);
+    }
+  }
+
+  const plotL = 55, plotB = H - 35, plotT = 20;
+  const plotSize = Math.min(W - 80, H - 60);
+  const plotR = plotL + plotSize;
+
+  function toScreen(cx, cy) {
+    return { x: plotL + cx * plotSize * 1.15, y: plotB - cy * plotSize * 1.3 };
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Draw axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR + 20, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', (plotL + plotR) / 2, H - 5);
+    ctx.save(); ctx.translate(12, (plotT + plotB) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('y', 0, 0);
+    ctx.restore();
+
+    // Axis tick labels
+    for (let v = 0; v <= 0.8; v += 0.2) {
+      const p = toScreen(v, 0);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(v.toFixed(1), p.x, plotB + 13);
+      const p2 = toScreen(0, v);
+      ctx.textAlign = 'right';
+      ctx.fillText(v.toFixed(1), plotL - 5, p2.y + 3);
+    }
+
+    // Fill horseshoe shape with colors using pixel-by-pixel approach
+    // Simplified: draw filled spectral locus
+    const imgData = ctx.createImageData(1, 1);
+
+    // Draw spectral locus curve (filled with approximate colors)
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < spectralX.length; i++) {
+      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
+      const p = toScreen(spectralX[i], spectralY[i]);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    }
+    // Close with purple line
+    ctx.closePath();
+
+    // Fill with a gradient approximation
+    ctx.save();
+    ctx.clip();
+    // Paint interior with colored pixels
+    for (let px = plotL; px < plotR + 20; px += 3) {
+      for (let py = plotT; py < plotB; py += 3) {
+        const cx = (px - plotL) / (plotSize * 1.15);
+        const cy = (plotB - py) / (plotSize * 1.3);
+        // Convert xy to approximate RGB
+        const Y = 1.0;
+        const X = (Y / Math.max(cy, 0.001)) * cx;
+        const Z = (Y / Math.max(cy, 0.001)) * (1 - cx - cy);
+        // XYZ to sRGB
+        let r =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+        let g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+        let b =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+        // Gamma correction
+        r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
+        g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
+        b = b > 0.0031308 ? 1.055 * Math.pow(b, 1/2.4) - 0.055 : 12.92 * b;
+        r = Math.max(0, Math.min(1, r));
+        g = Math.max(0, Math.min(1, g));
+        b = Math.max(0, Math.min(1, b));
+        ctx.fillStyle = 'rgb(' + Math.round(r*255) + ',' + Math.round(g*255) + ',' + Math.round(b*255) + ')';
+        ctx.fillRect(px, py, 3, 3);
+      }
+    }
+    ctx.restore();
+
+    // Spectral locus outline
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    started = false;
+    for (let i = 0; i < spectralX.length; i++) {
+      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
+      const p = toScreen(spectralX[i], spectralY[i]);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Wavelength labels on spectral locus
+    const labelWLs = [460, 480, 500, 520, 540, 560, 580, 600, 620, 700];
+    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui';
+    for (let k = 0; k < labelWLs.length; k++) {
+      const idx = Math.round((labelWLs[k] - 380) / 5);
+      if (idx >= 0 && idx < spectralX.length && (spectralX[idx] > 0 || spectralY[idx] > 0)) {
+        const p = toScreen(spectralX[idx], spectralY[idx]);
+        // Offset outward
+        const cx = 0.33, cy = 0.33;
+        const dx = spectralX[idx] - cx, dy = spectralY[idx] - cy;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        ctx.textAlign = 'center';
+        ctx.fillText(labelWLs[k], p.x + (dx/len)*16, p.y - (dy/len)*10);
+      }
+    }
+
+    // sRGB gamut triangle
+    const srgbR = toScreen(0.64, 0.33);
+    const srgbG = toScreen(0.30, 0.60);
+    const srgbB = toScreen(0.15, 0.06);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(srgbR.x, srgbR.y);
+    ctx.lineTo(srgbG.x, srgbG.y);
+    ctx.lineTo(srgbB.x, srgbB.y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Label gamut vertices
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('R', srgbR.x + 12, srgbR.y + 4);
+    ctx.fillText('G', srgbG.x, srgbG.y - 8);
+    ctx.fillText('B', srgbB.x - 10, srgbB.y + 4);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('sRGB gamut', srgbR.x + 5, srgbR.y + 18);
+
+    // White point D65
+    const wp = toScreen(0.3127, 0.3290);
+    ctx.beginPath(); ctx.arc(wp.x, wp.y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('D65', wp.x + 6, wp.y + 3);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('CIE 1931 Chromaticity Diagram', plotL, plotT - 5);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 4. Blackbody Planckian Locus
+// =========================================================================
+function initBlackbodyPlanckianLocus() {
+  const canvas = document.getElementById('scene-blackbody-planckian-locus');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let temperature = 5500;
+  let draggingSlider = false;
+  const sliderX = 30, sliderW = W - 80, sliderY = H - 20;
+
+  // Planckian locus points (pre-computed xy chromaticity for various temps)
+  function planckianXY(T) {
+    // Approximate Planckian locus using CIE formulas
+    let x, y;
+    if (T >= 1667 && T <= 4000) {
+      x = -0.2661239e9/(T*T*T) - 0.2343589e6/(T*T) + 0.8776956e3/T + 0.179910;
+    } else {
+      x = -3.0258469e9/(T*T*T) + 2.1070379e6/(T*T) + 0.2226347e3/T + 0.24039;
+    }
+    if (T >= 1667 && T <= 2222) {
+      y = -1.1063814*x*x*x - 1.34811020*x*x + 2.18555832*x - 0.20219683;
+    } else if (T <= 4000) {
+      y = -0.9549476*x*x*x - 1.37418593*x*x + 2.09137015*x - 0.16748867;
+    } else {
+      y = 3.0817580*x*x*x - 5.87338670*x*x + 3.75112997*x - 0.37001483;
+    }
+    return { x: x, y: y };
+  }
+
+  function blackbodyRGB(T) {
+    // Approximate blackbody color
+    let r, g, b;
+    const t = T / 100;
+    if (t <= 66) {
+      r = 255;
+      g = Math.max(0, Math.min(255, 99.4708025861 * Math.log(t) - 161.1195681661));
+      b = t <= 19 ? 0 : Math.max(0, Math.min(255, 138.5177312231 * Math.log(t - 10) - 305.0447927307));
+    } else {
+      r = Math.max(0, Math.min(255, 329.698727446 * Math.pow(t - 60, -0.1332047592)));
+      g = Math.max(0, Math.min(255, 288.1221695283 * Math.pow(t - 60, -0.0755148492)));
+      b = 255;
+    }
+    return 'rgb(' + Math.round(r) + ',' + Math.round(g) + ',' + Math.round(b) + ')';
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const my = e.clientY - rect.top;
+    if (Math.abs(my - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!draggingSlider) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) {
+      draggingSlider = true;
+      handleDrag(e.touches[0].clientX - rect.left);
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!draggingSlider) return;
+    e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    temperature = Math.round(1000 + t * 9000);
+    draw();
+  }
+
+  const cie = getCIEData();
+  const spectralX = [], spectralY = [];
+  for (let i = 0; i < cie.wavelengths.length; i++) {
+    const X = cie.xbar[i], Y = cie.ybar[i], Z = cie.zbar[i];
+    const sum = X + Y + Z;
+    if (sum > 0.001) { spectralX.push(X / sum); spectralY.push(Y / sum); }
+    else { spectralX.push(0); spectralY.push(0); }
+  }
+
+  const plotL = 55, plotB2 = H - 45, plotT = 15;
+  const plotSize = Math.min(W * 0.55, H - 80);
+
+  function toScreen(cx, cy) {
+    return { x: plotL + cx * plotSize * 1.15, y: plotB2 - cy * plotSize * 1.3 };
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Spectral locus outline
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < spectralX.length; i++) {
+      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
+      const p = toScreen(spectralX[i], spectralY[i]);
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB2); ctx.lineTo(plotL + plotSize * 1.15, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', plotL + plotSize * 0.5, plotB2 + 12);
+    ctx.textAlign = 'right';
+    ctx.fillText('y', plotL - 6, plotT + plotSize * 0.3);
+
+    // Planckian locus
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let T = 1000; T <= 10000; T += 50) {
+      const p = planckianXY(T);
+      const s = toScreen(p.x, p.y);
+      if (T === 1000) ctx.moveTo(s.x, s.y); else ctx.lineTo(s.x, s.y);
+    }
+    ctx.stroke();
+
+    // Temperature markers on locus
+    const markers = [
+      { T: 2856, label: 'A (2856K)' },
+      { T: 6504, label: 'D65 (6504K)' },
+      { T: 3000, label: '' },
+      { T: 5000, label: '' }
+    ];
+    markers.forEach(function(m) {
+      const p = planckianXY(m.T);
+      const s = toScreen(p.x, p.y);
+      ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = WCOLORS.axis; ctx.fill();
+      if (m.label) {
+        ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText(m.label, s.x + 6, s.y - 4);
+      }
+    });
+
+    // Current temperature on locus
+    const curP = planckianXY(temperature);
+    const curS = toScreen(curP.x, curP.y);
+    ctx.beginPath(); ctx.arc(curS.x, curS.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Color swatch
+    const swX = W - 140, swY = 20, swW = 120, swH = 70;
+    ctx.fillStyle = blackbodyRGB(temperature);
+    ctx.fillRect(swX, swY, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(swX, swY, swW, swH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(temperature + ' K', swX + swW/2, swY + swH + 16);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    // Color gradient on slider
+    for (let i = 0; i < sliderW; i++) {
+      const T = 1000 + (i / sliderW) * 9000;
+      ctx.fillStyle = blackbodyRGB(T);
+      ctx.fillRect(sliderX + i, sliderY - 3, 1, 6);
+    }
+    const st = (temperature - 1000) / 9000;
+    ctx.beginPath();
+    ctx.arc(sliderX + sliderW * st, sliderY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('1000K', sliderX, sliderY - 10);
+    ctx.textAlign = 'right'; ctx.fillText('10000K', sliderX + sliderW, sliderY - 10);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Planckian Locus', plotL, plotT - 2);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 5. HSV Color Explorer
+// =========================================================================
+function initHsvColorExplorer() {
+  const canvas = document.getElementById('scene-hsv-color-explorer');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let hue = 0, sat = 1.0, val = 1.0;
+  let draggingWheel = false, draggingSlider = false;
+
+  const wheelCX = W * 0.3, wheelCY = H * 0.45;
+  const wheelR = Math.min(W * 0.25, H * 0.38);
+  const sliderX = W * 0.65, sliderW = W * 0.25, sliderY = H * 0.78;
+
+  function hsvToRGB(h, s, v) {
+    const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+    let r, g, b;
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+    return 'rgb(' + Math.round((r+m)*255) + ',' + Math.round((g+m)*255) + ',' + Math.round((b+m)*255) + ')';
+  }
+
+  function handleWheelDrag(mx, my) {
+    const dx = mx - wheelCX, dy = my - wheelCY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist <= wheelR) {
+      hue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+      sat = Math.min(1, dist / wheelR);
+      draw();
+    }
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const dx = mx - wheelCX, dy = my - wheelCY;
+    if (Math.sqrt(dx*dx + dy*dy) <= wheelR + 5) {
+      draggingWheel = true; handleWheelDrag(mx, my);
+    } else if (Math.abs(my - sliderY) < 15 && mx >= sliderX && mx <= sliderX + sliderW) {
+      draggingSlider = true;
+      val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+      draw();
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (draggingWheel) handleWheelDrag(mx, my);
+    if (draggingSlider) { val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW)); draw(); }
+  });
+  canvas.addEventListener('mouseup', function() { draggingWheel = false; draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingWheel = false; draggingSlider = false; });
+
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    const dx = mx - wheelCX, dy = my - wheelCY;
+    if (Math.sqrt(dx*dx + dy*dy) <= wheelR + 10) {
+      draggingWheel = true; handleWheelDrag(mx, my);
+    } else if (Math.abs(my - sliderY) < 20 && mx >= sliderX - 10 && mx <= sliderX + sliderW + 10) {
+      draggingSlider = true;
+      val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+      draw();
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    if (draggingWheel) handleWheelDrag(mx, my);
+    if (draggingSlider) { val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW)); draw(); }
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingWheel = false; draggingSlider = false; });
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Draw HSV wheel
+    for (let angle = 0; angle < 360; angle += 1) {
+      for (let r = 0; r <= wheelR; r += 2) {
+        const s = r / wheelR;
+        ctx.fillStyle = hsvToRGB(angle, s, val);
+        const rad = angle * Math.PI / 180;
+        ctx.fillRect(wheelCX + Math.cos(rad) * r - 1, wheelCY + Math.sin(rad) * r - 1, 3, 3);
+      }
+    }
+
+    // Wheel border
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(wheelCX, wheelCY, wheelR, 0, Math.PI * 2); ctx.stroke();
+
+    // Selection crosshair on wheel
+    const selRad = hue * Math.PI / 180;
+    const selR = sat * wheelR;
+    const selX = wheelCX + Math.cos(selRad) * selR;
+    const selY = wheelCY + Math.sin(selRad) * selR;
+    ctx.beginPath(); ctx.arc(selX, selY, 6, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Value slider
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Value (Brightness)', sliderX, sliderY - 15);
+
+    for (let i = 0; i < sliderW; i++) {
+      const v = i / sliderW;
+      ctx.fillStyle = hsvToRGB(hue, sat, v);
+      ctx.fillRect(sliderX + i, sliderY - 4, 1, 8);
+    }
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(sliderX, sliderY - 4, sliderW, 8);
+
+    const vThumbX = sliderX + val * sliderW;
+    ctx.beginPath(); ctx.arc(vThumbX, sliderY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = hsvToRGB(hue, sat, val); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Color swatch
+    const swX = W * 0.65, swY = 20, swW = W * 0.28, swH = 70;
+    ctx.fillStyle = hsvToRGB(hue, sat, val);
+    ctx.fillRect(swX, swY, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(swX, swY, swW, swH);
+
+    // HSV values
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('H: ' + Math.round(hue) + '\u00B0', swX, swY + swH + 18);
+    ctx.fillText('S: ' + (sat * 100).toFixed(0) + '%', swX + 70, swY + swH + 18);
+    ctx.fillText('V: ' + (val * 100).toFixed(0) + '%', swX + 140, swY + swH + 18);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('HSV Color Explorer', W / 2, 14);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Click wheel to select hue & saturation', wheelCX, H - 8);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 6. Additive vs Subtractive Mixing
+// =========================================================================
+function initAdditiveSubtractiveMixing() {
+  const canvas = document.getElementById('scene-additive-subtractive-mixing');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const midX = W / 2;
+    const addCX = midX * 0.5, subCX = midX * 1.5;
+    const cy = H * 0.5;
+    const r = Math.min(W * 0.15, H * 0.3);
+    const offset = r * 0.5;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Additive (Light)', addCX, 18);
+    ctx.fillText('Subtractive (Pigment)', subCX, 18);
+
+    // Additive mixing (RGB) - use screen blending
+    ctx.globalCompositeOperation = 'lighter';
+    // Red circle
+    ctx.fillStyle = 'rgb(255,0,0)';
+    ctx.beginPath(); ctx.arc(addCX, cy - offset * 0.6, r, 0, Math.PI * 2); ctx.fill();
+    // Green circle
+    ctx.fillStyle = 'rgb(0,255,0)';
+    ctx.beginPath(); ctx.arc(addCX - offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.fill();
+    // Blue circle
+    ctx.fillStyle = 'rgb(0,0,255)';
+    ctx.beginPath(); ctx.arc(addCX + offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Additive outlines
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(addCX, cy - offset * 0.6, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(addCX - offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(addCX + offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.stroke();
+
+    // Labels for additive
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('R', addCX, cy - offset * 0.6 - r * 0.4);
+    ctx.fillText('G', addCX - offset * 0.87 - r * 0.3, cy + offset * 0.5 + r * 0.5);
+    ctx.fillText('B', addCX + offset * 0.87 + r * 0.3, cy + offset * 0.5 + r * 0.5);
+
+    // Subtractive mixing (CMY) - use multiply blending
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = 'rgb(0,255,255)';
+    ctx.beginPath(); ctx.arc(subCX, cy - offset * 0.6, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgb(255,0,255)';
+    ctx.beginPath(); ctx.arc(subCX - offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgb(255,255,0)';
+    ctx.beginPath(); ctx.arc(subCX + offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Subtractive outlines
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(subCX, cy - offset * 0.6, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(subCX - offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(subCX + offset * 0.87, cy + offset * 0.5, r, 0, Math.PI * 2); ctx.stroke();
+
+    // Labels for subtractive
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('C', subCX, cy - offset * 0.6 - r * 0.4);
+    ctx.fillText('M', subCX - offset * 0.87 - r * 0.3, cy + offset * 0.5 + r * 0.5);
+    ctx.fillText('Y', subCX + offset * 0.87 + r * 0.3, cy + offset * 0.5 + r * 0.5);
+
+    // Bottom labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('R+G+B = White', addCX, H - 10);
+    ctx.fillText('C+M+Y = Black', subCX, H - 10);
+
+    // Divider
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(midX, 30); ctx.lineTo(midX, H - 25); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 7. Rod and Cone Sensitivity
+// =========================================================================
+function initRodConeSensitivity() {
+  const canvas = document.getElementById('scene-rod-cone-sensitivity');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const plotL = 55, plotR = W - 20, plotT = 30, plotB = H - 40;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  // Approximate spectral sensitivity curves using Gaussians
+  function sCone(wl) { return Math.exp(-0.5 * Math.pow((wl - 420) / 22, 2)); }
+  function mCone(wl) { return Math.exp(-0.5 * Math.pow((wl - 534) / 40, 2)); }
+  function lCone(wl) { return Math.exp(-0.5 * Math.pow((wl - 564) / 45, 2)); }
+  function rod(wl)   { return Math.exp(-0.5 * Math.pow((wl - 498) / 35, 2)); }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Spectrum bar
+    drawSpectrumBar(ctx, plotL, plotB, plotW, 10);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    for (let wl = 400; wl <= 700; wl += 50) {
+      const px = plotL + ((wl - 380) / 400) * plotW;
+      ctx.fillText(wl, px, plotB + 24);
+    }
+    ctx.fillText('Wavelength (nm)', (plotL + plotR) / 2, H - 4);
+
+    ctx.textAlign = 'right';
+    ctx.fillText('Relative', plotL - 5, plotT + 8);
+    ctx.fillText('sensitivity', plotL - 5, plotT + 20);
+
+    // Curves
+    const curves = [
+      { fn: rod,   color: '#888888', label: 'Rods',     peakWL: 498 },
+      { fn: sCone, color: '#2563eb', label: 'S-cones',  peakWL: 420 },
+      { fn: mCone, color: '#16a34a', label: 'M-cones',  peakWL: 534 },
+      { fn: lCone, color: '#dc2626', label: 'L-cones',  peakWL: 564 }
+    ];
+
+    curves.forEach(function(curve) {
+      ctx.strokeStyle = curve.color; ctx.lineWidth = 2.5;
+      // Fill under curve
+      ctx.fillStyle = curve.color.replace(')', ',0.1)').replace('rgb', 'rgba');
+      if (curve.color.charAt(0) === '#') {
+        ctx.globalAlpha = 0.1;
+        ctx.fillStyle = curve.color;
+      }
+      ctx.beginPath();
+      let firstPx = plotL;
+      for (let wl = 380; wl <= 780; wl += 2) {
+        const px = plotL + ((wl - 380) / 400) * plotW;
+        const py = plotB - curve.fn(wl) * plotH * 0.9;
+        if (wl === 380) { ctx.moveTo(px, plotB); ctx.lineTo(px, py); firstPx = px; }
+        else ctx.lineTo(px, py);
+      }
+      ctx.lineTo(plotR, plotB);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      // Line
+      ctx.beginPath();
+      for (let wl = 380; wl <= 780; wl += 2) {
+        const px = plotL + ((wl - 380) / 400) * plotW;
+        const py = plotB - curve.fn(wl) * plotH * 0.9;
+        if (wl === 380) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = curve.color; ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label at peak
+      const peakPx = plotL + ((curve.peakWL - 380) / 400) * plotW;
+      const peakPy = plotB - curve.fn(curve.peakWL) * plotH * 0.9;
+      ctx.fillStyle = curve.color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(curve.label, peakPx, peakPy - 8);
+      ctx.font = '8px system-ui';
+      ctx.fillText(curve.peakWL + 'nm', peakPx, peakPy - 20);
+    });
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Photoreceptor Spectral Sensitivity', plotL, plotT - 12);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 18 - ANTENNAS
+// =========================================================================
+
+// =========================================================================
+// 8. Monopole/Dipole Radiation Pattern
+// =========================================================================
+function initMonopoleRadiationPattern() {
+  const canvas = document.getElementById('scene-monopole-radiation-pattern');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let time = 0;
+  const cx = W * 0.4, cy = H * 0.5;
+  const maxR = Math.min(W * 0.35, H * 0.42);
+
+  function tick() {
+    time += 0.03;
+    wClear(ctx, W, H);
+
+    // Grid circles
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    for (let r = maxR * 0.25; r <= maxR; r += maxR * 0.25) {
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Expanding wavefronts (sin^2 theta modulated)
+    for (let wf = 0; wf < 5; wf++) {
+      const phase = (time * 50 + wf * 60) % (maxR * 1.3);
+      if (phase > maxR * 1.2) continue;
+      const alpha = Math.max(0, 1 - phase / (maxR * 1.2));
+      ctx.strokeStyle = 'rgba(15,118,110,' + (alpha * 0.5) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let a = 0; a <= 360; a += 2) {
+        const rad = a * Math.PI / 180;
+        const sinTheta = Math.abs(Math.sin(rad));
+        const r = phase * sinTheta * sinTheta;
+        const px = cx + Math.cos(rad) * r;
+        const py = cy + Math.sin(rad) * r;
+        if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    // sin^2(theta) radiation pattern
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let a = 0; a <= 360; a += 1) {
+      const rad = a * Math.PI / 180;
+      const sinTheta = Math.sin(rad);
+      const r = maxR * sinTheta * sinTheta;
+      const px = cx + Math.cos(rad) * r;
+      const py = cy + Math.sin(rad) * r;
+      if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Fill pattern
+    ctx.fillStyle = 'rgba(15,118,110,0.08)';
+    ctx.beginPath();
+    for (let a = 0; a <= 360; a += 1) {
+      const rad = a * Math.PI / 180;
+      const sinTheta = Math.sin(rad);
+      const r = maxR * sinTheta * sinTheta;
+      if (a === 0) ctx.moveTo(cx + r, cy); else ctx.lineTo(cx + Math.cos(rad) * r, cy + Math.sin(rad) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Dipole antenna (vertical line at center)
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 25); ctx.lineTo(cx, cy + 25); ctx.stroke();
+    // Gap in middle
+    ctx.fillStyle = WCOLORS.bg; ctx.fillRect(cx - 3, cy - 3, 6, 6);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.stroke();
+
+    // Null labels
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('null', cx, cy - maxR * 0.15 - 30);
+    ctx.fillText('null', cx, cy + maxR * 0.15 + 38);
+
+    // Max labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('max', cx + maxR + 5, cy + 4);
+    ctx.textAlign = 'right'; ctx.fillText('max', cx - maxR - 5, cy + 4);
+
+    // Formula
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('P(\u03B8) \u221D sin\u00B2\u03B8', W * 0.75, 25);
+
+    // Angle label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03B8 measured from dipole axis', cx, H - 8);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Dipole Radiation Pattern', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 9. Two-Source Interference
+// =========================================================================
+function initTwoSourceInterference() {
+  const canvas = document.getElementById('scene-two-source-interference');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dOverLambda = 2.0;
+  let draggingSlider = false;
+  let time = 0;
+  const sliderX = 20, sliderW = W * 0.35, sliderY = H - 18;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) {
+      draggingSlider = true;
+      handleDrag(e.clientX - rect.left);
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!draggingSlider) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) {
+      draggingSlider = true;
+      handleDrag(e.touches[0].clientX - rect.left);
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!draggingSlider) return; e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    dOverLambda = 0.5 + t * 4.5;
+  }
+
+  function tick() {
+    time += 0.04;
+    wClear(ctx, W, H);
+
+    const lambda = 30;
+    const d = dOverLambda * lambda;
+    const s1x = W * 0.15, s1y = H * 0.4 - d/2;
+    const s2x = W * 0.15, s2y = H * 0.4 + d/2;
+
+    // Draw interference field
+    const fieldW = W * 0.55, fieldH = H - 50;
+    const fieldX = W * 0.05, fieldY = 15;
+
+    for (let px = 0; px < fieldW; px += 4) {
+      for (let py = 0; py < fieldH; py += 4) {
+        const x = fieldX + px, y = fieldY + py;
+        const r1 = Math.sqrt(Math.pow(x - s1x, 2) + Math.pow(y - s1y, 2));
+        const r2 = Math.sqrt(Math.pow(x - s2x, 2) + Math.pow(y - s2y, 2));
+        const k = 2 * Math.PI / lambda;
+        const wave = Math.cos(k * r1 - time * 3) + Math.cos(k * r2 - time * 3);
+        const intensity = wave * wave / 4;
+        const c = Math.round(intensity * 200);
+        ctx.fillStyle = 'rgb(' + (255 - c) + ',' + (255 - c) + ',' + (255 - Math.round(intensity * 150)) + ')';
+        ctx.fillRect(x, y, 4, 4);
+      }
+    }
+
+    // Source markers
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(s1x, s1y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s2x, s2y, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Radiation pattern (polar plot on right)
+    const polCX = W * 0.8, polCY = H * 0.4;
+    const polR = Math.min(W * 0.15, H * 0.3);
+
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.arc(polCX, polCY, polR, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let a = 0; a <= 360; a += 1) {
+      const theta = a * Math.PI / 180;
+      const arg = Math.PI * dOverLambda * Math.sin(theta);
+      const I = Math.abs(arg) < 0.001 ? 1 : Math.pow(Math.cos(arg), 2);
+      const r = polR * I;
+      const px = polCX + Math.cos(theta) * r;
+      const py = polCY + Math.sin(theta) * r;
+      if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Radiation pattern', polCX, polCY + polR + 18);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (dOverLambda - 0.5) / 4.5;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d/\u03BB = ' + dOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Two-Source Interference', 10, 12);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 10. Phased Array Radiation
+// =========================================================================
+function initPhasedArrayRadiation() {
+  const canvas = document.getElementById('scene-phased-array-radiation');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let N = 5, dOverLambda = 0.5, delta = 0;
+  let draggingSlider = null;
+
+  const sliders = [
+    { y: H - 50, label: 'N', min: 2, max: 10, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
+    { y: H - 32, label: 'd/\u03BB', min: 0.2, max: 2, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } },
+    { y: H - 14, label: '\u03B4', min: -Math.PI, max: Math.PI, getVal: function() { return delta; }, setVal: function(v) { delta = v; } }
+  ];
+  const sliderX = 30, sliderW = W * 0.4;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (let i = 0; i < sliders.length; i++) {
+      if (Math.abs(my - sliders[i].y) < 10 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+        draggingSlider = i; handleDrag(mx); break;
+      }
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (draggingSlider === null) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
+  canvas.addEventListener('mouseup', function() { draggingSlider = null; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = null; });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    for (let i = 0; i < sliders.length; i++) {
+      if (Math.abs(my - sliders[i].y) < 14 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+        draggingSlider = i; handleDrag(mx); break;
+      }
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (draggingSlider === null) return; e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = null; });
+
+  function handleDrag(mx) {
+    const s = sliders[draggingSlider];
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    s.setVal(s.min + t * (s.max - s.min));
+    draw();
+  }
+
+  function arrayFactor(theta) {
+    const psi = 2 * Math.PI * dOverLambda * Math.sin(theta) + delta;
+    if (Math.abs(psi) < 1e-10) return 1;
+    const af = Math.sin(N * psi / 2) / (N * Math.sin(psi / 2));
+    return af * af;
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Draw array on left
+    const arrX = W * 0.15, arrCY = H * 0.35;
+    const spacing = Math.min(25, (H * 0.5) / N);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    for (let i = 0; i < N; i++) {
+      const y = arrCY - (N - 1) * spacing / 2 + i * spacing;
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(arrX, y, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillText(N + ' sources', arrX, arrCY + N * spacing / 2 + 15);
+
+    // Polar plot on right
+    const polCX = W * 0.65, polCY = H * 0.35;
+    const polR = Math.min(W * 0.28, H * 0.3);
+
+    // Grid
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    for (let r = polR * 0.33; r <= polR; r += polR * 0.33) {
+      ctx.beginPath(); ctx.arc(polCX, polCY, r, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Pattern
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.fillStyle = 'rgba(15,118,110,0.1)';
+    ctx.beginPath();
+    for (let a = 0; a <= 360; a += 1) {
+      const theta = a * Math.PI / 180;
+      const r = polR * arrayFactor(theta);
+      const px = polCX + Math.cos(theta) * r;
+      const py = polCY + Math.sin(theta) * r;
+      if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Beam direction indicator
+    const beamAngle = -Math.asin(Math.max(-1, Math.min(1, -delta / (2 * Math.PI * dOverLambda))));
+    if (!isNaN(beamAngle)) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(polCX, polCY);
+      ctx.lineTo(polCX + Math.cos(beamAngle) * polR * 1.1, polCY + Math.sin(beamAngle) * polR * 1.1);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('beam', polCX + Math.cos(beamAngle) * polR * 0.7 + 5, polCY + Math.sin(beamAngle) * polR * 0.7);
+    }
+
+    // Sliders
+    sliders.forEach(function(s, i) {
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sliderX, s.y); ctx.lineTo(sliderX + sliderW, s.y); ctx.stroke();
+      const t = (s.getVal() - s.min) / (s.max - s.min);
+      ctx.beginPath(); ctx.arc(sliderX + sliderW * t, s.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = WCOLORS.teal; ctx.fill();
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      const valStr = i === 0 ? Math.round(s.getVal()) : i === 2 ? (s.getVal() / Math.PI).toFixed(2) + '\u03C0' : s.getVal().toFixed(2);
+      ctx.fillText(s.label + ' = ' + valStr, sliderX + sliderW + 10, s.y + 4);
+    });
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Phased Array Radiation Pattern', 10, 16);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 11. Interferometer Resolution
+// =========================================================================
+function initInterferometerResolution() {
+  const canvas = document.getElementById('scene-interferometer-resolution');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dOverLambda = 5;
+  let draggingSlider = false;
+  const sliderX = 30, sliderW = W * 0.5, sliderY = H - 18;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    dOverLambda = 1 + t * 19;
+    draw();
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Two antennas
+    const antY = H * 0.3;
+    const sep = Math.min(W * 0.3, dOverLambda * 8);
+    const a1x = W * 0.3 - sep / 2, a2x = W * 0.3 + sep / 2;
+
+    // Ground line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(a1x - 20, antY + 20); ctx.lineTo(a2x + 20, antY + 20); ctx.stroke();
+
+    // Antennas
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(a1x, antY + 20); ctx.lineTo(a1x, antY - 15); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(a2x, antY + 20); ctx.lineTo(a2x, antY - 15); ctx.stroke();
+    // Dishes
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(a1x, antY - 15, 8, Math.PI * 1.2, Math.PI * 1.8); ctx.stroke();
+    ctx.beginPath(); ctx.arc(a2x, antY - 15, 8, Math.PI * 1.2, Math.PI * 1.8); ctx.stroke();
+
+    // d label
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(a1x, antY + 30); ctx.lineTo(a2x, antY + 30); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('d', (a1x + a2x) / 2, antY + 44);
+
+    // Fringe pattern
+    const plotL2 = W * 0.55, plotR2 = W - 15, plotT2 = 30, plotB2 = H * 0.7;
+    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03B8', (plotL2 + plotR2) / 2, plotB2 + 14);
+    ctx.textAlign = 'right';
+    ctx.fillText('I', plotL2 - 5, plotT2 + 5);
+
+    // cos^2 fringe
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const theta = (px / pW - 0.5) * Math.PI * 0.8;
+      const I = Math.pow(Math.cos(Math.PI * dOverLambda * Math.sin(theta)), 2);
+      const py2 = plotB2 - I * pH * 0.9;
+      if (px === 0) ctx.moveTo(plotL2 + px, py2); else ctx.lineTo(plotL2 + px, py2);
+    }
+    ctx.stroke();
+
+    // Resolution
+    const deltaTheta = 1 / dOverLambda;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('\u0394\u03B8 = \u03BB/d = ' + (1/dOverLambda).toFixed(3) + ' rad', plotL2, plotB2 + 30);
+    ctx.fillText('= ' + (180 / (Math.PI * dOverLambda)).toFixed(2) + '\u00B0', plotL2 + 130, plotB2 + 30);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (dOverLambda - 1) / 19;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d/\u03BB = ' + dOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Two-Antenna Interferometer', 10, 18);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 19 - DIFFRACTION
+// =========================================================================
+
+// =========================================================================
+// 12. Huygens Principle Demo
+// =========================================================================
+function initHuygensPrincipleDemo() {
+  const canvas = document.getElementById('scene-huygens-principle-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let slitWidth = 3.0; // in wavelengths
+  let time = 0;
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.3, sliderY = H - 16;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    slitWidth = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 7.5;
+  }
+
+  function tick() {
+    time += 0.06;
+    wClear(ctx, W, H);
+
+    const lambda = 20;
+    const barrierX = W * 0.35;
+    const slitHalf = slitWidth * lambda / 2;
+    const slitCY = H * 0.45;
+
+    // Barrier
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(barrierX - 3, 0, 6, slitCY - slitHalf);
+    ctx.fillRect(barrierX - 3, slitCY + slitHalf, 6, H - slitCY - slitHalf);
+
+    // Incoming plane waves (left side)
+    ctx.strokeStyle = 'rgba(15,118,110,0.3)'; ctx.lineWidth = 1.5;
+    for (let wf = 0; wf < 12; wf++) {
+      const x = barrierX - ((time * 15 + wf * lambda) % (barrierX));
+      if (x > 5 && x < barrierX - 5) {
+        ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, H - 30); ctx.stroke();
+      }
+    }
+
+    // Huygens wavelets from slit
+    const nSources = Math.max(3, Math.round(slitWidth * 3));
+    for (let i = 0; i < nSources; i++) {
+      const sy = slitCY - slitHalf + (i + 0.5) * (2 * slitHalf / nSources);
+      // Draw expanding circles
+      for (let wf = 0; wf < 6; wf++) {
+        const r = (time * 15 + wf * lambda) % (W * 0.7);
+        if (r < 5) continue;
+        const alpha = Math.max(0, 0.2 * (1 - r / (W * 0.7)));
+        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(barrierX, sy, r, -Math.PI / 2, Math.PI / 2);
+        ctx.stroke();
+      }
+      // Source dot
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.arc(barrierX, sy, 2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Composite wavefront envelope (diffracted)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    for (let wf = 0; wf < 4; wf++) {
+      const baseR = (time * 15 + wf * lambda) % (W * 0.6);
+      if (baseR < 10) continue;
+      const alpha = Math.max(0, 0.6 * (1 - baseR / (W * 0.6)));
+      ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let a = -85; a <= 85; a += 2) {
+        const rad = a * Math.PI / 180;
+        // Envelope: constructive interference pattern
+        const sinc = slitWidth === 0 ? 1 : Math.sin(Math.PI * slitWidth * Math.sin(rad)) / (Math.PI * slitWidth * Math.sin(rad));
+        const amp = Math.abs(sinc);
+        const r = baseR * (0.3 + 0.7 * amp);
+        const px = barrierX + Math.cos(rad) * r;
+        const py = slitCY + Math.sin(rad) * r;
+        if (a === -85) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (slitWidth - 0.5) / 7.5;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('slit width = ' + slitWidth.toFixed(1) + '\u03BB', sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Huygens Principle', 10, 16);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('Each point in the slit acts as a new source', W * 0.45, 16);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 13. Diffraction Grating Pattern
+// =========================================================================
+function initDiffractionGratingPattern() {
+  const canvas = document.getElementById('scene-diffraction-grating-pattern');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let N = 5, dOverLambda = 2.0;
+  let draggingSlider = null;
+  const sliderX = 30, sliderW = W * 0.35;
+  const sliders = [
+    { y: H - 32, label: 'N', min: 2, max: 50, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
+    { y: H - 14, label: 'd/\u03BB', min: 1, max: 5, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } }
+  ];
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (let i = 0; i < sliders.length; i++) {
+      if (Math.abs(my - sliders[i].y) < 10) { draggingSlider = i; handleDrag(mx); break; }
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (draggingSlider === null) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = null; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = null; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top; for (let i = 0; i < sliders.length; i++) { if (Math.abs(my - sliders[i].y) < 14) { draggingSlider = i; handleDrag(mx); break; } } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (draggingSlider === null) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = null; });
+
+  function handleDrag(mx) {
+    const s = sliders[draggingSlider];
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    s.setVal(s.min + t * (s.max - s.min));
+    draw();
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const plotL2 = 50, plotR2 = W - 20, plotT2 = 30, plotB2 = H - 60;
+    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('sin \u03B8', (plotL2 + plotR2) / 2, plotB2 + 14);
+    ctx.textAlign = 'right';
+    ctx.fillText('I/I\u2080', plotL2 - 5, plotT2 + 5);
+
+    // Tick marks on x-axis
+    for (let v = -1; v <= 1; v += 0.5) {
+      const px = plotL2 + (v + 1) / 2 * pW;
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(v.toFixed(1), px, plotB2 + 12);
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(px, plotT2); ctx.lineTo(px, plotB2); ctx.stroke();
+    }
+
+    // Calculate and plot intensity
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let maxI = 0;
+    const intensities = [];
+    for (let px = 0; px <= pW; px++) {
+      const sinTheta = (px / pW) * 2 - 1;
+      const psi = 2 * Math.PI * dOverLambda * sinTheta;
+      let I;
+      if (Math.abs(Math.sin(psi / 2)) < 1e-8) {
+        I = 1;
+      } else {
+        const af = Math.sin(N * psi / 2) / (N * Math.sin(psi / 2));
+        I = af * af;
+      }
+      intensities.push(I);
+      if (I > maxI) maxI = I;
+    }
+
+    // Normalize and draw
+    for (let px = 0; px <= pW; px++) {
+      const py = plotB2 - (intensities[px] / Math.max(maxI, 0.01)) * pH * 0.9;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.stroke();
+
+    // Fill under curve
+    ctx.lineTo(plotR2, plotB2);
+    ctx.lineTo(plotL2, plotB2);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(15,118,110,0.08)';
+    ctx.fill();
+
+    // Mark principal maxima
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    for (let m = -3; m <= 3; m++) {
+      const sinTheta = m / dOverLambda;
+      if (Math.abs(sinTheta) <= 1) {
+        const px = plotL2 + (sinTheta + 1) / 2 * pW;
+        ctx.beginPath(); ctx.arc(px, plotB2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillText('m=' + m, px, plotT2 - 3);
+      }
+    }
+
+    // Sliders
+    sliders.forEach(function(s, i) {
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sliderX, s.y); ctx.lineTo(sliderX + sliderW, s.y); ctx.stroke();
+      const t = (s.getVal() - s.min) / (s.max - s.min);
+      ctx.beginPath(); ctx.arc(sliderX + sliderW * t, s.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = WCOLORS.teal; ctx.fill();
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      const valStr = i === 0 ? Math.round(s.getVal()) : s.getVal().toFixed(1);
+      ctx.fillText(s.label + ' = ' + valStr, sliderX + sliderW + 10, s.y + 4);
+    });
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Diffraction Grating: N-Slit Pattern', 50, 20);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 14. Single Slit Diffraction
+// =========================================================================
+function initSingleSlitDiffraction() {
+  const canvas = document.getElementById('scene-single-slit-diffraction');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let aOverLambda = 3.0;
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.35, sliderY = H - 16;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    aOverLambda = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 9.5;
+    draw();
+  }
+
+  function sinc2(x) {
+    if (Math.abs(x) < 1e-8) return 1;
+    return Math.pow(Math.sin(x) / x, 2);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Slit diagram on left
+    const slitX = 60, slitH = H * 0.6;
+    const slitOpenH = Math.min(slitH * 0.8, aOverLambda * 10);
+    const slitCY = H * 0.42;
+
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(slitX - 3, 20, 6, slitCY - slitOpenH / 2 - 20);
+    ctx.fillRect(slitX - 3, slitCY + slitOpenH / 2, 6, H - 40 - slitCY - slitOpenH / 2);
+
+    // Slit width label
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(slitX + 10, slitCY - slitOpenH / 2); ctx.lineTo(slitX + 10, slitCY + slitOpenH / 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('a', slitX + 14, slitCY + 3);
+
+    // Incoming arrows
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1;
+    for (let y = slitCY - slitOpenH / 2 + 5; y < slitCY + slitOpenH / 2; y += 12) {
+      ctx.beginPath(); ctx.moveTo(15, y); ctx.lineTo(slitX - 5, y); ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath();
+      ctx.moveTo(slitX - 5, y);
+      ctx.lineTo(slitX - 10, y - 3);
+      ctx.lineTo(slitX - 10, y + 3);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // Pattern plot on right
+    const plotL2 = W * 0.3, plotR2 = W - 15, plotT2 = 25, plotB2 = H - 35;
+    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('sin \u03B8', (plotL2 + plotR2) / 2, plotB2 + 13);
+
+    // Plot sinc^2 pattern
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const sinTheta = (px / pW - 0.5) * 2;
+      const beta = Math.PI * aOverLambda * sinTheta;
+      const I = sinc2(beta);
+      const py = plotB2 - I * pH * 0.9;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.stroke();
+
+    // Mark first minima
+    if (aOverLambda >= 1) {
+      const sinMin = 1 / aOverLambda;
+      if (sinMin <= 1) {
+        const pxPlus = plotL2 + (0.5 + sinMin / 2) * pW;
+        const pxMinus = plotL2 + (0.5 - sinMin / 2) * pW;
+        ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(pxPlus, plotT2); ctx.lineTo(pxPlus, plotB2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pxMinus, plotT2); ctx.lineTo(pxMinus, plotB2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('\u03BB/a', pxPlus, plotT2 - 3);
+        ctx.fillText('\u2212\u03BB/a', pxMinus, plotT2 - 3);
+      }
+    }
+
+    // Intensity bar below pattern
+    for (let px = 0; px <= pW; px++) {
+      const sinTheta = (px / pW - 0.5) * 2;
+      const beta = Math.PI * aOverLambda * sinTheta;
+      const I = sinc2(beta);
+      const bright = Math.round(I * 255);
+      ctx.fillStyle = 'rgb(' + bright + ',' + bright + ',' + bright + ')';
+      ctx.fillRect(plotL2 + px, plotB2 + 2, 1, 8);
+    }
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (aOverLambda - 0.5) / 9.5;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('a/\u03BB = ' + aOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Single Slit Diffraction', 10, 16);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 15. Fourier Optics Demo
+// =========================================================================
+function initFourierOpticsDemo() {
+  const canvas = document.getElementById('scene-fourier-optics-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let apertureType = 0; // 0=single, 1=double, 2=grating
+  const types = ['Single Slit', 'Double Slit', 'Grating (5 slits)'];
+
+  canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    // Check button area
+    if (my > H - 30 && my < H - 5) {
+      for (let i = 0; i < 3; i++) {
+        const bx = 20 + i * (W / 3);
+        if (mx > bx && mx < bx + W / 3 - 10) {
+          apertureType = i;
+          draw();
+          break;
+        }
+      }
+    }
+  });
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const apL = 30, apR = W * 0.4, apT = 30, apB = H - 45;
+    const apW2 = apR - apL, apH = apB - apT;
+    const patL = W * 0.55, patR = W - 15, patT = 30, patB = H - 45;
+    const patW2 = patR - patL, patH = patB - patT;
+
+    // Aperture function
+    function aperture(y) {
+      const yNorm = (y - 0.5) * 10; // -5 to 5
+      if (apertureType === 0) {
+        return Math.abs(yNorm) < 1 ? 1 : 0;
+      } else if (apertureType === 1) {
+        return (Math.abs(yNorm - 1.5) < 0.4 || Math.abs(yNorm + 1.5) < 0.4) ? 1 : 0;
+      } else {
+        for (let n = -2; n <= 2; n++) {
+          if (Math.abs(yNorm - n * 1.5) < 0.25) return 1;
+        }
+        return 0;
+      }
+    }
+
+    // Draw aperture
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Aperture', (apL + apR) / 2, apT - 8);
+
+    for (let py = 0; py < apH; py++) {
+      const y = py / apH;
+      const a = aperture(y);
+      if (a > 0) {
+        ctx.fillStyle = WCOLORS.teal;
+      } else {
+        ctx.fillStyle = '#d4c9b8';
+      }
+      ctx.fillRect(apL, apT + py, apW2, 1);
+    }
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(apL, apT, apW2, apH);
+
+    // Compute diffraction pattern (|FT|^2)
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('|FT|\u00B2 Pattern', (patL + patR) / 2, patT - 8);
+
+    // Numerical DFT
+    const nPts = 256;
+    const pattern = [];
+    let maxP = 0;
+    for (let k = 0; k < nPts; k++) {
+      let reSum = 0, imSum = 0;
+      for (let n = 0; n < nPts; n++) {
+        const a = aperture(n / nPts);
+        const phase = -2 * Math.PI * (k - nPts / 2) * n / nPts;
+        reSum += a * Math.cos(phase);
+        imSum += a * Math.sin(phase);
+      }
+      const I = (reSum * reSum + imSum * imSum) / (nPts * nPts);
+      pattern.push(I);
+      if (I > maxP) maxP = I;
+    }
+
+    // Draw pattern as image
+    for (let py = 0; py < patH; py++) {
+      const k = Math.floor(py / patH * nPts);
+      const I = pattern[k] / Math.max(maxP, 0.001);
+      const bright = Math.round(I * 255);
+      ctx.fillStyle = 'rgb(' + bright + ',' + bright + ',' + bright + ')';
+      ctx.fillRect(patL, patT + py, patW2, 1);
+    }
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(patL, patT, patW2, patH);
+
+    // Also draw 1D plot overlay
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let py = 0; py < patH; py++) {
+      const k = Math.floor(py / patH * nPts);
+      const I = pattern[k] / Math.max(maxP, 0.001);
+      const px = patL + I * patW2 * 0.8;
+      if (py === 0) ctx.moveTo(px, patT + py); else ctx.lineTo(px, patT + py);
+    }
+    ctx.stroke();
+
+    // Arrow between
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    const arrowY = (apT + apB) / 2;
+    ctx.beginPath(); ctx.moveTo(apR + 10, arrowY); ctx.lineTo(patL - 10, arrowY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.moveTo(patL - 10, arrowY);
+    ctx.lineTo(patL - 18, arrowY - 5);
+    ctx.lineTo(patL - 18, arrowY + 5);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('FT', (apR + patL) / 2, arrowY - 8);
+
+    // Buttons
+    for (let i = 0; i < 3; i++) {
+      const bx = 20 + i * (W / 3);
+      const bw = W / 3 - 15;
+      const active = apertureType === i;
+      ctx.fillStyle = active ? WCOLORS.teal : '#e5e0d6';
+      ctx.beginPath();
+      ctx.roundRect(bx, H - 28, bw, 22, 4);
+      ctx.fill();
+      ctx.fillStyle = active ? '#fff' : WCOLORS.text;
+      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(types[i], bx + bw / 2, H - 13);
+    }
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Fourier Optics', 10, 18);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 20 - QUANTUM MECHANICS
+// =========================================================================
+
+// =========================================================================
+// 16. Photoelectric Effect
+// =========================================================================
+function initPhotoelectricEffectDemo() {
+  const canvas = document.getElementById('scene-photoelectric-effect-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let frequency = 8e14; // Hz
+  let draggingSlider = false;
+  let particles = [];
+  let time = 0;
+  const sliderX = 20, sliderW = W * 0.5, sliderY = H - 16;
+  const phi = 4.2; // work function in eV (like aluminum)
+  const h = 6.626e-34;
+  const eV = 1.602e-19;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    frequency = 3e14 + t * 17e14;
+  }
+
+  function tick() {
+    time += 0.03;
+    wClear(ctx, W, H);
+
+    const photonEnergy = h * frequency / eV; // in eV
+    const KE = Math.max(0, photonEnergy - phi);
+    const aboveThreshold = photonEnergy > phi;
+
+    // Metal surface
+    const metalX = 20, metalY = 50, metalW = W * 0.3, metalH = H * 0.5;
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillRect(metalX, metalY, metalW, metalH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(metalX, metalY, metalW, metalH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Metal surface', metalX + metalW / 2, metalY + metalH + 14);
+    ctx.fillText('\u03C6 = ' + phi.toFixed(1) + ' eV', metalX + metalW / 2, metalY + metalH + 26);
+
+    // Light beam (photons hitting surface)
+    const wl = 3e8 / frequency * 1e9; // nm
+    const lightColor = (wl >= 380 && wl <= 780) ? wavelengthToCSS(wl) : (wl < 380 ? '#7c3aed' : '#dc2626');
+
+    // Incoming photon arrows
+    for (let i = 0; i < 4; i++) {
+      const py = metalY + 15 + i * (metalH - 30) / 3;
+      const phase = (time * 3 + i) % 1;
+      const px = metalX + metalW + 10 + (1 - phase) * 80;
+      ctx.strokeStyle = lightColor; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px + 15, py - 8); ctx.lineTo(px, py); ctx.lineTo(px + 15, py + 8); ctx.stroke();
+      // Wavy line
+      ctx.beginPath();
+      for (let dx = 0; dx < 40; dx += 2) {
+        const waveY = py + Math.sin(dx * 0.5 + time * 10) * 3;
+        if (dx === 0) ctx.moveTo(px + 15 + dx, waveY); else ctx.lineTo(px + 15 + dx, waveY);
+      }
+      ctx.stroke();
+    }
+
+    // Ejected electrons
+    if (aboveThreshold) {
+      if (Math.random() < 0.1) {
+        particles.push({
+          x: metalX + Math.random() * metalW * 0.8,
+          y: metalY + Math.random() * metalH,
+          vx: -2 - Math.random() * KE * 2,
+          vy: (Math.random() - 0.5) * 3,
+          life: 1.0
+        });
+      }
+    }
+    particles.forEach(function(p) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.015;
+    });
+    particles = particles.filter(function(p) { return p.life > 0 && p.x > -10; });
+
+    particles.forEach(function(p) {
+      ctx.fillStyle = 'rgba(37,99,235,' + p.life + ')';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Status text
+    if (aboveThreshold) {
+      ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('Electrons ejected!', metalX, metalY - 8);
+      ctx.fillText('KE = ' + KE.toFixed(2) + ' eV', metalX, metalY - 22);
+    } else {
+      ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('Below threshold \u2014 no emission', metalX, metalY - 8);
+    }
+
+    // KE vs frequency plot
+    const plotL2 = W * 0.58, plotR2 = W - 15, plotT2 = 25, plotB2 = H * 0.6;
+    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui';
+    ctx.textAlign = 'center'; ctx.fillText('frequency (10\u00B9\u2074 Hz)', (plotL2 + plotR2) / 2, plotB2 + 13);
+    ctx.textAlign = 'right'; ctx.fillText('KE (eV)', plotL2 - 3, plotT2 + 5);
+
+    // Plot line: KE = hf - phi (only for f > threshold)
+    const fThreshold = phi * eV / h;
+    const fMax = 20e14;
+    const keMax = h * fMax / eV - phi;
+
+    // Threshold line
+    const threshPx = plotL2 + (fThreshold / fMax) * pW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(threshPx, plotT2); ctx.lineTo(threshPx, plotB2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('f\u2080', threshPx, plotB2 + 22);
+
+    // KE line
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(plotL2, plotB2);
+    ctx.lineTo(threshPx, plotB2);
+    for (let f = fThreshold; f <= fMax; f += fMax / 100) {
+      const ke = h * f / eV - phi;
+      const px = plotL2 + (f / fMax) * pW;
+      const py = plotB2 - (ke / keMax) * pH * 0.85;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current frequency marker
+    const curPx = plotL2 + (frequency / fMax) * pW;
+    const curKE2 = Math.max(0, h * frequency / eV - phi);
+    const curPy = plotB2 - (curKE2 / keMax) * pH * 0.85;
+    ctx.beginPath(); ctx.arc(curPx, aboveThreshold ? curPy : plotB2, 5, 0, Math.PI * 2);
+    ctx.fillStyle = lightColor; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Formula
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('KE = hf \u2212 \u03C6', plotL2, plotT2 - 5);
+
+    // Slider
+    for (let i = 0; i < sliderW; i++) {
+      const f = 3e14 + (i / sliderW) * 17e14;
+      const wl2 = 3e8 / f * 1e9;
+      ctx.fillStyle = (wl2 >= 380 && wl2 <= 780) ? wavelengthToCSS(wl2) : (wl2 < 380 ? '#7c3aed' : '#991b1b');
+      ctx.fillRect(sliderX + i, sliderY - 3, 1, 6);
+    }
+    const st = (frequency - 3e14) / 17e14;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = lightColor; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('f = ' + (frequency / 1e14).toFixed(1) + '\u00D710\u00B9\u2074 Hz  (\u03BB=' + Math.round(3e8/frequency*1e9) + 'nm)', sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Photoelectric Effect', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 17. Double Slit Photon Buildup
+// =========================================================================
+function initDoubleSiltPhotonBuildup() {
+  const canvas = document.getElementById('scene-double-slit-photon-buildup');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dots = [];
+  let speed = 5; // photons per frame
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.3, sliderY = H - 16;
+  const screenL = W * 0.15, screenR = W - 20, screenT = 25, screenB = H - 35;
+  const screenW2 = screenR - screenL, screenH2 = screenB - screenT;
+
+  // Double slit pattern probability
+  const d = 5, a = 1.5; // slit separation, slit width (normalized)
+  function prob(y) {
+    const yNorm = (y - 0.5) * 20;
+    const sincArg = Math.PI * a * yNorm;
+    const cosArg = Math.PI * d * yNorm;
+    const env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
+    return env * Math.pow(Math.cos(cosArg), 2);
+  }
+
+  // Build CDF for sampling
+  const nBins = 500;
+  const cdf = [0];
+  for (let i = 1; i <= nBins; i++) {
+    cdf.push(cdf[i-1] + prob(i / nBins));
+  }
+  const total = cdf[nBins];
+  for (let i = 0; i <= nBins; i++) cdf[i] /= total;
+
+  function sampleY() {
+    const u = Math.random();
+    let lo = 0, hi = nBins;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cdf[mid] < u) lo = mid + 1; else hi = mid;
+    }
+    return lo / nBins;
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    speed = Math.round(1 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 29);
+  }
+
+  // Reset button area
+  canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (mx > W - 65 && mx < W - 5 && my > H - 30 && my < H - 8) {
+      dots = [];
+    }
+  });
+
+  function tick() {
+    // Add new photons
+    for (let i = 0; i < speed; i++) {
+      const y = sampleY();
+      const x = 0.3 + Math.random() * 0.5; // spread in x for visual effect
+      dots.push({ x: x, y: y });
+    }
+
+    wClear(ctx, W, H);
+
+    // Screen border
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(screenL, screenT, screenW2, screenH2);
+
+    // Draw dots
+    ctx.fillStyle = 'rgba(15,118,110,0.7)';
+    const maxDots = 15000;
+    if (dots.length > maxDots) dots = dots.slice(dots.length - maxDots);
+
+    for (let i = 0; i < dots.length; i++) {
+      const px = screenL + dots[i].x * screenW2;
+      const py = screenT + dots[i].y * screenH2;
+      ctx.fillRect(px, py, 1.5, 1.5);
+    }
+
+    // Histogram on right edge
+    const histW = 40;
+    const bins = new Array(50).fill(0);
+    dots.forEach(function(d2) {
+      const bin = Math.min(49, Math.floor(d2.y * 50));
+      bins[bin]++;
+    });
+    const maxBin = Math.max(1, Math.max.apply(null, bins));
+    ctx.fillStyle = 'rgba(15,118,110,0.2)';
+    for (let i = 0; i < 50; i++) {
+      const bh = (bins[i] / maxBin) * histW;
+      const by = screenT + (i / 50) * screenH2;
+      ctx.fillRect(screenR + 3, by, bh, screenH2 / 50 - 1);
+    }
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Photons: ' + dots.length, screenL, screenT - 5);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (speed - 1) / 29;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Speed: ' + speed + '/frame', sliderX + sliderW + 10, sliderY + 4);
+
+    // Reset button
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.roundRect(W - 65, H - 30, 60, 22, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Reset', W - 35, H - 15);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Double Slit: Photon Buildup', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 18. Hydrogen Energy Levels
+// =========================================================================
+function initHydrogenEnergyLevels() {
+  const canvas = document.getElementById('scene-hydrogen-energy-levels');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const plotL2 = 60, plotR2 = W * 0.55, plotT2 = 25, plotB2 = H - 25;
+  const pH = plotB2 - plotT2;
+
+  // Energy levels: E_n = -13.6 / n^2 eV
+  function energy(n) { return -13.6 / (n * n); }
+
+  // Balmer series: transitions to n=2
+  const balmerTransitions = [
+    { from: 3, to: 2, name: 'H\u03B1', wl: 656 },
+    { from: 4, to: 2, name: 'H\u03B2', wl: 486 },
+    { from: 5, to: 2, name: 'H\u03B3', wl: 434 },
+    { from: 6, to: 2, name: 'H\u03B4', wl: 410 }
+  ];
+
+  function energyToY(E) {
+    // Map -13.6 to 0 eV onto plot
+    return plotB2 - ((E + 13.6) / 14.5) * pH;
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Energy axis
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2 - 5, plotT2); ctx.lineTo(plotL2 - 5, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    for (let e = -14; e <= 0; e += 2) {
+      const y = energyToY(e);
+      ctx.fillText(e + ' eV', plotL2 - 10, y + 3);
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.3;
+      ctx.beginPath(); ctx.moveTo(plotL2 - 5, y); ctx.lineTo(plotR2, y); ctx.stroke();
+    }
+
+    // Draw energy levels
+    const levels = [1, 2, 3, 4, 5];
+    levels.forEach(function(n) {
+      const E = energy(n);
+      const y = energyToY(E);
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(plotL2, y); ctx.lineTo(plotR2, y); ctx.stroke();
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('n = ' + n, plotL2 - 10, y - 5);
+      ctx.textAlign = 'left';
+      ctx.fillText(E.toFixed(2) + ' eV', plotR2 + 5, y + 4);
+    });
+
+    // Ionization level (n=infinity)
+    const yInf = energyToY(0);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL2, yInf); ctx.lineTo(plotR2, yInf); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n = \u221E (ionization)', plotR2 + 5, yInf + 4);
+
+    // Draw Balmer series transitions
+    const arrowX = plotL2 + (plotR2 - plotL2) * 0.3;
+    const spacing = (plotR2 - plotL2) * 0.12;
+
+    balmerTransitions.forEach(function(trans, i) {
+      const yFrom = energyToY(energy(trans.from));
+      const yTo = energyToY(energy(trans.to));
+      const x = arrowX + i * spacing;
+      const color = wavelengthToCSS(trans.wl);
+
+      // Arrow
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x, yFrom); ctx.lineTo(x, yTo); ctx.stroke();
+      // Arrowhead
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x, yTo);
+      ctx.lineTo(x - 4, yTo - 10);
+      ctx.lineTo(x + 4, yTo - 10);
+      ctx.closePath(); ctx.fill();
+
+      // Label
+      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(trans.name, x, yFrom + 12);
+      ctx.fillText(trans.wl + ' nm', x, yFrom + 22);
+    });
+
+    // Spectrum bar showing Balmer lines
+    const specY = H - 20;
+    drawSpectrumBar(ctx, plotL2, specY, plotR2 - plotL2, 10);
+    balmerTransitions.forEach(function(trans) {
+      const px = plotL2 + ((trans.wl - 380) / 400) * (plotR2 - plotL2);
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px, specY); ctx.lineTo(px, specY + 10); ctx.stroke();
+    });
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Visible spectrum with Balmer lines', (plotL2 + plotR2) / 2, specY - 3);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Hydrogen Energy Levels & Balmer Series', 10, 18);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 19. Quantum Wavepacket Dispersion
+// =========================================================================
+function initQuantumWavepacketDispersion() {
+  const canvas = document.getElementById('scene-quantum-wavepacket-dispersion');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let sigma0 = 0.05;
+  let time = 0;
+  let running = true;
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.3, sliderY = H - 16;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (Math.abs(my - sliderY) < 15 && mx >= sliderX && mx <= sliderX + sliderW) {
+      draggingSlider = true; handleDrag(mx);
+    }
+    // Reset on click on canvas area
+    if (my > 20 && my < H - 40 && mx > W * 0.6 && mx < W - 10) {
+      time = 0;
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    sigma0 = 0.02 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 0.13;
+    time = 0;
+  }
+
+  const plotL2 = 40, plotR2 = W - 20, plotT2 = 30, plotB2 = H - 35;
+  const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+  function tick() {
+    time += 0.008;
+    wClear(ctx, W, H);
+
+    const tau = 2 * sigma0 * sigma0; // characteristic time
+    const sigmaT = sigma0 * Math.sqrt(1 + Math.pow(time / tau, 2));
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', (plotL2 + plotR2) / 2, plotB2 + 13);
+    ctx.textAlign = 'right';
+    ctx.fillText('|\u03C8|\u00B2', plotL2 - 5, plotT2 + 5);
+
+    // Draw initial packet (ghost)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const x = (px / pW - 0.5);
+      const psi2 = Math.exp(-x * x / (2 * sigma0 * sigma0)) / (sigma0 * Math.sqrt(2 * Math.PI));
+      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw current packet
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const x = (px / pW - 0.5);
+      const psi2 = Math.exp(-x * x / (2 * sigmaT * sigmaT)) / (sigmaT * Math.sqrt(2 * Math.PI));
+      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.stroke();
+
+    // Fill
+    ctx.fillStyle = 'rgba(15,118,110,0.1)';
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const x = (px / pW - 0.5);
+      const psi2 = Math.exp(-x * x / (2 * sigmaT * sigmaT)) / (sigmaT * Math.sqrt(2 * Math.PI));
+      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.lineTo(plotR2, plotB2);
+    ctx.lineTo(plotL2, plotB2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Width indicator
+    const widthPx = (sigmaT / 0.5) * pW;
+    const centerPx = plotL2 + pW / 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(centerPx - widthPx, plotB2 + 3);
+    ctx.lineTo(centerPx + widthPx, plotB2 + 3);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C3(t)', centerPx, plotB2 + 12);
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('\u03C3(t) = \u03C3\u2080\u221A(1 + (t/\u03C4)\u00B2)', W * 0.55, plotT2 + 5);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('\u03C3\u2080 = ' + sigma0.toFixed(3), W * 0.55, plotT2 + 20);
+    ctx.fillText('\u03C3(t) = ' + sigmaT.toFixed(3), W * 0.55, plotT2 + 33);
+    ctx.fillText('t/\u03C4 = ' + (time / tau).toFixed(2), W * 0.55, plotT2 + 46);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (sigma0 - 0.02) / 0.13;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('\u03C3\u2080 = ' + sigma0.toFixed(3), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Quantum Wavepacket Dispersion', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 21 - DOPPLER EFFECT
+// =========================================================================
+
+// =========================================================================
+// 20. Doppler Moving Source
+// =========================================================================
+function initDopplerMovingSource() {
+  const canvas = document.getElementById('scene-doppler-moving-source');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let beta = 0.4; // v/c
+  let time = 0;
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.4, sliderY = H - 16;
+  let waveHistory = [];
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const newBeta = Math.max(0, Math.min(0.9, (mx - sliderX) / sliderW * 0.9));
+    if (Math.abs(newBeta - beta) > 0.01) {
+      beta = newBeta;
+      waveHistory = [];
+      time = 0;
+    }
+  }
+
+  const cy = H * 0.45;
+  const waveSpeed = 2.5;
+  const emitInterval = 18;
+
+  function tick() {
+    time += 1;
+
+    // Source position
+    const sourceX = W * 0.3 + (time * beta * waveSpeed) % (W * 0.5);
+
+    // Emit waves periodically
+    if (time % emitInterval === 0) {
+      waveHistory.push({ x: sourceX, y: cy, r: 0, born: time });
+    }
+
+    wClear(ctx, W, H);
+
+    // Draw wavefronts
+    waveHistory.forEach(function(w) {
+      w.r += waveSpeed;
+      const age = time - w.born;
+      const alpha = Math.max(0, 0.5 * (1 - w.r / (W * 0.8)));
+      if (alpha <= 0) return;
+      ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    // Remove old waves
+    waveHistory = waveHistory.filter(function(w) { return w.r < W; });
+
+    // Source
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(sourceX, cy, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Velocity arrow
+    if (beta > 0.01) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sourceX + 12, cy); ctx.lineTo(sourceX + 12 + beta * 40, cy); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath();
+      ctx.moveTo(sourceX + 12 + beta * 40, cy);
+      ctx.lineTo(sourceX + 8 + beta * 40, cy - 4);
+      ctx.lineTo(sourceX + 8 + beta * 40, cy + 4);
+      ctx.closePath(); ctx.fill();
+      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('v', sourceX + 12 + beta * 20, cy - 10);
+    }
+
+    // Labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('compressed', W * 0.7, 25);
+    ctx.textAlign = 'right'; ctx.fillText('stretched', W * 0.15, 25);
+
+    // Formula
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    const fAhead = (1 / (1 - beta)).toFixed(2);
+    const fBehind = (1 / (1 + beta)).toFixed(2);
+    ctx.fillText('f(ahead) = f\u2080/(1\u2212\u03B2) = ' + fAhead + 'f\u2080', W * 0.55, H - 40);
+    ctx.fillText('f(behind) = f\u2080/(1+\u03B2) = ' + fBehind + 'f\u2080', W * 0.55, H - 26);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = beta / 0.9;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('v/c = ' + beta.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Doppler: Moving Source', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 21. Doppler Angle
+// =========================================================================
+function initDopplerAngle() {
+  const canvas = document.getElementById('scene-doppler-angle');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let time = 0;
+  const sourceSpeed = 0.5; // fraction of wave speed
+  const observerX = W * 0.5, observerY = H * 0.25;
+  let freqHistory = [];
+
+  function tick() {
+    time += 0.03;
+    wClear(ctx, W, H);
+
+    // Source moves along horizontal line
+    const sourceY = H * 0.55;
+    const travelRange = W * 0.8;
+    const sourceX = W * 0.1 + ((time * 40) % travelRange);
+
+    // Angle from source to observer
+    const dx = observerX - sourceX;
+    const dy = observerY - sourceY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const cosTheta = -dx / dist; // negative because source moves in +x
+    const fReceived = 1 / (1 + sourceSpeed * cosTheta);
+
+    freqHistory.push({ t: time, f: fReceived, sx: sourceX });
+    if (freqHistory.length > 300) freqHistory.shift();
+
+    // Draw scene
+    // Source path
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(W * 0.1, sourceY); ctx.lineTo(W * 0.9, sourceY); ctx.stroke();
+
+    // Observer
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(observerX, observerY, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Observer', observerX, observerY - 10);
+
+    // Line from source to observer
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(observerX, observerY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Source
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(sourceX, sourceY, 7, 0, Math.PI * 2); ctx.fill();
+    // Arrow
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sourceX + 10, sourceY); ctx.lineTo(sourceX + 30, sourceY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.moveTo(sourceX + 30, sourceY);
+    ctx.lineTo(sourceX + 25, sourceY - 4);
+    ctx.lineTo(sourceX + 25, sourceY + 4);
+    ctx.closePath(); ctx.fill();
+
+    // Color code the received frequency
+    const fColor = fReceived > 1.05 ? WCOLORS.blue : (fReceived < 0.95 ? WCOLORS.red : WCOLORS.text);
+    ctx.fillStyle = fColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('f/f\u2080 = ' + fReceived.toFixed(3), W * 0.05, 20);
+
+    // f vs time plot
+    const plotL2 = W * 0.1, plotR2 = W - 15, plotT2 = H * 0.68, plotB2 = H - 10;
+    const pW = plotR2 - plotL2, pH2 = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+
+    // f=f0 reference
+    const f0Y = plotB2 - 0.5 * pH2;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL2, f0Y); ctx.lineTo(plotR2, f0Y); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('f\u2080', plotL2 - 3, f0Y + 3);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('f', plotL2 - 3, plotT2 + 5);
+
+    // Plot frequency history
+    if (freqHistory.length > 1) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath();
+      const tRange = freqHistory[freqHistory.length - 1].t - freqHistory[0].t;
+      for (let i = 0; i < freqHistory.length; i++) {
+        const px = plotL2 + ((freqHistory[i].t - freqHistory[0].t) / Math.max(tRange, 1)) * pW;
+        const py = plotB2 - ((freqHistory[i].f - 0.5) / 1.0) * pH2;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Doppler: Source Passing Observer', W - 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 22. Sonic Boom / Mach Cone
+// =========================================================================
+function initSonicBoomMachCone() {
+  const canvas = document.getElementById('scene-sonic-boom-mach-cone');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let mach = 1.5;
+  let time = 0;
+  let draggingSlider = false;
+  const sliderX = 20, sliderW = W * 0.4, sliderY = H - 16;
+  let waveHistory = [];
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    const newMach = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 2.5;
+    if (Math.abs(newMach - mach) > 0.02) {
+      mach = newMach;
+      waveHistory = [];
+      time = 0;
+    }
+  }
+
+  const cy = H * 0.45;
+  const soundSpeed = 2.0;
+  const emitInterval = 12;
+
+  function tick() {
+    time += 1;
+
+    const sourceSpeed = mach * soundSpeed;
+    const sourceX = (W * 0.15 + time * sourceSpeed) % (W * 1.2) - W * 0.1;
+
+    if (time % emitInterval === 0) {
+      waveHistory.push({ x: sourceX, y: cy, r: 0 });
+    }
+
+    wClear(ctx, W, H);
+
+    // Draw wavefronts
+    waveHistory.forEach(function(w) {
+      w.r += soundSpeed;
+      const alpha = Math.max(0, 0.5 * (1 - w.r / (W * 0.8)));
+      if (alpha <= 0) return;
+      ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    waveHistory = waveHistory.filter(function(w) { return w.r < W * 1.2; });
+
+    // Mach cone (only if supersonic)
+    if (mach > 1.0) {
+      const halfAngle = Math.asin(1 / mach);
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sourceX, cy);
+      ctx.lineTo(sourceX - W * 0.6, cy - Math.tan(halfAngle) * W * 0.6);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sourceX, cy);
+      ctx.lineTo(sourceX - W * 0.6, cy + Math.tan(halfAngle) * W * 0.6);
+      ctx.stroke();
+
+      // Label half-angle
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      const angleStr = (halfAngle * 180 / Math.PI).toFixed(1);
+      ctx.fillText('\u03B8 = arcsin(1/M) = ' + angleStr + '\u00B0', sourceX - 130, cy - 8);
+    } else if (Math.abs(mach - 1) < 0.05) {
+      ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Wavefronts pile up at M = 1!', W / 2, 25);
+    }
+
+    // Source
+    ctx.fillStyle = mach > 1 ? WCOLORS.red : WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(sourceX, cy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    const regime = mach < 1 ? 'Subsonic' : (mach > 1 ? 'Supersonic' : 'Sonic');
+    ctx.fillText(regime, W * 0.6, sliderY + 3);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = (mach - 0.5) / 2.5;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = mach > 1 ? WCOLORS.red : WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('M = ' + mach.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Mach Cone', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 23. Relativistic Doppler Redshift
+// =========================================================================
+function initRelativisticDopplerRedshift() {
+  const canvas = document.getElementById('scene-relativistic-doppler-redshift');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let betaVal = 0.3;
+  let draggingSlider = false;
+  const sliderX = 30, sliderW = W * 0.5, sliderY = H - 16;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+
+  function handleDrag(mx) {
+    betaVal = Math.max(0.01, Math.min(0.95, (mx - sliderX) / sliderW * 0.95));
+    draw();
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const f0_wl = 550; // reference wavelength (green)
+
+    // Approaching: blueshift
+    const fRatioApproach = Math.sqrt((1 + betaVal) / (1 - betaVal));
+    const wlApproach = f0_wl / fRatioApproach;
+    // Receding: redshift
+    const fRatioRecede = Math.sqrt((1 - betaVal) / (1 + betaVal));
+    const wlRecede = f0_wl / fRatioRecede;
+
+    const cy = H * 0.35;
+    const observerX = W * 0.5;
+
+    // Observer
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.beginPath(); ctx.arc(observerX, cy, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Observer', observerX, cy + 22);
+
+    // Approaching source (left)
+    const appX = W * 0.15;
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(appX, cy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(appX + 10, cy); ctx.lineTo(appX + 35, cy); ctx.stroke();
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.moveTo(appX + 35, cy); ctx.lineTo(appX + 30, cy - 4); ctx.lineTo(appX + 30, cy + 4); ctx.closePath(); ctx.fill();
+
+    // Approaching color swatch
+    const swW = 70, swH = 40;
+    ctx.fillStyle = (wlApproach >= 380 && wlApproach <= 780) ? wavelengthToCSS(wlApproach) : '#7c3aed';
+    ctx.fillRect(appX - swW/2, cy - 60, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(appX - swW/2, cy - 60, swW, swH);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Approaching', appX, cy - 65);
+    ctx.fillText(Math.round(wlApproach) + ' nm', appX, cy + 36);
+    ctx.fillText('Blueshift', appX, cy + 48);
+
+    // Receding source (right)
+    const recX = W * 0.85;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(recX, cy, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(recX - 10, cy); ctx.lineTo(recX - 35, cy); ctx.stroke();
+
+    // Receding color swatch
+    ctx.fillStyle = (wlRecede >= 380 && wlRecede <= 780) ? wavelengthToCSS(wlRecede) : '#991b1b';
+    ctx.fillRect(recX - swW/2, cy - 60, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(recX - swW/2, cy - 60, swW, swH);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Receding', recX, cy - 65);
+    ctx.fillText(Math.round(wlRecede) + ' nm', recX, cy + 36);
+    ctx.fillText('Redshift', recX, cy + 48);
+
+    // Rest color swatch (center)
+    ctx.fillStyle = wavelengthToCSS(f0_wl);
+    ctx.fillRect(observerX - swW/2, cy - 60, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(observerX - swW/2, cy - 60, swW, swH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Rest: ' + f0_wl + ' nm', observerX, cy - 65);
+
+    // Formula
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("f' = f\u2080\u221A((1\u2212\u03B2)/(1+\u03B2))  (receding)", W / 2, H * 0.7);
+    ctx.fillText("f' = f\u2080\u221A((1+\u03B2)/(1\u2212\u03B2))  (approaching)", W / 2, H * 0.7 + 18);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    const st = betaVal / 0.95;
+    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('\u03B2 = v/c = ' + betaVal.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Relativistic Doppler Effect', 10, 18);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 24. Doppler Spectroscopy Exoplanet
+// =========================================================================
+function initDopplerSpectroscopyExoplanet() {
+  const canvas = document.getElementById('scene-doppler-spectroscopy-exoplanet');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let time = 0;
+  let planetMassRatio = 0.001; // planet/star mass ratio
+  let period = 4; // orbital period in seconds
+  let draggingSlider = null;
+
+  const sliders = [
+    { y: H - 32, label: 'Planet mass', min: 0.0003, max: 0.01, getVal: function() { return planetMassRatio; }, setVal: function(v) { planetMassRatio = v; } },
+    { y: H - 14, label: 'Period', min: 1, max: 8, getVal: function() { return period; }, setVal: function(v) { period = v; } }
+  ];
+  const sliderX = 20, sliderW = W * 0.3;
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (let i = 0; i < sliders.length; i++) {
+      if (Math.abs(my - sliders[i].y) < 10 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+        draggingSlider = i; handleDrag(mx); break;
+      }
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) { if (draggingSlider === null) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { draggingSlider = null; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = null; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top; for (let i = 0; i < sliders.length; i++) { if (Math.abs(my - sliders[i].y) < 14) { draggingSlider = i; handleDrag(mx); break; } } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (draggingSlider === null) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = null; });
+
+  function handleDrag(mx) {
+    const s = sliders[draggingSlider];
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    s.setVal(s.min + t * (s.max - s.min));
+  }
+
+  const orbitCX = W * 0.22, orbitCY = H * 0.35;
+  const orbitR = Math.min(W * 0.15, H * 0.25);
+
+  function tick() {
+    time += 0.02;
+    wClear(ctx, W, H);
+
+    const omega = 2 * Math.PI / period;
+    const phase = omega * time;
+
+    // Star wobble radius (proportional to planet mass ratio)
+    const starWobble = orbitR * planetMassRatio * 10;
+
+    // Positions
+    const planetX = orbitCX + orbitR * Math.cos(phase);
+    const planetY = orbitCY + orbitR * Math.sin(phase) * 0.4; // perspective
+    const starX = orbitCX - starWobble * Math.cos(phase);
+    const starY = orbitCY - starWobble * Math.sin(phase) * 0.4;
+
+    // Orbit paths
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(orbitCX, orbitCY, orbitR, orbitR * 0.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    if (starWobble > 1) {
+      ctx.strokeStyle = 'rgba(220,38,38,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(orbitCX, orbitCY, starWobble, starWobble * 0.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Center of mass
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.beginPath(); ctx.arc(orbitCX, orbitCY, 2, 0, Math.PI * 2); ctx.fill();
+
+    // Planet
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(planetX, planetY, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Star
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(starX, starY, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1; ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Star', starX, starY + 22);
+    ctx.fillText('Planet', planetX, planetY + 14);
+
+    // Radial velocity (component toward observer = x component)
+    const vRadial = Math.sin(phase) * planetMassRatio * 100; // arbitrary scale
+
+    // Spectral line (shifts back and forth)
+    const specY = H * 0.13, specH = 35;
+    const specL = W * 0.45, specR = W - 15;
+    const specW2 = specR - specL;
+
+    drawSpectrumBar(ctx, specL, specY, specW2, specH);
+
+    // Absorption line that shifts
+    const lineShift = vRadial * specW2 * 0.02;
+    const lineX = specL + specW2 * 0.5 + lineShift;
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(lineX, specY); ctx.lineTo(lineX, specY + specH); ctx.stroke();
+
+    // Reference line
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(specL + specW2 * 0.5, specY - 5); ctx.lineTo(specL + specW2 * 0.5, specY + specH + 5); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Spectral line shifts with star\u2019s radial velocity', (specL + specR) / 2, specY - 5);
+
+    // Radial velocity curve
+    const plotL2 = W * 0.45, plotR2 = W - 15, plotT2 = specY + specH + 15, plotB2 = H - 50;
+    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+
+    const midY2 = (plotT2 + plotB2) / 2;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL2, midY2); ctx.lineTo(plotR2, midY2); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui';
+    ctx.textAlign = 'center'; ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 12);
+    ctx.textAlign = 'right'; ctx.fillText('v_r', plotL2 - 5, plotT2 + 5);
+
+    // Draw sinusoidal RV curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= pW; px++) {
+      const t2 = (px / pW) * period * 2;
+      const v = Math.sin(omega * t2) * planetMassRatio * 100;
+      const py = midY2 - v * pH * 0.03;
+      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    }
+    ctx.stroke();
+
+    // Current position on RV curve
+    const curT = (time % (period * 2));
+    const curPx = plotL2 + (curT / (period * 2)) * pW;
+    const curPy = midY2 - vRadial * pH * 0.03;
+    ctx.beginPath(); ctx.arc(curPx, curPy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.red; ctx.fill();
+
+    // Sliders
+    sliders.forEach(function(s, i) {
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sliderX, s.y); ctx.lineTo(sliderX + sliderW, s.y); ctx.stroke();
+      const t = (s.getVal() - s.min) / (s.max - s.min);
+      ctx.beginPath(); ctx.arc(sliderX + sliderW * t, s.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = WCOLORS.teal; ctx.fill();
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      const valStr = i === 0 ? (s.getVal() * 1000).toFixed(1) + ' M_J' : s.getVal().toFixed(1) + ' s';
+      ctx.fillText(s.label + ': ' + valStr, sliderX + sliderW + 10, s.y + 4);
+    });
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Doppler Spectroscopy: Exoplanet Detection', 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
