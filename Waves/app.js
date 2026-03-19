@@ -2698,9 +2698,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-driven-oscillator" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&omega;<sub>d</sub>: <input type="range" id="driven-wd" min="0.2" max="10" step="0.05" value="3"><span class="scene-val" id="driven-wd-val">3.0</span></label>
+            <label style="position:relative">&omega;<sub>d</sub>: <input type="range" id="driven-wd" min="0.2" max="10" step="0.05" value="3"><span class="scene-val" id="driven-wd-val">3.0</span><span id="driven-res-marker" style="position:absolute;bottom:-2px;pointer-events:none;font-size:8px;color:var(--w-amber,#f59e0b);transform:translateX(-50%)" title="resonance">&blacktriangle;</span></label>
             <label>&omega;<sub>0</sub>: <input type="range" id="driven-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="driven-w0-val">5.0</span></label>
-            <label>&gamma;: <input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="driven-gamma-val">0.8</span></label>
+            <label>&gamma;: <input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.2"><span class="scene-val" id="driven-gamma-val">0.2</span></label>
           </div>
         </div>
       `;

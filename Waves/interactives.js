@@ -1183,13 +1183,25 @@ function initDrivenOscillator() {
   function tick() {
     const wd = parseFloat(wdSlider?.value || 3);
     const w0 = parseFloat(w0Slider?.value || 5);
-    const gamma = parseFloat(gammaSlider?.value || 0.8);
+    const gamma = parseFloat(gammaSlider?.value || 0.2);
     const dt = 0.025;
     t += dt;
 
     document.getElementById('driven-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(2)));
     document.getElementById('driven-w0-val')?.replaceChildren(document.createTextNode(w0.toFixed(1)));
     document.getElementById('driven-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+
+    // Position resonance marker on wd slider
+    const resMarker = document.getElementById('driven-res-marker');
+    if (resMarker && wdSlider) {
+      const min = parseFloat(wdSlider.min), max = parseFloat(wdSlider.max);
+      const pct = ((w0 - min) / (max - min)) * 100;
+      const sliderRect = wdSlider.getBoundingClientRect();
+      const labelRect = wdSlider.parentElement.getBoundingClientRect();
+      const offset = sliderRect.left - labelRect.left + (pct / 100) * sliderRect.width;
+      resMarker.style.left = offset + 'px';
+      resMarker.style.display = (w0 >= min && w0 <= max) ? '' : 'none';
+    }
 
     const { A, B } = getAB(w0, wd, gamma);
     const x = A * Math.cos(wd * t) + B * Math.sin(wd * t);
@@ -1301,7 +1313,8 @@ function initDrivenOscillator() {
     ctx.beginPath(); ctx.moveTo(ampL, ampB); ctx.lineTo(ampR, ampB); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('|x|', ampL - 10, ampT + 3);
-    ctx.fillText('\u03C9_d', ampR, ampB + 12);
+    ctx.fillText('\u03C9', ampR - 4, ampB + 12);
+    ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', ampR + 4, ampB + 14); ctx.restore();
 
     // Sweep amplitude curve
     const wMax = 10;
@@ -1346,7 +1359,8 @@ function initDrivenOscillator() {
     ctx.beginPath(); ctx.moveTo(phL, phB); ctx.lineTo(phR, phB); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Phase', phL - 14, phT + 3);
-    ctx.fillText('\u03C9_d', phR, phB + 12);
+    ctx.fillText('\u03C9', phR - 4, phB + 12);
+    ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', phR + 4, phB + 14); ctx.restore();
 
     // Phase labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
