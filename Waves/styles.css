@@ -1832,6 +1832,10 @@ a {
   display: none;
 }
 
+.hero[hidden] {
+  display: none;
+}
+
 .learn-mode-inner {
   padding: 26px;
   border: 1px solid var(--line);
@@ -1841,27 +1845,49 @@ a {
   background: var(--paper);
 }
 
+.learn-mode-inner .chapter-header h3 {
+  font-size: clamp(1.1rem, 1.8vw, 1.5rem);
+}
+
 .lecture-toc {
-  margin-top: 22px;
-  padding: 18px 20px;
+  margin-top: 16px;
+  padding: 4px 20px 4px;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.6);
   border: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.lecture-toc[open] {
+  padding: 4px 20px 12px;
+}
+
+.lecture-toc .toc-toggle {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink);
+  padding: 10px 0;
+  cursor: pointer;
+  list-style: revert;
 }
 
 .lecture-toc ol {
-  margin: 10px 0 0;
-  padding-left: 20px;
-  color: var(--muted);
+  margin: 8px 0 0;
+  padding-left: 8px;
+  list-style: none;
   line-height: 1.8;
 }
 
 .lecture-toc a {
   color: var(--accent);
   text-decoration: none;
+  font-size: 0.92rem;
+  font-family: var(--display);
 }
 
 .lecture-toc a:hover {
+  color: var(--ink);
   text-decoration: underline;
 }
 
@@ -2201,7 +2227,11 @@ a {
 .antenna-scene,
 .diffraction-scene,
 .quantum-scene,
-.doppler-scene {
+.doppler-scene,
+.shm-spring-scene,
+.shm-oscillator-scene,
+.damped-osc-scene,
+.damping-regimes-scene {
   position: absolute;
   inset: 44px 16px 16px;
 }
@@ -2310,6 +2340,115 @@ a {
 .potential-curve svg {
   width: 100%;
   height: 100%;
+}
+
+/* ==========================================================================
+   Lecture-section scenes — SHM spring, SHM oscillator, damped, regimes
+   ========================================================================== */
+
+.shm-oscillator-scene,
+.damped-osc-scene,
+.damping-regimes-scene {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -- SHM spring (mass attached to spring, vertical) -- */
+
+.shm-ceiling {
+  position: absolute;
+  top: 8%;
+  left: 20%;
+  width: 30%;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: 0.6;
+}
+
+.shm-spring-svg {
+  position: absolute;
+  left: 25%;
+  top: 12%;
+  width: 60px;
+  height: 55%;
+  animation: shmBounce 2.4s ease-in-out infinite;
+}
+
+@keyframes shmBounce {
+  0%, 100% { transform: scaleY(0.78) translateY(-12px); }
+  50% { transform: scaleY(1.22) translateY(12px); }
+}
+
+.shm-eq-line {
+  position: absolute;
+  left: 15%;
+  right: 30%;
+  top: 55%;
+  height: 0;
+  border-top: 2px dashed rgba(255,255,255,0.15);
+}
+
+.shm-arrow-up, .shm-arrow-down {
+  position: absolute;
+  left: 55%;
+  font-size: 12px;
+  opacity: 0.55;
+  color: var(--accent-2);
+}
+.shm-arrow-up { top: 25%; }
+.shm-arrow-down { top: 60%; }
+
+/* -- SHM oscillator (sine wave with phase dot) -- */
+
+.shm-osc-canvas {
+  width: 90%;
+  height: 80%;
+}
+
+.shm-phase-dot {
+  animation: phaseDotMove 2.4s linear infinite;
+}
+
+@keyframes phaseDotMove {
+  0%   { cx: 20;  cy: 70; }
+  12.5%  { cx: 57;  cy: 10; }
+  25%  { cx: 95;  cy: 70; }
+  37.5%  { cx: 132; cy: 130; }
+  50%  { cx: 170; cy: 70; }
+  62.5%  { cx: 207; cy: 10; }
+  75%  { cx: 245; cy: 70; }
+  87.5%  { cx: 282; cy: 130; }
+  100% { cx: 320; cy: 70; }
+}
+
+.shm-sine-path {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 0;
+}
+
+/* -- Damped oscillator -- */
+
+.damped-osc-canvas {
+  width: 90%;
+  height: 80%;
+}
+
+.damped-wave {
+  animation: dampenFadeIn 3s ease-out infinite;
+}
+
+@keyframes dampenFadeIn {
+  0% { stroke-dashoffset: 600; opacity: 0.5; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+
+/* -- Damping regimes comparison -- */
+
+.damping-regimes-canvas {
+  width: 90%;
+  height: 80%;
 }
 
 /* ==========================================================================
