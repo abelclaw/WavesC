@@ -3128,7 +3128,8 @@ function sceneMarkup(type) {
       `;
     case "shm-spring":
       return `
-        <div class="scene-title">The Spring Lab</div>
+        <div class="scene-label">Interactive 1: The Spring Lab</div>
+        <p class="scene-caption">Drag the mass to displace it and let go. Adjust the spring constant and mass to see how the frequency changes &mdash; notice that amplitude does not affect the period.</p>
         <div class="interactive-scene">
           <canvas id="scene-shm-spring" width="550" height="280"></canvas>
           <div class="scene-controls">
@@ -3140,7 +3141,8 @@ function sceneMarkup(type) {
       `;
     case "shm-oscillator":
       return `
-        <div class="scene-title">Phasor &amp; Wave</div>
+        <div class="scene-label">Interactive 2: Phasor &amp; Wave</div>
+        <p class="scene-caption">The rotating phasor on the left projects onto the sine wave on the right. Adjust amplitude, frequency, and phase to see how circular motion creates sinusoidal oscillation.</p>
         <div class="interactive-scene">
           <canvas id="scene-shm-oscillator" width="550" height="260"></canvas>
           <div class="scene-controls">
@@ -3152,19 +3154,21 @@ function sceneMarkup(type) {
       `;
     case "damped-oscillator":
       return `
-        <div class="scene-title">The Damping Explorer</div>
+        <div class="scene-label">Interactive 3: Damping</div>
+        <p class="scene-caption">Drag the mass down and release it. Increase &gamma; to add damping and watch the oscillations die out. At critical damping (&gamma; = 2&omega;<sub>0</sub>) the system returns to rest fastest without oscillating. The roots of the characteristic equation move in the complex plane on the right.</p>
         <div class="interactive-scene">
           <canvas id="scene-damped-oscillator" width="550" height="280"></canvas>
           <div class="scene-controls">
-            <label>&gamma;: <input type="range" id="damp-gamma" min="0.2" max="20" step="0.2" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
-            <label>m: <input type="range" id="damp-mass" min="0.2" max="5" step="0.1" value="1"><span class="scene-val" id="damp-mass-val">1.0</span></label>
+            <label>&gamma;: <input type="range" id="damp-gamma" min="0" max="10" step="0.1" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
+            <label>m: <input type="range" id="damp-mass" min="0.1" max="2" step="0.05" value="1"><span class="scene-val" id="damp-mass-val">1.0</span></label>
             <span class="scene-val" id="damp-omega-val"></span>
           </div>
         </div>
       `;
     case "damping-regimes":
       return `
-        <div class="scene-title">Race to Equilibrium</div>
+        <div class="scene-label">Interactive 4: Race to Equilibrium</div>
+        <p class="scene-caption">Three oscillators with the same &omega;<sub>0</sub> but different damping start from the same displacement. The critically damped one (amber) always returns to equilibrium fastest without overshooting. Adjust &omega;<sub>0</sub> to change the natural frequency.</p>
         <div class="interactive-scene">
           <canvas id="scene-damping-regimes" width="550" height="280"></canvas>
           <div class="scene-controls">

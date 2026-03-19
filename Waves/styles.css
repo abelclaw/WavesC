@@ -4541,6 +4541,24 @@ a {
   50% { transform: scaleY(0.6); opacity: 0.8; }
 }
 
+/* ===== Interactive Scene Labels & Captions ===== */
+.scene-label {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.scene-caption {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+  max-width: 550px;
+}
+
 /* ===== Interactive Scene Controls ===== */
 .interactive-scene {
   display: flex;
