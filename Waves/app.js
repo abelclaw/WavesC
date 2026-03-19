@@ -3280,6 +3280,19 @@ function renderLearnMode(chapter) {
   const prereqsHtml = renderMathPrereqs(chapter);
   const lectureContent = chapter.lectureContent || [];
 
+  const chapterSceneHtml = chapter.scene
+    ? `<div class="chapter-lab panel">
+        <div class="lab-header">
+          <div>
+            <p class="mini-label">Concept Lab</p>
+            <h3>${chapter.conceptTitle}</h3>
+          </div>
+          <p class="lab-caption">${chapter.conceptCaption}</p>
+        </div>
+        <div class="scene">${sceneMarkup(chapter.scene)}</div>
+      </div>`
+    : "";
+
   const tocHtml = lectureContent.length > 1
     ? `
       <nav class="lecture-toc">
@@ -3299,7 +3312,7 @@ function renderLearnMode(chapter) {
         <div class="lecture-section-body">${section.body}</div>
         ${
           section.interactive
-            ? `<div class="scene lecture-scene" data-interactive="${section.interactive}">${sceneMarkup(section.interactive)}</div>`
+            ? `<div class="scene lecture-scene" data-interactive="${section.interactive}">${sceneMarkup(section.interactive) || sceneMarkup(chapter.scene)}</div>`
             : ""
         }
         ${
@@ -3381,6 +3394,7 @@ function renderLearnMode(chapter) {
         <a class="pdf-link" href="${chapter.pdf}" target="_blank" rel="noreferrer">Open chapter PDF</a>
       </div>
       ${prereqsHtml}
+      ${chapterSceneHtml}
       ${tocHtml}
       <div class="lecture-sections">
         ${sectionsHtml}
@@ -3675,6 +3689,11 @@ function attachEvents() {
     const mathLessonButton = event.target.closest("[data-math-lesson]");
     if (mathLessonButton) {
       renderMathLesson(mathLessonButton.dataset.mathLesson);
+      return;
+    }
+    const inlineMathLink = event.target.closest("[data-math]");
+    if (inlineMathLink) {
+      renderMathLesson(inlineMathLink.dataset.math);
       return;
     }
     const closeMathButton = event.target.closest("[data-close-math-lesson]");
