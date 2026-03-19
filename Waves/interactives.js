@@ -1,3 +1,66 @@
+// Helper: render text with subscript notation on canvas.
+// Parses "_x" (single char subscript) and "_{...}" (multi-char subscript)
+// and draws them smaller and lower. Respects ctx.textAlign.
+function fillTextSub(ctx, text, x, y) {
+  var parts = [];
+  var i = 0;
+  while (i < text.length) {
+    if (text[i] === '_' && i + 1 < text.length) {
+      if (text[i + 1] === '{') {
+        var close = text.indexOf('}', i + 2);
+        if (close !== -1) {
+          parts.push({ text: text.substring(i + 2, close), sub: true });
+          i = close + 1;
+          continue;
+        }
+      }
+      // single character subscript
+      parts.push({ text: text[i + 1], sub: true });
+      i += 2;
+      continue;
+    }
+    // accumulate normal text
+    var start = i;
+    while (i < text.length && !(text[i] === '_' && i + 1 < text.length)) i++;
+    parts.push({ text: text.substring(start, i), sub: false });
+  }
+
+  // Measure total width for alignment
+  var savedFont = ctx.font;
+  var fontMatch = savedFont.match(/(\d+(?:\.\d+)?)(px|pt)/);
+  var fontSize = fontMatch ? parseFloat(fontMatch[1]) : 12;
+  var unit = fontMatch ? fontMatch[2] : 'px';
+  var subFontSize = Math.round(fontSize * 0.7);
+  var subFont = savedFont.replace(/(\d+(?:\.\d+)?)(px|pt)/, subFontSize + '$2');
+  var totalWidth = 0;
+  for (var p = 0; p < parts.length; p++) {
+    ctx.font = parts[p].sub ? subFont : savedFont;
+    totalWidth += ctx.measureText(parts[p].text).width;
+  }
+
+  // Determine starting x based on alignment
+  var align = ctx.textAlign || 'start';
+  var drawX = x;
+  if (align === 'center') drawX = x - totalWidth / 2;
+  else if (align === 'right' || align === 'end') drawX = x - totalWidth;
+
+  var savedAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  for (var p = 0; p < parts.length; p++) {
+    if (parts[p].sub) {
+      ctx.font = subFont;
+      ctx.fillText(parts[p].text, drawX, y + fontSize * 0.3);
+      drawX += ctx.measureText(parts[p].text).width;
+    } else {
+      ctx.font = savedFont;
+      ctx.fillText(parts[p].text, drawX, y);
+      drawX += ctx.measureText(parts[p].text).width;
+    }
+  }
+  ctx.font = savedFont;
+  ctx.textAlign = savedAlign;
+}
+
 // Polyfill for CanvasRenderingContext2D.roundRect (Safari < 16, older browsers)
 if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
@@ -1840,71 +1903,108 @@ function initPowerAbsorption() {
   function draw(wd, gamma, A, B) {
     wClear(ctx, W, H);
 
+    // Normalize scale: at resonance (wd=w0), peak absorptive power = w0/(gamma*w0) = 1/gamma.
+    // Use that as reference so the plot fills nicely at resonance.
+    const refP = 1 / gamma;
+    const pScale = (plotH * 0.38) / refP;
+
+    // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
 
-    const tRange = 3 * 2 * Math.PI / wd;
-    const pScale = plotH * 0.3;
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('t \u2192', plotR + 10, midY + 4);
+    ctx.save(); ctx.translate(plotL - 8, midY); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('P(t)', 0, 0); ctx.restore();
+    ctx.textAlign = 'right'; ctx.font = '9px system-ui';
+    ctx.fillText('0', plotL - 4, midY + 3);
 
-    // Power = F * dx/dt = F0 cos(wd t) * wd [-A sin(wd t) + B cos(wd t)]
-    // P_elastic = -F0^2 wd A sin(wd t) cos(wd t) = -(F0^2 wd A / 2) sin(2 wd t)
-    // P_absorptive = F0^2 wd B cos^2(wd t)
+    const tRange = 3 * 2 * Math.PI / wd;
+
+    // Shaded fill under absorptive curve (visually shows it's always >= 0)
+    ctx.beginPath();
+    ctx.moveTo(plotL, midY);
     for (let px = 0; px <= plotW; px++) {
       const tc = (px / plotW) * tRange + t;
-
-      const pElastic = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
-      const pAbsorptive = wd * B * Math.cos(wd * tc) * Math.cos(wd * tc);
-      const pTotal = pElastic + pAbsorptive;
-
-      const pxCoord = plotL + px;
-
-      // Elastic (fills alternating)
-      if (px % 2 === 0) {
-        ctx.fillStyle = pElastic > 0 ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.08)';
-        const barH = pElastic * pScale * 10;
-        ctx.fillRect(pxCoord, midY - Math.max(barH, 0), 2, Math.abs(barH));
-      }
+      const pAb = wd * B * Math.cos(wd * tc) ** 2;
+      ctx.lineTo(plotL + px, midY - pAb * pScale);
     }
+    ctx.lineTo(plotL + plotW, midY);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(239,68,68,0.12)';
+    ctx.fill();
 
-    // Elastic curve
+    // Total power curve (elastic + absorptive) — dashed gray
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+      const pEl = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
+      const pAb = wd * B * Math.cos(wd * tc) ** 2;
+      const py = midY - (pEl + pAb) * pScale;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Elastic curve (blue)
     ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let px = 0; px <= plotW; px++) {
       const tc = (px / plotW) * tRange + t;
       const pEl = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
-      const py = midY - pEl * pScale * 10;
-      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+      px === 0 ? ctx.moveTo(plotL + px, midY - pEl * pScale) : ctx.lineTo(plotL + px, midY - pEl * pScale);
     }
     ctx.stroke();
 
-    // Absorptive curve
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    // Absorptive curve (red, thicker)
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
     ctx.beginPath();
     for (let px = 0; px <= plotW; px++) {
       const tc = (px / plotW) * tRange + t;
       const pAb = wd * B * Math.cos(wd * tc) ** 2;
-      const py = midY - pAb * pScale * 10;
-      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+      px === 0 ? ctx.moveTo(plotL + px, midY - pAb * pScale) : ctx.lineTo(plotL + px, midY - pAb * pScale);
     }
     ctx.stroke();
 
-    // Average power line
+    // Average power dashed line (amber)
     const avgP = wd * B * 0.5;
-    const avgPy = midY - avgP * pScale * 10;
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    const avgPy = midY - avgP * pScale;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
     ctx.beginPath(); ctx.moveTo(plotL, avgPy); ctx.lineTo(plotR, avgPy); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Power P(t) = F \u00B7 dx/dt', plotL + plotW / 2, plotT - 6);
+    // Average power label with physically meaningful value
+    const avgPNorm = avgP / refP;
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('\u27E8P\u27E9 = ' + avgPNorm.toFixed(2) + ' \u00D7 F\u2080\u00B2/(\u03B3m)', plotR, avgPy - 6);
 
+    // Title — context-sensitive
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    const nearRes = Math.abs(wd - w0) < 0.3;
+    const regime = nearRes ? '  \u2190 near resonance: max absorption'
+      : (wd < w0 ? '  (\u03C9_d < \u03C9\u2080)' : '  (\u03C9_d > \u03C9\u2080)');
+    ctx.fillText('Instantaneous power into oscillator' + regime, plotL + plotW / 2, plotT - 6);
+
+    // Legend
     ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillStyle = WCOLORS.blue; ctx.fillText('\u2014 Elastic (averages to 0)', plotL + 5, plotB + 14);
-    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u2014 Absorptive (always \u2265 0)', plotL + plotW * 0.45, plotB + 14);
+    const legY = plotB + 14;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('\u2014 Absorptive (always \u2265 0)', plotL + 5, legY);
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillText('\u2014 Elastic (\u27E8P\u27E9 = 0)', plotL + plotW * 0.38, legY);
     ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
-    ctx.fillText('\u27E8P\u27E9 = ' + (avgP * 10).toFixed(2), plotR, avgPy - 5);
+    ctx.fillText('--- Total', plotR, legY);
+
+    // Resonance callout
+    if (nearRes) {
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u2605 \u03C9_d \u2248 \u03C9\u2080 = ' + w0.toFixed(1) + ' \u2014 maximum power transfer', plotL + plotW / 2, plotT + 14);
+    }
   }
 
   wdSlider?.addEventListener('input', () => { t = 0; });
