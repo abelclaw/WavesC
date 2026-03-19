@@ -65,7 +65,7 @@ function initSceneInteractives() {
   initFourierOpticsDemo();
   // Chapter 20 - Quantum Mechanics
   initPhotoelectricEffectDemo();
-  initDoubleSiltPhotonBuildup();
+  initDoubleSlitPhotonBuildup();
   initHydrogenEnergyLevels();
   initQuantumWavepacketDispersion();
   // Chapter 21 - Doppler Effect
@@ -12421,7 +12421,7 @@ function initPhotoelectricEffectDemo() {
 // =========================================================================
 // 17. Double Slit Photon Buildup
 // =========================================================================
-function initDoubleSiltPhotonBuildup() {
+function initDoubleSlitPhotonBuildup() {
   const canvas = document.getElementById('scene-double-slit-photon-buildup');
   if (!canvas) return;
   const setup = wSetupCanvas(canvas);

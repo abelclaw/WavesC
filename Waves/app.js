@@ -3198,6 +3198,15 @@ function sceneMarkup(type) {
           </div>
         </div>
       `;
+    case "euler-circle":
+      return `
+        <div class="scene-label">Euler&rsquo;s Formula</div>
+        <p class="scene-caption">e<sup>i&theta;</sup> = cos&theta; + i sin&theta;. The rotating phasor on the unit circle projects onto cosine (real) and sine (imaginary).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-euler-circle" width="550" height="280"></canvas>
+        </div>
+      `;
+
     // =====================================================================
     // CHAPTER 3: COUPLED OSCILLATORS
     // =====================================================================
