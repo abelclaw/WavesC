@@ -8,6 +8,7 @@ function initSceneInteractives() {
   initSHMOscillator();
   initDampedOscillator();
   initDampingRegimes();
+  initEulerCircle();
 }
 
 // Color palette matching WavesC theme
@@ -865,5 +866,273 @@ function initDampingRegimes() {
   });
   omega0Slider?.addEventListener('input', () => { t = 0; running = false; done = false; if (goBtn) goBtn.textContent = '\u25B6 Go'; });
   draw();
+  tick();
+}
+
+// =========================================================================
+// EULER CIRCLE — unit circle phasor with real/imaginary projections
+// =========================================================================
+function initEulerCircle() {
+  const canvas = document.getElementById('scene-euler-circle');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let omega = 1.5;   // angular frequency
+  let t = 0;
+  let dragging = false;
+  let trail = [];
+  const maxTrail = 200;
+
+  // Layout
+  const cx = W * 0.3;          // circle center x
+  const cy = H * 0.5;          // circle center y
+  const R = Math.min(W * 0.22, H * 0.38);  // circle radius
+
+  // Real-part plot on the right
+  const plotL = W * 0.58, plotR = W - 15;
+  const plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL;
+  const plotH = plotB - plotT;
+  const plotMidY = (plotT + plotB) / 2;
+
+  // Mouse: drag angle
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const dx = mx - cx, dy = my - cy;
+    if (Math.sqrt(dx * dx + dy * dy) < R + 30) {
+      dragging = true;
+    }
+  });
+  canvas.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    t = Math.atan2(-(my - cy), mx - cx) / omega;
+  });
+  canvas.addEventListener('mouseup', () => { dragging = false; });
+  canvas.addEventListener('mouseleave', () => { dragging = false; });
+
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const dx = touch.clientX - rect.left - cx;
+    const dy = touch.clientY - rect.top - cy;
+    if (Math.sqrt(dx * dx + dy * dy) < R + 40) dragging = true;
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const my = e.touches[0].clientY - rect.top;
+    const mx = e.touches[0].clientX - rect.left;
+    t = Math.atan2(-(my - cy), mx - cx) / omega;
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = false; });
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const theta = omega * t;
+    const px = cx + R * Math.cos(theta);
+    const py = cy - R * Math.sin(theta);  // canvas y is flipped
+
+    // --- Unit circle ---
+    // Axes
+    ctx.strokeStyle = WCOLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - R - 20, cy); ctx.lineTo(cx + R + 20, cy);
+    ctx.moveTo(cx, cy - R - 20); ctx.lineTo(cx, cy + R + 20);
+    ctx.stroke();
+
+    // Circle
+    ctx.strokeStyle = 'rgba(31,42,46,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Axis labels
+    ctx.font = '12px Georgia, serif';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText('Re', cx + R + 16, cy + 14);
+    ctx.fillText('Im', cx + 4, cy - R - 10);
+
+    // Angle arc
+    if (Math.abs(theta % (2 * Math.PI)) > 0.05) {
+      ctx.strokeStyle = WCOLORS.amber;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      const arcR = R * 0.25;
+      // Draw arc from 0 to theta (canvas convention: angles go clockwise)
+      if (theta >= 0) {
+        ctx.arc(cx, cy, arcR, 0, -theta, true);
+      } else {
+        ctx.arc(cx, cy, arcR, 0, -theta, false);
+      }
+      ctx.stroke();
+      // Theta label
+      const labelAngle = -theta / 2;
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.font = '13px Georgia, serif';
+      ctx.fillText('\u03B8', cx + arcR * 1.4 * Math.cos(labelAngle), cy + arcR * 1.4 * Math.sin(labelAngle) + 4);
+    }
+
+    // Projection lines (dashed)
+    ctx.setLineDash([4, 4]);
+    // cos projection (horizontal)
+    ctx.strokeStyle = WCOLORS.teal;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px, py); ctx.lineTo(px, cy);
+    ctx.stroke();
+    // sin projection (vertical)
+    ctx.strokeStyle = WCOLORS.red;
+    ctx.beginPath();
+    ctx.moveTo(px, py); ctx.lineTo(cx, py);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // cos component on real axis
+    ctx.strokeStyle = WCOLORS.teal;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(px, cy);
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.font = '11px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('cos \u03B8', (cx + px) / 2, cy + 16);
+
+    // sin component on imaginary axis
+    ctx.strokeStyle = WCOLORS.red;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx, py);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('sin \u03B8', cx - 26, (cy + py) / 2 + 4);
+
+    // Phasor arrow
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(px, py);
+    ctx.stroke();
+    // Arrowhead
+    const aLen = 8, aAngle = 0.35;
+    const pAngle = Math.atan2(py - cy, px - cx);
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - aLen * Math.cos(pAngle - aAngle), py - aLen * Math.sin(pAngle - aAngle));
+    ctx.lineTo(px - aLen * Math.cos(pAngle + aAngle), py - aLen * Math.sin(pAngle + aAngle));
+    ctx.closePath();
+    ctx.fill();
+
+    // Dot at phasor tip
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // e^{i theta} label near dot
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.font = '13px Georgia, serif';
+    ctx.textAlign = 'left';
+    const lx = px + 10, ly = py - 10;
+    ctx.fillText('e', lx, ly);
+    ctx.font = '10px Georgia, serif';
+    ctx.fillText('i\u03B8', lx + 8, ly - 6);
+
+    // --- Right plot: Re(e^{i omega t}) = cos(omega t) vs t ---
+    // Record trail
+    trail.push({ time: t, val: Math.cos(theta) });
+    if (trail.length > maxTrail) trail.shift();
+
+    // Plot axes
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY);
+    ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.font = '11px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('t', plotR - 2, plotMidY + 16);
+    ctx.textAlign = 'right';
+    ctx.fillText('cos(\u03B8)', plotL - 4, plotT + 4);
+
+    // Guide lines at +1 and -1
+    ctx.strokeStyle = WCOLORS.grid;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotT + 10); ctx.lineTo(plotR, plotT + 10);
+    ctx.moveTo(plotL, plotB - 10); ctx.lineTo(plotR, plotB - 10);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Plot the trail
+    if (trail.length > 1) {
+      const tMin = trail[0].time;
+      const tMax = trail[trail.length - 1].time;
+      const tRange = Math.max(tMax - tMin, 0.01);
+
+      ctx.strokeStyle = WCOLORS.teal;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < trail.length; i++) {
+        const sx = plotL + ((trail[i].time - tMin) / tRange) * plotW;
+        const sy = plotMidY - trail[i].val * (plotH / 2 - 10);
+        if (i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+
+      // Current point
+      const lastPt = trail[trail.length - 1];
+      const curX = plotR;
+      const curY = plotMidY - lastPt.val * (plotH / 2 - 10);
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath();
+      ctx.arc(curX, curY, 4, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Connecting line from circle to plot
+      ctx.strokeStyle = 'rgba(15,118,110,0.2)';
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath();
+      ctx.moveTo(px, cy); ctx.lineTo(curX, curY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Title
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.font = '13px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Euler\'s formula: e\u2071\u1D48 = cos \u03B8 + i sin \u03B8', cx, 16);
+  }
+
+  function tick() {
+    if (!dragging) {
+      t += 0.02;
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
   tick();
 }

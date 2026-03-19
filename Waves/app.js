@@ -3283,7 +3283,7 @@ function renderMathLesson(lessonId) {
             <div class="math-lesson-section">
               <h4>${section.heading}</h4>
               <p>${section.body}</p>
-              ${section.interactive ? `<div class="scene math-lesson-interactive" data-interactive="${section.interactive}"></div>` : ""}
+              ${section.interactive ? `<div class="scene math-lesson-interactive" data-interactive="${section.interactive}"><canvas id="scene-${section.interactive}" style="width:100%;height:280px;"></canvas></div>` : ""}
             </div>
           `
           )
@@ -3317,6 +3317,7 @@ function renderMathLesson(lessonId) {
     </div>
   `;
   setTimeout(renderMath, 0);
+  setTimeout(initSceneInteractives, 0);
 }
 
 function closeMathLesson() {
