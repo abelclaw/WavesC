@@ -2235,11 +2235,22 @@ function initCoupledOscillators() {
       ctx.stroke();
     }
 
-    // Legend
+    // Legend box
+    const legX = plotR - 90, legY = plotT + 2, legW2 = 86, legH2 = 30;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(legX, legY, legW2, legH2);
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.strokeRect(legX, legY, legW2, legH2);
+    // x1 line sample + label
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(legX + 6, legY + 10); ctx.lineTo(legX + 22, legY + 10); ctx.stroke();
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('x₁(t)', plotR - 80, plotT + 12);
+    ctx.fillText('x\u2081', legX + 26, legY + 14);
+    // x2 line sample + label
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(legX + 48, legY + 10); ctx.lineTo(legX + 64, legY + 10); ctx.stroke();
     ctx.fillStyle = WCOLORS.blue;
-    ctx.fillText('x₂(t)', plotR - 40, plotT + 12);
+    ctx.fillText('x\u2082', legX + 68, legY + 14);
   }
 
   tick();
@@ -2341,8 +2352,14 @@ function initNormalModes() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(label, xOff + panelW / 2, 28);
 
+    // Equilibrium reference lines (dashed vertical at wall positions)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.7; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(eq1, y - bh / 2 - 10); ctx.lineTo(eq1, y + bh / 2 + 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eq2, y - bh / 2 - 10); ctx.lineTo(eq2, y + bh / 2 + 10); ctx.stroke();
+    ctx.setLineDash([]);
+
     // Frequency
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui, sans-serif';
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 13px system-ui, sans-serif';
     ctx.fillText(omega, xOff + panelW / 2, H - 14);
   }
 
@@ -2468,12 +2485,22 @@ function initBeats() {
       ctx.beginPath(); ctx.moveTo(markerX, pTop); ctx.lineTo(markerX, pTop + panelH); ctx.stroke();
     }
 
+    // Header
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Energy Transfer via Beats', W / 2, 14);
+
+    // Panel labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('x₁', plotL - 40, 30 + panelH / 2 + 4);
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillText('x₂', plotL - 40, 30 + panelH + 15 + panelH / 2 + 4);
+
     // Labels
     const beatFreq = omegaBeat / Math.PI;
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, 18);
-    ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right';
-    ctx.fillText('f_beat = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, 18);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 6);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('f_beat = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
 
     requestAnimationFrame(tick);
   }
@@ -2547,18 +2574,26 @@ function initEigenvalueSolver() {
     const plotCx = W - 130, plotCy = H / 2 + 10;
     const plotR = 80;
 
+    // Grid lines
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    for (let g = -plotR; g <= plotR; g += plotR / 2) {
+      if (Math.abs(g) < 1) continue;
+      ctx.beginPath(); ctx.moveTo(plotCx + g, plotCy - plotR); ctx.lineTo(plotCx + g, plotCy + plotR); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(plotCx - plotR, plotCy + g); ctx.lineTo(plotCx + plotR, plotCy + g); ctx.stroke();
+    }
+
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotCx - plotR - 10, plotCy); ctx.lineTo(plotCx + plotR + 10, plotCy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotCx, plotCy - plotR - 10); ctx.lineTo(plotCx, plotCy + plotR + 10); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('x₁', plotCx + plotR + 15, plotCy + 4);
-    ctx.fillText('x₂', plotCx, plotCy - plotR - 15);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x₁', plotCx + plotR + 18, plotCy + 4);
+    ctx.fillText('x₂', plotCx, plotCy - plotR - 16);
 
     // Eigenvector 1 (symmetric): (1, 1) / sqrt(2)
     const ev1x = plotR * 0.7, ev1y = -plotR * 0.7;
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 3.5;
     ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev1x, plotCy + ev1y); ctx.stroke();
     // Arrowhead
     drawArrowHead(ctx, plotCx + ev1x, plotCy + ev1y, Math.atan2(ev1y, ev1x), WCOLORS.teal);
@@ -2567,7 +2602,7 @@ function initEigenvalueSolver() {
 
     // Eigenvector 2 (antisymmetric): (1, -1) / sqrt(2)
     const ev2x = plotR * 0.7, ev2y = plotR * 0.7;
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 3.5;
     ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev2x, plotCy + ev2y); ctx.stroke();
     drawArrowHead(ctx, plotCx + ev2x, plotCy + ev2y, Math.atan2(ev2y, ev2x), WCOLORS.red);
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif';
@@ -3196,7 +3231,7 @@ function initFourierDecomposition() {
       if (!hasContrib) continue;
 
       ctx.strokeStyle = harmColors[(n - 1) % harmColors.length];
-      ctx.lineWidth = 0.8; ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 1.0; ctx.globalAlpha = 0.4;
       ctx.beginPath();
       for (let px = 0; px <= plotW; px += 2) {
         const xVal = xMin + (px / plotW) * xRange;
@@ -3225,7 +3260,7 @@ function initFourierDecomposition() {
     // Title & info
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
     const typeName = waveType.charAt(0).toUpperCase() + waveType.slice(1);
-    ctx.fillText(typeName + ' wave — ' + nTerms + ' term' + (nTerms > 1 ? 's' : ''), W / 2, 18);
+    ctx.fillText('Fourier Series Approximation: ' + typeName + ' wave — ' + nTerms + ' term' + (nTerms > 1 ? 's' : ''), W / 2, 18);
 
     // Legend
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
@@ -3332,6 +3367,14 @@ function initFourierSawtooth() {
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Coefficients b_n', (barL + barR) / 2, plotT - 8);
+
+    // y-axis label
+    ctx.save();
+    ctx.translate(barL - 8, plotMidY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('b_n', 0, 0);
+    ctx.restore();
 
     const maxCoeff = 2 / Math.PI; // b_1
     for (let n = 1; n <= maxBars; n++) {
@@ -3458,6 +3501,19 @@ function initPluckedString() {
     ctx.beginPath(); ctx.moveTo(strL, modeMidY); ctx.lineTo(strR, modeMidY); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(strL, modesT); ctx.lineTo(strL, modesB); ctx.stroke();
 
+    // Vertical gridlines at x/L = 0.25, 0.5, 0.75
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    for (const frac of [0.25, 0.5, 0.75]) {
+      const gx = strL + frac * strW;
+      ctx.beginPath(); ctx.moveTo(gx, modesT); ctx.lineTo(gx, modesB); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // Gridline labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('0.25', strL + 0.25 * strW, modesB + 10);
+    ctx.fillText('0.5', strL + 0.5 * strW, modesB + 10);
+    ctx.fillText('0.75', strL + 0.75 * strW, modesB + 10);
+
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Individual mode contributions', (strL + strR) / 2, modesT - 5);
 
@@ -3479,11 +3535,11 @@ function initPluckedString() {
       ctx.globalAlpha = 1.0;
     }
 
-    // Legend for modes
-    ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    // Legend for modes with amplitude labels
+    ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
     for (let n = 0; n < showModes; n++) {
       ctx.fillStyle = modeColors[n % modeColors.length];
-      ctx.fillText('n=' + (n + 1), strR + 5, modesT + 10 + n * 13);
+      ctx.fillText('n=' + (n + 1) + ' A=' + Math.abs(coeffs[n]).toFixed(2), strR + 5, modesT + 10 + n * 13);
     }
 
     // Title
@@ -4466,7 +4522,7 @@ function initBoundaryConditionsDemo() {
     // Boundary indicators
     if (bcType === 0 || bcType === 1) {
       ctx.fillStyle = WCOLORS.axis;
-      ctx.fillRect(stringL - 6, midY - 30, 5, 60);
+      ctx.fillRect(stringL - 8, midY - 35, 7, 70);
       for (let i = 0; i < 4; i++) {
         ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
         ctx.beginPath();
@@ -4477,7 +4533,7 @@ function initBoundaryConditionsDemo() {
     }
     if (bcType === 0) {
       ctx.fillStyle = WCOLORS.axis;
-      ctx.fillRect(stringR + 1, midY - 30, 5, 60);
+      ctx.fillRect(stringR + 1, midY - 35, 7, 70);
       for (let i = 0; i < 4; i++) {
         ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
         ctx.beginPath();
@@ -4491,7 +4547,7 @@ function initBoundaryConditionsDemo() {
       const freeY = midY - modeShape(1.0, n, bcType) * cosT * maxAmp;
       ctx.beginPath(); ctx.moveTo(stringR + 2, midY - 50); ctx.lineTo(stringR + 2, midY + 50); ctx.stroke();
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(stringR + 2, freeY, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(stringR + 2, freeY, 8, 0, Math.PI * 2); ctx.stroke();
     }
     if (bcType === 2) {
       const leftFreeY = midY - modeShape(0, n, bcType) * cosT * maxAmp;
@@ -4499,9 +4555,9 @@ function initBoundaryConditionsDemo() {
       ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(stringL - 2, midY - 50); ctx.lineTo(stringL - 2, midY + 50); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(stringR + 2, midY - 50); ctx.lineTo(stringR + 2, midY + 50); ctx.stroke();
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(stringL - 2, leftFreeY, 5, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(stringR + 2, rightFreeY, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(stringL - 2, leftFreeY, 8, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(stringR + 2, rightFreeY, 8, 0, Math.PI * 2); ctx.stroke();
     }
 
     // Equilibrium line
@@ -4566,6 +4622,10 @@ function initBoundaryConditionsDemo() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(bcLabels[bcType] + '  |  Mode n = ' + n, W / 2, 18);
 
+    // Prominent mode number label
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('n = ' + n, W - 20, 20);
+
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
     ctx.fillText(modeFreqLabel(n, bcType), W / 2, H - 8);
 
@@ -4629,7 +4689,7 @@ function initStandingWaveModes() {
       ctx.fillText(cfg.label, labelW - 5, midY + 4);
 
       if (r > 0) {
-        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+        ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(0, rowTop); ctx.lineTo(W, rowTop); ctx.stroke();
       }
 
@@ -4692,6 +4752,10 @@ function initStandingWaveModes() {
           ctx.beginPath(); ctx.arc(modeL, midY - modeShape(0, n, cfg.bc) * cosT * amp, 3, 0, Math.PI * 2); ctx.stroke();
           ctx.beginPath(); ctx.arc(modeR, midY - modeShape(1, n, cfg.bc) * cosT * amp, 3, 0, Math.PI * 2); ctx.stroke();
         }
+
+        // Mode number label
+        ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('n=' + n, modeL + mW / 2, midY - amp - 6);
 
         // Frequency label
         ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
@@ -4845,9 +4909,9 @@ function initHelmholtzResonator() {
     ctx.fillRect(springX - 20, springBot2, 40, 4);
 
     // Labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Neck air = mass', springX, massBlockY - 20);
-    ctx.fillText('Body air = spring', springX, springBot2 + 18);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Neck air → mass m', springX, massBlockY - 22);
+    ctx.fillText('Body air → spring k', springX, springBot2 + 20);
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('A (neck area)', bottleX + neckW / 2 + 5, neckTop + neckH / 2);
@@ -4857,8 +4921,11 @@ function initHelmholtzResonator() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Helmholtz Resonator', W / 2, 16);
 
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
-    ctx.fillText('f = (c\u209B/2\u03C0)\u221A(A/VL) = ' + fRes.toFixed(1) + ' Hz', W / 2, H - 8);
+    // Resonant frequency formula (prominent)
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 13px system-ui';
+    ctx.fillText('f\u2080 = (c\u209B / 2\u03C0) \u00B7 \u221A(A / VL)', W / 2, H - 22);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 14px system-ui';
+    ctx.fillText('= ' + fRes.toFixed(1) + ' Hz', W / 2, H - 6);
 
     requestAnimationFrame(tick);
   }
@@ -5068,7 +5135,8 @@ function initConsonanceDissonance() {
       ctx.strokeStyle = matched ? '#16a34a' : (nearBeat ? WCOLORS.red : WCOLORS.teal);
       ctx.lineWidth = matched ? 3 : 2;
       ctx.globalAlpha = matched ? 1 : 0.7;
-      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, specTop + 10); ctx.stroke();
+      const barTopN = specBot - (specH - 10) / n;
+      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, barTopN); ctx.stroke();
       ctx.globalAlpha = 1;
 
       ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -5090,11 +5158,12 @@ function initConsonanceDissonance() {
         if (diff < tolerance && diff >= 0.005) { nearBeat = true; }
       }
 
+      const barTop2 = specBot - (specH - 10) / m;
       ctx.strokeStyle = matched ? '#16a34a' : (nearBeat ? WCOLORS.red : WCOLORS.amber);
       ctx.lineWidth = matched ? 3 : 1.5;
       ctx.globalAlpha = matched ? 1 : 0.6;
       ctx.setLineDash(matched ? [] : [3, 2]);
-      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, specTop + 25); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, barTop2); ctx.stroke();
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
 
@@ -5146,9 +5215,11 @@ function initConsonanceDissonance() {
     }
 
     // Legend
-    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillStyle = '#16a34a'; ctx.fillText('\u25CF aligned', specL, specTop + 6);
-    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF near-beat', specL + 55, specTop + 6);
+    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('\u2502 f\u2081 harmonics', specL, specTop + 6);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2502 f\u2082 harmonics', specL + 72, specTop + 6);
+    ctx.fillStyle = '#16a34a'; ctx.fillText('\u25CF aligned', specL + 150, specTop + 6);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF near-beat', specL + 195, specTop + 6);
 
     requestAnimationFrame(tick);
   }
@@ -5429,7 +5500,7 @@ function initCircleOfFifths() {
       const y = cy + R * Math.sin(a);
 
       const isHL = (i === highlighted);
-      const radius = isHL ? 16 : 12;
+      const radius = isHL ? 20 : 15;
       ctx.fillStyle = isHL ? WCOLORS.teal : '#fff';
       ctx.strokeStyle = isHL ? WCOLORS.teal : WCOLORS.axis;
       ctx.lineWidth = isHL ? 2.5 : 1.5;
@@ -5447,11 +5518,11 @@ function initCircleOfFifths() {
       const overshootCents = 12 * 1200 * Math.log2(3 / 2) - 7 * 1200;
       const overshootAngle = -Math.PI / 2 + overshootCents / 1200 * (2 * Math.PI);
 
-      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 4;
       const startA = -Math.PI / 2;
       const endA = overshootAngle;
       ctx.beginPath();
-      ctx.arc(cx, cy, R + 20, Math.min(startA, endA), Math.max(startA, endA));
+      ctx.arc(cx, cy, R + 24, Math.min(startA, endA), Math.max(startA, endA));
       ctx.stroke();
 
       ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
@@ -8349,13 +8420,20 @@ function initStringJunction() {
 
     // Labels
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('String 1 (Z\u2081)', stringL, 25);
+    ctx.fillText('String 1', stringL, 25);
     ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'right';
-    ctx.fillText('String 2 (Z\u2082)', stringR, 25);
+    ctx.fillText('String 2', stringR, 25);
 
-    // Coefficients
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('r = ' + r.toFixed(2) + '    t = ' + tr.toFixed(2), W / 2, H - 12);
+    // Z labels on each side of junction
+    ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('Z\u2081', jx - 40, midY + 40);
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillText('Z\u2082', jx + 40, midY + 40);
+
+    // Coefficients with formulas
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('r = (Z\u2082\u2013Z\u2081)/(Z\u2082+Z\u2081) = ' + r.toFixed(3) + '     t = 2Z\u2081/(Z\u2082+Z\u2081) = ' + tr.toFixed(3), W / 2, H - 12);
     if (r < 0) {
       ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui';
       ctx.fillText('(phase flip on reflection)', W / 2, H - 26);
@@ -8468,12 +8546,12 @@ function initReflectionTransmissionPulse() {
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
 
-    // Legend
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    // Color legend
+    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
     const legY = H - 30;
-    ctx.fillStyle = WCOLORS.teal; ctx.fillRect(20, legY, 12, 3); ctx.fillText('Incident', 36, legY + 5);
-    ctx.fillStyle = WCOLORS.amber; ctx.fillRect(100, legY, 12, 3); ctx.fillText('Reflected (r=' + r.toFixed(2) + ')', 116, legY + 5);
-    ctx.fillStyle = WCOLORS.blue; ctx.fillRect(260, legY, 12, 3); ctx.fillText('Transmitted (t=' + tr.toFixed(2) + ')', 276, legY + 5);
+    ctx.fillStyle = WCOLORS.teal; ctx.fillRect(20, legY - 2, 18, 5); ctx.fillText('Incident', 42, legY + 5);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillRect(110, legY - 2, 18, 5); ctx.fillText('Reflected (r=' + r.toFixed(2) + ')', 132, legY + 5);
+    ctx.fillStyle = WCOLORS.blue; ctx.fillRect(290, legY - 2, 18, 5); ctx.fillText('Transmitted (t=' + tr.toFixed(2) + ')', 312, legY + 5);
 
     // Reset
     if (t > hitTime + (stringR - jx) / (speed / Math.sqrt(zRatio)) + 2) t = 0;
@@ -8800,12 +8878,18 @@ function initComplexImpedance() {
     ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(2), resX, plotB + 14);
     ctx.fillText('Im(Z) = 0', resX, plotT - 5);
 
-    // Labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9', plotL + plotW / 2, plotB + 30);
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9 (angular frequency)', plotL + plotW / 2, plotB + 30);
+    ctx.save(); ctx.translate(plotL - 42, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Z (impedance)', 0, 0); ctx.restore();
+
+    // Resonance annotation
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u2190 Resonance: Z purely real \u2192', resX, plotT - 16);
 
     // Legend
-    ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.teal;
     ctx.fillRect(plotR - 120, plotT + 5, 15, 3);
     ctx.fillText('Re(Z) = b', plotR - 100, plotT + 10);
@@ -8896,7 +8980,7 @@ function initImpedanceMaterials() {
       ctx.globalAlpha = 1.0;
 
       // Label
-      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'right';
       ctx.fillText(mat.name, barL - 5, y + barH / 2 + 4);
 
       // Value
@@ -8911,12 +8995,12 @@ function initImpedanceMaterials() {
       const R = Math.pow((Z2 - Z1) / (Z2 + Z1), 2);
       const T = 1 - R;
 
-      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(materials[hovered].name + ' \u2192 ' + materials[hovered2].name +
-        ':  R = ' + (R * 100).toFixed(1) + '%   T = ' + (T * 100).toFixed(1) + '%', W / 2, H - 10);
+        ':  R (power) = ' + (R * 100).toFixed(1) + '%   T (power) = ' + (T * 100).toFixed(1) + '%', W / 2, H - 10);
     } else {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('Hover over two materials to see reflection coefficient', W / 2, H - 10);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Hover over two materials to see power reflectance R = [(Z\u2082\u2013Z\u2081)/(Z\u2082+Z\u2081)]\u00B2', W / 2, H - 10);
     }
   }
 
@@ -9175,13 +9259,13 @@ function initDecibelScale() {
   }
 
   const sounds = [
-    { name: 'Breathing', dB: 10, color: WCOLORS.teal },
-    { name: 'Whisper', dB: 30, color: WCOLORS.teal },
-    { name: 'Conversation', dB: 60, color: WCOLORS.amber },
-    { name: 'Traffic', dB: 80, color: WCOLORS.amber },
-    { name: 'Factory', dB: 90, color: WCOLORS.orange },
-    { name: 'Concert', dB: 110, color: WCOLORS.red },
-    { name: 'Jet engine', dB: 140, color: WCOLORS.red },
+    { name: 'Breathing', desc: 'barely audible', dB: 10, color: WCOLORS.teal },
+    { name: 'Whisper', desc: 'very quiet', dB: 30, color: WCOLORS.teal },
+    { name: 'Conversation', desc: 'moderate', dB: 60, color: WCOLORS.amber },
+    { name: 'Traffic', desc: 'loud', dB: 80, color: WCOLORS.amber },
+    { name: 'Factory', desc: 'very loud', dB: 90, color: WCOLORS.orange },
+    { name: 'Concert', desc: 'risk of damage', dB: 110, color: WCOLORS.red },
+    { name: 'Jet engine', desc: 'extreme pain', dB: 140, color: WCOLORS.red },
   ];
 
   function draw() {
@@ -9236,8 +9320,10 @@ function initDecibelScale() {
       ctx.fillStyle = s.color;
       ctx.beginPath(); ctx.arc(scaleR + 15, y, 5, 0, Math.PI * 2); ctx.fill();
 
-      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(s.name + ' (' + adjDb.toFixed(0) + ' dB)', scaleR + 25, y + 4);
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(s.name + ' (' + adjDb.toFixed(0) + ' dB)', scaleR + 25, y + 1);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+      ctx.fillText(s.desc, scaleR + 25, y + 12);
     });
 
     // Right side: intensity info
@@ -9551,8 +9637,8 @@ function initGaussianWavepacket() {
 
     // Titles
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('x-space: Gaussian wavepacket', lL + lW / 2, 18);
-    ctx.fillText('k-space: Fourier transform', rL + rW / 2, 18);
+    ctx.fillText('Position Space (x)', lL + lW / 2, 18);
+    ctx.fillText('Momentum Space (k)', rL + rW / 2, 18);
 
     // Left axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
@@ -9635,10 +9721,12 @@ function initGaussianWavepacket() {
     ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui';
     ctx.fillText('\u0394k = ' + sigmaK.toFixed(2), k0px, rB - rH * 0.85 * 0.6 + 14);
 
-    // Uncertainty relation
+    // Uncertainty relation - prominent display
     const product = sigmaX * sigmaK;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u0394x \u00B7 \u0394k = ' + product.toFixed(2) + ' \u2265 \u00BD', W / 2, H - 8);
+    ctx.fillStyle = 'rgba(15,118,110,0.12)';
+    ctx.fillRect(W / 2 - 110, H - 24, 220, 20);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u0394x \u00B7 \u0394k = ' + product.toFixed(2) + '  \u2265  \u00BD', W / 2, H - 8);
 
     // Axis labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -9851,6 +9939,18 @@ function initDispersionRelations() {
         ctx.lineTo(plotL + plotW, plotB - Math.min(vpEndOmega / omegaMax, 1) * plotH);
         ctx.stroke();
         ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+        // Draw vg tangent line at k0
+        ctx.strokeStyle = rel.color; ctx.lineWidth = 1.2; ctx.setLineDash([6, 3]);
+        ctx.globalAlpha = 0.7;
+        const tangentSpan = 1.5;
+        const tgK1 = Math.max(0, k0 - tangentSpan), tgK2 = Math.min(kMax, k0 + tangentSpan);
+        const tgOm1 = omega0 + vg * (tgK1 - k0), tgOm2 = omega0 + vg * (tgK2 - k0);
+        const tgPx1 = plotL + (tgK1 / kMax) * plotW, tgPy1 = plotB - (tgOm1 / omegaMax) * plotH;
+        const tgPx2 = plotL + (tgK2 / kMax) * plotW, tgPy2 = plotB - (tgOm2 / omegaMax) * plotH;
+        ctx.beginPath(); ctx.moveTo(tgPx1, Math.max(plotT, Math.min(plotB, tgPy1)));
+        ctx.lineTo(tgPx2, Math.max(plotT, Math.min(plotB, tgPy2))); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
       }
 
       // Legend
@@ -9876,6 +9976,17 @@ function initDispersionRelations() {
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('k\u2080', k0x, plotB + 14);
+
+    // Line type legend
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.8; ctx.setLineDash([2, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL + 5, plotT + 10); ctx.lineTo(plotL + 20, plotT + 10); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('vp = \u03C9/k (slope from origin)', plotL + 24, plotT + 13);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.2; ctx.setLineDash([6, 3]);
+    ctx.beginPath(); ctx.moveTo(plotL + 5, plotT + 22); ctx.lineTo(plotL + 20, plotT + 22); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('vg = d\u03C9/dk (tangent)', plotL + 24, plotT + 25);
   }
 
   k0Slider?.addEventListener('input', draw);
@@ -10087,24 +10198,32 @@ function initGroupVelocityDemo() {
     }
     ctx.stroke(); ctx.setLineDash([]);
 
-    // Mark envelope peak (vg)
+    // Mark envelope peak (vg) - group velocity
     const envPeakX = plotL + (vg * t / xRange) * plotW;
     if (envPeakX > plotL && envPeakX < plotR) {
       ctx.fillStyle = WCOLORS.amber;
-      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp - 10); ctx.lineTo(envPeakX - 5, midY - amp); ctx.lineTo(envPeakX + 5, midY - amp); ctx.fill();
-      ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('vg', envPeakX, midY - amp - 14);
+      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp - 12); ctx.lineTo(envPeakX - 6, midY - amp - 1); ctx.lineTo(envPeakX + 6, midY - amp - 1); ctx.fill();
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('vg (group)', envPeakX, midY - amp - 16);
+      // Vertical dashed line from marker
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp); ctx.lineTo(envPeakX, midY); ctx.stroke();
+      ctx.setLineDash([]);
     }
 
-    // Mark a crest (vp)
+    // Mark a crest (vp) - phase velocity
     const crestPhase = (vp * t) % (2 * Math.PI / k0);
     const nearestCrestX = vp * t;
     const crestPx = plotL + (nearestCrestX / xRange) * plotW;
     if (crestPx > plotL && crestPx < plotR) {
       ctx.fillStyle = WCOLORS.red;
-      ctx.beginPath(); ctx.moveTo(crestPx, midY + amp + 10); ctx.lineTo(crestPx - 5, midY + amp); ctx.lineTo(crestPx + 5, midY + amp); ctx.fill();
-      ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('vp', crestPx, midY + amp + 22);
+      ctx.beginPath(); ctx.moveTo(crestPx, midY + amp + 12); ctx.lineTo(crestPx - 6, midY + amp + 1); ctx.lineTo(crestPx + 6, midY + amp + 1); ctx.fill();
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('vp (phase)', crestPx, midY + amp + 24);
+      // Vertical dashed line from marker
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+      ctx.beginPath(); ctx.moveTo(crestPx, midY); ctx.lineTo(crestPx, midY + amp); ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Baseline
