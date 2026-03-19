@@ -3496,6 +3496,626 @@ function sceneMarkup(type) {
         </div>
       `;
 
+    // =====================================================================
+    // CHAPTER 8: FOURIER TRANSFORMS
+    // =====================================================================
+    case "violin-spectrum":
+      return `
+        <div class="scene-label">Violin Spectrum</div>
+        <p class="scene-caption">Spectrum of a violin showing harmonics as Lorentzian peaks. Higher harmonics are weaker. Adjust fundamental frequency and Q factor.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-violin-spectrum" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>f<sub>0</sub>: <input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>
+            <label>Q: <input type="range" id="violin-q" min="5" max="100" step="5" value="30"><span class="scene-val" id="violin-q-val">30</span></label>
+          </div>
+        </div>
+      `;
+    case "fourier-transform-derivation":
+      return `
+        <div class="scene-label">From Series to Transform</div>
+        <p class="scene-caption">As L increases, discrete Fourier series bars crowd together and approach the continuous Fourier transform.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-transform-derivation" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>L: <input type="range" id="ftd-L" min="1" max="20" step="0.5" value="3"><span class="scene-val" id="ftd-L-val">3.0</span></label>
+          </div>
+        </div>
+      `;
+    case "underdamped-fourier-transform":
+      return `
+        <div class="scene-label">Underdamped Oscillator &amp; Power Spectrum</div>
+        <p class="scene-caption">Left: decaying oscillation. Right: its Lorentzian power spectrum with peak at &omega;<sub>0</sub> and width &gamma;.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-underdamped-fourier-transform" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&gamma;: <input type="range" id="uft-gamma" min="0.2" max="5" step="0.2" value="2"><span class="scene-val" id="uft-gamma-val">2.0</span></label>
+            <label>&omega;<sub>0</sub>: <input type="range" id="uft-omega0" min="2" max="15" step="0.5" value="10"><span class="scene-val" id="uft-omega0-val">10.0</span></label>
+          </div>
+        </div>
+      `;
+    case "fourier-magnitude-phase":
+      return `
+        <div class="scene-label">Magnitude vs Phase</div>
+        <p class="scene-caption">Phase carries most of the structural information in a Fourier transform. Swapping magnitudes preserves structure.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-magnitude-phase" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "fourier-filtering":
+      return `
+        <div class="scene-label">Fourier Filtering</div>
+        <p class="scene-caption">Low-pass filtering removes sharp features; high-pass filtering keeps only the rapid variations.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-filtering" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Cutoff: <input type="range" id="ff-cutoff" min="1" max="20" step="1" value="5"><span class="scene-val" id="ff-cutoff-val">5</span></label>
+          </div>
+        </div>
+      `;
+    case "dirac-delta-visualization":
+      return `
+        <div class="scene-label">Dirac Delta Function</div>
+        <p class="scene-caption">The delta function as a limit of narrowing Gaussians. Area stays 1 while the peak grows. Its FT is constant (all frequencies equally present).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-dirac-delta-visualization" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&sigma;: <input type="range" id="dd-sigma" min="0.02" max="1" step="0.02" value="0.3"><span class="scene-val" id="dd-sigma-val">0.30</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 9: REFLECTION & TRANSMISSION
+    // =====================================================================
+    case "string-junction":
+      return `
+        <div class="scene-label">String Junction</div>
+        <p class="scene-caption">A pulse hits a junction between two strings of different impedance. Part reflects, part transmits.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-string-junction" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
+          </div>
+        </div>
+      `;
+    case "reflection-transmission-pulse":
+      return `
+        <div class="scene-label">Reflection &amp; Transmission</div>
+        <p class="scene-caption">Watch incident (teal), reflected (amber), and transmitted (blue) pulses at a junction.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-reflection-transmission-pulse" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="rtp-z-val">2.0</span></label>
+          </div>
+        </div>
+      `;
+    case "phase-flip-demo":
+      return `
+        <div class="scene-label">Phase Flip on Reflection</div>
+        <p class="scene-caption">Top: light&rarr;heavy string (reflected pulse inverts). Bottom: heavy&rarr;light (no inversion).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-phase-flip-demo" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "mass-collision-impedance":
+      return `
+        <div class="scene-label">Mass Collision &amp; Impedance</div>
+        <p class="scene-caption">Elastic collisions between masses: energy transfer depends on mass ratio, analogous to impedance matching.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-mass-collision-impedance" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>m<sub>2</sub>/m<sub>1</sub>: <input type="range" id="mci-ratio" min="0.1" max="10" step="0.1" value="1"><span class="scene-val" id="mci-ratio-val">1.0</span></label>
+          </div>
+        </div>
+      `;
+    case "complex-impedance":
+      return `
+        <div class="scene-label">Complex Impedance</div>
+        <p class="scene-caption">Real and imaginary parts of impedance vs frequency. At resonance, Im(Z)=0 and the system is purely resistive.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-complex-impedance" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>m: <input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>
+            <label>b: <input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>
+            <label>k: <input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 10: POWER
+    // =====================================================================
+    case "impedance-materials":
+      return `
+        <div class="scene-label">Material Impedances</div>
+        <p class="scene-caption">Acoustic impedance values for common materials. Large mismatch means strong reflection at boundaries.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-impedance-materials" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "wave-energy-string":
+      return `
+        <div class="scene-label">Wave Energy on a String</div>
+        <p class="scene-caption">For a traveling wave, kinetic and potential energy densities are equal everywhere and move with the wave.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-wave-energy-string" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "power-reflection-transmission":
+      return `
+        <div class="scene-label">Power Reflection &amp; Transmission</div>
+        <p class="scene-caption">R + T = 1 always. Matched impedances (Z<sub>2</sub>/Z<sub>1</sub> = 1) give zero reflection.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-power-reflection-transmission" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="prt-z" min="0.1" max="5" step="0.05" value="1"><span class="scene-val" id="prt-z-val">1.00</span></label>
+          </div>
+        </div>
+      `;
+    case "decibel-scale":
+      return `
+        <div class="scene-label">Decibel Scale</div>
+        <p class="scene-caption">Common sounds on the dB scale. Sound intensity drops as 1/r&sup2; with distance from the source.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-decibel-scale" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>Distance (m): <input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>
+          </div>
+        </div>
+      `;
+    case "plane-wave-3d":
+      return `
+        <div class="scene-label">3D Plane Wave</div>
+        <p class="scene-caption">Parallel wavefronts propagate perpendicular to the wave vector k. Adjust the propagation angle.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-plane-wave-3d" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Angle: <input type="range" id="pw3d-angle" min="0" max="90" step="5" value="30"><span class="scene-val" id="pw3d-angle-val">30&deg;</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 11: WAVEPACKETS
+    // =====================================================================
+    case "interference-demo":
+      return `
+        <div class="scene-label">Two-Source Interference</div>
+        <p class="scene-caption">Two point sources produce constructive (bright) and destructive (dark) interference. Adjust source separation.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-interference-demo" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>d/&lambda;: <input type="range" id="intdemo-sep" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="intdemo-sep-val">2.00</span></label>
+          </div>
+        </div>
+      `;
+    case "gaussian-wavepacket":
+      return `
+        <div class="scene-label">Gaussian Wavepacket</div>
+        <p class="scene-caption">A narrow wavepacket in x-space has a wide spectrum in k-space, and vice versa. &Delta;x&middot;&Delta;k &ge; 1/2.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-gaussian-wavepacket" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&sigma;<sub>x</sub>: <input type="range" id="gwp-sigma" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="gwp-sigma-val">2.0</span></label>
+          </div>
+        </div>
+      `;
+    case "amplitude-modulation":
+      return `
+        <div class="scene-label">Amplitude Modulation</div>
+        <p class="scene-caption">A slowly varying envelope modulates a high-frequency carrier. Sidebands appear in the frequency domain.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-amplitude-modulation" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>f<sub>c</sub>: <input type="range" id="am-fc" min="20" max="100" step="5" value="50"><span class="scene-val" id="am-fc-val">50</span></label>
+            <label>f<sub>m</sub>: <input type="range" id="am-fm" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="am-fm-val">5.0</span></label>
+          </div>
+        </div>
+      `;
+    case "dispersion-relations":
+      return `
+        <div class="scene-label">Dispersion Relations</div>
+        <p class="scene-caption">Different media have different &omega;(k) curves. The slope at any point gives the group velocity.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-dispersion-relations" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>k<sub>0</sub>: <input type="range" id="disp-k0" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>
+          </div>
+        </div>
+      `;
+    case "phase-velocity-demo":
+      return `
+        <div class="scene-label">Phase Velocity</div>
+        <p class="scene-caption">In a dispersive medium, different Fourier components travel at different phase velocities v<sub>p</sub> = &omega;/k.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-phase-velocity-demo" width="600" height="280"></canvas>
+        </div>
+      `;
+    case "group-velocity-demo":
+      return `
+        <div class="scene-label">Group Velocity</div>
+        <p class="scene-caption">The envelope moves at v<sub>g</sub> = d&omega;/dk while crests move at v<sub>p</sub>. Increase dispersion to see them differ.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-group-velocity-demo" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Dispersion: <input type="range" id="gvd-disp" min="0" max="5" step="0.1" value="1"><span class="scene-val" id="gvd-disp-val">1.0</span></label>
+          </div>
+        </div>
+      `;
+    case "wavepacket-dispersion":
+      return `
+        <div class="scene-label">Wavepacket Dispersion</div>
+        <p class="scene-caption">Top: non-dispersive (shape preserved). Bottom: dispersive (pulse broadens over time).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-wavepacket-dispersion" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Dispersion: <input type="range" id="wpdisp-d" min="0" max="0.5" step="0.01" value="0.1"><span class="scene-val" id="wpdisp-d-val">0.10</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 12: WAVES (MULLER)
+    // =====================================================================
+    case "wave-transport-energy":
+      return `
+        <div class="scene-label">Wave Energy Transport</div>
+        <p class="scene-caption">Medium particles oscillate in place while the wave pulse carries energy forward.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-wave-transport-energy" width="600" height="280"></canvas>
+        </div>
+      `;
+    case "transverse-longitudinal-demo":
+      return `
+        <div class="scene-label">Transverse vs Longitudinal</div>
+        <p class="scene-caption">Top: transverse wave (displacement perpendicular to propagation). Bottom: longitudinal (displacement parallel).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-transverse-longitudinal-demo" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "sound-refraction-atmosphere":
+      return `
+        <div class="scene-label">Sound Refraction in the Atmosphere</div>
+        <p class="scene-caption">Sound bends toward slower regions. Daytime: rays bend up (shadow zone). Evening: rays bend down (sound carries far).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-sound-refraction-atmosphere" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 13: LIGHT
+    // =====================================================================
+    case "em-plane-wave":
+      return `
+        <div class="scene-label">Electromagnetic Plane Wave</div>
+        <p class="scene-caption">E (blue, vertical) and B (red, horizontal) oscillate perpendicular to each other and to the propagation direction k.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-em-plane-wave" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 14: POLARIZATION
+    // =====================================================================
+    case "linear-polarization":
+      return `
+        <div class="scene-label">Linear Polarization</div>
+        <p class="scene-caption">The electric field oscillates along a fixed direction. Adjust the polarization angle.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-linear-polarization" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Angle: <input type="range" id="linear-pol-angle" min="0" max="3.14" step="0.05" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
+          </div>
+        </div>
+      `;
+    case "circular-polarization":
+      return `
+        <div class="scene-label">Circular Polarization</div>
+        <p class="scene-caption">The E-field vector rotates as the wave propagates, tracing a helix. Toggle between right and left circular.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-circular-polarization" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <button id="circ-pol-toggle" class="scene-btn">Toggle RCP/LCP</button>
+          </div>
+        </div>
+      `;
+    case "malus-law":
+      return `
+        <div class="scene-label">Malus&rsquo; Law</div>
+        <p class="scene-caption">Transmitted intensity through a polarizer follows I = I<sub>0</sub>cos&sup2;&theta;. Rotate the polarizer to see.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-malus-law" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&theta;: <input type="range" id="malus-theta" min="0" max="180" step="1" value="0"><span class="scene-val" id="malus-theta-val">0&deg;</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 15: REFRACTION
+    // =====================================================================
+    case "snells-law-demo":
+      return `
+        <div class="scene-label">Snell&rsquo;s Law</div>
+        <p class="scene-caption">Light refracting at a boundary. Adjust the angle and index ratio to see the refracted ray bend.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-snells-law-demo" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&theta;<sub>1</sub>: <input type="range" id="snell-theta1" min="0" max="89" step="1" value="30"><span class="scene-val" id="snell-theta1-val">30&deg;</span></label>
+            <label>n<sub>2</sub>/n<sub>1</sub>: <input type="range" id="snell-nratio" min="0.5" max="3" step="0.05" value="1.5"><span class="scene-val" id="snell-nratio-val">1.50</span></label>
+          </div>
+        </div>
+      `;
+    case "total-internal-reflection":
+      return `
+        <div class="scene-label">Total Internal Reflection</div>
+        <p class="scene-caption">Beyond the critical angle, all light reflects. An evanescent wave decays exponentially in the second medium.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-total-internal-reflection" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&theta;: <input type="range" id="tir-angle" min="0" max="89" step="1" value="30"><span class="scene-val" id="tir-angle-val">30&deg;</span></label>
+          </div>
+        </div>
+      `;
+    case "thin-film-interference":
+      return `
+        <div class="scene-label">Thin Film Interference</div>
+        <p class="scene-caption">Adjust film thickness to see which wavelengths constructively or destructively interfere in the reflected light.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-thin-film-interference" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>Thickness (nm): <input type="range" id="thinfilm-thickness" min="50" max="800" step="10" value="300"><span class="scene-val" id="thinfilm-thickness-val">300</span></label>
+          </div>
+        </div>
+      `;
+    case "brewster-angle":
+      return `
+        <div class="scene-label">Brewster&rsquo;s Angle</div>
+        <p class="scene-caption">Fresnel coefficients vs angle. At Brewster&rsquo;s angle, the p-polarized reflection vanishes completely.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-brewster-angle" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>n<sub>2</sub>/n<sub>1</sub>: <input type="range" id="brewster-n" min="1.1" max="3" step="0.05" value="1.5"><span class="scene-val" id="brewster-n-val">1.50</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 16: PRISMS & SCATTERING
+    // =====================================================================
+    case "rayleigh-scattering":
+      return `
+        <div class="scene-label">Rayleigh Scattering</div>
+        <p class="scene-caption">Scattering intensity scales as 1/&lambda;&sup4;. Blue light scatters much more than red, making the sky blue and sunsets red.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-rayleigh-scattering" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "prism-dispersion":
+      return `
+        <div class="scene-label">Prism Dispersion</div>
+        <p class="scene-caption">White light separates into colors because n(&lambda;) differs for each wavelength. Blue bends more than red.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-prism-dispersion" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Apex angle: <input type="range" id="prism-apex" min="20" max="80" step="1" value="60"><span class="scene-val" id="prism-apex-val">60&deg;</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 17: COLOR
+    // =====================================================================
+    case "color-matching-metamers":
+      return `
+        <div class="scene-label">Color Matching &amp; Metamers</div>
+        <p class="scene-caption">Mix RGB to match a monochromatic target. When they look the same despite different spectra, they are metamers.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-color-matching-metamers" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "cie-tristimulus-curves":
+      return `
+        <div class="scene-label">CIE Tristimulus Curves</div>
+        <p class="scene-caption">The CIE color matching functions x&#772;(&lambda;), y&#772;(&lambda;), z&#772;(&lambda;) describe how the eye responds to each wavelength.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-cie-tristimulus-curves" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "cie-color-space-gamut":
+      return `
+        <div class="scene-label">CIE Color Space &amp; Gamut</div>
+        <p class="scene-caption">The horseshoe-shaped CIE chromaticity diagram with the sRGB gamut triangle. Not all visible colors can be displayed by RGB monitors.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-cie-color-space-gamut" width="600" height="340"></canvas>
+        </div>
+      `;
+    case "blackbody-planckian-locus":
+      return `
+        <div class="scene-label">Blackbody &amp; Planckian Locus</div>
+        <p class="scene-caption">A blackbody&rsquo;s color traces a curve on the CIE diagram as temperature changes from red-hot to blue-white.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-blackbody-planckian-locus" width="600" height="340"></canvas>
+        </div>
+      `;
+    case "hsv-color-explorer":
+      return `
+        <div class="scene-label">HSV Color Explorer</div>
+        <p class="scene-caption">Click on the color wheel to select hue and saturation. Adjust the value slider for brightness.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-hsv-color-explorer" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "additive-subtractive-mixing":
+      return `
+        <div class="scene-label">Additive &amp; Subtractive Mixing</div>
+        <p class="scene-caption">Left: RGB additive mixing (light) produces white at center. Right: CMY subtractive mixing (pigments) produces black.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-additive-subtractive-mixing" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "rod-cone-sensitivity":
+      return `
+        <div class="scene-label">Rod &amp; Cone Sensitivity</div>
+        <p class="scene-caption">Spectral sensitivity curves for rods (scotopic vision) and the three cone types (S, M, L).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-rod-cone-sensitivity" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 18: ANTENNAS
+    // =====================================================================
+    case "monopole-radiation-pattern":
+      return `
+        <div class="scene-label">Dipole Radiation Pattern</div>
+        <p class="scene-caption">An oscillating dipole radiates with a sin&sup2;&theta; pattern: maximum perpendicular to the axis, zero along it.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-monopole-radiation-pattern" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "two-source-interference":
+      return `
+        <div class="scene-label">Two-Source Interference</div>
+        <p class="scene-caption">Two coherent sources produce an interference pattern. Adjust d/&lambda; to change the number of lobes.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-two-source-interference" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "phased-array-radiation":
+      return `
+        <div class="scene-label">Phased Array</div>
+        <p class="scene-caption">N sources with adjustable spacing and phase offset. The beam direction steers with phase.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-phased-array-radiation" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "interferometer-resolution":
+      return `
+        <div class="scene-label">Interferometer Resolution</div>
+        <p class="scene-caption">Two antennas separated by d. Angular resolution improves as d/&lambda; increases.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-interferometer-resolution" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 19: DIFFRACTION
+    // =====================================================================
+    case "huygens-principle-demo":
+      return `
+        <div class="scene-label">Huygens&rsquo; Principle</div>
+        <p class="scene-caption">Plane waves pass through a slit. Each point in the slit acts as a new point source. Narrower slits spread more.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-huygens-principle-demo" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "diffraction-grating-pattern":
+      return `
+        <div class="scene-label">Diffraction Grating</div>
+        <p class="scene-caption">More slits produce sharper principal maxima. With N slits, peaks are N&sup2; times as intense.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-diffraction-grating-pattern" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "single-slit-diffraction":
+      return `
+        <div class="scene-label">Single-Slit Diffraction</div>
+        <p class="scene-caption">The sinc&sup2; pattern: a central maximum with side lobes. Narrower slits produce wider patterns.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-single-slit-diffraction" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "fourier-optics-demo":
+      return `
+        <div class="scene-label">Fourier Optics</div>
+        <p class="scene-caption">The diffraction pattern is the Fourier transform of the aperture. Select different aperture shapes to see.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-optics-demo" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 20: QUANTUM MECHANICS
+    // =====================================================================
+    case "photoelectric-effect-demo":
+      return `
+        <div class="scene-label">Photoelectric Effect</div>
+        <p class="scene-caption">Below the threshold frequency, no electrons are ejected. Above it, KE = hf &minus; &phi; increases linearly with frequency.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-photoelectric-effect-demo" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "double-slit-photon-buildup":
+      return `
+        <div class="scene-label">Double-Slit Photon Buildup</div>
+        <p class="scene-caption">Individual photons arrive one at a time at random positions, gradually revealing the double-slit interference pattern.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-double-slit-photon-buildup" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "hydrogen-energy-levels":
+      return `
+        <div class="scene-label">Hydrogen Energy Levels</div>
+        <p class="scene-caption">Energy levels at E<sub>n</sub> = &minus;13.6/n&sup2; eV. Balmer series transitions to n=2 produce visible light.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-hydrogen-energy-levels" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "quantum-wavepacket-dispersion":
+      return `
+        <div class="scene-label">Quantum Wavepacket Spreading</div>
+        <p class="scene-caption">A free quantum particle&rsquo;s wavepacket spreads over time due to dispersion in the Schr&ouml;dinger equation.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-quantum-wavepacket-dispersion" width="600" height="300"></canvas>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 21: DOPPLER EFFECT
+    // =====================================================================
+    case "doppler-moving-source":
+      return `
+        <div class="scene-label">Doppler: Moving Source</div>
+        <p class="scene-caption">Wave crests bunch up ahead of a moving source and spread out behind it. Adjust source velocity.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-doppler-moving-source" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "doppler-angle":
+      return `
+        <div class="scene-label">Doppler: Angle Dependence</div>
+        <p class="scene-caption">As a source passes an observer, the received frequency drops from high (approach) to low (recession).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-doppler-angle" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "sonic-boom-mach-cone":
+      return `
+        <div class="scene-label">Sonic Boom &amp; Mach Cone</div>
+        <p class="scene-caption">At supersonic speeds, wavefronts pile up into a Mach cone. The half-angle is arcsin(1/M).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-sonic-boom-mach-cone" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "relativistic-doppler-redshift":
+      return `
+        <div class="scene-label">Relativistic Doppler</div>
+        <p class="scene-caption">For light, the Doppler shift depends only on relative velocity: f&rsquo; = f&radic;((1&minus;&beta;)/(1+&beta;)).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-relativistic-doppler-redshift" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "doppler-spectroscopy-exoplanet":
+      return `
+        <div class="scene-label">Exoplanet Doppler Spectroscopy</div>
+        <p class="scene-caption">A planet&rsquo;s gravity causes periodic Doppler shifts in its host star&rsquo;s spectral lines, revealing the planet&rsquo;s orbit.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-doppler-spectroscopy-exoplanet" width="600" height="300"></canvas>
+        </div>
+      `;
+
     default:
       return "";
   }
