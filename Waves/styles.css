@@ -1,15 +1,15 @@
 :root {
-  --bg: #e8eef5;
-  --bg-soft: #dce5f0;
-  --paper: rgba(240, 246, 255, 0.88);
-  --paper-strong: rgba(235, 243, 255, 0.94);
-  --ink: #1a2332;
-  --muted: #4a5568;
-  --accent: #2563eb;
-  --accent-2: #7c3aed;
-  --accent-3: #6d28d9;
-  --line: rgba(26, 35, 50, 0.12);
-  --shadow: 0 24px 80px rgba(18, 30, 56, 0.12);
+  --bg: #f5ead9;
+  --bg-soft: #f0ddbf;
+  --paper: rgba(255, 250, 240, 0.86);
+  --paper-strong: rgba(255, 248, 233, 0.94);
+  --ink: #1f2a2e;
+  --muted: #596166;
+  --accent: #0f766e;
+  --accent-2: #d97706;
+  --accent-3: #b45309;
+  --line: rgba(31, 42, 46, 0.12);
+  --shadow: 0 24px 80px rgba(56, 37, 18, 0.12);
   --radius-lg: 28px;
   --radius-md: 20px;
   --radius-sm: 14px;
@@ -32,8 +32,8 @@ body {
   font-family: var(--body);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.55), transparent 30%),
-    radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.15), transparent 18%),
-    linear-gradient(135deg, #e0eaf6 0%, #c7d6ed 42%, #edf2f9 100%);
+    radial-gradient(circle at 80% 10%, rgba(15, 118, 110, 0.15), transparent 18%),
+    linear-gradient(135deg, #f8eddc 0%, #efd7af 42%, #f7f0e4 100%);
 }
 
 button,
@@ -57,8 +57,8 @@ a {
   align-items: center;
   justify-content: center;
   padding: 12px 16px;
-  background: rgba(16, 24, 48, 0.96);
-  color: #e8eef5;
+  background: rgba(22, 47, 44, 0.96);
+  color: #f8f0e4;
   box-shadow: var(--shadow);
 }
 
@@ -66,7 +66,7 @@ a {
   position: fixed;
   inset: 0;
   z-index: 39;
-  background: rgba(16, 24, 48, 0.42);
+  background: rgba(18, 35, 37, 0.42);
   backdrop-filter: blur(4px);
 }
 
@@ -81,7 +81,7 @@ a {
 .sidebar-close {
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.12);
-  color: #e0eaf6;
+  color: #fff3df;
 }
 
 .page-shell {
@@ -109,9 +109,9 @@ a {
   overflow-y: auto;
   padding: 28px 22px;
   background:
-    linear-gradient(180deg, rgba(16, 24, 48, 0.96), rgba(12, 18, 38, 0.96)),
+    linear-gradient(180deg, rgba(22, 47, 44, 0.96), rgba(18, 35, 37, 0.96)),
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent);
-  color: #e0eaf6;
+  color: #f8f0e4;
 }
 
 .brand-block h1,
@@ -158,7 +158,7 @@ a {
 
 .sidebar .eyebrow,
 .sidebar .section-label {
-  color: #93b4f5;
+  color: #f5d08d;
 }
 
 .sidebar-section + .sidebar-section {
@@ -188,12 +188,12 @@ a {
 .mode-pill {
   padding: 8px 12px;
   background: rgba(255, 255, 255, 0.1);
-  color: #e0eaf6;
+  color: #fff3df;
 }
 
 .mode-pill.active {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(255, 255, 255, 0.12));
-  border-color: rgba(147, 180, 245, 0.35);
+  background: linear-gradient(135deg, rgba(244, 171, 47, 0.25), rgba(255, 255, 255, 0.12));
+  border-color: rgba(255, 238, 206, 0.35);
 }
 
 .chapter-nav {
@@ -207,11 +207,11 @@ a {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.08);
-  color: #e0eaf6;
+  color: #fff6ea;
 }
 
 .sidebar-search input::placeholder {
-  color: rgba(224, 234, 246, 0.6);
+  color: rgba(255, 246, 234, 0.6);
 }
 
 .search-results {
@@ -247,7 +247,7 @@ a {
 
 .search-result span {
   margin-top: 6px;
-  color: rgba(224, 234, 246, 0.82);
+  color: rgba(248, 240, 228, 0.82);
 }
 
 .chapter-link {
@@ -262,8 +262,8 @@ a {
 
 .chapter-link.active {
   transform: translateX(4px);
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(37, 99, 235, 0.22));
-  border-color: rgba(147, 180, 245, 0.35);
+  background: linear-gradient(135deg, rgba(244, 171, 47, 0.16), rgba(15, 118, 110, 0.22));
+  border-color: rgba(255, 231, 196, 0.35);
 }
 
 .chapter-link span {
@@ -298,8 +298,8 @@ a {
   overflow: hidden;
   padding: 32px;
   background:
-    linear-gradient(140deg, rgba(240, 246, 255, 0.85), rgba(205, 220, 245, 0.88)),
-    radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.2), transparent 22%);
+    linear-gradient(140deg, rgba(255, 249, 238, 0.85), rgba(252, 236, 205, 0.88)),
+    radial-gradient(circle at 80% 20%, rgba(15, 118, 110, 0.2), transparent 22%);
 }
 
 .hero::before {
@@ -307,8 +307,8 @@ a {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, transparent 0, transparent 48%, rgba(37, 99, 235, 0.08) 48.5%, transparent 49%),
-    linear-gradient(transparent 0, transparent 48%, rgba(124, 58, 237, 0.08) 48.5%, transparent 49%);
+    linear-gradient(90deg, transparent 0, transparent 48%, rgba(15, 118, 110, 0.08) 48.5%, transparent 49%),
+    linear-gradient(transparent 0, transparent 48%, rgba(217, 119, 6, 0.08) 48.5%, transparent 49%);
   background-size: 110px 110px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 80%);
   pointer-events: none;
@@ -342,7 +342,7 @@ a {
 .hero-orbit span {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(15, 118, 110, 0.2);
   border-radius: 50%;
   animation: spin 16s linear infinite;
 }
@@ -360,7 +360,7 @@ a {
 
 .hero-orbit span:nth-child(4) {
   inset: 75px;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.48), transparent 70%);
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.48), transparent 70%);
   border: none;
   animation: pulse 3.2s ease-in-out infinite;
 }
@@ -398,7 +398,7 @@ a {
   border-radius: 999px;
   text-decoration: none;
   color: var(--paper-strong);
-  background: linear-gradient(135deg, var(--accent), #1e40af);
+  background: linear-gradient(135deg, var(--accent), #134e4a);
 }
 
 .pdf-link-full {
@@ -415,8 +415,8 @@ a {
   margin-top: 18px;
   padding: 18px 20px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(124, 58, 237, 0.08));
-  border: 1px solid rgba(37, 99, 235, 0.14);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(217, 119, 6, 0.08));
+  border: 1px solid rgba(15, 118, 110, 0.14);
 }
 
 .source-summary-note[hidden] {
@@ -447,8 +447,8 @@ a {
   align-items: center;
   margin: 0 2px;
   padding: 0 8px;
-  background: rgba(37, 99, 235, 0.1);
-  border-color: rgba(37, 99, 235, 0.16);
+  background: rgba(15, 118, 110, 0.1);
+  border-color: rgba(15, 118, 110, 0.16);
   color: var(--accent);
   cursor: pointer;
 }
@@ -492,9 +492,9 @@ a {
   border-radius: calc(var(--radius-lg) - 8px);
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(240, 246, 255, 0.88)),
-    radial-gradient(circle at top center, rgba(124, 58, 237, 0.14), transparent 35%);
-  border: 1px solid rgba(37, 99, 235, 0.12);
+    linear-gradient(180deg, rgba(15, 118, 110, 0.14), rgba(250, 243, 230, 0.88)),
+    radial-gradient(circle at top center, rgba(244, 171, 47, 0.14), transparent 35%);
+  border: 1px solid rgba(15, 118, 110, 0.12);
 }
 
 .scene::after {
@@ -502,8 +502,8 @@ a {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(15, 118, 110, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.08) 1px, transparent 1px);
   background-size: 42px 42px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.34), transparent 86%);
   pointer-events: none;
@@ -520,7 +520,7 @@ a {
   width: 100%;
   padding: 13px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.18);
+  border: 1px solid rgba(15, 118, 110, 0.18);
   background: rgba(255, 255, 255, 0.72);
 }
 
@@ -534,8 +534,8 @@ a {
 .quick-action,
 .term-chip {
   padding: 10px 14px;
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.1);
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.1);
   color: var(--ink);
 }
 
@@ -543,7 +543,7 @@ a {
 .nav-button {
   padding: 12px 16px;
   background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
-  border: 1px solid rgba(109, 40, 217, 0.12);
+  border: 1px solid rgba(180, 83, 9, 0.12);
   color: white;
 }
 
@@ -631,7 +631,7 @@ a {
   margin-top: 14px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(37, 99, 235, 0.08);
+  background: rgba(15, 118, 110, 0.08);
   color: var(--ink);
 }
 
@@ -639,8 +639,8 @@ a {
   margin-top: 16px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.1);
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.1);
 }
 
 .source-derivation h5 {
@@ -729,8 +729,8 @@ a {
   max-width: 280px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(16, 24, 48, 0.96);
-  color: #e0eaf6;
+  background: rgba(22, 47, 44, 0.96);
+  color: #fcf3e5;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
   opacity: 0;
@@ -763,7 +763,7 @@ a {
   font-size: 1rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(26, 35, 50, 0.72);
+  color: rgba(31, 42, 46, 0.72);
 }
 
 .particle,
@@ -789,15 +789,15 @@ a {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-2), #a78bfa);
-  box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.08);
+  background: linear-gradient(135deg, var(--accent-2), #f59e0b);
+  box-shadow: 0 0 0 6px rgba(217, 119, 6, 0.08);
 }
 
 .bar {
   bottom: 28px;
   width: 44px;
   border-radius: 18px 18px 8px 8px;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.82), rgba(37, 99, 235, 0.28));
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.82), rgba(15, 118, 110, 0.28));
   animation: barPulse 2.6s ease-in-out infinite;
 }
 
@@ -816,7 +816,7 @@ a {
   top: 52%;
   height: 8px;
   border-radius: 999px;
-  background: #2a3a5e;
+  background: #37504e;
   transform-origin: center;
   animation: balance 5.2s ease-in-out infinite;
 }
@@ -828,7 +828,7 @@ a {
   width: 52px;
   height: 80px;
   clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  background: rgba(42, 58, 94, 0.9);
+  background: rgba(55, 80, 78, 0.9);
 }
 
 .equilibrium-weight {
@@ -837,7 +837,7 @@ a {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(14, 74, 180, 0.72));
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.88), rgba(12, 74, 110, 0.72));
 }
 
 .thermometer {
@@ -847,7 +847,7 @@ a {
   width: 48px;
   height: 210px;
   border-radius: 999px;
-  border: 4px solid rgba(26, 35, 50, 0.2);
+  border: 4px solid rgba(31, 42, 46, 0.2);
   background: rgba(255, 255, 255, 0.4);
 }
 
@@ -857,7 +857,7 @@ a {
   inset: auto 8px 8px 8px;
   height: 58%;
   border-radius: 999px;
-  background: linear-gradient(180deg, #818cf8, #7c3aed);
+  background: linear-gradient(180deg, #fb7185, #d97706);
   animation: mercury 3s ease-in-out infinite;
 }
 
@@ -871,7 +871,7 @@ a {
   top: 18%;
   width: 42%;
   height: 190px;
-  border: 5px solid rgba(26, 35, 50, 0.26);
+  border: 5px solid rgba(31, 42, 46, 0.26);
   border-radius: 24px;
 }
 
@@ -881,7 +881,7 @@ a {
   height: 20px;
   top: 20%;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(124, 58, 237, 0.85), rgba(37, 99, 235, 0.82));
+  background: linear-gradient(90deg, rgba(217, 119, 6, 0.85), rgba(15, 118, 110, 0.82));
   animation: piston 3.2s ease-in-out infinite;
 }
 
@@ -890,7 +890,7 @@ a {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: rgba(37, 99, 235, 0.72);
+  background: rgba(15, 118, 110, 0.72);
   animation: bounce 2.8s linear infinite;
 }
 
@@ -905,7 +905,7 @@ a {
 .tile {
   position: relative;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(124, 58, 237, 0.26));
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.22), rgba(217, 119, 6, 0.26));
   animation: shuffle 3.4s ease-in-out infinite;
 }
 
@@ -920,8 +920,8 @@ a {
   left: calc(50% - 90px);
   top: 54px;
   background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(26, 35, 50, 0.14);
-  box-shadow: 0 16px 30px rgba(26, 35, 50, 0.08);
+  border: 1px solid rgba(31, 42, 46, 0.14);
+  box-shadow: 0 16px 30px rgba(31, 42, 46, 0.08);
 }
 
 .ensemble-stack .card:nth-child(2) {
@@ -945,8 +945,8 @@ a {
   bottom: 24px;
   border-radius: 18px;
   background:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.14), rgba(255, 255, 255, 0.36)),
-    linear-gradient(90deg, transparent 0, transparent 48%, rgba(37, 99, 235, 0.1) 49%, transparent 50%);
+    linear-gradient(180deg, rgba(15, 118, 110, 0.14), rgba(255, 255, 255, 0.36)),
+    linear-gradient(90deg, transparent 0, transparent 48%, rgba(15, 118, 110, 0.1) 49%, transparent 50%);
 }
 
 .landscape {
@@ -966,15 +966,15 @@ a {
   left: 18%;
   top: 38%;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, #0f766e, #0ea5e9);
   animation: rollLandscape 5s ease-in-out infinite;
 }
 
 .phase-diagram {
   position: absolute;
   inset: 54px 44px 36px 44px;
-  border-left: 3px solid rgba(26, 35, 50, 0.46);
-  border-bottom: 3px solid rgba(26, 35, 50, 0.46);
+  border-left: 3px solid rgba(31, 42, 46, 0.46);
+  border-bottom: 3px solid rgba(31, 42, 46, 0.46);
 }
 
 .phase-line {
@@ -982,14 +982,14 @@ a {
   transform-origin: left center;
   height: 3px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.8);
+  background: rgba(15, 118, 110, 0.8);
 }
 
 .phase-point {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(124, 58, 237, 0.9);
+  background: rgba(217, 119, 6, 0.9);
   animation: phaseWander 5s ease-in-out infinite;
 }
 
@@ -1004,7 +1004,7 @@ a {
   right: 18%;
   height: 4px;
   border-radius: 999px;
-  background: rgba(26, 35, 50, 0.3);
+  background: rgba(31, 42, 46, 0.3);
 }
 
 .energy-level .particle {
@@ -1017,7 +1017,7 @@ a {
   right: 7%;
   height: 2px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.7);
+  background: rgba(15, 118, 110, 0.7);
   animation: waveShift 2.6s ease-in-out infinite;
 }
 
@@ -1032,7 +1032,7 @@ a {
   bottom: 16%;
   height: 120px;
   border-radius: 0 0 120px 120px;
-  border: 4px solid rgba(26, 35, 50, 0.2);
+  border: 4px solid rgba(31, 42, 46, 0.2);
   border-top: none;
 }
 
@@ -1050,7 +1050,7 @@ a {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: rgba(37, 99, 235, 0.32);
+  background: rgba(15, 118, 110, 0.32);
 }
 
 .electron-stream {
@@ -1060,7 +1060,7 @@ a {
   bottom: 20%;
   height: 68px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.2));
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.1), rgba(14, 165, 233, 0.2));
 }
 
 .electron-stream .particle {
@@ -1073,7 +1073,7 @@ a {
   right: 10%;
   height: 56px;
   border-radius: 16px;
-  background: rgba(37, 99, 235, 0.14);
+  background: rgba(15, 118, 110, 0.14);
 }
 
 .band.top {
@@ -1090,8 +1090,8 @@ a {
   right: 10%;
   top: calc(50% - 18px);
   height: 36px;
-  border-top: 2px dashed rgba(124, 58, 237, 0.44);
-  border-bottom: 2px dashed rgba(124, 58, 237, 0.44);
+  border-top: 2px dashed rgba(217, 119, 6, 0.44);
+  border-bottom: 2px dashed rgba(217, 119, 6, 0.44);
 }
 
 .band-electron {
@@ -1107,8 +1107,8 @@ a {
   width: 148px;
   height: 148px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #bfdbfe, #3b82f6 72%, rgba(30, 64, 175, 0.96));
-  box-shadow: 0 0 0 18px rgba(59, 130, 246, 0.12);
+  background: radial-gradient(circle at 35% 35%, #fde68a, #f97316 72%, rgba(180, 83, 9, 0.96));
+  box-shadow: 0 0 0 18px rgba(249, 115, 22, 0.12);
 }
 
 .star-ring {
@@ -1117,7 +1117,7 @@ a {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  border: 3px solid rgba(37, 99, 235, 0.22);
+  border: 3px solid rgba(15, 118, 110, 0.22);
   animation: pulse 3.8s ease-in-out infinite;
 }
 
@@ -1125,11 +1125,9 @@ a {
   position: absolute;
   width: 58px;
   height: 3px;
-  background: rgba(26, 35, 50, 0.4);
+  background: rgba(31, 42, 46, 0.4);
   transform-origin: left center;
 }
-
-/* ── Existing Animations ── */
 
 @keyframes spin {
   from {
@@ -1346,279 +1344,6 @@ a {
   }
 }
 
-/* ── NEW: Wave-specific Animations ── */
-
-@keyframes oscillate {
-  0%, 100% {
-    transform: translateY(-40px);
-  }
-  25% {
-    transform: translateY(40px);
-  }
-  50% {
-    transform: translateY(-30px);
-  }
-  75% {
-    transform: translateY(30px);
-  }
-}
-
-@keyframes propagate {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(400%);
-  }
-}
-
-@keyframes resonate {
-  0%, 100% {
-    transform: scaleY(0.2);
-    opacity: 0.4;
-  }
-  30% {
-    transform: scaleY(1.0);
-    opacity: 1;
-  }
-  50% {
-    transform: scaleY(1.4);
-    opacity: 1;
-  }
-  70% {
-    transform: scaleY(1.0);
-    opacity: 1;
-  }
-}
-
-@keyframes interfere {
-  0% {
-    transform: translateX(-120px) scaleY(1);
-    opacity: 0.6;
-  }
-  40% {
-    transform: translateX(0) scaleY(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateX(0) scaleY(1.8);
-    opacity: 1;
-  }
-  60% {
-    transform: translateX(0) scaleY(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateX(120px) scaleY(1);
-    opacity: 0.6;
-  }
-}
-
-@keyframes polarize {
-  0% {
-    transform: rotate(0deg);
-  }
-  25% {
-    transform: rotate(90deg);
-  }
-  50% {
-    transform: rotate(180deg);
-  }
-  75% {
-    transform: rotate(270deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes refract {
-  0%, 100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  30% {
-    transform: translateX(40px) rotate(0deg);
-  }
-  50% {
-    transform: translateX(40px) rotate(22deg);
-  }
-  100% {
-    transform: translateX(120px) rotate(22deg);
-  }
-}
-
-@keyframes diffract {
-  0% {
-    transform: scaleX(0.3) scaleY(1);
-    opacity: 1;
-  }
-  40% {
-    transform: scaleX(0.3) scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleX(2.4) scaleY(0.6);
-    opacity: 0.4;
-  }
-}
-
-@keyframes doppler {
-  0% {
-    transform: translateX(-60px);
-  }
-  50% {
-    transform: translateX(60px);
-  }
-  100% {
-    transform: translateX(-60px);
-  }
-}
-
-/* ── NEW: Wave-specific Scene Element Classes ── */
-
-.spring-mass {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-  animation: oscillate 2.4s ease-in-out infinite;
-}
-
-.spring-mass::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  width: 4px;
-  height: 60px;
-  margin-left: -2px;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(26, 35, 50, 0.6) 0px,
-    rgba(26, 35, 50, 0.6) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-.wave-crest {
-  position: absolute;
-  width: 28px;
-  height: 14px;
-  border-radius: 14px 14px 0 0;
-  background: linear-gradient(180deg, rgba(37, 99, 235, 0.7), rgba(37, 99, 235, 0.3));
-}
-
-.wave-trough {
-  position: absolute;
-  width: 28px;
-  height: 14px;
-  border-radius: 0 0 14px 14px;
-  background: linear-gradient(0deg, rgba(99, 102, 241, 0.7), rgba(99, 102, 241, 0.3));
-}
-
-.medium-boundary {
-  position: absolute;
-  width: 4px;
-  height: 100%;
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.6), rgba(37, 99, 235, 0.6));
-  box-shadow:
-    -8px 0 20px rgba(37, 99, 235, 0.08),
-    8px 0 20px rgba(124, 58, 237, 0.08);
-}
-
-.ray-beam {
-  position: absolute;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.9), rgba(124, 58, 237, 0.6));
-  box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
-  transform-origin: left center;
-}
-
-.slit-barrier {
-  position: absolute;
-  width: 6px;
-  background: rgba(26, 35, 50, 0.7);
-  border-radius: 3px;
-}
-
-.slit-barrier::before,
-.slit-barrier::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 100%;
-  background: inherit;
-  border-radius: inherit;
-}
-
-.speaker-cone {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 40%, #4b5563, #1a2332);
-  border: 3px solid rgba(26, 35, 50, 0.3);
-  box-shadow:
-    0 0 0 6px rgba(37, 99, 235, 0.12),
-    0 0 0 14px rgba(37, 99, 235, 0.06),
-    0 0 0 24px rgba(37, 99, 235, 0.03);
-}
-
-.string-segment {
-  position: absolute;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(26, 35, 50, 0.6);
-  transform-origin: left center;
-}
-
-.prism-shape {
-  position: absolute;
-  width: 72px;
-  height: 72px;
-  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(124, 58, 237, 0.22), rgba(99, 102, 241, 0.16));
-  border: none;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
-}
-
-.antenna-element {
-  position: absolute;
-  width: 4px;
-  height: 64px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, rgba(26, 35, 50, 0.7), rgba(26, 35, 50, 0.4));
-}
-
-.antenna-element::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 24px;
-  height: 24px;
-  margin-left: -12px;
-  margin-top: -12px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.3), transparent 70%);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.photon-packet {
-  position: absolute;
-  width: 32px;
-  height: 18px;
-  border-radius: 9px;
-  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.5), rgba(124, 58, 237, 0.6), rgba(37, 99, 235, 0.5), transparent);
-  animation: propagate 3s linear infinite;
-}
-
-/* ── Responsive ── */
-
 @media (max-width: 1120px) {
   .page-shell,
   .chapter-stage,
@@ -1739,7 +1464,7 @@ a {
   margin-top: 14px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: rgba(124, 58, 237, 0.08);
+  background: rgba(217, 119, 6, 0.08);
 }
 
 .quiz-link,
@@ -1747,8 +1472,8 @@ a {
   margin-top: 12px;
   padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.16);
-  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(15, 118, 110, 0.08);
   color: var(--accent);
   cursor: pointer;
 }
@@ -1786,27 +1511,27 @@ a {
   padding: 10px 12px;
   text-align: left;
   border-radius: 14px;
-  border: 1px solid rgba(37, 99, 235, 0.1);
-  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.1);
+  background: rgba(15, 118, 110, 0.06);
   color: var(--ink);
   cursor: pointer;
 }
 
 .source-section-button.active {
-  border-color: rgba(37, 99, 235, 0.24);
-  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(15, 118, 110, 0.24);
+  background: rgba(15, 118, 110, 0.12);
 }
 
 .term-source-summary {
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: rgba(37, 99, 235, 0.06);
-  border: 1px solid rgba(37, 99, 235, 0.1);
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.1);
 }
 
 .roadmap-panel {
-  background: linear-gradient(140deg, rgba(240, 246, 255, 0.92), rgba(228, 237, 249, 0.94));
+  background: linear-gradient(140deg, rgba(255, 249, 238, 0.92), rgba(247, 240, 228, 0.94));
 }
 
 .roadmap-grid {
@@ -1824,7 +1549,7 @@ a {
 }
 
 .roadmap-card-primary {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08));
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(217, 119, 6, 0.08));
 }
 
 .roadmap-copy {
@@ -1845,7 +1570,7 @@ a {
   margin-bottom: 12px;
   border-radius: 999px;
   font-family: var(--display);
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(15, 118, 110, 0.12);
   color: var(--accent);
 }
 
@@ -1864,8 +1589,8 @@ a {
   margin-top: 14px;
   padding: 10px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.14);
-  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: rgba(15, 118, 110, 0.08);
   color: var(--accent);
   cursor: pointer;
 }
@@ -2019,8 +1744,8 @@ a {
   margin-top: 14px;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(37, 99, 235, 0.14);
-  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: rgba(15, 118, 110, 0.06);
   color: var(--accent);
   cursor: pointer;
 }
@@ -2051,7 +1776,7 @@ a {
 .chapter-link-progress {
   font-family: var(--display);
   font-size: 0.74rem;
-  color: rgba(224, 234, 246, 0.72);
+  color: rgba(248, 240, 228, 0.72);
 }
 
 .mastery-progress {
@@ -2091,6 +1816,361 @@ a {
 }
 
 .mastery-item.checked {
-  border-color: rgba(37, 99, 235, 0.24);
-  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(15, 118, 110, 0.24);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+/* ===== Learn Mode ===== */
+
+.learn-mode-container {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.learn-mode-container[hidden] {
+  display: none;
+}
+
+.learn-mode-inner {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  background: var(--paper);
+}
+
+.lecture-toc {
+  margin-top: 22px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--line);
+}
+
+.lecture-toc ol {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.lecture-toc a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.lecture-toc a:hover {
+  text-decoration: underline;
+}
+
+.lecture-sections {
+  margin-top: 24px;
+}
+
+.lecture-section {
+  margin-top: 28px;
+  padding: 22px 24px;
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.lecture-section:first-child {
+  margin-top: 0;
+}
+
+.lecture-section h3 {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.lecture-section-body {
+  color: var(--ink);
+  font-size: 1.06rem;
+  line-height: 1.65;
+}
+
+.lecture-section-body p {
+  margin: 0 0 14px;
+}
+
+.lecture-section .scene,
+.lecture-scene {
+  min-height: 200px;
+  margin-top: 18px;
+}
+
+.lecture-math-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.lecture-derivations {
+  margin-top: 28px;
+}
+
+.lecture-derivations .derivation-card {
+  margin-top: 14px;
+}
+
+/* Math Prerequisite Bar */
+
+.math-prereq-bar {
+  margin-top: 22px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.06), rgba(217, 119, 6, 0.06));
+  border: 1px solid rgba(15, 118, 110, 0.12);
+}
+
+.math-prereq-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.math-prereq-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--accent);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.math-prereq-pill:hover {
+  transform: translateY(-2px);
+  background: rgba(15, 118, 110, 0.14);
+}
+
+/* Math Lesson Overlay */
+
+.math-lesson-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(18, 35, 37, 0.52);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.math-lesson-overlay[hidden] {
+  display: none;
+}
+
+.math-lesson-panel {
+  width: min(90vw, 780px);
+  margin: 24px auto;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.math-lesson-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.math-lesson-header h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  letter-spacing: 0.02em;
+  line-height: 0.96;
+}
+
+.math-lesson-body {
+  margin-top: 24px;
+}
+
+.math-lesson-section {
+  margin-top: 22px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--line);
+}
+
+.math-lesson-section:first-child {
+  margin-top: 0;
+}
+
+.math-lesson-section h4 {
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-size: 1.3rem;
+}
+
+.math-lesson-section p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.6;
+  font-size: 1.02rem;
+}
+
+.math-lesson-interactive {
+  min-height: 180px;
+  margin-top: 14px;
+}
+
+.math-lesson-exercises {
+  margin-top: 28px;
+}
+
+.math-exercise {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.58);
+  overflow: hidden;
+}
+
+.math-exercise summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 18px 20px;
+}
+
+.math-exercise summary::-webkit-details-marker {
+  display: none;
+}
+
+.math-exercise summary h4 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.math-exercise summary p {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.math-exercise-answer {
+  padding: 0 20px 18px;
+}
+
+.math-exercise-answer strong {
+  color: var(--accent);
+  font-family: var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.math-exercise-answer p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Lecture Summary */
+
+.lecture-summary {
+  margin-top: 28px;
+  padding: 22px 24px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.06), rgba(217, 119, 6, 0.06));
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.lecture-summary > p {
+  margin: 10px 0 0;
+  color: var(--ink);
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+/* Lecture Problems */
+
+.lecture-problems {
+  margin-top: 24px;
+  padding: 22px 24px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--line);
+}
+
+.lecture-problem {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(217, 119, 6, 0.06);
+  border: 1px solid rgba(217, 119, 6, 0.12);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.lecture-problem:first-of-type {
+  margin-top: 14px;
+}
+
+/* Inline Math Link */
+
+.inline-math-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 119, 6, 0.2);
+  background: rgba(217, 119, 6, 0.08);
+  color: var(--accent-3);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.inline-math-link:hover {
+  transform: translateY(-2px);
+  background: rgba(217, 119, 6, 0.14);
+}
+
+.math-lesson-close {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .math-lesson-panel {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .math-lesson-header {
+    flex-direction: column;
+  }
+
+  .lecture-section {
+    padding: 16px 18px;
+  }
+
+  .math-prereq-pills {
+    gap: 8px;
+  }
 }

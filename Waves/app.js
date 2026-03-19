@@ -1,5 +1,11 @@
 const modes = [
   {
+    id: "learn",
+    label: "Learn",
+    hero: "Follow the lecture from start to finish, with interactives along the way.",
+    subtitle: "A linear walkthrough of Schwartz's notes with inline animations, derivation boxes, and math lesson links."
+  },
+  {
     id: "intuition",
     label: "Intuition",
     hero: "Everything oscillates. When oscillators talk, waves emerge.",
@@ -16,6 +22,215 @@ const modes = [
     label: "Exam",
     hero: "Turn the notes into checkpoints, prompts, and recoverable errors.",
     subtitle: "Use the chapter prompts and common pitfalls to rehearse reasoning instead of memorizing results."
+  }
+];
+
+const mathLessons = [
+  {
+    id: "complex-numbers",
+    title: "Complex Numbers & Euler's Formula",
+    sections: [
+      { heading: "Why complex numbers?", body: "Real numbers lie on a line. But many physical problems -- especially oscillations and waves -- naturally involve two coupled quantities (amplitude and phase, or position and velocity). Complex numbers let you package both into a single object z = x + iy, turning two-dimensional problems into one-dimensional algebra.", interactive: null },
+      { heading: "Basic arithmetic", body: "Addition is component-wise: (a+bi) + (c+di) = (a+c) + (b+d)i. Multiplication uses i^2 = -1: (a+bi)(c+di) = (ac-bd) + (ad+bc)i. The complex conjugate z* = x - iy gives you |z|^2 = z z* = x^2 + y^2, which is the squared distance from the origin in the complex plane.", interactive: null },
+      { heading: "Polar form and Euler's formula", body: "Any complex number can be written as z = r e^(i theta) where r = |z| is the magnitude and theta = arg(z) is the angle from the positive real axis. Euler's formula e^(i theta) = cos(theta) + i sin(theta) is the bridge between exponentials and trigonometry. It makes oscillation problems vastly easier because differentiation just multiplies by i omega.", interactive: "euler-circle" },
+      { heading: "Why physicists love e^(i omega t)", body: "When you write x(t) = Re[A e^(i omega t)], differentiating becomes trivial: dx/dt = Re[i omega A e^(i omega t)]. The complex exponential turns differential equations into algebraic equations. After solving for the complex amplitude, you take the real part at the end.", interactive: null }
+    ],
+    exercises: [
+      { question: "Write z = 3 + 4i in polar form. What are r and theta?", answer: "r = sqrt(9+16) = 5, theta = arctan(4/3) approximately 53.1 degrees. So z = 5 e^(i arctan(4/3))." },
+      { question: "Compute (1+i)^4 using polar form.", answer: "1+i = sqrt(2) e^(i pi/4). Raising to the 4th power: (sqrt(2))^4 e^(i 4 pi/4) = 4 e^(i pi) = -4." },
+      { question: "Show that |e^(i theta)| = 1 for any real theta.", answer: "|e^(i theta)|^2 = e^(i theta) e^(-i theta) = e^0 = 1, so |e^(i theta)| = 1. The complex exponential always lies on the unit circle." }
+    ]
+  },
+  {
+    id: "taylor-series",
+    title: "Taylor Series & Approximations",
+    sections: [
+      { heading: "The idea of local approximation", body: "A Taylor series approximates a function near a point by matching its value and all its derivatives there. f(x) = f(a) + f'(a)(x-a) + f''(a)(x-a)^2/2! + ... The more terms you keep, the better the approximation over a wider range.", interactive: null },
+      { heading: "Leading-order approximations", body: "In physics, we often only need the first nontrivial term. For small x: sin(x) approximately equals x, cos(x) approximately equals 1 - x^2/2, e^x approximately equals 1 + x, (1+x)^n approximately equals 1 + nx. These approximations are the workhorses of physics, valid when x is much less than 1.", interactive: null },
+      { heading: "Taylor expansion of potentials", body: "Near a minimum of V(x), V'(x_0) = 0, so V(x) approximately equals V(x_0) + (1/2)V''(x_0)(x - x_0)^2. This is why every potential near equilibrium looks like a harmonic oscillator -- the quadratic term always dominates for small displacements.", interactive: null },
+      { heading: "When approximations break down", body: "Taylor approximations fail when the expansion parameter is not small. For the discrete dispersion relation omega = 2 omega_0 |sin(ka/2)|, the approximation omega approximately equals omega_0 ka works only when ka is much less than 1, i.e., wavelengths much longer than the lattice spacing.", interactive: null }
+    ],
+    exercises: [
+      { question: "Expand cos(x) to fourth order about x = 0.", answer: "cos(x) = 1 - x^2/2! + x^4/4! - ... = 1 - x^2/2 + x^4/24." },
+      { question: "For a pendulum, the exact restoring torque involves sin(theta). For small angles, why does the period not depend on amplitude?", answer: "For small theta, sin(theta) approximately equals theta, making the equation of motion linear: theta'' = -(g/L) theta. The frequency omega = sqrt(g/L) is independent of amplitude because the equation is linear." },
+      { question: "What is the leading correction to the approximation sin(x) approximately equals x?", answer: "sin(x) = x - x^3/6 + ..., so the leading correction is -x^3/6. The relative error is about x^2/6." }
+    ]
+  },
+  {
+    id: "solving-odes",
+    title: "Solving Linear ODEs",
+    sections: [
+      { heading: "The exponential ansatz", body: "For a linear ODE with constant coefficients like a x'' + b x' + c x = 0, guess x = e^(alpha t). Substituting gives (a alpha^2 + b alpha + c) e^(alpha t) = 0. Since e^(alpha t) is never zero, the characteristic equation a alpha^2 + b alpha + c = 0 determines alpha.", interactive: null },
+      { heading: "The characteristic equation", body: "The characteristic equation is a polynomial in alpha whose roots give the time dependence of the solution. For a second-order equation, there are two roots. Real roots give exponential growth or decay. Complex roots alpha = sigma +/- i omega give oscillation: e^(sigma t)(A cos(omega t) + B sin(omega t)).", interactive: null },
+      { heading: "Particular solutions for driven systems", body: "For x'' + gamma x' + omega_0^2 x = F_0 cos(omega_d t), try x_p = Re[z_0 e^(-i omega_d t)]. Substitute to get z_0 = F_0 / (omega_0^2 - omega_d^2 - i gamma omega_d). The real part gives the steady-state amplitude and phase.", interactive: null },
+      { heading: "General solution = homogeneous + particular", body: "The general solution is x(t) = x_h(t) + x_p(t), where x_h contains two arbitrary constants set by initial conditions and x_p is the particular solution. For a damped system, x_h dies away exponentially, leaving only x_p at long times.", interactive: null }
+    ],
+    exercises: [
+      { question: "Find the general solution of x'' + 4x = 0.", answer: "Characteristic equation: alpha^2 + 4 = 0, so alpha = +/- 2i. General solution: x(t) = A cos(2t) + B sin(2t), or equivalently x(t) = C cos(2t + phi)." },
+      { question: "Solve x'' + 2x' + x = 0 and classify the damping.", answer: "alpha^2 + 2 alpha + 1 = (alpha + 1)^2 = 0, so alpha = -1 (repeated root). x(t) = (A + Bt) e^(-t). This is critically damped." },
+      { question: "For x'' + x' + x = cos(2t), find the steady-state amplitude.", answer: "z_0 = 1/(1 - 4 - 2i) = 1/(-3 - 2i) = (-3 + 2i)/13. Amplitude = |z_0| = sqrt(9+4)/13 = sqrt(13)/13 = 1/sqrt(13)." }
+    ]
+  },
+  {
+    id: "eigenvalues",
+    title: "Eigenvalues & Normal Modes",
+    sections: [
+      { heading: "The eigenvalue equation", body: "An eigenvalue problem asks: for what values of lambda does A v = lambda v have a nonzero solution v? This happens exactly when det(A - lambda I) = 0. The values of lambda are eigenvalues; the corresponding vectors v are eigenvectors.", interactive: null },
+      { heading: "Physical meaning: normal modes", body: "For coupled oscillators, the equations of motion can be written as M x'' = -K x. Guessing x = v e^(i omega t) gives K v = omega^2 M v, an eigenvalue problem. Each eigenvalue omega^2 gives a normal mode frequency, and the eigenvector v gives the pattern of motion in that mode.", interactive: null },
+      { heading: "The determinant condition", body: "For a 2x2 matrix [[a,b],[c,d]], det(A - lambda I) = (a-lambda)(d-lambda) - bc = 0 gives lambda^2 - (a+d) lambda + (ad-bc) = 0. The sum of eigenvalues equals the trace, and the product equals the determinant.", interactive: null },
+      { heading: "Diagonalization", body: "If a matrix has n linearly independent eigenvectors, it can be diagonalized: A = P D P^(-1), where D is the diagonal matrix of eigenvalues and P has eigenvectors as columns. In the eigenvector basis, the coupled system decouples into independent oscillators.", interactive: null }
+    ],
+    exercises: [
+      { question: "Find the eigenvalues of the matrix [[3,1],[1,3]].", answer: "det([[3-lambda,1],[1,3-lambda]]) = (3-lambda)^2 - 1 = 0, so lambda = 3 +/- 1 = 4 or 2. Eigenvectors: (1,1) for lambda=4 and (1,-1) for lambda=2." },
+      { question: "Two identical masses m connected by springs with k and coupling kappa. What are the normal mode frequencies?", answer: "omega_1^2 = k/m (symmetric mode, masses move together) and omega_2^2 = (k + 2 kappa)/m (antisymmetric mode, masses move oppositely)." },
+      { question: "Why must the eigenvalues of a real symmetric matrix be real?", answer: "If A v = lambda v, take the conjugate transpose: v^dagger A = lambda* v^dagger (since A = A^dagger). Then v^dagger A v = lambda |v|^2 = lambda* |v|^2, so lambda = lambda*." }
+    ]
+  },
+  {
+    id: "matrix-methods",
+    title: "Matrix Methods for Coupled Systems",
+    sections: [
+      { heading: "Matrix multiplication", body: "The element (AB)_ij = sum_k A_ik B_kj. Physically, if A and B each represent a transformation, AB represents doing B first, then A. Matrix multiplication is associative but not commutative in general.", interactive: null },
+      { heading: "Coupled equations as matrix problems", body: "The system x_1'' = -2 omega_0^2 x_1 + omega_0^2 x_2 and x_2'' = omega_0^2 x_1 - 2 omega_0^2 x_2 can be written as x'' = -M x with M = omega_0^2 [[2,-1],[-1,2]]. Diagonalizing M solves the coupled system.", interactive: null },
+      { heading: "The Jones vector for polarization", body: "A polarization state is described by a 2-vector (E_x, E_y). Optical elements like polarizers and wave plates act as 2x2 matrices. A linear polarizer along x is [[1,0],[0,0]]. A quarter-wave plate is [[1,0],[0,i]]. The output polarization is the matrix times the input Jones vector.", interactive: null }
+    ],
+    exercises: [
+      { question: "Compute [[1,2],[3,4]] times [[5],[6]].", answer: "[[1*5+2*6],[3*5+4*6]] = [[17],[39]]." },
+      { question: "What is the Jones vector for right circular polarization, and what happens when you pass it through a linear polarizer along x?", answer: "Right circular: (1/sqrt(2))(1, -i). Through x-polarizer [[1,0],[0,0]]: result is (1/sqrt(2))(1, 0). The intensity is 1/2 of the input." },
+      { question: "If A and B are 2x2 matrices, is AB = BA in general? Give a counterexample.", answer: "No. For A = [[1,1],[0,1]] and B = [[1,0],[1,1]]: AB = [[2,1],[1,1]] but BA = [[1,1],[1,2]]. They differ." }
+    ]
+  },
+  {
+    id: "orthogonality",
+    title: "Orthogonality & Inner Products",
+    sections: [
+      { heading: "Inner products of functions", body: "The inner product of two functions on [0, L] is <f, g> = integral from 0 to L of f(x) g(x) dx. Two functions are orthogonal if <f, g> = 0. This generalizes the dot product of vectors to infinite-dimensional function spaces.", interactive: null },
+      { heading: "Orthogonality of sines and cosines", body: "On [0, L], the functions sin(n pi x / L) are mutually orthogonal: integral of sin(n pi x / L) sin(m pi x / L) dx = 0 when n is not equal to m, and = L/2 when n = m. Similarly for cosines. This orthogonality is what makes Fourier analysis work.", interactive: null },
+      { heading: "Kronecker delta and completeness", body: "Orthonormality is expressed as <phi_n, phi_m> = delta_{nm}, where the Kronecker delta is 1 if n=m and 0 otherwise. A set is complete if any function in the space can be expanded as f = sum c_n phi_n, with c_n = <phi_n, f>.", interactive: null },
+      { heading: "Extracting coefficients", body: "If f = sum c_n phi_n and the phi_n are orthonormal, then c_m = <phi_m, f> = integral phi_m(x) f(x) dx. Each coefficient is computed independently thanks to orthogonality. This is the key step in Fourier analysis.", interactive: null }
+    ],
+    exercises: [
+      { question: "Verify that sin(pi x / L) and sin(2 pi x / L) are orthogonal on [0, L].", answer: "Integral of sin(pi x/L) sin(2 pi x/L) dx from 0 to L = integral of (1/2)[cos(pi x/L) - cos(3 pi x/L)] dx = 0, since both cosines integrate to zero over a full number of half-periods." },
+      { question: "For the expansion f(x) = sum b_n sin(n pi x / L), derive the formula for b_n.", answer: "Multiply both sides by sin(m pi x / L) and integrate: integral f(x) sin(m pi x/L) dx = sum b_n (L/2) delta_{nm} = b_m L/2. So b_m = (2/L) integral f(x) sin(m pi x/L) dx." }
+    ]
+  },
+  {
+    id: "integration-techniques",
+    title: "Integration Techniques for Waves",
+    sections: [
+      { heading: "Integration by parts", body: "integral u dv = uv - integral v du. Choose u to be the function that simplifies when differentiated, and dv to be the function that is easy to integrate. Common in wave physics: integrating x sin(nx) dx, or computing Fourier coefficients of piecewise functions.", interactive: null },
+      { heading: "Trig integrals", body: "integral sin^2(x) dx = x/2 - sin(2x)/4. integral sin(ax)cos(bx) dx uses the product-to-sum identity. integral sin(ax)sin(bx) dx over a full period gives zero unless a = b (orthogonality). These show up constantly in energy and power calculations.", interactive: null },
+      { heading: "Gaussian integrals", body: "integral from -infinity to infinity of e^(-a x^2) dx = sqrt(pi/a). With x^2 in front: integral x^2 e^(-a x^2) dx = sqrt(pi)/(2 a^(3/2)). These appear in wavepacket calculations and quantum mechanics.", interactive: null }
+    ],
+    exercises: [
+      { question: "Compute integral from 0 to pi of x sin(x) dx using integration by parts.", answer: "u = x, dv = sin(x) dx. Then du = dx, v = -cos(x). integral = [-x cos(x)] from 0 to pi + integral cos(x) dx = pi + [sin(x)] from 0 to pi = pi." },
+      { question: "Show that the time-averaged value of sin^2(omega t) is 1/2.", answer: "Average over one period T = 2pi/omega: (1/T) integral sin^2(omega t) dt = (1/T)(T/2) = 1/2. Alternatively, sin^2 = (1 - cos(2 omega t))/2, and the cosine averages to zero." },
+      { question: "Evaluate integral from -infinity to infinity of e^(-x^2/2) dx.", answer: "This is a Gaussian with a = 1/2, so the result is sqrt(pi/(1/2)) = sqrt(2 pi)." }
+    ]
+  },
+  {
+    id: "fourier-math",
+    title: "Fourier Series Mathematics",
+    sections: [
+      { heading: "The Fourier coefficients formula", body: "For a function with period L: a_0 = (2/L) integral f(x) dx, a_n = (2/L) integral f(x) cos(2 pi n x / L) dx, b_n = (2/L) integral f(x) sin(2 pi n x / L) dx. These formulas extract the nth harmonic from f by exploiting orthogonality.", interactive: null },
+      { heading: "Convergence of Fourier series", body: "For a piecewise smooth function, the Fourier series converges to f(x) at points of continuity and to the average of left and right limits at jumps. The rate of convergence depends on smoothness: smoother functions have faster-decaying coefficients.", interactive: null },
+      { heading: "Parseval's theorem", body: "The total energy (mean square value) of a signal equals the sum of the squared Fourier coefficients: (1/L) integral |f(x)|^2 dx = |a_0|^2/4 + (1/2) sum (|a_n|^2 + |b_n|^2). Energy is conserved between the time/space domain and the frequency domain.", interactive: null },
+      { heading: "Exponential form", body: "Using c_n = (1/L) integral f(x) e^(-i 2 pi n x / L) dx, the Fourier series becomes f(x) = sum c_n e^(i 2 pi n x / L). The exponential form is more compact and is the stepping stone to the Fourier transform.", interactive: null }
+    ],
+    exercises: [
+      { question: "Compute the Fourier sine coefficients b_n for the sawtooth wave f(x) = x on [0, L].", answer: "b_n = (2/L) integral_0^L x sin(2 pi n x/L) dx. Integration by parts gives b_n = -L/(n pi). The series is f(x) = -(L/pi) sum (1/n) sin(2 pi n x/L)." },
+      { question: "Why does the Fourier series of a square wave only contain odd harmonics?", answer: "A square wave is an odd function with half-wave symmetry: f(x + L/2) = -f(x). This symmetry forces all even Fourier coefficients to vanish." },
+      { question: "State Parseval's theorem in words and explain what it means physically.", answer: "The total power of a signal equals the sum of the powers of its harmonic components. Energy is neither created nor destroyed by the Fourier decomposition -- it is just redistributed among frequencies." }
+    ]
+  },
+  {
+    id: "fourier-transform-math",
+    title: "Fourier Transform Mathematics",
+    sections: [
+      { heading: "The L to infinity limit", body: "As the period L goes to infinity, the discrete frequencies k_n = 2 pi n / L become continuous, the spacing Delta k = 2 pi / L shrinks to dk, and the sum over n becomes an integral over k. The Fourier series coefficients become the Fourier transform f-tilde(k).", interactive: null },
+      { heading: "The delta function", body: "The Dirac delta function delta(x) is zero everywhere except at x = 0, with integral delta(x) dx = 1. Its Fourier transform is 1 (constant), meaning a perfectly localized spike contains all frequencies equally. Conversely, a single frequency e^(ikx) transforms to a delta function delta(k - k_0).", interactive: null },
+      { heading: "Convolution theorem", body: "The Fourier transform of a product is a convolution, and vice versa. If h(x) = integral f(x') g(x - x') dx', then h-tilde(k) = f-tilde(k) g-tilde(k). This is immensely useful: multiplication in one domain corresponds to convolution in the other.", interactive: null },
+      { heading: "Uncertainty principle", body: "A function cannot be simultaneously narrow in both x and k. Quantitatively, Delta x Delta k >= 1/2. For Gaussian wavepackets, equality holds. This is the mathematical backbone of the Heisenberg uncertainty principle in quantum mechanics.", interactive: null }
+    ],
+    exercises: [
+      { question: "What is the Fourier transform of a Gaussian f(x) = e^(-x^2/(2 sigma^2))?", answer: "f-tilde(k) = sigma sqrt(2 pi) e^(-sigma^2 k^2/2). A Gaussian transforms to a Gaussian. The wider the original (large sigma), the narrower the transform." },
+      { question: "Show that the Fourier transform of f'(x) is ik f-tilde(k).", answer: "FT[f'] = integral f'(x) e^(-ikx) dx. Integrate by parts: [f e^(-ikx)] (vanishes at infinity) + ik integral f(x) e^(-ikx) dx = ik f-tilde(k)." },
+      { question: "If a wavepacket has spatial width Delta x = 1 nm, what is the minimum spread in wavenumber?", answer: "Delta k >= 1/(2 Delta x) = 0.5 nm^(-1) = 5 x 10^8 m^(-1). You cannot have a pulse narrower than 1 nm without this minimum spread in k." }
+    ]
+  },
+  {
+    id: "pde-basics",
+    title: "Partial Differential Equations",
+    sections: [
+      { heading: "Partial derivatives", body: "A partial derivative d f/d x treats all other variables as constants. For f(x,t) = sin(kx - omega t), d f/d x = k cos(kx - omega t) and d f/d t = -omega cos(kx - omega t). The wave equation relates the second partial derivatives in space and time.", interactive: null },
+      { heading: "Separation of variables", body: "To solve d^2 u/dt^2 = v^2 d^2 u/dx^2, guess u(x,t) = X(x) T(t). Then T''/T = v^2 X''/X. Since the left side depends only on t and the right only on x, both must equal a constant. This splits one PDE into two ODEs.", interactive: null },
+      { heading: "Boundary conditions", body: "A PDE needs boundary conditions to have a unique solution. Fixed ends: u(0,t) = u(L,t) = 0 select standing wave modes sin(n pi x/L). Free ends give cosine modes. The boundary conditions determine which normal modes are allowed.", interactive: null },
+      { heading: "The wave equation and its solutions", body: "d^2 u/dt^2 = v^2 d^2 u/dx^2 has general solution u = f(x - vt) + g(x + vt): any shape traveling right plus any shape traveling left. Standing waves sin(kx)cos(omega t) are the special case where the right and left movers have equal amplitude.", interactive: null }
+    ],
+    exercises: [
+      { question: "Verify that u(x,t) = A sin(kx) cos(omega t) satisfies the wave equation if omega = vk.", answer: "d^2u/dt^2 = -omega^2 A sin(kx) cos(omega t). v^2 d^2u/dx^2 = -v^2 k^2 A sin(kx) cos(omega t). These are equal when omega^2 = v^2 k^2, i.e. omega = vk." },
+      { question: "For a string of length L with fixed ends, what are the allowed wavelengths?", answer: "The mode shapes are sin(n pi x/L), so k_n = n pi / L and lambda_n = 2L/n. The longest wavelength is lambda_1 = 2L (the fundamental)." },
+      { question: "Why does separation of variables work? What is the key assumption?", answer: "It assumes the solution factors as u(x,t) = X(x)T(t). When substituted into the PDE, the variables separate, and since a function of t alone cannot equal a function of x alone (unless both are constant), each side must equal the same constant." }
+    ]
+  },
+  {
+    id: "vector-calculus",
+    title: "Vector Calculus for EM Waves",
+    sections: [
+      { heading: "Gradient", body: "The gradient grad f = (df/dx, df/dy, df/dz) points in the direction of steepest increase. Its magnitude is the rate of change in that direction. For electromagnetic waves, the gradient of the scalar potential is related to the electric field.", interactive: null },
+      { heading: "Divergence", body: "div F = dF_x/dx + dF_y/dy + dF_z/dz measures the net outward flux per unit volume. Gauss's law div E = rho/epsilon_0 says charges are sources of electric field lines. In vacuum (rho = 0), div E = 0.", interactive: null },
+      { heading: "Curl", body: "curl F measures the circulation per unit area. Faraday's law curl E = -dB/dt says a changing magnetic field creates a circulating electric field. Ampere's law curl B = mu_0 epsilon_0 dE/dt says a changing electric field creates a circulating magnetic field. These two curls are the engine of electromagnetic waves.", interactive: null },
+      { heading: "The vector identity for wave equations", body: "curl(curl F) = grad(div F) - nabla^2 F. Since div E = 0 in vacuum, curl(curl E) = -nabla^2 E. Combined with curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt, this gives the wave equation nabla^2 E = mu_0 epsilon_0 d^2E/dt^2.", interactive: null }
+    ],
+    exercises: [
+      { question: "Compute the divergence of F = (x^2, xy, z).", answer: "div F = 2x + x + 1 = 3x + 1." },
+      { question: "Why does div B = 0 imply there are no magnetic monopoles?", answer: "div B = 0 means the net magnetic flux out of any closed surface is zero. Every field line that enters a region must also leave it. There is no point source of magnetic field lines (no monopole)." },
+      { question: "Starting from curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt, derive the wave equation for E.", answer: "Take curl of the first: curl(curl E) = -d/dt(curl B) = -mu_0 epsilon_0 d^2E/dt^2. Use curl(curl E) = -nabla^2 E (since div E = 0) to get nabla^2 E = mu_0 epsilon_0 d^2E/dt^2." }
+    ]
+  },
+  {
+    id: "probability-waves",
+    title: "Probability & Wavefunctions",
+    sections: [
+      { heading: "Probability density", body: "In quantum mechanics, the wavefunction psi(x,t) is a complex-valued function whose squared magnitude |psi(x,t)|^2 gives the probability density. The probability of finding the particle between x and x+dx is |psi|^2 dx.", interactive: null },
+      { heading: "Normalization", body: "The total probability must be 1: integral from -infinity to infinity of |psi(x)|^2 dx = 1. This fixes the overall amplitude of the wavefunction. Not all solutions of the Schrodinger equation are normalizable -- only the physically meaningful ones.", interactive: null },
+      { heading: "Expectation values", body: "The expected value of position is <x> = integral x |psi|^2 dx. For any observable A with operator A-hat, <A> = integral psi* A-hat psi dx. The variance (Delta x)^2 = <x^2> - <x>^2 measures the spread of the probability distribution.", interactive: null },
+      { heading: "Connection to waves", body: "A plane wave psi = e^(i(kx - omega t)) has a definite momentum p = hbar k but is completely delocalized. A wavepacket is localized but has a spread of momenta. The uncertainty principle Delta x Delta p >= hbar/2 follows directly from the wave nature of quantum particles.", interactive: null }
+    ],
+    exercises: [
+      { question: "Normalize psi(x) = A e^(-|x|/a) by finding A.", answer: "integral |A|^2 e^(-2|x|/a) dx = 2|A|^2 integral_0^infinity e^(-2x/a) dx = 2|A|^2 (a/2) = |A|^2 a = 1. So A = 1/sqrt(a)." },
+      { question: "For a particle in a box with psi_n = sqrt(2/L) sin(n pi x/L), compute <x>.", answer: "<x> = (2/L) integral_0^L x sin^2(n pi x/L) dx = L/2. By symmetry, the expected position is always the center of the box." },
+      { question: "Why can the wavefunction be complex even though probabilities must be real?", answer: "The wavefunction is an amplitude, not a probability. The probability |psi|^2 = psi* psi is always real and non-negative. The complex phase of psi encodes information about momentum and time evolution." }
+    ]
+  },
+  {
+    id: "trig-identities",
+    title: "Trigonometric Identities for Waves",
+    sections: [
+      { heading: "Sum and difference formulas", body: "cos(A +/- B) = cos A cos B -/+ sin A sin B. sin(A +/- B) = sin A cos B +/- cos A sin B. These are essential for decomposing wave sums and deriving beat frequencies.", interactive: null },
+      { heading: "Product-to-sum formulas", body: "sin A sin B = (1/2)[cos(A-B) - cos(A+B)]. cos A cos B = (1/2)[cos(A-B) + cos(A+B)]. sin A cos B = (1/2)[sin(A+B) + sin(A-B)]. These convert products of oscillations into sums of different frequencies.", interactive: null },
+      { heading: "Beating", body: "cos(omega_1 t) + cos(omega_2 t) = 2 cos((omega_1-omega_2)t/2) cos((omega_1+omega_2)t/2). When omega_1 and omega_2 are close, this is a fast oscillation at the average frequency modulated by a slow envelope at half the difference frequency. The envelope is the beat.", interactive: null },
+      { heading: "Phase shifts and phasors", body: "A cos(omega t) + B sin(omega t) = C cos(omega t + phi), where C = sqrt(A^2 + B^2) and tan(phi) = -B/A. This lets you combine two oscillations at the same frequency into a single cosine with a phase shift.", interactive: null }
+    ],
+    exercises: [
+      { question: "Derive the beat formula: cos(omega_1 t) + cos(omega_2 t) = 2 cos(Delta omega t/2) cos(omega_bar t), where Delta omega = omega_1 - omega_2 and omega_bar = (omega_1 + omega_2)/2.", answer: "Write omega_1 = omega_bar + Delta omega/2 and omega_2 = omega_bar - Delta omega/2. Then use cos A + cos B = 2 cos((A-B)/2) cos((A+B)/2)." },
+      { question: "Use a trig identity to show that sin^2(x) + cos^2(x) = 1.", answer: "From cos(A-B) = cos A cos B + sin A sin B, set A = B = x: cos(0) = cos^2(x) + sin^2(x), and cos(0) = 1." },
+      { question: "Write 3 cos(omega t) + 4 sin(omega t) as C cos(omega t + phi). Find C and phi.", answer: "C = sqrt(9 + 16) = 5. tan(phi) = -4/3, so phi = -arctan(4/3) approximately -53.1 degrees. The combined oscillation is 5 cos(omega t - 53.1 degrees)." }
+    ]
+  },
+  {
+    id: "dimensional-analysis",
+    title: "Dimensional Analysis & Scaling",
+    sections: [
+      { heading: "Checking units", body: "Every equation in physics must be dimensionally consistent. If the left side has units of meters per second, the right side must too. This provides an instant check on any formula. The wave equation d^2u/dt^2 = v^2 d^2u/dx^2 works because [1/t^2] = [v^2/x^2] = [1/t^2].", interactive: null },
+      { heading: "Scaling arguments", body: "Dimensional analysis can predict how quantities scale. The speed of waves on a string must depend on tension T (force, [MLT^-2]) and linear density mu ([ML^-1]). The only combination with units of speed is sqrt(T/mu). No detailed derivation needed!", interactive: null },
+      { heading: "Natural units and dimensionless numbers", body: "The quality factor Q = omega_0/gamma is dimensionless: it counts the number of oscillations in a decay time. The Mach number M = v_source/v_wave is dimensionless and determines whether shock waves form (M > 1). Dimensionless ratios often identify the important physics.", interactive: null }
+    ],
+    exercises: [
+      { question: "Use dimensional analysis to find the speed of sound in terms of bulk modulus B ([ML^-1T^-2]) and density rho ([ML^-3]).", answer: "[v] = [L T^-1]. B/rho has units [L^2 T^-2], so v = sqrt(B/rho). This is the correct answer." },
+      { question: "The de Broglie wavelength lambda = h/p. Check the dimensions.", answer: "[h] = [ML^2T^-1] (energy times time). [p] = [MLT^-1]. [h/p] = [L]. So lambda has units of length, as required." },
+      { question: "A pendulum of length L swings under gravity g. Use dimensional analysis to find the period.", answer: "[T] = [T^1]. L/g has units [T^2], so T must be proportional to sqrt(L/g). Dimensional analysis gives T = C sqrt(L/g) where C is a dimensionless constant (which turns out to be 2pi)." }
+    ]
   }
 ];
 
@@ -100,6 +315,10 @@ const chapters = [
       "What physical quantity determines the oscillation frequency of a simple harmonic oscillator?",
       "How does the behavior change qualitatively as damping increases from zero to above critical?"
     ],
+    mathPrereqs: ["taylor-series", "solving-odes", "complex-numbers"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "oscillator"
   },
   {
@@ -172,6 +391,10 @@ const chapters = [
       "What determines the width of the resonance peak?",
       "How does the phase lag between driving force and response change as you sweep through resonance?"
     ],
+    mathPrereqs: ["complex-numbers", "solving-odes", "trig-identities"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "driven"
   },
   {
@@ -239,6 +462,10 @@ const chapters = [
     prompts: [
       "Why does coupling create two distinct frequencies instead of one?",
       "Under what conditions do you see pronounced beats?"
+    ],
+    mathPrereqs: ["eigenvalues", "matrix-methods"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "coupled"
   },
@@ -308,6 +535,10 @@ const chapters = [
       "Why must boundary conditions be specified to determine the allowed normal modes?",
       "How does the number of normal modes relate to the number of masses?"
     ],
+    mathPrereqs: ["eigenvalues", "trig-identities", "pde-basics"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "n-modes"
   },
   {
@@ -375,6 +606,10 @@ const chapters = [
     prompts: [
       "How does the rate at which Fourier coefficients decrease relate to the smoothness of the function?",
       "Why are only sine terms needed for an odd function?"
+    ],
+    mathPrereqs: ["orthogonality", "integration-techniques", "fourier-math", "trig-identities"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "fourier-series"
   },
@@ -444,6 +679,10 @@ const chapters = [
       "Why can a wave carry energy without the medium moving as a whole?",
       "How does the wave speed in a string change if you double the tension?"
     ],
+    mathPrereqs: ["pde-basics", "taylor-series"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "waves"
   },
   {
@@ -511,6 +750,10 @@ const chapters = [
     prompts: [
       "Why do instruments playing the same note sound different?",
       "What is the physical origin of dissonance?"
+    ],
+    mathPrereqs: ["fourier-math", "trig-identities"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "music"
   },
@@ -580,6 +823,10 @@ const chapters = [
       "How does the width of a Fourier transform peak relate to the duration of the signal?",
       "What physical information does the power spectrum contain that the Fourier transform alone does not?"
     ],
+    mathPrereqs: ["fourier-math", "fourier-transform-math"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "fourier-transform"
   },
   {
@@ -647,6 +894,10 @@ const chapters = [
     prompts: [
       "How does impedance matching work in practical applications like audio cables?",
       "Why does the reflected wave flip when going from a lighter to a heavier medium?"
+    ],
+    mathPrereqs: ["complex-numbers", "pde-basics"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "impedance"
   },
@@ -716,6 +967,10 @@ const chapters = [
       "Why are KE and PE densities equal for a traveling wave but not for a standing wave?",
       "How does the power scale with frequency for a fixed amplitude wave?"
     ],
+    mathPrereqs: ["integration-techniques", "trig-identities"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "power"
   },
   {
@@ -783,6 +1038,10 @@ const chapters = [
     prompts: [
       "Why does a narrower wavepacket in space require a broader range of frequencies?",
       "Under what conditions does a wavepacket travel without spreading?"
+    ],
+    mathPrereqs: ["fourier-transform-math", "complex-numbers"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "wavepackets"
   },
@@ -852,6 +1111,10 @@ const chapters = [
       "What does the absence of S-waves at certain stations tell us about the Earth's interior?",
       "How does the SOFAR channel allow sound to travel thousands of miles in the ocean?"
     ],
+    mathPrereqs: ["pde-basics", "dimensional-analysis"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "em-waves"
   },
   {
@@ -919,6 +1182,10 @@ const chapters = [
     prompts: [
       "Why did the prediction of electromagnetic waves confirm that light is electromagnetic?",
       "How does the speed of light in a material relate to the index of refraction?"
+    ],
+    mathPrereqs: ["vector-calculus", "pde-basics"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "light"
   },
@@ -988,6 +1255,10 @@ const chapters = [
       "Why are there only two independent polarization states for a wave traveling in a given direction?",
       "How can you experimentally distinguish linearly polarized light from circularly polarized light?"
     ],
+    mathPrereqs: ["complex-numbers", "matrix-methods"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "polarization"
   },
   {
@@ -1055,6 +1326,10 @@ const chapters = [
     prompts: [
       "Why does the frequency of light not change when it enters a new medium?",
       "How does a SOFAR channel in the ocean work by the same principle as total internal reflection?"
+    ],
+    mathPrereqs: ["trig-identities", "pde-basics"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "refraction"
   },
@@ -1124,6 +1399,10 @@ const chapters = [
       "What physical mechanism causes the index of refraction to depend on wavelength?",
       "Why does the Larmor formula predict zero radiation along the axis of acceleration?"
     ],
+    mathPrereqs: ["taylor-series", "trig-identities"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "prisms"
   },
   {
@@ -1191,6 +1470,10 @@ const chapters = [
     prompts: [
       "How does a computer monitor that emits only three wavelengths reproduce millions of colors?",
       "Why is the gamut of real displays smaller than the full CIE diagram?"
+    ],
+    mathPrereqs: ["dimensional-analysis"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "color"
   },
@@ -1260,6 +1543,10 @@ const chapters = [
       "How does increasing the number of array elements affect the radiation pattern?",
       "What is the physical role of the phase shift delta_0 between adjacent elements?"
     ],
+    mathPrereqs: ["fourier-math", "trig-identities", "integration-techniques"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "antennas"
   },
   {
@@ -1327,6 +1614,10 @@ const chapters = [
     prompts: [
       "What determines the resolving power of a diffraction grating?",
       "Why does the single-slit pattern have minima at sin(theta) = m lambda / a?"
+    ],
+    mathPrereqs: ["fourier-transform-math", "integration-techniques"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "diffraction"
   },
@@ -1396,6 +1687,10 @@ const chapters = [
       "How is the particle-in-a-box quantization analogous to standing waves on a string?",
       "Why did the ultraviolet catastrophe require the introduction of quantized energy?"
     ],
+    mathPrereqs: ["complex-numbers", "probability-waves", "solving-odes"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
+    ],
     scene: "quantum"
   },
   {
@@ -1463,6 +1758,10 @@ const chapters = [
     prompts: [
       "Why is the frequency change not symmetric between approaching and receding in the classical Doppler formula?",
       "How do astronomers use the Doppler effect to measure the velocities of distant galaxies?"
+    ],
+    mathPrereqs: ["trig-identities", "dimensional-analysis"],
+    lectureContent: [
+      { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
     scene: "doppler"
   }
@@ -2886,6 +3185,260 @@ function answerQuestion(chapter, rawQuestion) {
   };
 }
 
+function getMathLesson(lessonId) {
+  return mathLessons.find((lesson) => lesson.id === lessonId) || null;
+}
+
+function renderMathPrereqs(chapter) {
+  const prereqs = chapter.mathPrereqs || [];
+  if (!prereqs.length) return "";
+  return `
+    <div class="math-prereq-bar">
+      <p class="mini-label">Math Prerequisites</p>
+      <div class="math-prereq-pills">
+        ${prereqs
+          .map((prereqId) => {
+            const lesson = getMathLesson(prereqId);
+            return lesson
+              ? `<button class="math-prereq-pill" data-math-lesson="${prereqId}">${lesson.title}</button>`
+              : "";
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderMathLesson(lessonId) {
+  const lesson = getMathLesson(lessonId);
+  if (!lesson) return;
+
+  const overlay = document.getElementById("math-lesson-overlay");
+  overlay.hidden = false;
+  overlay.innerHTML = `
+    <div class="math-lesson-panel">
+      <div class="math-lesson-header">
+        <div>
+          <p class="mini-label">Math Lesson</p>
+          <h3>${lesson.title}</h3>
+        </div>
+        <button class="math-lesson-close action-button" data-close-math-lesson>Back to lecture</button>
+      </div>
+      <div class="math-lesson-body">
+        ${lesson.sections
+          .map(
+            (section) => `
+            <div class="math-lesson-section">
+              <h4>${section.heading}</h4>
+              <p>${section.body}</p>
+              ${section.interactive ? `<div class="scene math-lesson-interactive" data-interactive="${section.interactive}"></div>` : ""}
+            </div>
+          `
+          )
+          .join("")}
+        ${
+          lesson.exercises.length
+            ? `
+            <div class="math-lesson-exercises">
+              <p class="mini-label">Exercises</p>
+              ${lesson.exercises
+                .map(
+                  (exercise, index) => `
+                  <details class="math-exercise">
+                    <summary>
+                      <h4>Exercise ${index + 1}</h4>
+                      <p>${exercise.question}</p>
+                    </summary>
+                    <div class="math-exercise-answer">
+                      <strong>Answer:</strong>
+                      <p>${exercise.answer}</p>
+                    </div>
+                  </details>
+                `
+                )
+                .join("")}
+            </div>
+          `
+            : ""
+        }
+      </div>
+    </div>
+  `;
+}
+
+function closeMathLesson() {
+  const overlay = document.getElementById("math-lesson-overlay");
+  overlay.hidden = true;
+  overlay.innerHTML = "";
+}
+
+function renderLearnMode(chapter) {
+  const learnContainer = document.getElementById("learn-mode-container");
+  if (!learnContainer) return;
+
+  const prereqsHtml = renderMathPrereqs(chapter);
+  const lectureContent = chapter.lectureContent || [];
+
+  const tocHtml = lectureContent.length > 1
+    ? `
+      <nav class="lecture-toc">
+        <p class="mini-label">In this lecture</p>
+        <ol>
+          ${lectureContent.map((section, index) => `<li><a href="#lecture-section-${index}">${section.heading}</a></li>`).join("")}
+        </ol>
+      </nav>
+    `
+    : "";
+
+  const sectionsHtml = lectureContent
+    .map(
+      (section, index) => `
+      <div class="lecture-section" id="lecture-section-${index}">
+        <h3>${section.heading}</h3>
+        <div class="lecture-section-body">${section.body}</div>
+        ${
+          section.interactive
+            ? `<div class="scene lecture-scene" data-interactive="${section.interactive}">${sceneMarkup(section.interactive)}</div>`
+            : ""
+        }
+        ${
+          (section.mathLinks || []).length
+            ? `
+              <div class="lecture-math-links">
+                ${section.mathLinks
+                  .map(
+                    (linkId) => {
+                      const lesson = getMathLesson(linkId);
+                      return lesson
+                        ? `<button class="inline-math-link" data-math-lesson="${linkId}">Math: ${lesson.title}</button>`
+                        : "";
+                    }
+                  )
+                  .join("")}
+              </div>
+            `
+            : ""
+        }
+      </div>
+    `
+    )
+    .join("");
+
+  const derivationsHtml = chapter.derivations
+    .map(
+      (derivation, index) => `
+      <details class="derivation-card" ${index === 0 ? "open" : ""}>
+        <summary>
+          <div>
+            <h4>${derivation.title}</h4>
+            <p class="derivation-meta">${derivation.teaser}</p>
+          </div>
+          <span>Expand</span>
+        </summary>
+        <div class="derivation-body">
+          <ol>
+            ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
+          </ol>
+          <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
+        </div>
+      </details>
+    `
+    )
+    .join("");
+
+  const summaryHtml = `
+    <div class="lecture-summary">
+      <p class="mini-label">Chapter Summary</p>
+      <p>${chapter.quickActions.intuition}</p>
+      <div class="goal-grid">
+        <div>
+          <p class="mini-label">What you should now know</p>
+          <ul class="bullet-list">${chapter.goals.map((goal) => `<li>${goal}</li>`).join("")}</ul>
+        </div>
+        <div>
+          <p class="mini-label">Watch for these mistakes</p>
+          <ul class="bullet-list">${chapter.pitfalls.map((pitfall) => `<li>${pitfall}</li>`).join("")}</ul>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const problemsHtml = `
+    <div class="lecture-problems">
+      <p class="mini-label">Problems &amp; Prompts</p>
+      ${chapter.prompts.map((prompt) => `<p class="lecture-problem">${prompt}</p>`).join("")}
+    </div>
+  `;
+
+  learnContainer.innerHTML = `
+    <div class="learn-mode-inner">
+      <div class="chapter-header">
+        <div>
+          <p class="chapter-kicker">Chapter ${chapter.number}</p>
+          <h3>${chapter.title}</h3>
+        </div>
+        <a class="pdf-link" href="${chapter.pdf}" target="_blank" rel="noreferrer">Open chapter PDF</a>
+      </div>
+      ${prereqsHtml}
+      ${tocHtml}
+      <div class="lecture-sections">
+        ${sectionsHtml}
+      </div>
+      <div class="lecture-derivations">
+        <p class="mini-label">Derivations</p>
+        ${derivationsHtml}
+      </div>
+      ${summaryHtml}
+      ${problemsHtml}
+    </div>
+  `;
+}
+
+function applyModeVisibility() {
+  const learnContainer = document.getElementById("learn-mode-container");
+  const studyGuideSections = [
+    document.getElementById("roadmap-section"),
+    document.getElementById("overview-section"),
+    document.getElementById("section-guide-section"),
+    document.getElementById("mastery-section")
+  ];
+  const detailGrids = document.querySelectorAll(".detail-grid");
+  const derivationPanel = document.getElementById("derivations-section");
+  const quizSection = document.getElementById("quiz-section");
+
+  if (state.mode === "learn") {
+    if (learnContainer) learnContainer.hidden = false;
+    studyGuideSections.forEach((el) => { if (el) el.hidden = true; });
+    detailGrids.forEach((el) => { if (el) el.hidden = true; });
+    if (derivationPanel) derivationPanel.hidden = true;
+    if (quizSection) quizSection.hidden = true;
+  } else {
+    if (learnContainer) learnContainer.hidden = true;
+    studyGuideSections.forEach((el) => { if (el) el.hidden = false; });
+    detailGrids.forEach((el) => { if (el) el.hidden = false; });
+    if (derivationPanel) derivationPanel.hidden = false;
+    if (quizSection) quizSection.hidden = false;
+  }
+
+  if (state.mode === "math") {
+    document.querySelectorAll(".derivation-card").forEach((card) => {
+      card.open = true;
+    });
+  }
+
+  if (state.mode === "exam") {
+    const quizEl = document.getElementById("quiz-section");
+    const masteryEl = document.getElementById("mastery-section");
+    if (quizEl) quizEl.style.borderColor = "rgba(217, 119, 6, 0.3)";
+    if (masteryEl) masteryEl.style.borderColor = "rgba(217, 119, 6, 0.3)";
+  } else {
+    const quizEl = document.getElementById("quiz-section");
+    const masteryEl = document.getElementById("mastery-section");
+    if (quizEl) quizEl.style.borderColor = "";
+    if (masteryEl) masteryEl.style.borderColor = "";
+  }
+}
+
 function renderChapter() {
   const chapter = chapters[state.chapterIndex];
   const mode = modes.find((item) => item.id === state.mode);
@@ -2917,6 +3470,11 @@ function renderChapter() {
     sourcePanel.open = false;
   }
   applyFocusTarget(chapter);
+
+  if (state.mode === "learn") {
+    renderLearnMode(chapter);
+  }
+  applyModeVisibility();
 
   prevChapter.disabled = state.chapterIndex === 0;
   nextChapter.disabled = state.chapterIndex === chapters.length - 1;
@@ -3102,7 +3660,25 @@ function attachEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      const overlay = document.getElementById("math-lesson-overlay");
+      if (overlay && !overlay.hidden) {
+        closeMathLesson();
+        return;
+      }
       closeSidebarDrawer();
+    }
+  });
+
+  document.body.addEventListener("click", (event) => {
+    const mathLessonButton = event.target.closest("[data-math-lesson]");
+    if (mathLessonButton) {
+      renderMathLesson(mathLessonButton.dataset.mathLesson);
+      return;
+    }
+    const closeMathButton = event.target.closest("[data-close-math-lesson]");
+    if (closeMathButton) {
+      closeMathLesson();
+      return;
     }
   });
 
@@ -3110,6 +3686,25 @@ function attachEvents() {
     syncSidebarDrawer();
   });
 }
+
+// Load lecture content from external files into chapter objects
+(function loadLectureContent() {
+  const sources = [
+    window.LECTURE_CONTENT_1_3 || {},
+    window.LECTURE_CONTENT_4_7 || {},
+    window.LECTURE_CONTENT_8_11 || {},
+    window.LECTURE_CONTENT_12_16 || {},
+    window.LECTURE_CONTENT_17_21 || {}
+  ];
+  sources.forEach((source) => {
+    Object.keys(source).forEach((num) => {
+      const idx = Number(num) - 1;
+      if (chapters[idx]) {
+        chapters[idx].lectureContent = source[num];
+      }
+    });
+  });
+})();
 
 syncSidebarDrawer();
 renderModes();
