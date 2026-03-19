@@ -1,3 +1,16 @@
+// Polyfill for CanvasRenderingContext2D.roundRect (Safari < 16, older browsers)
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    var r = typeof radii === 'number' ? radii : (Array.isArray(radii) ? radii[0] : 0);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+  };
+}
+
 // =========================================================================
 // LECTURE 1 INTERACTIVE SCENES
 // =========================================================================
@@ -371,7 +384,7 @@ function initSHMSpring() {
     ctx.fillText('t', plotR + 8, plotMidY + 4);
 
     // Zero line label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText('0', plotL - 4, plotMidY + 3);
 
@@ -692,7 +705,7 @@ function initDampedOscillator() {
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(massX - 25, massEqY); ctx.lineTo(massX + 30, massEqY); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('eq', massX + 22, massEqY - 3);
 
     // Drag hint
@@ -744,7 +757,7 @@ function initDampedOscillator() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(rootCx - rootR - 15, rootCy); ctx.lineTo(rootCx + rootR + 15, rootCy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(rootCx, rootCy - rootR - 15); ctx.lineTo(rootCx, rootCy + rootR + 15); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Re', rootCx + rootR + 12, rootCy - 6);
     ctx.fillText('Im', rootCx + 8, rootCy - rootR - 8);
 
@@ -877,7 +890,7 @@ function initDampingRegimes() {
     // Labels
     ctx.fillStyle = color; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText(label, cx, springY0 + springZoneH - 2);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif';
     ctx.fillText(dampLabel, cx, springY0 + springZoneH + 10);
   }
 
@@ -1369,7 +1382,7 @@ function initDrivenOscillator() {
       ctx.lineTo(springX - 4, massY + bH / 2 + 5 + fLen - dir * 6);
       ctx.lineTo(springX + 4, massY + bH / 2 + 5 + fLen - dir * 6);
       ctx.closePath(); ctx.fill();
-      ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText('F', springX + 8, massY + bH / 2 + 5 + fLen / 2 + 3);
     }
 
@@ -1405,7 +1418,7 @@ function initDrivenOscillator() {
       ctx.stroke();
     }
 
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('F(t)', plotL + 3, plotT + 10);
     ctx.fillStyle = WCOLORS.teal;
     ctx.fillText('x(t)', plotL + 3, plotT + 22);
@@ -1415,7 +1428,7 @@ function initDrivenOscillator() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(ampL, ampT); ctx.lineTo(ampL, ampB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(ampL, ampB); ctx.lineTo(ampR, ampB); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('|x|', ampL - 10, ampT + 3);
     ctx.fillText('\u03C9', ampR - 4, ampB + 12);
     ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', ampR + 4, ampB + 14); ctx.restore();
@@ -1453,7 +1466,7 @@ function initDrivenOscillator() {
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(w0px, ampT); ctx.lineTo(w0px, ampB); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('\u03C9\u2080', w0px, ampB + 12);
 
     // --- Phase vs wd curve (lower right) ---
@@ -1461,13 +1474,13 @@ function initDrivenOscillator() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(phL, phT); ctx.lineTo(phL, phB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(phL, phB); ctx.lineTo(phR, phB); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Phase', phL - 14, phT + 3);
     ctx.fillText('\u03C9', phR - 4, phB + 12);
     ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', phR + 4, phB + 14); ctx.restore();
 
     // Phase labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('0\u00B0', phL - 3, phT + 4);
     ctx.fillText('\u221290\u00B0', phL - 3, (phT + phB) / 2 + 3);
     ctx.fillText('\u2212180\u00B0', phL - 3, phB + 3);
@@ -1944,7 +1957,7 @@ function initResonanceCurve() {
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(plotL, halfY); ctx.lineTo(plotR, halfY); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('\u00BD max', plotL - 4, halfY + 3);
 
     // FWHM bracket
@@ -1984,7 +1997,7 @@ function initResonanceCurve() {
     ctx.fillText('Lorentzian resonance: Q = \u03C9\u2080/\u03B3 = ' + Q.toFixed(1), plotL + plotW / 2, plotT - 8);
 
     // Tick marks on x-axis
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
     for (let w = 0; w <= wMax; w += 2) {
       const tx = plotL + (w / wMax) * plotW;
       ctx.beginPath(); ctx.moveTo(tx, plotB); ctx.lineTo(tx, plotB + 4); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
@@ -2181,14 +2194,19 @@ function initCoupledOscillators() {
     }
 
     // --- Trace plot ---
+    // Dashed zero-displacement reference line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.8; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
+    ctx.setLineDash([]);
+
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
     ctx.fillText('0', plotL - 4, plotMidY + 3);
-    ctx.textAlign = 'center';
-    ctx.fillText('t', plotR + 10, plotMidY + 4);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('t', plotR + 12, plotMidY + 4);
 
     if (trail1.length > 1) {
       const tRange = Math.max(trail1[trail1.length - 1].t - trail1[0].t, 4);
@@ -3328,7 +3346,7 @@ function initFourierSawtooth() {
 
       // Label for first few
       if (maxBars <= 12 || n <= 5 || n === maxBars) {
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
         ctx.fillText(n.toString(), bx + barWidth / 2, plotMidY + (bn > 0 ? 12 : -4));
       }
     }
@@ -3462,7 +3480,7 @@ function initPluckedString() {
     }
 
     // Legend for modes
-    ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
     for (let n = 0; n < showModes; n++) {
       ctx.fillStyle = modeColors[n % modeColors.length];
       ctx.fillText('n=' + (n + 1), strR + 5, modesT + 10 + n * 13);
@@ -3717,7 +3735,7 @@ function initDispersionRelationDiscrete() {
     ctx.fillText('p (wave number)', plotL + plotW / 2, plotB + 28);
 
     // Y-axis ticks
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     for (let v = 0; v <= 2; v += 0.5) {
       const py = plotB - (v / omegaMax) * plotH;
       ctx.beginPath(); ctx.moveTo(plotL - 3, py); ctx.lineTo(plotL, py); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
@@ -3890,11 +3908,11 @@ function initContinuumLimit() {
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Dispersion: discrete vs continuum', dL + dW / 2, botT - 4);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
     ctx.fillText('\u03C9', dL - 14, botT + 6);
     ctx.fillText('p', dR + 10, botB + 4);
 
-    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.teal; ctx.fillText('discrete', dR - 80, botT + 12);
     ctx.fillStyle = WCOLORS.amber; ctx.fillText('linear', dR - 80, botT + 24);
 
@@ -4069,7 +4087,7 @@ function initTravelingVsStanding() {
         ctx.beginPath(); ctx.arc(px, midY, 4, 0, Math.PI * 2); ctx.fill();
       }
 
-      ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText('\u25CF nodes', standL + 5, H - 10);
     }
 
@@ -4347,7 +4365,7 @@ function initSoundWaveLongitudinal() {
       ctx.fillRect(px, barY, 1, barH);
     }
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Compression', barL + 30, barY + barH + 12);
     ctx.fillText('Rarefaction', barR - 30, barY + barH + 12);
 
@@ -4551,7 +4569,7 @@ function initBoundaryConditionsDemo() {
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
     ctx.fillText(modeFreqLabel(n, bcType), W / 2, H - 8);
 
-    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF node', stringL, H - 8);
     ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2502 antinode', stringL + 55, H - 8);
 
@@ -4676,7 +4694,7 @@ function initStandingWaveModes() {
         }
 
         // Frequency label
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
         ctx.fillText(freqLabel(n, cfg.bc), modeL + mW / 2, midY + amp + 14);
       }
     }
@@ -4831,7 +4849,7 @@ function initHelmholtzResonator() {
     ctx.fillText('Neck air = mass', springX, massBlockY - 20);
     ctx.fillText('Body air = spring', springX, springBot2 + 18);
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('A (neck area)', bottleX + neckW / 2 + 5, neckTop + neckH / 2);
     ctx.fillText('L (neck length)', bottleX + neckW / 2 + 5, neckTop + neckH / 2 + 12);
     ctx.fillText('V (body volume)', bottleX + bodyW / 2 + 5, bottleCenterY);
@@ -4926,7 +4944,7 @@ function initBeatsDemo() {
     ctx.stroke();
     ctx.globalAlpha = 1;
 
-    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.teal; ctx.globalAlpha = 0.6; ctx.fillText('f\u2081', plotL + 3, topY - ampSmall - 3);
     ctx.fillStyle = WCOLORS.amber; ctx.fillText('f\u2082', plotL + 20, topY - ampSmall - 3);
     ctx.globalAlpha = 1;
@@ -4972,7 +4990,7 @@ function initBeatsDemo() {
     ctx.fillText('Beat frequency = |f\u2081 \u2212 f\u2082| = ' + df.toFixed(1) + ' Hz', W / 2, H - 8);
 
     if (df > 0.1) {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
       ctx.fillText('envelope', plotR - 5, botY - ampBig - 3);
     }
 
@@ -5053,7 +5071,7 @@ function initConsonanceDissonance() {
       ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, specTop + 10); ctx.stroke();
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = WCOLORS.teal; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(n + 'f\u2081', px, specBot + 10);
     }
 
@@ -5080,7 +5098,7 @@ function initConsonanceDissonance() {
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
 
-      ctx.fillStyle = WCOLORS.amber; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(m + 'f\u2082', px, specTop + 6);
     }
 
@@ -5128,7 +5146,7 @@ function initConsonanceDissonance() {
     }
 
     // Legend
-    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = '#16a34a'; ctx.fillText('\u25CF aligned', specL, specTop + 6);
     ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF near-beat', specL + 55, specTop + 6);
 
@@ -5211,7 +5229,7 @@ function initHarmonicAlignment() {
     // Frequency axis
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(barL, alignY + 10); ctx.lineTo(barR, alignY + 10); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     for (let tickVal = 0; tickVal <= Math.floor(fMax / 100); tickVal++) {
       const px = barL + (tickVal * 100 / fMax) * barW;
       ctx.beginPath(); ctx.moveTo(px, alignY + 10); ctx.lineTo(px, alignY + 14); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
@@ -5235,7 +5253,7 @@ function initHarmonicAlignment() {
       ctx.fillStyle = aligned ? '#16a34a' : WCOLORS.teal;
       ctx.fillRect(px - 3, bar1Y - barH / 2, 6, barH);
 
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(n + '', px, bar1Y - barH / 2 - 3);
     }
 
@@ -5256,7 +5274,7 @@ function initHarmonicAlignment() {
       ctx.fillStyle = aligned ? '#16a34a' : WCOLORS.amber;
       ctx.fillRect(px - 3, bar2Y - barH / 2, 6, barH);
 
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(m + '', px, bar2Y + barH / 2 + 10);
     }
 
@@ -5509,7 +5527,7 @@ function initScaleComparison() {
     }
 
     // Cent ticks
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     for (let c = 0; c <= 1200; c += 200) {
       const px = barL + (c / 1200) * barW;
       for (const sc of scales) {
@@ -5567,7 +5585,7 @@ function initScaleComparison() {
 
       ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
       ctx.fillText(justNames[hoveredNote], boxX + 5, boxY + 14);
-      ctx.font = '9px system-ui';
+      ctx.font = '11px system-ui';
       ctx.fillStyle = WCOLORS.teal;
       ctx.fillText('Just: ' + justCents.toFixed(1) + '\u00A2  (ratio ' + justRatios[hoveredNote].toFixed(4) + ')', boxX + 5, boxY + 28);
       ctx.fillStyle = WCOLORS.amber;
@@ -5751,7 +5769,7 @@ function initTransverseLongitudinalDemo() {
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.moveTo(arrowX1, transY - 20); ctx.lineTo(arrowX1 - 4, transY - 14); ctx.lineTo(arrowX1 + 4, transY - 14); ctx.closePath(); ctx.fill();
     ctx.beginPath(); ctx.moveTo(arrowX1, transY + 20); ctx.lineTo(arrowX1 - 4, transY + 14); ctx.lineTo(arrowX1 + 4, transY + 14); ctx.closePath(); ctx.fill();
-    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('disp.', arrowX1, transY - 24);
 
     // Propagation arrow (horizontal)
@@ -5760,7 +5778,7 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY); ctx.lineTo(W / 2 + 40, propArrowY); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '9px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
+    ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
     // --- Longitudinal ---
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
@@ -5787,7 +5805,7 @@ function initTransverseLongitudinalDemo() {
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.moveTo(arrowX1 + 15, longY); ctx.lineTo(arrowX1 + 9, longY - 4); ctx.lineTo(arrowX1 + 9, longY + 4); ctx.closePath(); ctx.fill();
     ctx.beginPath(); ctx.moveTo(arrowX1 - 15, longY); ctx.lineTo(arrowX1 - 9, longY - 4); ctx.lineTo(arrowX1 - 9, longY + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('disp.', arrowX1, longY - 10);
 
     // Propagation arrow
@@ -5796,10 +5814,10 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY2); ctx.lineTo(W / 2 + 34, propArrowY2 - 4); ctx.lineTo(W / 2 + 34, propArrowY2 + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '9px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
+    ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
 
     // Compression/rarefaction labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('● compression', 20, H - 8);
     ctx.fillStyle = WCOLORS.red; ctx.fillText('● rarefaction', 120, H - 8);
   }
@@ -5845,13 +5863,13 @@ function initSoundRefractionAtmosphere() {
     ctx.fillText('Daytime (hot ground)', lx + panelW / 2, 18);
 
     // Temperature labels
-    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Hot', lx + 3, groundY - 5);
     ctx.fillStyle = WCOLORS.blue;
     ctx.fillText('Cold', lx + 3, panelT + 15);
 
     // Speed labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('v fast', lx + panelW - 3, groundY - 5);
     ctx.fillText('v slow', lx + panelW - 3, panelT + 15);
 
@@ -5878,13 +5896,13 @@ function initSoundRefractionAtmosphere() {
     // Shadow zone
     ctx.fillStyle = 'rgba(220, 38, 38, 0.1)';
     ctx.fillRect(lx + panelW * 0.55, groundY - 40, panelW * 0.4, 40);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Shadow zone', lx + panelW * 0.75, groundY - 15);
 
     // Source marker
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX, srcY, 5, 0, 2 * Math.PI); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('src', srcX, srcY + 14);
 
     // --- Evening panel (right) ---
@@ -5909,13 +5927,13 @@ function initSoundRefractionAtmosphere() {
     ctx.fillText('Evening (cool ground)', rx + panelW / 2, 18);
 
     // Temperature labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Cool', rx + 3, groundY - 5);
     ctx.fillStyle = WCOLORS.red;
     ctx.fillText('Warm', rx + 3, panelT + 15);
 
     // Speed labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('v slow', rx + panelW - 3, groundY - 5);
     ctx.fillText('v fast', rx + panelW - 3, panelT + 15);
 
@@ -5943,11 +5961,11 @@ function initSoundRefractionAtmosphere() {
     // Source marker
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX2, srcY2, 5, 0, 2 * Math.PI); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('src', srcX2, srcY2 + 14);
 
     // Sound travels far label
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Sound carried far', rx + panelW * 0.65, groundY - 5);
 
     // Bottom note
@@ -6416,10 +6434,10 @@ function initMalusLaw() {
     ctx.lineTo(polX + polH * 0.8 * Math.sin(theta), diagCy - polH * 0.8 * Math.cos(theta));
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('axis', polX + polH * 0.8 * Math.sin(theta) + 4, diagCy - polH * 0.8 * Math.cos(theta));
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Polarizer', polX, diagCy + polH + 15);
 
     // Transmitted light
@@ -6457,7 +6475,7 @@ function initMalusLaw() {
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
     // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('θ (degrees)', (plotL + plotR) / 2, plotB + 14);
     ctx.save(); ctx.translate(plotL - 14, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('I / I₀', 0, 0); ctx.restore();
@@ -6466,13 +6484,13 @@ function initMalusLaw() {
     for (let deg = 0; deg <= 90; deg += 30) {
       const x = plotL + (deg / 90) * plotW;
       ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 4); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
       ctx.fillText(deg + '°', x, plotB + 14);
     }
     for (let iv = 0; iv <= 1; iv += 0.5) {
       const y = plotB - iv * plotH2;
       ctx.beginPath(); ctx.moveTo(plotL - 3, y); ctx.lineTo(plotL, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
       ctx.fillText(iv.toFixed(1), plotL - 5, y + 3);
     }
 
@@ -6571,7 +6589,7 @@ function initSnellsLawDemo() {
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(hitX, intfY - 100); ctx.lineTo(hitX, intfY + 100); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('normal', hitX + 4, intfY - 92);
 
     // Incident ray
@@ -6759,7 +6777,7 @@ function initTotalInternalReflection() {
         ctx.stroke();
       }
       ctx.globalAlpha = 1; ctx.setLineDash([]);
-      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText('evanescent wave', hitX + 30, intfY - 20);
     }
 
@@ -6798,7 +6816,7 @@ function initTotalInternalReflection() {
     // Critical angle marker
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(barX + barW2, barY2 - 2); ctx.lineTo(barX + barW2, barY2 + barH2 + 2); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('θ_c', barX + barW2, barY2 - 4);
   }
 
@@ -6862,7 +6880,7 @@ function initThinFilmInterference() {
     // Air above
     ctx.fillStyle = 'rgba(200,220,255,0.1)';
     ctx.fillRect(filmL, 30, filmR - filmL, filmT - 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('n = 1.0 (air)', filmL + 3, 45);
 
     // Film
@@ -6877,7 +6895,7 @@ function initThinFilmInterference() {
     // Substrate below
     ctx.fillStyle = 'rgba(100,100,120,0.1)';
     ctx.fillRect(filmL, filmB, filmR - filmL, 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('n = 1.5 (glass)', filmL + 3, filmB + 20);
 
     // Thickness dimension
@@ -6885,7 +6903,7 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.moveTo(filmR + 8, filmT); ctx.lineTo(filmR + 8, filmB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(filmR + 4, filmT); ctx.lineTo(filmR + 12, filmT); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(filmR + 4, filmB); ctx.lineTo(filmR + 12, filmB); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('d', filmR + 14, (filmT + filmB) / 2 + 3);
 
     // Incident ray
@@ -6896,7 +6914,7 @@ function initThinFilmInterference() {
     // Reflected ray 1 (from top surface, with phase flip)
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(rayInX, filmT); ctx.lineTo(rayInX + 20, 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('R₁ (π shift)', rayInX + 22, 38);
 
     // Ray into film
@@ -6908,7 +6926,7 @@ function initThinFilmInterference() {
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(rayInX + 15, filmB); ctx.lineTo(rayInX + 35, filmT); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(rayInX + 35, filmT); ctx.lineTo(rayInX + 55, 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '8px system-ui';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui';
     ctx.fillText('R₂ (no shift)', rayInX + 57, 38);
 
     // Path difference info
@@ -6955,10 +6973,10 @@ function initThinFilmInterference() {
     }
 
     // Labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('380nm', specL, specT + 55); ctx.textAlign = 'right';
     ctx.fillText('780nm', specR, specT + 55);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('all λ', specL - 5, specT + 10);
     ctx.fillText('reflected', specL - 5, specT + 36);
 
@@ -6970,7 +6988,7 @@ function initThinFilmInterference() {
     ctx.fillRect(specL, specT + 65, specW, 30);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
     ctx.strokeRect(specL, specT + 65, specW, 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('perceived', specL - 5, specT + 84);
 
     // Reflectance curve
@@ -6981,7 +6999,7 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.moveTo(specL, plotT2); ctx.lineTo(specL, plotB2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(specL, plotB2); ctx.lineTo(specR, plotB2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Wavelength (nm)', (specL + specR) / 2, plotB2 + 12);
     ctx.save(); ctx.translate(specL - 10, (plotT2 + plotB2) / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('R', 0, 0); ctx.restore();
@@ -6999,7 +7017,7 @@ function initThinFilmInterference() {
     ctx.stroke();
 
     // Constructive peaks
-    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     for (let m = 1; m <= 10; m++) {
       // 2nd = mλ → λ = 2nd/m
       const wlPeak = 2 * nFilm * d / m;
@@ -7068,14 +7086,14 @@ function initBrewsterAngle() {
       const x = plotL + (deg / 90) * plotW;
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(x, plotT); ctx.lineTo(x, plotB); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(deg + '°', x, plotB + 12);
     }
     for (let v = -1; v <= 1; v += 0.5) {
       const y = plotB - ((v + 1) / 2) * plotH;
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
       ctx.fillText(v.toFixed(1), plotL - 5, y + 3);
     }
 
@@ -7200,7 +7218,7 @@ function initRayleighScattering() {
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Wavelength (nm)', (plotL + plotR) / 2, plotB + 14);
     ctx.save(); ctx.translate(plotL - 18, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('Scattering intensity', 0, 0); ctx.restore();
@@ -7270,7 +7288,7 @@ function initRayleighScattering() {
     }
     ctx.globalAlpha = 1;
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('violet/blue', barL, barY + barH2 + 12);
     ctx.textAlign = 'right';
     ctx.fillText('red', barR, barY + barH2 + 12);
@@ -7433,7 +7451,7 @@ function initPrismDispersion() {
       ctx.beginPath(); ctx.moveTo(exitX, exitY); ctx.lineTo(endX, endY); ctx.stroke();
 
       // Label
-      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = color; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText(c.name + ' ' + c.label, endX + 5, endY + 3);
     }
 
@@ -7523,7 +7541,7 @@ function initViolinSpectrum() {
       const fx = plotL + (n * f0 - fMin) / (fMax - fMin) * plotW;
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText((n * f0).toFixed(0), fx, plotB + 14);
     }
 
@@ -7568,7 +7586,7 @@ function initViolinSpectrum() {
       const amp = 1.0 / (n * 0.7);
       const fy = plotB - (amp / maxVal) * plotH * 0.9;
       ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(n.toString(), fx, fy - 8);
+      ctx.fillText('n=' + n, fx, fy - 8);
     }
 
     // Title
@@ -7632,8 +7650,8 @@ function initFourierTransformDerivation() {
 
     // Titles
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Discrete coefficients (L = ' + L.toFixed(1) + ')', lL + lW / 2, 18);
-    ctx.fillText('Continuous FT envelope', rL + rW / 2, 18);
+    ctx.fillText('Discrete (Fourier Series), L = ' + L.toFixed(1), lL + lW / 2, 18);
+    ctx.fillText('Continuous (Fourier Transform)', rL + rW / 2, 18);
 
     // k range
     const kMax = 8;
@@ -7691,8 +7709,8 @@ function initFourierTransformDerivation() {
 
     // Axis labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('k', lL + lW / 2, lB + 18);
-    ctx.fillText('k', rL + rW / 2, rB + 18);
+    ctx.fillText('k (wavenumber)', lL + lW / 2, lB + 18);
+    ctx.fillText('k (wavenumber)', rL + rW / 2, rB + 18);
     ctx.fillText('|c\u2099|', lL - 8, lT + 10);
     ctx.fillText('|F\u0302(k)|', rL - 8, rT + 10);
 
@@ -7752,8 +7770,8 @@ function initUnderdampedFourierTransform() {
 
     // Titles
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('x(t) = e^(\u2013\u03B3t/2) cos(\u03C9\u2080t)', lL + lW / 2, 18);
-    ctx.fillText('Power spectrum |F(\u03C9)|\u00B2', rL + rW / 2, 18);
+    ctx.fillText('Time Domain: x(t) = e^(\u2013\u03B3t/2) cos(\u03C9\u2080t)', lL + lW / 2, 18);
+    ctx.fillText('Power Spectrum: |F(\u03C9)|\u00B2', rL + rW / 2, 18);
 
     // Left axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
@@ -7796,6 +7814,10 @@ function initUnderdampedFourierTransform() {
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke(); ctx.setLineDash([]);
+
+    // Label the envelope
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('envelope: e^(\u2013\u03B3t/2)', lL + 5, lT + 12);
 
     // Right axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
@@ -8212,7 +8234,7 @@ function initDiracDeltaVisualization() {
     const refY = rB - rH * 0.8;
     ctx.beginPath(); ctx.moveTo(rL, refY); ctx.lineTo(rR, refY); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('1', rL - 4, refY + 4);
 
     // Axis labels
@@ -8792,7 +8814,7 @@ function initComplexImpedance() {
     ctx.fillText('Im(Z)', plotR - 100, plotT + 25);
 
     // Stiffness/mass dominated labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Stiffness-dominated', plotL + (resX - plotL) / 2, plotB - 5);
     ctx.fillText('(Im < 0)', plotL + (resX - plotL) / 2, plotB + 6);
     ctx.fillText('Mass-dominated', resX + (plotR - resX) / 2, plotB - 5);
@@ -8878,7 +8900,7 @@ function initImpedanceMaterials() {
       ctx.fillText(mat.name, barL - 5, y + barH / 2 + 4);
 
       // Value
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText(mat.Z.toFixed(mat.Z < 1 ? 4 : 1) + ' MRayl', barL + w + 5, y + barH / 2 + 4);
     });
 
@@ -9053,7 +9075,7 @@ function initPowerReflectionTransmission() {
       const y = plotB - v * plotH;
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
       ctx.fillText(v.toFixed(2), plotL - 4, y + 3);
     }
 
@@ -9097,7 +9119,7 @@ function initPowerReflectionTransmission() {
 
     // Z₂/Z₁ = 1 marker
     const matchX = plotL + (1 / zMax) * plotW;
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('1', matchX, plotB + 12);
 
     // Axis labels
@@ -9194,7 +9216,7 @@ function initDecibelScale() {
       const y = scaleB - (db / dbMax) * scaleH;
       ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(scaleL - 5, y); ctx.lineTo(scaleR + 5, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
       ctx.fillText(db + ' dB', scaleL - 8, y + 3);
     }
 
@@ -9232,7 +9254,7 @@ function initDecibelScale() {
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
     ctx.beginPath(); ctx.moveTo(scaleL - 10, painY); ctx.lineTo(scaleR + 20, painY); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('Pain threshold', scaleL - 12, painY + 3);
   }
 
@@ -9430,7 +9452,7 @@ function initInterferenceDemo() {
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.arc(srcX, srcY1, 5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(srcX, srcY2, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('S\u2081', srcX - 8, srcY1 + 3);
     ctx.fillText('S\u2082', srcX - 8, srcY2 + 3);
 
@@ -9715,7 +9737,7 @@ function initAmplitudeModulation() {
     const carrX = freqToX(fc);
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(carrX, fPlotB); ctx.lineTo(carrX, fPlotT + 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('f_c', carrX, fPlotB + 12);
 
     // Sidebands
@@ -9726,7 +9748,7 @@ function initAmplitudeModulation() {
     ctx.beginPath(); ctx.moveTo(lsbX, fPlotB); ctx.lineTo(lsbX, fPlotB - sbH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(usbX, fPlotB); ctx.lineTo(usbX, fPlotB - sbH); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui';
     ctx.fillText('f_c\u2013f_m', lsbX, fPlotB + 12);
     ctx.fillText('f_c+f_m', usbX, fPlotB + 12);
 
@@ -9834,14 +9856,14 @@ function initDispersionRelations() {
       // Legend
       const legX = plotR + 15, legY = plotT + 15 + idx * 45;
       ctx.fillStyle = rel.color; ctx.fillRect(legX, legY, 12, 3);
-      ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText(rel.name, legX + 16, legY + 4);
 
       if (rel.fn(k0) <= omegaMax) {
         const vp = rel.fn(k0) / k0;
         const dk = 0.01;
         const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
         ctx.fillText('vp=' + vp.toFixed(2), legX + 16, legY + 16);
         ctx.fillText('vg=' + vg.toFixed(2), legX + 16, legY + 28);
       }
@@ -9940,7 +9962,7 @@ function initPhaseVelocityDemo() {
     if (crestX > plotL && crestX < plotR) {
       ctx.fillStyle = WCOLORS.red;
       ctx.beginPath(); ctx.moveTo(crestX, midY - amp - 15); ctx.lineTo(crestX - 5, midY - amp - 5); ctx.lineTo(crestX + 5, midY - amp - 5); ctx.fill();
-      ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText('crest (vp)', crestX, midY - amp - 18);
     }
 
@@ -10581,7 +10603,7 @@ function initCieColorSpaceGamut() {
     // Axis tick labels
     for (let v = 0; v <= 0.8; v += 0.2) {
       const p = toScreen(v, 0);
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(v.toFixed(1), p.x, plotB + 13);
       const p2 = toScreen(0, v);
       ctx.textAlign = 'right';
@@ -10648,7 +10670,7 @@ function initCieColorSpaceGamut() {
 
     // Wavelength labels on spectral locus
     const labelWLs = [460, 480, 500, 520, 540, 560, 580, 600, 620, 700];
-    ctx.fillStyle = WCOLORS.text; ctx.font = '8px system-ui';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui';
     for (let k = 0; k < labelWLs.length; k++) {
       const idx = Math.round((labelWLs[k] - 380) / 5);
       if (idx >= 0 && idx < spectralX.length && (spectralX[idx] > 0 || spectralY[idx] > 0)) {
@@ -10691,7 +10713,7 @@ function initCieColorSpaceGamut() {
     ctx.beginPath(); ctx.arc(wp.x, wp.y, 3, 0, Math.PI * 2);
     ctx.fillStyle = '#fff'; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('D65', wp.x + 6, wp.y + 3);
 
     // Title
@@ -10820,7 +10842,7 @@ function initBlackbodyPlanckianLocus() {
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB2); ctx.lineTo(plotL + plotSize * 1.15, plotB2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('x', plotL + plotSize * 0.5, plotB2 + 12);
     ctx.textAlign = 'right';
     ctx.fillText('y', plotL - 6, plotT + plotSize * 0.3);
@@ -10848,7 +10870,7 @@ function initBlackbodyPlanckianLocus() {
       ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = WCOLORS.axis; ctx.fill();
       if (m.label) {
-        ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+        ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
         ctx.fillText(m.label, s.x + 6, s.y - 4);
       }
     });
@@ -10884,7 +10906,7 @@ function initBlackbodyPlanckianLocus() {
     ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
     ctx.textAlign = 'left'; ctx.fillText('1000K', sliderX, sliderY - 10);
     ctx.textAlign = 'right'; ctx.fillText('10000K', sliderX + sliderW, sliderY - 10);
 
@@ -11183,10 +11205,15 @@ function initRodConeSensitivity() {
     curves.forEach(function(curve) {
       ctx.strokeStyle = curve.color; ctx.lineWidth = 2.5;
       // Fill under curve
-      ctx.fillStyle = curve.color.replace(')', ',0.1)').replace('rgb', 'rgba');
       if (curve.color.charAt(0) === '#') {
-        ctx.globalAlpha = 0.1;
-        ctx.fillStyle = curve.color;
+        // Convert hex to rgba
+        const hex = curve.color;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.1)';
+      } else {
+        ctx.fillStyle = curve.color.replace(')', ',0.1)').replace('rgb', 'rgba');
       }
       ctx.beginPath();
       let firstPx = plotL;
@@ -11216,7 +11243,7 @@ function initRodConeSensitivity() {
       const peakPy = plotB - curve.fn(curve.peakWL) * plotH * 0.9;
       ctx.fillStyle = curve.color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(curve.label, peakPx, peakPy - 8);
-      ctx.font = '8px system-ui';
+      ctx.font = '10px system-ui';
       ctx.fillText(curve.peakWL + 'nm', peakPx, peakPy - 20);
     });
 
@@ -11538,7 +11565,7 @@ function initPhasedArrayRadiation() {
       ctx.fillStyle = WCOLORS.teal;
       ctx.beginPath(); ctx.arc(arrX, y, 4, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
     ctx.fillText(N + ' sources', arrX, arrCY + N * spacing / 2 + 15);
 
     // Polar plot on right
@@ -11575,7 +11602,7 @@ function initPhasedArrayRadiation() {
       ctx.lineTo(polCX + Math.cos(beamAngle) * polR * 1.1, polCY + Math.sin(beamAngle) * polR * 1.1);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
       ctx.fillText('beam', polCX + Math.cos(beamAngle) * polR * 0.7 + 5, polCY + Math.sin(beamAngle) * polR * 0.7);
     }
 
@@ -11796,7 +11823,7 @@ function initHuygensPrincipleDemo() {
       for (let a = -85; a <= 85; a += 2) {
         const rad = a * Math.PI / 180;
         // Envelope: constructive interference pattern
-        const sinc = slitWidth === 0 ? 1 : Math.sin(Math.PI * slitWidth * Math.sin(rad)) / (Math.PI * slitWidth * Math.sin(rad));
+        const sinc = Math.abs(slitWidth) < 1e-10 ? 1 : Math.sin(Math.PI * slitWidth * Math.sin(rad)) / (Math.PI * slitWidth * Math.sin(rad));
         const amp = Math.abs(sinc);
         const r = baseR * (0.3 + 0.7 * amp);
         const px = barrierX + Math.cos(rad) * r;
@@ -11885,7 +11912,7 @@ function initDiffractionGratingPattern() {
     // Tick marks on x-axis
     for (let v = -1; v <= 1; v += 0.5) {
       const px = plotL2 + (v + 1) / 2 * pW;
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(v.toFixed(1), px, plotB2 + 12);
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(px, plotT2); ctx.lineTo(px, plotB2); ctx.stroke();
@@ -11925,7 +11952,7 @@ function initDiffractionGratingPattern() {
     ctx.fill();
 
     // Mark principal maxima
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     for (let m = -3; m <= 3; m++) {
       const sinTheta = m / dOverLambda;
       if (Math.abs(sinTheta) <= 1) {
@@ -12055,7 +12082,7 @@ function initSingleSlitDiffraction() {
         ctx.beginPath(); ctx.moveTo(pxPlus, plotT2); ctx.lineTo(pxPlus, plotB2); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(pxMinus, plotT2); ctx.lineTo(pxMinus, plotB2); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
         ctx.fillText('\u03BB/a', pxPlus, plotT2 - 3);
         ctx.fillText('\u2212\u03BB/a', pxMinus, plotT2 - 3);
       }
@@ -12220,7 +12247,13 @@ function initFourierOpticsDemo() {
       const active = apertureType === i;
       ctx.fillStyle = active ? WCOLORS.teal : '#e5e0d6';
       ctx.beginPath();
-      ctx.roundRect(bx, H - 28, bw, 22, 4);
+      var br = 4, bx2 = bx, by2 = H - 28, bw2 = bw, bh2 = 22;
+      ctx.moveTo(bx2 + br, by2);
+      ctx.arcTo(bx2 + bw2, by2, bx2 + bw2, by2 + bh2, br);
+      ctx.arcTo(bx2 + bw2, by2 + bh2, bx2, by2 + bh2, br);
+      ctx.arcTo(bx2, by2 + bh2, bx2, by2, br);
+      ctx.arcTo(bx2, by2, bx2 + bw2, by2, br);
+      ctx.closePath();
       ctx.fill();
       ctx.fillStyle = active ? '#fff' : WCOLORS.text;
       ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -12323,6 +12356,9 @@ function initPhotoelectricEffectDemo() {
         });
       }
     }
+    if (particles.length > 500) {
+      particles = particles.slice(particles.length - 500);
+    }
     particles.forEach(function(p) {
       p.x += p.vx;
       p.y += p.vy;
@@ -12353,7 +12389,7 @@ function initPhotoelectricEffectDemo() {
     ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui';
     ctx.textAlign = 'center'; ctx.fillText('frequency (10\u00B9\u2074 Hz)', (plotL2 + plotR2) / 2, plotB2 + 13);
     ctx.textAlign = 'right'; ctx.fillText('KE (eV)', plotL2 - 3, plotT2 + 5);
 
@@ -12367,7 +12403,7 @@ function initPhotoelectricEffectDemo() {
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(threshPx, plotT2); ctx.lineTo(threshPx, plotB2); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('f\u2080', threshPx, plotB2 + 22);
 
     // KE line
@@ -12593,7 +12629,7 @@ function initHydrogenEnergyLevels() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL2 - 5, plotT2); ctx.lineTo(plotL2 - 5, plotB2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     for (let e = -14; e <= 0; e += 2) {
       const y = energyToY(e);
       ctx.fillText(e + ' eV', plotL2 - 10, y + 3);
@@ -12645,7 +12681,7 @@ function initHydrogenEnergyLevels() {
       ctx.closePath(); ctx.fill();
 
       // Label
-      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = color; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(trans.name, x, yFrom + 12);
       ctx.fillText(trans.wl + ' nm', x, yFrom + 22);
     });
@@ -12659,7 +12695,7 @@ function initHydrogenEnergyLevels() {
       ctx.beginPath(); ctx.moveTo(px, specY); ctx.lineTo(px, specY + 10); ctx.stroke();
     });
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Visible spectrum with Balmer lines', (plotL2 + plotR2) / 2, specY - 3);
 
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
@@ -12773,7 +12809,7 @@ function initQuantumWavepacketDispersion() {
     ctx.moveTo(centerPx - widthPx, plotB2 + 3);
     ctx.lineTo(centerPx + widthPx, plotB2 + 3);
     ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('\u03C3(t)', centerPx, plotB2 + 12);
 
     // Info
@@ -13006,10 +13042,10 @@ function initDopplerAngle() {
     const f0Y = plotB2 - 0.5 * pH2;
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL2, f0Y); ctx.lineTo(plotR2, f0Y); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('f\u2080', plotL2 - 3, f0Y + 3);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 10);
     ctx.textAlign = 'right';
     ctx.fillText('f', plotL2 - 3, plotT2 + 5);
@@ -13218,7 +13254,7 @@ function initRelativisticDopplerRedshift() {
     ctx.fillRect(appX - swW/2, cy - 60, swW, swH);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(appX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Approaching', appX, cy - 65);
     ctx.fillText(Math.round(wlApproach) + ' nm', appX, cy + 36);
     ctx.fillText('Blueshift', appX, cy + 48);
@@ -13235,7 +13271,7 @@ function initRelativisticDopplerRedshift() {
     ctx.fillRect(recX - swW/2, cy - 60, swW, swH);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(recX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Receding', recX, cy - 65);
     ctx.fillText(Math.round(wlRecede) + ' nm', recX, cy + 36);
     ctx.fillText('Redshift', recX, cy + 48);
@@ -13245,7 +13281,7 @@ function initRelativisticDopplerRedshift() {
     ctx.fillRect(observerX - swW/2, cy - 60, swW, swH);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(observerX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Rest: ' + f0_wl + ' nm', observerX, cy - 65);
 
     // Formula
@@ -13358,7 +13394,7 @@ function initDopplerSpectroscopyExoplanet() {
     ctx.beginPath(); ctx.arc(starX, starY, 12, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1; ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Star', starX, starY + 22);
     ctx.fillText('Planet', planetX, planetY + 14);
 
@@ -13383,7 +13419,7 @@ function initDopplerSpectroscopyExoplanet() {
     ctx.beginPath(); ctx.moveTo(specL + specW2 * 0.5, specY - 5); ctx.lineTo(specL + specW2 * 0.5, specY + specH + 5); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Spectral line shifts with star\u2019s radial velocity', (specL + specR) / 2, specY - 5);
 
     // Radial velocity curve
@@ -13398,7 +13434,7 @@ function initDopplerSpectroscopyExoplanet() {
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL2, midY2); ctx.lineTo(plotR2, midY2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui';
     ctx.textAlign = 'center'; ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 12);
     ctx.textAlign = 'right'; ctx.fillText('v_r', plotL2 - 5, plotT2 + 5);
 
