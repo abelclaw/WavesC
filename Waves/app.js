@@ -3198,6 +3198,304 @@ function sceneMarkup(type) {
           </div>
         </div>
       `;
+    // =====================================================================
+    // CHAPTER 3: COUPLED OSCILLATORS
+    // =====================================================================
+    case "coupled-oscillators":
+      return `
+        <div class="scene-label">Coupled Oscillators</div>
+        <p class="scene-caption">Drag either mass and release. Adjust the coupling strength &kappa;/k to see how the interaction changes.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-coupled-oscillators" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>&kappa;/k: <input type="range" id="coupled-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="coupled-kappa-val">0.30</span></label>
+          </div>
+        </div>
+      `;
+    case "normal-modes":
+      return `
+        <div class="scene-label">Normal Modes</div>
+        <p class="scene-caption">The symmetric mode (left) and antisymmetric mode (right). Each oscillates at a single frequency determined by the coupling.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-normal-modes" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>&kappa;/k: <input type="range" id="normal-modes-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="normal-modes-kappa-val">0.30</span></label>
+          </div>
+        </div>
+      `;
+    case "beats":
+      return `
+        <div class="scene-label">Beats from Coupled Oscillators</div>
+        <p class="scene-caption">Start with one mass displaced. Energy sloshes between the two masses at the beat frequency |&omega;<sub>f</sub> &minus; &omega;<sub>s</sub>|.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-beats" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>&kappa;/k: <input type="range" id="beats-kappa" min="0.05" max="1" step="0.05" value="0.2"><span class="scene-val" id="beats-kappa-val">0.20</span></label>
+          </div>
+        </div>
+      `;
+    case "eigenvalue-solver":
+      return `
+        <div class="scene-label">Eigenvalue Problem</div>
+        <p class="scene-caption">The eigenvalues give normal mode frequencies; eigenvectors give the mode shapes. Adjust coupling to see how modes change.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-eigenvalue-solver" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&kappa;/k: <input type="range" id="eigen-kappa" min="0.05" max="2" step="0.05" value="0.5"><span class="scene-val" id="eigen-kappa-val">0.50</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 4: FROM OSCILLATORS TO WAVES
+    // =====================================================================
+    case "two-mass-normal-modes":
+      return `
+        <div class="scene-label">Two-Mass Mode Shapes</div>
+        <p class="scene-caption">Select a mode to see the displacement pattern. The symmetric mode has both masses moving together; the antisymmetric mode has them moving in opposite directions.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-two-mass-normal-modes" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <button id="two-mass-sym" class="scene-btn">Symmetric</button>
+            <button id="two-mass-anti" class="scene-btn">Antisymmetric</button>
+            <button id="two-mass-both" class="scene-btn">Both</button>
+          </div>
+        </div>
+      `;
+    case "three-mass-normal-modes":
+      return `
+        <div class="scene-label">Three-Mass Normal Modes</div>
+        <p class="scene-caption">Three normal modes from slowest (top) to fastest (bottom). Higher modes have more nodes and higher frequencies.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-three-mass-normal-modes" width="600" height="340"></canvas>
+        </div>
+      `;
+    case "n-mass-chain":
+      return `
+        <div class="scene-label">N-Mass Chain</div>
+        <p class="scene-caption">Adjust N and the mode number to see how mode shapes become smoother as N increases.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-n-mass-chain" width="600" height="340"></canvas>
+          <div class="scene-controls">
+            <label>N: <input type="range" id="nchain-n" min="3" max="20" step="1" value="8"><span class="scene-val" id="nchain-n-val">8</span></label>
+            <label>Mode: <input type="range" id="nchain-mode" min="1" max="20" step="1" value="1"><span class="scene-val" id="nchain-mode-val">1</span></label>
+          </div>
+        </div>
+      `;
+    case "n-mass-modes-numerical":
+      return `
+        <div class="scene-label">Normal Mode Shapes (Numerical)</div>
+        <p class="scene-caption">Normal mode shapes for N coupled masses. Higher modes oscillate faster and have more nodes.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-n-mass-modes-numerical" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>N: <input type="range" id="nmm-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="nmm-n-val">8</span></label>
+            <label>Mode j: <input type="range" id="nmm-j" min="1" max="20" step="1" value="1"><span class="scene-val" id="nmm-j-val">1</span></label>
+          </div>
+        </div>
+      `;
+    case "dispersion-relation-discrete":
+      return `
+        <div class="scene-label">Discrete Dispersion Relation</div>
+        <p class="scene-caption">The dispersion curve &omega;(p) = 2&omega;<sub>0</sub>|sin(p/2)| with allowed modes as dots. The dashed line shows the linear approximation.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-dispersion-relation-discrete" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>N: <input type="range" id="drd-n" min="3" max="30" step="1" value="10"><span class="scene-val" id="drd-n-val">10</span></label>
+            <label>Mode: <input type="range" id="drd-mode" min="1" max="30" step="1" value="1"><span class="scene-val" id="drd-mode-val">1</span></label>
+          </div>
+        </div>
+      `;
+    case "continuum-limit":
+      return `
+        <div class="scene-label">Continuum Limit</div>
+        <p class="scene-caption">As N increases, the discrete masses approach a continuous string and the dispersion relation becomes linear.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-continuum-limit" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>N: <input type="range" id="cl-n" min="3" max="100" step="1" value="6"><span class="scene-val" id="cl-n-val">6</span></label>
+            <label>Mode: <input type="range" id="cl-mode" min="1" max="10" step="1" value="1"><span class="scene-val" id="cl-mode-val">1</span></label>
+          </div>
+        </div>
+      `;
+    case "traveling-vs-standing":
+      return `
+        <div class="scene-label">Traveling vs Standing Waves</div>
+        <p class="scene-caption">Compare a traveling wave (moves to the right) with a standing wave (oscillates in place with fixed nodes).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-traveling-vs-standing" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>k: <input type="range" id="tvs-k" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="tvs-k-val">3.0</span></label>
+            <button id="tvs-mode-btn" class="scene-btn">Toggle View</button>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 5: FOURIER SERIES
+    // =====================================================================
+    case "fourier-decomposition":
+      return `
+        <div class="scene-label">Fourier Series Builder</div>
+        <p class="scene-caption">Choose a function and add terms to see the Fourier series converge. Individual harmonics shown in light colors.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-decomposition" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <button id="fourier-square" class="scene-btn">Square</button>
+            <button id="fourier-triangle" class="scene-btn">Triangle</button>
+            <button id="fourier-sawtooth" class="scene-btn">Sawtooth</button>
+            <label>Terms: <input type="range" id="fourier-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="fourier-terms-val">5</span></label>
+          </div>
+        </div>
+      `;
+    case "fourier-sawtooth":
+      return `
+        <div class="scene-label">Sawtooth Fourier Series</div>
+        <p class="scene-caption">Building the sawtooth function term by term. Notice the Gibbs overshoot at the discontinuity that persists even with many terms.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-fourier-sawtooth" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Terms: <input type="range" id="sawtooth-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="sawtooth-terms-val">5</span></label>
+          </div>
+        </div>
+      `;
+    case "plucked-string":
+      return `
+        <div class="scene-label">Plucked String</div>
+        <p class="scene-caption">A string plucked at a chosen position decomposes into harmonics. Each mode oscillates at its own frequency, producing the evolving shape.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-plucked-string" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>Pluck position: <input type="range" id="pluck-position" min="0.1" max="0.9" step="0.05" value="0.25"><span class="scene-val" id="pluck-position-val">0.25</span></label>
+            <label>Speed: <input type="range" id="pluck-speed" min="0.1" max="3" step="0.1" value="1"><span class="scene-val" id="pluck-speed-val">1.0</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 6: WAVES
+    // =====================================================================
+    case "string-transverse-wave":
+      return `
+        <div class="scene-label">Transverse Wave on a String</div>
+        <p class="scene-caption">A wave pulse on a string. The highlighted segment shows how the net transverse force arises from the difference in slope (curvature).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-string-transverse-wave" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Segment: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>
+            <label>Amplitude: <input type="range" id="stw-amp" min="0.5" max="3" step="0.1" value="1.5"><span class="scene-val" id="stw-amp-val">1.5</span></label>
+          </div>
+        </div>
+      `;
+    case "sound-wave-longitudinal":
+      return `
+        <div class="scene-label">Longitudinal Sound Wave</div>
+        <p class="scene-caption">Air molecules oscillate back and forth. Regions of compression (dark) and rarefaction (light) propagate as a wave.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <label>Wavelength: <input type="range" id="swl-wl" min="40" max="200" step="10" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
+          </div>
+        </div>
+      `;
+    case "boundary-conditions-demo":
+      return `
+        <div class="scene-label">Boundary Conditions</div>
+        <p class="scene-caption">Compare how different boundary conditions change the allowed standing wave modes. Nodes (&bull;) and antinodes (&circ;) are marked.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-boundary-conditions-demo" width="600" height="280"></canvas>
+          <div class="scene-controls">
+            <button id="bcd-ff" class="scene-btn">Fixed-Fixed</button>
+            <button id="bcd-fo" class="scene-btn">Fixed-Free</button>
+            <button id="bcd-oo" class="scene-btn">Free-Free</button>
+            <label>Mode: <input type="range" id="bcd-mode" min="1" max="8" step="1" value="1"><span class="scene-val" id="bcd-mode-val">1</span></label>
+          </div>
+        </div>
+      `;
+    case "standing-wave-modes":
+      return `
+        <div class="scene-label">Standing Wave Frequency Spectra</div>
+        <p class="scene-caption">The first four modes for each boundary type. Fixed-free is missing even harmonics. Frequencies shown as multiples of the fundamental.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-standing-wave-modes" width="600" height="340"></canvas>
+        </div>
+      `;
+    case "helmholtz-resonator":
+      return `
+        <div class="scene-label">Helmholtz Resonator</div>
+        <p class="scene-caption">A cavity with a neck: air in the neck oscillates as a mass, air in the body acts as a spring. Adjust geometry to change the resonant frequency.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-helmholtz-resonator" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>A (cm&sup2;): <input type="range" id="hr-a" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-a-val">3.0</span></label>
+            <label>V (mL): <input type="range" id="hr-v" min="100" max="2000" step="50" value="500"><span class="scene-val" id="hr-v-val">500</span></label>
+            <label>L (cm): <input type="range" id="hr-l" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-l-val">3.0</span></label>
+          </div>
+        </div>
+      `;
+
+    // =====================================================================
+    // CHAPTER 7: MUSIC
+    // =====================================================================
+    case "beats-demo":
+      return `
+        <div class="scene-label">Beats</div>
+        <p class="scene-caption">Two waves of slightly different frequencies produce a slowly varying beat pattern. Adjust &Delta;f to change the beat rate.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-beats-demo" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&Delta;f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="5"><span class="scene-val" id="bd-df-val">5.0</span></label>
+          </div>
+        </div>
+      `;
+    case "consonance-dissonance":
+      return `
+        <div class="scene-label">Consonance &amp; Dissonance</div>
+        <p class="scene-caption">Slide the frequency ratio to see where harmonics align (consonant, green) or nearly collide (dissonant, red).</p>
+        <div class="interactive-scene">
+          <canvas id="scene-consonance-dissonance" width="600" height="320"></canvas>
+          <div class="scene-controls">
+            <label>Ratio: <input type="range" id="cd-ratio" min="1" max="2" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>
+          </div>
+        </div>
+      `;
+    case "harmonic-alignment":
+      return `
+        <div class="scene-label">Harmonic Alignment</div>
+        <p class="scene-caption">Select an interval to see which harmonics of the two notes align. Simpler ratios have more alignments.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-harmonic-alignment" width="600" height="300"></canvas>
+          <div class="scene-controls" id="ha-btns">
+            <button id="ha-btn-0" class="scene-btn">Octave</button>
+            <button id="ha-btn-1" class="scene-btn">Fifth</button>
+            <button id="ha-btn-2" class="scene-btn">Fourth</button>
+            <button id="ha-btn-3" class="scene-btn">Maj 3rd</button>
+            <button id="ha-btn-4" class="scene-btn">Min 3rd</button>
+          </div>
+        </div>
+      `;
+    case "circle-of-fifths":
+      return `
+        <div class="scene-label">Circle of Fifths</div>
+        <p class="scene-caption">In equal temperament the circle closes exactly. In Pythagorean tuning, 12 fifths overshoot 7 octaves by the Pythagorean comma.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-circle-of-fifths" width="600" height="340"></canvas>
+          <div class="scene-controls">
+            <button id="cof-et" class="scene-btn">Equal Tempered</button>
+            <button id="cof-py" class="scene-btn">Pythagorean</button>
+            <label>Note: <input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>
+          </div>
+        </div>
+      `;
+    case "scale-comparison":
+      return `
+        <div class="scene-label">Scale Comparison</div>
+        <p class="scene-caption">Three tuning systems compared on a cents axis. Just intonation is purest in one key; equal temperament works equally in all keys.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-scale-comparison" width="600" height="300"></canvas>
+        </div>
+      `;
+
     default:
       return "";
   }
