@@ -1,44 +1,42 @@
-// Helper: render text with subscript notation on canvas.
-// Parses "_x" (single char subscript) and "_{...}" (multi-char subscript)
-// and draws them smaller and lower. Respects ctx.textAlign.
+// Helper: render text with sub/superscript notation on canvas.
+// Parses "_x" / "_{...}" for subscripts, "^x" / "^{...}" for superscripts.
+// Respects ctx.textAlign and current font.
 function fillTextSub(ctx, text, x, y) {
   var parts = [];
   var i = 0;
   while (i < text.length) {
-    if (text[i] === '_' && i + 1 < text.length) {
+    if ((text[i] === '_' || text[i] === '^') && i + 1 < text.length) {
+      var isSub = text[i] === '_';
       if (text[i + 1] === '{') {
         var close = text.indexOf('}', i + 2);
         if (close !== -1) {
-          parts.push({ text: text.substring(i + 2, close), sub: true });
+          parts.push({ text: text.substring(i + 2, close), mode: isSub ? 'sub' : 'sup' });
           i = close + 1;
           continue;
         }
       }
-      // single character subscript
-      parts.push({ text: text[i + 1], sub: true });
+      parts.push({ text: text[i + 1], mode: isSub ? 'sub' : 'sup' });
       i += 2;
       continue;
     }
-    // accumulate normal text
     var start = i;
-    while (i < text.length && !(text[i] === '_' && i + 1 < text.length)) i++;
-    parts.push({ text: text.substring(start, i), sub: false });
+    while (i < text.length && !((text[i] === '_' || text[i] === '^') && i + 1 < text.length)) i++;
+    parts.push({ text: text.substring(start, i), mode: 'normal' });
   }
 
-  // Measure total width for alignment
   var savedFont = ctx.font;
   var fontMatch = savedFont.match(/(\d+(?:\.\d+)?)(px|pt)/);
   var fontSize = fontMatch ? parseFloat(fontMatch[1]) : 12;
-  var unit = fontMatch ? fontMatch[2] : 'px';
-  var subFontSize = Math.round(fontSize * 0.7);
-  var subFont = savedFont.replace(/(\d+(?:\.\d+)?)(px|pt)/, subFontSize + '$2');
+  var smallSize = Math.round(fontSize * 0.7);
+  var smallFont = savedFont.replace(/(\d+(?:\.\d+)?)(px|pt)/, smallSize + '$2');
+
+  // Measure total width
   var totalWidth = 0;
   for (var p = 0; p < parts.length; p++) {
-    ctx.font = parts[p].sub ? subFont : savedFont;
+    ctx.font = parts[p].mode !== 'normal' ? smallFont : savedFont;
     totalWidth += ctx.measureText(parts[p].text).width;
   }
 
-  // Determine starting x based on alignment
   var align = ctx.textAlign || 'start';
   var drawX = x;
   if (align === 'center') drawX = x - totalWidth / 2;
@@ -47,15 +45,12 @@ function fillTextSub(ctx, text, x, y) {
   var savedAlign = ctx.textAlign;
   ctx.textAlign = 'left';
   for (var p = 0; p < parts.length; p++) {
-    if (parts[p].sub) {
-      ctx.font = subFont;
-      ctx.fillText(parts[p].text, drawX, y + fontSize * 0.3);
-      drawX += ctx.measureText(parts[p].text).width;
-    } else {
-      ctx.font = savedFont;
-      ctx.fillText(parts[p].text, drawX, y);
-      drawX += ctx.measureText(parts[p].text).width;
-    }
+    var yOff = 0;
+    if (parts[p].mode === 'sub') yOff = fontSize * 0.3;
+    else if (parts[p].mode === 'sup') yOff = -fontSize * 0.35;
+    ctx.font = parts[p].mode !== 'normal' ? smallFont : savedFont;
+    ctx.fillText(parts[p].text, drawX, y + yOff);
+    drawX += ctx.measureText(parts[p].text).width;
   }
   ctx.font = savedFont;
   ctx.textAlign = savedAlign;
@@ -1836,11 +1831,11 @@ function initPhaseLag() {
     const phaseDeg = (phase * 180 / Math.PI);
     const inPhase = wd < w0;
     ctx.fillStyle = WCOLORS.text; ctx.font = '13px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(inPhase ? 'In phase (\u03C9_d < \u03C9\u2080)' : 'Out of phase (\u03C9_d > \u03C9\u2080)', plotL + plotW / 2, plotT - 6);
+    fillTextSub(ctx, inPhase ? 'In phase (ω_d < ω₀)' : 'Out of phase (ω_d > ω₀)', plotL + plotW / 2, plotT - 6);
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Phase lag: ' + phaseDeg.toFixed(1) + '\u00B0', plotL + 10, plotB + 14);
-    ctx.fillText('\u03C9_d = ' + wd.toFixed(1) + '   \u03C9\u2080 = ' + w0.toFixed(1), plotL + plotW * 0.5, plotB + 14);
+    fillTextSub(ctx, 'ω_d = ' + wd.toFixed(1) + '   ω₀ = ' + w0.toFixed(1), plotL + plotW * 0.5, plotB + 14);
 
     // Legend
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
@@ -2003,7 +1998,7 @@ function initPowerAbsorption() {
     // Resonance callout
     if (nearRes) {
       ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('\u2605 \u03C9_d \u2248 \u03C9\u2080 = ' + w0.toFixed(1) + ' \u2014 maximum power transfer', plotL + plotW / 2, plotT + 14);
+      fillTextSub(ctx, '★ ω_d ≈ ω₀ = ' + w0.toFixed(1) + ' — maximum power transfer', plotL + plotW / 2, plotT + 14);
     }
   }
 
@@ -2116,7 +2111,7 @@ function initResonanceCurve() {
     // Axis labels
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('\u27E8P\u27E9', plotL - 20, plotT - 4);
-    ctx.fillText('\u03C9_d', plotR + 10, plotB + 4);
+    fillTextSub(ctx, 'ω_d', plotR + 10, plotB + 4);
 
     // Q value and info
     const Q = w0 / gamma;
@@ -2627,7 +2622,7 @@ function initBeats() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 6);
     ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('f_beat = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
+    fillTextSub(ctx, 'f_{beat} = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
 
     requestAnimationFrame(tick);
   }
@@ -2725,7 +2720,7 @@ function initEigenvalueSolver() {
     // Arrowhead
     drawArrowHead(ctx, plotCx + ev1x, plotCy + ev1y, Math.atan2(ev1y, ev1x), WCOLORS.teal);
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui, sans-serif';
-    ctx.fillText('ξ_s = (1,1)', plotCx + ev1x + 5, plotCy + ev1y - 8);
+    fillTextSub(ctx, 'ξ_s = (1,1)', plotCx + ev1x + 5, plotCy + ev1y - 8);
 
     // Eigenvector 2 (antisymmetric): (1, -1) / sqrt(2)
     const ev2x = plotR * 0.7, ev2y = plotR * 0.7;
@@ -2733,7 +2728,7 @@ function initEigenvalueSolver() {
     ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev2x, plotCy + ev2y); ctx.stroke();
     drawArrowHead(ctx, plotCx + ev2x, plotCy + ev2y, Math.atan2(ev2y, ev2x), WCOLORS.red);
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif';
-    ctx.fillText('ξ_a = (1,−1)', plotCx + ev2x + 5, plotCy + ev2y + 16);
+    fillTextSub(ctx, 'ξ_a = (1,−1)', plotCx + ev2x + 5, plotCy + ev2y + 16);
 
     // Eigenvalue display
     const evY = H - 50;
@@ -2741,9 +2736,9 @@ function initEigenvalueSolver() {
     ctx.fillText('Eigenvalues (ω²):', matX, evY);
 
     ctx.fillStyle = WCOLORS.teal; ctx.font = '13px system-ui, sans-serif';
-    ctx.fillText('ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + Math.sqrt(lambdaS).toFixed(2), matX, evY + 22);
+    fillTextSub(ctx, 'ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + Math.sqrt(lambdaS).toFixed(2), matX, evY + 22);
     ctx.fillStyle = WCOLORS.red;
-    ctx.fillText('ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + Math.sqrt(lambdaA).toFixed(2), matX, evY + 44);
+    fillTextSub(ctx, 'ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + Math.sqrt(lambdaA).toFixed(2), matX, evY + 44);
 
     // κ/k label
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'right';
@@ -2923,12 +2918,12 @@ function initTwoMassNormalModes() {
     // Mode label
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
     const modeLabel = mode === 'sym' ? 'Symmetric mode (ω_s)' : mode === 'anti' ? 'Antisymmetric mode (ω_a)' : 'Superposition of both modes';
-    ctx.fillText(modeLabel, W / 2, 18);
+    fillTextSub(ctx, modeLabel, W / 2, 18);
 
     // Frequency values
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('ω_s = ' + omegaS.toFixed(2), 10, H - 5);
-    ctx.fillText('ω_a = ' + omegaA.toFixed(2), 120, H - 5);
+    fillTextSub(ctx, 'ω_s = ' + omegaS.toFixed(2), 10, H - 5);
+    fillTextSub(ctx, 'ω_a = ' + omegaA.toFixed(2), 120, H - 5);
 
     requestAnimationFrame(tick);
   }
@@ -3493,14 +3488,14 @@ function initFourierSawtooth() {
     ctx.beginPath(); ctx.moveTo(barL, plotT); ctx.lineTo(barL, plotB); ctx.stroke();
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Coefficients b_n', (barL + barR) / 2, plotT - 8);
+    fillTextSub(ctx, 'Coefficients b_n', (barL + barR) / 2, plotT - 8);
 
     // y-axis label
     ctx.save();
     ctx.translate(barL - 8, plotMidY);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('b_n', 0, 0);
+    fillTextSub(ctx, 'b_n', 0, 0);
     ctx.restore();
 
     const maxCoeff = 2 / Math.PI; // b_1
@@ -3523,7 +3518,7 @@ function initFourierSawtooth() {
 
     // Formula
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('b_n = (−1)^(n+1) · 2/(πn)', barL, plotB + 14);
+    fillTextSub(ctx, 'b_n = (−1)^{(n+1)} · 2/(πn)', barL, plotB + 14);
 
     // Info
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
@@ -4449,12 +4444,12 @@ function initStringTransverseWave() {
     ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'left';
     ctx.fillText('T (tension)', 10, H - 25);
     ctx.fillStyle = WCOLORS.red;
-    ctx.fillText('F_net \u221D curvature \u2202\u00B2y/\u2202x\u00B2', 10, H - 10);
+    fillTextSub(ctx, 'F_{net} ∝ curvature ∂²y/∂x²', 10, H - 10);
 
     const curvature = d2y * 1000;
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    const curvLabel = Math.abs(curvature) < 0.5 ? 'Flat (no net force)' : ('Curved: F_net ' + (curvature > 0 ? '\u2191' : '\u2193'));
-    ctx.fillText(curvLabel, W - 10, H - 10);
+    const curvLabel = Math.abs(curvature) < 0.5 ? 'Flat (no net force)' : ('Curved: F_{net} ' + (curvature > 0 ? '↑' : '↓'));
+    fillTextSub(ctx, curvLabel, W - 10, H - 10);
 
     requestAnimationFrame(tick);
   }
@@ -6993,11 +6988,11 @@ function initTotalInternalReflection() {
     const boxX = W * 0.58, boxY = intfY + 15;
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('θ₁ = ' + angleDeg + '°', boxX, boxY + 15);
-    ctx.fillText('θ_c = ' + critDeg + '° = arcsin(n₂/n₁)', boxX, boxY + 32);
+    fillTextSub(ctx, 'θ_c = ' + critDeg + '° = arcsin(n₂/n₁)', boxX, boxY + 32);
 
     if (isTIR) {
       ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui';
-      ctx.fillText('θ₁ > θ_c → Total internal reflection!', boxX, boxY + 52);
+      fillTextSub(ctx, 'θ₁ > θ_c → Total internal reflection!', boxX, boxY + 52);
     } else {
       const theta2 = Math.asin(sinTheta2);
       ctx.fillStyle = WCOLORS.amber;
@@ -7015,7 +7010,7 @@ function initTotalInternalReflection() {
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(barX + barW2, barY2 - 2); ctx.lineTo(barX + barW2, barY2 + barH2 + 2); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('θ_c', barX + barW2, barY2 - 4);
+    fillTextSub(ctx, 'θ_c', barX + barW2, barY2 - 4);
   }
 
   angleSlider?.addEventListener('input', draw);
@@ -7345,7 +7340,7 @@ function initBrewsterAngle() {
     ctx.beginPath(); ctx.moveTo(bx, plotT); ctx.lineTo(bx, plotB); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('θ_B = ' + brewsterAngle.toFixed(1) + '°', bx, plotT - 5);
+    fillTextSub(ctx, 'θ_B = ' + brewsterAngle.toFixed(1) + '°', bx, plotT - 5);
     ctx.fillStyle = WCOLORS.teal;
     ctx.beginPath(); ctx.arc(bx, zeroY, 5, 0, 2 * Math.PI); ctx.fill();
 
@@ -7356,7 +7351,7 @@ function initBrewsterAngle() {
       ctx.beginPath(); ctx.moveTo(cx, plotT); ctx.lineTo(cx, plotB); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 10px system-ui';
-      ctx.fillText('θ_c = ' + critAngle.toFixed(1) + '°', cx, plotT - 5);
+      fillTextSub(ctx, 'θ_c = ' + critAngle.toFixed(1) + '°', cx, plotT - 5);
     }
 
     // Legend
@@ -7368,7 +7363,7 @@ function initBrewsterAngle() {
     // Info
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('n₂/n₁ = ' + n.toFixed(2), plotR, plotT + 15);
-    ctx.fillText('θ_B = arctan(n₂/n₁) = ' + brewsterAngle.toFixed(1) + '°', plotR, plotT + 30);
+    fillTextSub(ctx, 'θ_B = arctan(n₂/n₁) = ' + brewsterAngle.toFixed(1) + '°', plotR, plotT + 30);
   }
 
   nSlider?.addEventListener('input', draw);
@@ -9922,7 +9917,7 @@ function initAmplitudeModulation() {
       }
       ctx.stroke();
       ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(label, plotL, y0 + 12);
+      fillTextSub(ctx, label, plotL, y0 + 12);
     }
 
     const N = 400;
@@ -9953,7 +9948,7 @@ function initAmplitudeModulation() {
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(carrX, fPlotB); ctx.lineTo(carrX, fPlotT + 30); ctx.stroke();
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('f_c', carrX, fPlotB + 12);
+    fillTextSub(ctx, 'f_c', carrX, fPlotB + 12);
 
     // Sidebands
     const lsbX = freqToX(fc - fm);
@@ -9964,12 +9959,12 @@ function initAmplitudeModulation() {
     ctx.beginPath(); ctx.moveTo(usbX, fPlotB); ctx.lineTo(usbX, fPlotB - sbH); ctx.stroke();
 
     ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui';
-    ctx.fillText('f_c\u2013f_m', lsbX, fPlotB + 12);
-    ctx.fillText('f_c+f_m', usbX, fPlotB + 12);
+    fillTextSub(ctx, 'f_c–f_m', lsbX, fPlotB + 12);
+    fillTextSub(ctx, 'f_c+f_m', usbX, fPlotB + 12);
 
     // Labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Sidebands at f_c \u00B1 f_m', fL + fW / 2, fPlotT + 25);
+    fillTextSub(ctx, 'Sidebands at f_c ± f_m', fL + fW / 2, fPlotT + 25);
   }
 
   fcSlider?.addEventListener('input', draw);
@@ -13706,7 +13701,7 @@ function initDopplerSpectroscopyExoplanet() {
 
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui';
     ctx.textAlign = 'center'; ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 12);
-    ctx.textAlign = 'right'; ctx.fillText('v_r', plotL2 - 5, plotT2 + 5);
+    ctx.textAlign = 'right'; fillTextSub(ctx, 'v_r', plotL2 - 5, plotT2 + 5);
 
     // Draw sinusoidal RV curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
