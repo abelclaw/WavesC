@@ -679,63 +679,70 @@ function initDampingRegimes() {
 
   const omega0Slider = document.getElementById('regime-omega0');
 
+  let t = 0;
+  const tMax = 5;
+  const nPts = 500;
+  const x0 = 1;
+
+  const plotL = 50, plotR = W - 30, plotT = 40, plotB = H - 40;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const midY = (plotT + plotB) / 2;
+
+  function xt(omega0, gamma, tc) {
+    const r = gamma / (2 * omega0);
+    if (r < 1) {
+      const wu = Math.sqrt(omega0 * omega0 - (gamma / 2) * (gamma / 2));
+      return x0 * Math.exp(-gamma * tc / 2) * (Math.cos(wu * tc) + (gamma / (2 * wu)) * Math.sin(wu * tc));
+    } else if (r > 1) {
+      const r1 = -gamma / 2 + Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
+      const r2 = -gamma / 2 - Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
+      const A = x0 * r2 / (r2 - r1);
+      const B = -x0 * r1 / (r2 - r1);
+      return A * Math.exp(r1 * tc) + B * Math.exp(r2 * tc);
+    } else {
+      return x0 * (1 + gamma * tc / 2) * Math.exp(-gamma * tc / 2);
+    }
+  }
+
+  function tick() {
+    t += 0.02;
+    if (t > tMax) t = 0;
+    draw();
+    requestAnimationFrame(tick);
+  }
+
   function draw() {
     wClear(ctx, W, H);
     const omega0 = parseFloat(omega0Slider?.value || 5);
-
     document.getElementById('regime-omega0-val')?.replaceChildren(document.createTextNode(omega0.toFixed(1)));
 
-    const gammaUD = omega0 * 0.5;  // underdamped: gamma/2omega0 = 0.25
-    const gammaC = 2 * omega0;     // critical: gamma = 2*omega0
-    const gammaOD = omega0 * 5;    // overdamped: gamma/2omega0 = 2.5
-
-    const plotL = 50, plotR = W - 30, plotT = 40, plotB = H - 40;
-    const plotW = plotR - plotL, plotH = plotB - plotT;
-    const midY = (plotT + plotB) / 2;
-    const tMax = 5;
-    const nPts = 500;
-    const x0 = 1;
-
-    function xt(gamma, t) {
-      const r = gamma / (2 * omega0);
-      if (r < 1) {
-        const wu = Math.sqrt(omega0 * omega0 - (gamma / 2) * (gamma / 2));
-        return x0 * Math.exp(-gamma * t / 2) * (Math.cos(wu * t) + (gamma / (2 * wu)) * Math.sin(wu * t));
-      } else if (r > 1) {
-        const r1 = -gamma / 2 + Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
-        const r2 = -gamma / 2 - Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
-        const A = x0 * r2 / (r2 - r1);
-        const B = -x0 * r1 / (r2 - r1);
-        return A * Math.exp(r1 * t) + B * Math.exp(r2 * t);
-      } else {
-        return x0 * (1 + gamma * t / 2) * Math.exp(-gamma * t / 2);
-      }
-    }
+    const gammaUD = omega0 * 0.5;
+    const gammaC = 2 * omega0;
+    const gammaOD = omega0 * 5;
 
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT - 5); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
-
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('x(t)', plotL - 16, plotT - 6);
     ctx.fillText('t', plotR + 10, midY + 4);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'right';
     ctx.fillText('x\u2080', plotL - 5, plotT + 5);
 
-    // Draw three curves
     const curves = [
-      { gamma: gammaUD, color: WCOLORS.teal, label: 'Underdamped (\u03B3 = ' + gammaUD.toFixed(1) + ')', lw: 2.5 },
-      { gamma: gammaC, color: WCOLORS.amber, label: 'Critical (\u03B3 = ' + gammaC.toFixed(1) + ')', lw: 2.5 },
-      { gamma: gammaOD, color: WCOLORS.orange, label: 'Overdamped (\u03B3 = ' + gammaOD.toFixed(1) + ')', lw: 2.5 },
+      { gamma: gammaUD, color: WCOLORS.teal, label: 'Underdamped (\u03B3 = ' + gammaUD.toFixed(1) + ')' },
+      { gamma: gammaC, color: WCOLORS.amber, label: 'Critical (\u03B3 = ' + gammaC.toFixed(1) + ')' },
+      { gamma: gammaOD, color: WCOLORS.orange, label: 'Overdamped (\u03B3 = ' + gammaOD.toFixed(1) + ')' },
     ];
 
+    // Full curves (faint)
     for (const curve of curves) {
-      ctx.strokeStyle = curve.color; ctx.lineWidth = curve.lw;
+      ctx.strokeStyle = curve.color + '30'; ctx.lineWidth = 1.5;
       ctx.beginPath();
       for (let i = 0; i <= nPts; i++) {
-        const t = (i / nPts) * tMax;
-        const val = xt(curve.gamma, t);
+        const tc = (i / nPts) * tMax;
+        const val = xt(omega0, curve.gamma, tc);
         const py = midY - val * (plotH / 2) * 0.85;
         const px = plotL + (i / nPts) * plotW;
         i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
@@ -743,25 +750,45 @@ function initDampingRegimes() {
       ctx.stroke();
     }
 
+    // Traced portions up to current time
+    const curIdx = Math.floor((t / tMax) * nPts);
+    for (const curve of curves) {
+      ctx.strokeStyle = curve.color; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i <= curIdx; i++) {
+        const tc = (i / nPts) * tMax;
+        const val = xt(omega0, curve.gamma, tc);
+        const py = midY - val * (plotH / 2) * 0.85;
+        const px = plotL + (i / nPts) * plotW;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Dot at current time
+      const curVal = xt(omega0, curve.gamma, t);
+      const dotPx = plotL + (t / tMax) * plotW;
+      const dotPy = midY - curVal * (plotH / 2) * 0.85;
+      ctx.fillStyle = curve.color;
+      ctx.beginPath(); ctx.arc(dotPx, dotPy, 5, 0, Math.PI * 2); ctx.fill();
+    }
+
     // Legend
     let ly = plotT + 5;
     for (const curve of curves) {
       ctx.fillStyle = curve.color; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-      // Color swatch
       ctx.fillRect(plotL + plotW * 0.55, ly - 8, 14, 3);
       ctx.fillText(curve.label, plotL + plotW * 0.55 + 20, ly);
       ly += 18;
     }
 
-    // Annotation: critical is fastest
+    // Annotation
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Fastest return without oscillation \u2192', plotL + plotW * 0.35, plotB + 14);
 
-    // omega0 display
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(1) + ' rad/s', plotL + 5, plotT - 12);
   }
 
-  omega0Slider?.addEventListener('input', draw);
-  draw();
+  omega0Slider?.addEventListener('input', () => { t = 0; });
+  tick();
 }
