@@ -92,6 +92,33 @@ function initSceneInteractives() {
   // Chapter 16 - Prisms & Scattering
   initRayleighScattering();
   initPrismDispersion();
+  // Chapter 8 - Fourier Transforms
+  initViolinSpectrum();
+  initFourierTransformDerivation();
+  initUnderdampedFourierTransform();
+  initFourierMagnitudePhase();
+  initFourierFiltering();
+  initDiracDeltaVisualization();
+  // Chapter 9 - Reflection & Transmission
+  initStringJunction();
+  initReflectionTransmissionPulse();
+  initPhaseFlipDemo();
+  initMassCollisionImpedance();
+  initComplexImpedance();
+  // Chapter 10 - Power
+  initImpedanceMaterials();
+  initWaveEnergyString();
+  initPowerReflectionTransmission();
+  initDecibelScale();
+  initPlaneWave3d();
+  // Chapter 11 - Wavepackets
+  initInterferenceDemo();
+  initGaussianWavepacket();
+  initAmplitudeModulation();
+  initDispersionRelations();
+  initPhaseVelocityDemo();
+  initGroupVelocityDemo();
+  initWavepacketDispersion();
 }
 
 // Color palette matching WavesC theme
@@ -7430,4 +7457,2771 @@ function initPrismDispersion() {
 
   apexSlider?.addEventListener('input', draw);
   draw();
+}
+
+// =========================================================================
+// CHAPTER 8: Fourier Transforms
+// =========================================================================
+
+// =========================================================================
+// 1. Violin Spectrum
+// =========================================================================
+function initViolinSpectrum() {
+  const canvas = document.getElementById('scene-violin-spectrum');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let f0Slider = document.getElementById('violin-f0');
+  if (!f0Slider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>f\u2080: <input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>' +
+        '<label>Q: <input type="range" id="violin-q" min="5" max="200" step="5" value="40"><span class="scene-val" id="violin-q-val">40</span></label>';
+      parent.appendChild(controls);
+      f0Slider = document.getElementById('violin-f0');
+    }
+  }
+  const qSlider = document.getElementById('violin-q');
+
+  function lorentzian(f, fc, gamma) {
+    const df = f - fc;
+    return (gamma * gamma / 4) / (df * df + gamma * gamma / 4);
+  }
+
+  function draw() {
+    const f0 = parseFloat(f0Slider?.value || 440);
+    const Q = parseFloat(qSlider?.value || 40);
+    document.getElementById('violin-f0-val')?.replaceChildren(document.createTextNode(f0.toFixed(0) + ' Hz'));
+    document.getElementById('violin-q-val')?.replaceChildren(document.createTextNode(Q.toFixed(0)));
+
+    wClear(ctx, W, H);
+
+    const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 45;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+    const nHarmonics = 8;
+    const fMax = f0 * (nHarmonics + 0.5);
+    const fMin = 0;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotL, plotT); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Frequency (Hz)', plotL + plotW / 2, plotB + 35);
+    ctx.save(); ctx.translate(plotL - 40, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Amplitude', 0, 0); ctx.restore();
+
+    // Frequency ticks
+    for (let n = 1; n <= nHarmonics; n++) {
+      const fx = plotL + (n * f0 - fMin) / (fMax - fMin) * plotW;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText((n * f0).toFixed(0), fx, plotB + 14);
+    }
+
+    // Draw spectrum: sum of Lorentzian peaks
+    const nPts = 500;
+    ctx.beginPath();
+    let maxVal = 0;
+    const vals = [];
+    for (let i = 0; i < nPts; i++) {
+      const f = fMin + (fMax - fMin) * i / nPts;
+      let val = 0;
+      for (let n = 1; n <= nHarmonics; n++) {
+        const fc = n * f0;
+        const gamma = fc / Q;
+        // Amplitude envelope: decreases with harmonic number
+        const amp = 1.0 / (n * 0.7);
+        val += amp * lorentzian(f, fc, gamma);
+      }
+      vals.push(val);
+      if (val > maxVal) maxVal = val;
+    }
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i < nPts; i++) {
+      const fx = plotL + plotW * i / nPts;
+      const fy = plotB - (vals[i] / maxVal) * plotH * 0.9;
+      i === 0 ? ctx.moveTo(fx, fy) : ctx.lineTo(fx, fy);
+    }
+    ctx.stroke();
+
+    // Fill under curve
+    ctx.lineTo(plotR, plotB);
+    ctx.lineTo(plotL, plotB);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(15,118,110,0.1)';
+    ctx.fill();
+
+    // Label harmonics
+    for (let n = 1; n <= nHarmonics; n++) {
+      const fx = plotL + (n * f0 - fMin) / (fMax - fMin) * plotW;
+      const amp = 1.0 / (n * 0.7);
+      const fy = plotB - (amp / maxVal) * plotH * 0.9;
+      ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(n.toString(), fx, fy - 8);
+    }
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Violin Spectrum', plotL + plotW / 2, 18);
+  }
+
+  f0Slider?.addEventListener('input', draw);
+  qSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 2. Fourier Transform Derivation (discrete → continuous)
+// =========================================================================
+function initFourierTransformDerivation() {
+  const canvas = document.getElementById('scene-fourier-transform-derivation');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let lSlider = document.getElementById('ftd-L');
+  if (!lSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>L: <input type="range" id="ftd-L" min="1" max="20" step="0.5" value="3"><span class="scene-val" id="ftd-L-val">3.0</span></label>';
+      parent.appendChild(controls);
+      lSlider = document.getElementById('ftd-L');
+    }
+  }
+
+  function gaussian(x, sigma) {
+    return Math.exp(-x * x / (2 * sigma * sigma));
+  }
+
+  function gaussianFT(k, sigma) {
+    // FT of Gaussian is Gaussian: sigma_k = 1/sigma
+    return Math.exp(-k * k * sigma * sigma / 2);
+  }
+
+  function draw() {
+    const L = parseFloat(lSlider?.value || 3);
+    document.getElementById('ftd-L-val')?.replaceChildren(document.createTextNode(L.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const midW = W / 2;
+    const sigma = 1.0;
+
+    // Left panel: discrete spectrum
+    const lL = 40, lR = midW - 20, lT = 40, lB = H - 40;
+    const lW = lR - lL, lH = lB - lT;
+
+    // Right panel: continuous FT
+    const rL = midW + 20, rR = W - 20, rT = 40, rB = H - 40;
+    const rW = rR - rL, rH = rB - rT;
+
+    // Titles
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Discrete coefficients (L = ' + L.toFixed(1) + ')', lL + lW / 2, 18);
+    ctx.fillText('Continuous FT envelope', rL + rW / 2, 18);
+
+    // k range
+    const kMax = 8;
+
+    // Left axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lL, lB); ctx.lineTo(lR, lB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lL, lB); ctx.lineTo(lL, lT); ctx.stroke();
+
+    // Draw discrete bars at k_n = n * 2π/L
+    const dk = 2 * Math.PI / L;
+    const barWidth = Math.max(2, Math.min(8, dk / kMax * lW * 0.4));
+    ctx.fillStyle = WCOLORS.teal;
+    for (let n = -Math.ceil(kMax / dk); n <= Math.ceil(kMax / dk); n++) {
+      const k = n * dk;
+      if (Math.abs(k) > kMax) continue;
+      const amp = gaussianFT(k, sigma);
+      const bx = lL + (k + kMax) / (2 * kMax) * lW;
+      const bh = amp * lH * 0.85;
+      ctx.fillRect(bx - barWidth / 2, lB - bh, barWidth, bh);
+    }
+
+    // Draw continuous envelope on left (dashed)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const k = -kMax + 2 * kMax * i / 200;
+      const amp = gaussianFT(k, sigma);
+      const px = lL + (k + kMax) / (2 * kMax) * lW;
+      const py = lB - amp * lH * 0.85;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Right axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rR, rB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rL, rT); ctx.stroke();
+
+    // Draw continuous FT on right
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const k = -kMax + 2 * kMax * i / 200;
+      const amp = gaussianFT(k, sigma);
+      const px = rL + (k + kMax) / (2 * kMax) * rW;
+      const py = rB - amp * rH * 0.85;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Fill under continuous
+    ctx.lineTo(rR, rB); ctx.lineTo(rL, rB); ctx.closePath();
+    ctx.fillStyle = 'rgba(217,119,6,0.1)'; ctx.fill();
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('k', lL + lW / 2, lB + 18);
+    ctx.fillText('k', rL + rW / 2, rB + 18);
+    ctx.fillText('|c\u2099|', lL - 8, lT + 10);
+    ctx.fillText('|F\u0302(k)|', rL - 8, rT + 10);
+
+    // Math note
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Spacing \u0394k = 2\u03C0/L = ' + dk.toFixed(2), lL + lW / 2, lB + 32);
+    ctx.fillText('As L \u2192 \u221E, bars merge into continuous curve', W / 2, H - 5);
+  }
+
+  lSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 3. Underdamped Fourier Transform
+// =========================================================================
+function initUnderdampedFourierTransform() {
+  const canvas = document.getElementById('scene-underdamped-fourier-transform');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let gammaSlider = document.getElementById('uft-gamma');
+  if (!gammaSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>\u03B3: <input type="range" id="uft-gamma" min="0.1" max="3" step="0.1" value="0.5"><span class="scene-val" id="uft-gamma-val">0.5</span></label>' +
+        '<label>\u03C9\u2080: <input type="range" id="uft-omega0" min="2" max="10" step="0.5" value="5"><span class="scene-val" id="uft-omega0-val">5.0</span></label>';
+      parent.appendChild(controls);
+      gammaSlider = document.getElementById('uft-gamma');
+    }
+  }
+  const omega0Slider = document.getElementById('uft-omega0');
+
+  function draw() {
+    const gamma = parseFloat(gammaSlider?.value || 0.5);
+    const omega0 = parseFloat(omega0Slider?.value || 5);
+    document.getElementById('uft-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+    document.getElementById('uft-omega0-val')?.replaceChildren(document.createTextNode(omega0.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const midW = W / 2;
+
+    // Left panel: x(t)
+    const lL = 50, lR = midW - 15, lT = 35, lB = H - 35;
+    const lW = lR - lL, lH = lB - lT;
+    const lMid = (lT + lB) / 2;
+
+    // Right panel: |F(ω)|²
+    const rL = midW + 25, rR = W - 20, rT = 35, rB = H - 35;
+    const rW = rR - rL, rH = rB - rT;
+
+    // Titles
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x(t) = e^(\u2013\u03B3t/2) cos(\u03C9\u2080t)', lL + lW / 2, 18);
+    ctx.fillText('Power spectrum |F(\u03C9)|\u00B2', rL + rW / 2, 18);
+
+    // Left axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lL, lB); ctx.lineTo(lR, lB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lL, lMid); ctx.lineTo(lR, lMid); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(lL, lT + lH * 0.25); ctx.lineTo(lR, lT + lH * 0.25); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lL, lT + lH * 0.75); ctx.lineTo(lR, lT + lH * 0.75); ctx.stroke();
+
+    // Draw x(t)
+    const tMax = 10;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const t = tMax * i / 300;
+      const x = Math.exp(-gamma * t / 2) * Math.cos(omega0 * t);
+      const px = lL + (t / tMax) * lW;
+      const py = lMid - x * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Draw envelope
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const t = tMax * i / 300;
+      const env = Math.exp(-gamma * t / 2);
+      const px = lL + (t / tMax) * lW;
+      const py = lMid - env * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const t = tMax * i / 300;
+      const env = -Math.exp(-gamma * t / 2);
+      const px = lL + (t / tMax) * lW;
+      const py = lMid - env * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Right axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rR, rB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rL, rT); ctx.stroke();
+
+    // Draw |F(ω)|² = Lorentzian centered at ω₀ with width γ
+    const omegaMax = omega0 * 2.5;
+    let maxPow = 0;
+    const powVals = [];
+    for (let i = 0; i <= 300; i++) {
+      const omega = omegaMax * i / 300;
+      const dw = omega - omega0;
+      const pow = 1 / (dw * dw + gamma * gamma / 4);
+      powVals.push(pow);
+      if (pow > maxPow) maxPow = pow;
+    }
+
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const px = rL + (i / 300) * rW;
+      const py = rB - (powVals[i] / maxPow) * rH * 0.85;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Fill under
+    ctx.lineTo(rR, rB); ctx.lineTo(rL, rB); ctx.closePath();
+    ctx.fillStyle = 'rgba(37,99,235,0.08)'; ctx.fill();
+
+    // Mark peak and width
+    const peakX = rL + (omega0 / omegaMax) * rW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(peakX, rB); ctx.lineTo(peakX, rT); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Width markers
+    const halfPeakY = rB - rH * 0.85 * 0.5;
+    const leftHalf = rL + ((omega0 - gamma / 2) / omegaMax) * rW;
+    const rightHalf = rL + ((omega0 + gamma / 2) / omegaMax) * rW;
+    if (leftHalf > rL) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(leftHalf, halfPeakY); ctx.lineTo(rightHalf, halfPeakY); ctx.stroke();
+      // Arrow heads
+      ctx.beginPath(); ctx.moveTo(leftHalf, halfPeakY - 3); ctx.lineTo(leftHalf, halfPeakY + 3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rightHalf, halfPeakY - 3); ctx.lineTo(rightHalf, halfPeakY + 3); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u03B3', (leftHalf + rightHalf) / 2, halfPeakY - 6);
+    }
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('t', lL + lW / 2, lB + 16);
+    ctx.fillText('\u03C9', rL + rW / 2, rB + 16);
+    ctx.fillText('\u03C9\u2080', peakX, rB + 16);
+  }
+
+  gammaSlider?.addEventListener('input', draw);
+  omega0Slider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 4. Fourier Magnitude & Phase
+// =========================================================================
+function initFourierMagnitudePhase() {
+  const canvas = document.getElementById('scene-fourier-magnitude-phase');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // Generate two signals: square wave and triangle wave
+  const N = 128;
+  function squareWave(n) {
+    const arr = new Array(N);
+    for (let i = 0; i < N; i++) {
+      arr[i] = (i < N / 2) ? 1 : -1;
+    }
+    return arr;
+  }
+  function triangleWave(n) {
+    const arr = new Array(N);
+    for (let i = 0; i < N; i++) {
+      arr[i] = 1 - 4 * Math.abs(i / N - 0.5);
+    }
+    return arr;
+  }
+
+  // Simple DFT
+  function dft(signal) {
+    const n = signal.length;
+    const re = new Array(n).fill(0);
+    const im = new Array(n).fill(0);
+    for (let k = 0; k < n; k++) {
+      for (let j = 0; j < n; j++) {
+        const angle = -2 * Math.PI * k * j / n;
+        re[k] += signal[j] * Math.cos(angle);
+        im[k] += signal[j] * Math.sin(angle);
+      }
+    }
+    return { re, im };
+  }
+
+  function idft(re, im) {
+    const n = re.length;
+    const signal = new Array(n).fill(0);
+    for (let j = 0; j < n; j++) {
+      for (let k = 0; k < n; k++) {
+        const angle = 2 * Math.PI * k * j / n;
+        signal[j] += re[k] * Math.cos(angle) - im[k] * Math.sin(angle);
+      }
+      signal[j] /= n;
+    }
+    return signal;
+  }
+
+  const sq = squareWave(N);
+  const tr = triangleWave(N);
+  const sqFT = dft(sq);
+  const trFT = dft(tr);
+
+  // Compute magnitudes and phases
+  function magPhase(ft) {
+    const mag = [], phase = [];
+    for (let k = 0; k < ft.re.length; k++) {
+      mag.push(Math.sqrt(ft.re[k] * ft.re[k] + ft.im[k] * ft.im[k]));
+      phase.push(Math.atan2(ft.im[k], ft.re[k]));
+    }
+    return { mag, phase };
+  }
+
+  const sqMP = magPhase(sqFT);
+  const trMP = magPhase(trFT);
+
+  // Swap: square magnitude + triangle phase
+  const swapRe = [], swapIm = [];
+  for (let k = 0; k < N; k++) {
+    swapRe.push(sqMP.mag[k] * Math.cos(trMP.phase[k]));
+    swapIm.push(sqMP.mag[k] * Math.sin(trMP.phase[k]));
+  }
+  const swapped = idft(swapRe, swapIm);
+
+  function drawSignal(arr, x0, y0, w, h, color, label) {
+    const maxV = Math.max(...arr.map(Math.abs), 0.001);
+    const mid = y0 + h / 2;
+    // Axis
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke();
+
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < arr.length; i++) {
+      const px = x0 + w * i / arr.length;
+      const py = mid - (arr[i] / maxV) * h * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(label, x0 + 2, y0 + 12);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const col1 = 20, col2 = W / 3 + 10, col3 = 2 * W / 3;
+    const colW = W / 3 - 25;
+    const rowH = H / 3 - 10;
+
+    // Headers
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Original Signals', col1 + colW / 2, 14);
+    ctx.fillText('Magnitudes', col2 + colW / 2, 14);
+    ctx.fillText('Mag swap + Phase keep', col3 + colW / 2, 14);
+
+    // Row 1: square wave
+    drawSignal(sq, col1, 20, colW, rowH, WCOLORS.teal, 'Square');
+    drawSignal(sqMP.mag.slice(0, N / 2), col2, 20, colW, rowH, WCOLORS.teal, '|F| square');
+
+    // Row 2: triangle wave
+    drawSignal(tr, col1, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Triangle');
+    drawSignal(trMP.mag.slice(0, N / 2), col2, 20 + rowH + 5, colW, rowH, WCOLORS.amber, '|F| triangle');
+
+    // Row 3: swapped result
+    drawSignal(swapped, col3, 20, colW, rowH, WCOLORS.blue, 'Sq mag + Tri phase');
+    drawSignal(tr, col3, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Original triangle');
+
+    // Explanation
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Swapping magnitudes but keeping triangle phase \u2192 result resembles triangle', W / 2, H - 10);
+    ctx.fillText('Phase carries structural information!', W / 2, H - 25);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 5. Fourier Filtering
+// =========================================================================
+function initFourierFiltering() {
+  const canvas = document.getElementById('scene-fourier-filtering');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let cutoffSlider = document.getElementById('ff-cutoff');
+  if (!cutoffSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Cutoff frequency: <input type="range" id="ff-cutoff" min="1" max="30" step="1" value="8"><span class="scene-val" id="ff-cutoff-val">8</span></label>';
+      parent.appendChild(controls);
+      cutoffSlider = document.getElementById('ff-cutoff');
+    }
+  }
+
+  const N = 256;
+  // Build composite signal: low freq + high freq + noise
+  const signal = new Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / N;
+    signal[i] = Math.sin(2 * Math.PI * 3 * t) + 0.5 * Math.sin(2 * Math.PI * 7 * t) +
+                0.8 * Math.sin(2 * Math.PI * 20 * t) + 0.4 * Math.sin(2 * Math.PI * 25 * t);
+  }
+
+  // Simple DFT / IDFT
+  function dft(sig) {
+    const n = sig.length;
+    const re = new Array(n).fill(0);
+    const im = new Array(n).fill(0);
+    for (let k = 0; k < n; k++) {
+      for (let j = 0; j < n; j++) {
+        const angle = -2 * Math.PI * k * j / n;
+        re[k] += sig[j] * Math.cos(angle);
+        im[k] += sig[j] * Math.sin(angle);
+      }
+    }
+    return { re, im };
+  }
+  function idft(re, im) {
+    const n = re.length;
+    const sig = new Array(n).fill(0);
+    for (let j = 0; j < n; j++) {
+      for (let k = 0; k < n; k++) {
+        const angle = 2 * Math.PI * k * j / n;
+        sig[j] += re[k] * Math.cos(angle) - im[k] * Math.sin(angle);
+      }
+      sig[j] /= n;
+    }
+    return sig;
+  }
+
+  const ft = dft(signal);
+
+  function drawSig(arr, x0, y0, w, h, color, label) {
+    const maxV = Math.max(...arr.map(Math.abs), 0.001);
+    const mid = y0 + h / 2;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < arr.length; i++) {
+      const px = x0 + w * i / arr.length;
+      const py = mid - (arr[i] / maxV) * h * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(label, x0 + 2, y0 + 12);
+  }
+
+  function draw() {
+    const cutoff = parseInt(cutoffSlider?.value || 8);
+    document.getElementById('ff-cutoff-val')?.replaceChildren(document.createTextNode(cutoff.toString()));
+
+    wClear(ctx, W, H);
+
+    // Apply filters
+    const lpRe = ft.re.slice(), lpIm = ft.im.slice();
+    const hpRe = ft.re.slice(), hpIm = ft.im.slice();
+    for (let k = 0; k < N; k++) {
+      const freq = Math.min(k, N - k);
+      if (freq > cutoff) { lpRe[k] = 0; lpIm[k] = 0; }
+      if (freq <= cutoff) { hpRe[k] = 0; hpIm[k] = 0; }
+    }
+    const lpSig = idft(lpRe, lpIm);
+    const hpSig = idft(hpRe, hpIm);
+
+    const rowH = (H - 20) / 3 - 5;
+    const plotL = 20, plotW = W - 40;
+
+    drawSig(signal, plotL, 5, plotW, rowH, WCOLORS.axis, 'Original (low + high freq)');
+    drawSig(lpSig, plotL, 10 + rowH, plotW, rowH, WCOLORS.teal, 'Low-pass (f \u2264 ' + cutoff + ')');
+    drawSig(hpSig, plotL, 15 + 2 * rowH, plotW, rowH, WCOLORS.amber, 'High-pass (f > ' + cutoff + ')');
+
+    // Draw cutoff indicator
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Adjust cutoff to separate frequency components', W / 2, H - 2);
+  }
+
+  cutoffSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 6. Dirac Delta Visualization
+// =========================================================================
+function initDiracDeltaVisualization() {
+  const canvas = document.getElementById('scene-dirac-delta-visualization');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let sigmaSlider = document.getElementById('dd-sigma');
+  if (!sigmaSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>\u03C3: <input type="range" id="dd-sigma" min="0.02" max="1.5" step="0.02" value="0.5"><span class="scene-val" id="dd-sigma-val">0.50</span></label>';
+      parent.appendChild(controls);
+      sigmaSlider = document.getElementById('dd-sigma');
+    }
+  }
+
+  function draw() {
+    const sigma = parseFloat(sigmaSlider?.value || 0.5);
+    document.getElementById('dd-sigma-val')?.replaceChildren(document.createTextNode(sigma.toFixed(2)));
+
+    wClear(ctx, W, H);
+
+    const midW = W / 2;
+
+    // Left panel: Gaussian approaching delta
+    const lL = 50, lR = midW - 20, lT = 35, lB = H - 35;
+    const lW = lR - lL, lH = lB - lT;
+
+    // Right panel: FT (should be flat)
+    const rL = midW + 30, rR = W - 20, rT = 35, rB = H - 35;
+    const rW = rR - rL, rH = rB - rT;
+
+    // Titles
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Gaussian \u2192 \u03B4(x) as \u03C3 \u2192 0', lL + lW / 2, 18);
+    ctx.fillText('Fourier Transform', rL + rW / 2, 18);
+
+    // Left axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lL, lB); ctx.lineTo(lR, lB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lL + lW / 2, lB); ctx.lineTo(lL + lW / 2, lT); ctx.stroke();
+
+    // Draw multiple Gaussians in light colors for reference
+    const sigmas = [1.5, 1.0, 0.5, 0.2];
+    const xRange = 4;
+    sigmas.forEach(s => {
+      if (Math.abs(s - sigma) < 0.05) return;
+      ctx.strokeStyle = 'rgba(31,42,46,0.12)'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const x = -xRange + 2 * xRange * i / 200;
+        const g = (1 / (s * Math.sqrt(2 * Math.PI))) * Math.exp(-x * x / (2 * s * s));
+        const maxDisplay = 1 / (0.02 * Math.sqrt(2 * Math.PI));
+        const px = lL + (x + xRange) / (2 * xRange) * lW;
+        const py = lB - Math.min(g / maxDisplay, 1) * lH * 0.9;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+
+    // Draw current Gaussian
+    const maxDisplay = 1 / (0.02 * Math.sqrt(2 * Math.PI));
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const x = -xRange + 2 * xRange * i / 400;
+      const g = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-x * x / (2 * sigma * sigma));
+      const px = lL + (x + xRange) / (2 * xRange) * lW;
+      const py = lB - Math.min(g / maxDisplay, 1) * lH * 0.9;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Area = 1 label
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Area = 1', lL + 5, lT + 15);
+
+    // Right axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rR, rB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rL, rT); ctx.stroke();
+
+    // FT of Gaussian: exp(-σ²k²/2), as σ→0 this → 1 (flat)
+    const kMax = 10;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const k = -kMax + 2 * kMax * i / 200;
+      const ft = Math.exp(-sigma * sigma * k * k / 2);
+      const px = rL + (k + kMax) / (2 * kMax) * rW;
+      const py = rB - ft * rH * 0.8;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Reference line at 1
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    const refY = rB - rH * 0.8;
+    ctx.beginPath(); ctx.moveTo(rL, refY); ctx.lineTo(rR, refY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('1', rL - 4, refY + 4);
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', lL + lW / 2, lB + 16);
+    ctx.fillText('k', rL + rW / 2, rB + 16);
+    ctx.fillText('\u03B4(x): FT is constant', rL + rW / 2, rB + 30);
+  }
+
+  sigmaSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 9: Reflection & Transmission
+// =========================================================================
+
+// =========================================================================
+// 7. String Junction
+// =========================================================================
+function initStringJunction() {
+  const canvas = document.getElementById('scene-string-junction');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let zSlider = document.getElementById('sj-z');
+  if (!zSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Z\u2082/Z\u2081: <input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>';
+      parent.appendChild(controls);
+      zSlider = document.getElementById('sj-z');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const zRatio = parseFloat(zSlider?.value || 2);
+    document.getElementById('sj-z-val')?.replaceChildren(document.createTextNode(zRatio.toFixed(1)));
+
+    t += 0.02;
+    wClear(ctx, W, H);
+
+    const midY = H / 2;
+    const jx = W / 2; // junction position
+    const amp = 40;
+    const stringL = 30, stringR = W - 30;
+
+    // Reflection and transmission coefficients
+    const r = (zRatio - 1) / (zRatio + 1); // reflected amplitude fraction
+    const tr = 2 / (zRatio + 1); // transmitted amplitude fraction
+
+    // String thickness
+    const thick1 = 3;
+    const thick2 = 3 * Math.sqrt(zRatio);
+
+    // Draw junction marker
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(jx, midY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Junction (x = 0)', jx, midY + 55);
+
+    // Gaussian pulse parameters
+    const sigma = 30; // width in pixels
+    const speed = 60; // pixels per time unit
+    const pulseCenter = stringL + speed * t;
+
+    function gaussPulse(x, center, s) {
+      const dx = x - center;
+      return Math.exp(-dx * dx / (2 * s * s));
+    }
+
+    // Draw string 1 (left side)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
+    ctx.beginPath();
+    for (let x = stringL; x <= jx; x++) {
+      let y = midY;
+      // Incident pulse
+      if (pulseCenter < jx + sigma * 3) {
+        y -= amp * gaussPulse(x, pulseCenter, sigma);
+      }
+      // Reflected pulse (only after it has reached junction)
+      if (pulseCenter > jx - sigma) {
+        const refCenter = 2 * jx - pulseCenter;
+        y -= amp * r * gaussPulse(x, refCenter, sigma);
+      }
+      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Draw string 2 (right side)
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = Math.max(1.5, thick2);
+    ctx.beginPath();
+    for (let x = jx; x <= stringR; x++) {
+      let y = midY;
+      // Transmitted pulse (only after it reaches junction)
+      if (pulseCenter > jx - sigma) {
+        const transSpeed = speed / Math.sqrt(zRatio);
+        const delay = (jx - stringL) / speed;
+        const transCenter = jx + transSpeed * (t - delay);
+        y -= amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
+      }
+      x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('String 1 (Z\u2081)', stringL, 25);
+    ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'right';
+    ctx.fillText('String 2 (Z\u2082)', stringR, 25);
+
+    // Coefficients
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('r = ' + r.toFixed(2) + '    t = ' + tr.toFixed(2), W / 2, H - 12);
+    if (r < 0) {
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui';
+      ctx.fillText('(phase flip on reflection)', W / 2, H - 26);
+    }
+
+    // Reset animation
+    if (pulseCenter > stringR + sigma * 3) t = 0;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 8. Reflection/Transmission Pulse
+// =========================================================================
+function initReflectionTransmissionPulse() {
+  const canvas = document.getElementById('scene-reflection-transmission-pulse');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let zSlider = document.getElementById('rtp-z');
+  if (!zSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Z\u2082/Z\u2081: <input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="3"><span class="scene-val" id="rtp-z-val">3.0</span></label>';
+      parent.appendChild(controls);
+      zSlider = document.getElementById('rtp-z');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const zRatio = parseFloat(zSlider?.value || 3);
+    document.getElementById('rtp-z-val')?.replaceChildren(document.createTextNode(zRatio.toFixed(1)));
+
+    t += 0.025;
+    wClear(ctx, W, H);
+
+    const midY = H / 2;
+    const jx = W * 0.45;
+    const amp = 45;
+    const stringL = 20, stringR = W - 20;
+    const sigma = 25;
+    const speed = 70;
+
+    const r = (zRatio - 1) / (zRatio + 1);
+    const tr = 2 / (zRatio + 1);
+
+    const pulseCenter = stringL - sigma * 2 + speed * t;
+    const hitTime = (jx - stringL + sigma * 2) / speed;
+    const hasHitJunction = t > hitTime;
+
+    // Draw junction
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(jx, 20); ctx.lineTo(jx, H - 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Junction', jx, 16);
+
+    function gaussPulse(x, center, s) {
+      return Math.exp(-(x - center) * (x - center) / (2 * s * s));
+    }
+
+    // Incident wave (teal)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = stringL; x <= jx; x++) {
+      let y = midY;
+      if (!hasHitJunction || pulseCenter < jx + sigma * 3) {
+        y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
+      }
+      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Reflected wave (amber, may be inverted)
+    if (hasHitJunction) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      ctx.beginPath();
+      const refCenter = 2 * jx - pulseCenter;
+      for (let x = stringL; x <= jx; x++) {
+        const y = midY - amp * r * gaussPulse(x, refCenter, sigma);
+        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Transmitted wave (blue)
+    if (hasHitJunction) {
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+      ctx.beginPath();
+      const transSpeed = speed / Math.sqrt(zRatio);
+      const transCenter = jx + transSpeed * (t - hitTime);
+      for (let x = jx; x <= stringR; x++) {
+        const y = midY - amp * tr * gaussPulse(x, transCenter, sigma);
+        x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    // Baseline string
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    const legY = H - 30;
+    ctx.fillStyle = WCOLORS.teal; ctx.fillRect(20, legY, 12, 3); ctx.fillText('Incident', 36, legY + 5);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillRect(100, legY, 12, 3); ctx.fillText('Reflected (r=' + r.toFixed(2) + ')', 116, legY + 5);
+    ctx.fillStyle = WCOLORS.blue; ctx.fillRect(260, legY, 12, 3); ctx.fillText('Transmitted (t=' + tr.toFixed(2) + ')', 276, legY + 5);
+
+    // Reset
+    if (t > hitTime + (stringR - jx) / (speed / Math.sqrt(zRatio)) + 2) t = 0;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 9. Phase Flip Demo
+// =========================================================================
+function initPhaseFlipDemo() {
+  const canvas = document.getElementById('scene-phase-flip-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  function tick() {
+    t += 0.025;
+    wClear(ctx, W, H);
+
+    const stringL = 40, stringR = W - 40;
+    const jx = W * 0.45;
+    const sigma = 20;
+    const speed = 60;
+    const amp = 25;
+
+    function gaussPulse(x, center, s) {
+      return Math.exp(-(x - center) * (x - center) / (2 * s * s));
+    }
+
+    const panels = [
+      { label: 'Light \u2192 Heavy (Z\u2082 > Z\u2081): phase flip', zRatio: 3, y0: 10, h: H / 2 - 15 },
+      { label: 'Heavy \u2192 Light (Z\u2082 < Z\u2081): no flip', zRatio: 0.33, y0: H / 2 + 5, h: H / 2 - 15 },
+    ];
+
+    panels.forEach(p => {
+      const midY = p.y0 + p.h / 2;
+      const r = (p.zRatio - 1) / (p.zRatio + 1);
+      const tr = 2 / (p.zRatio + 1);
+
+      // Panel label
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(p.label, stringL, p.y0 + 14);
+
+      // Junction line
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(jx, p.y0 + 18); ctx.lineTo(jx, p.y0 + p.h); ctx.stroke();
+      ctx.setLineDash([]);
+
+      const pulseCenter = stringL - sigma * 2 + speed * t;
+      const hitTime = (jx - stringL + sigma * 2) / speed;
+      const hasHit = t > hitTime;
+
+      // String 1 (left)
+      const thick1 = p.zRatio > 1 ? 2 : 4;
+      const thick2 = p.zRatio > 1 ? 4 : 2;
+
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
+      ctx.beginPath();
+      for (let x = stringL; x <= jx; x++) {
+        let y = midY;
+        if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
+        if (hasHit) {
+          const refCenter = 2 * jx - pulseCenter;
+          y -= amp * r * gaussPulse(x, refCenter, sigma);
+        }
+        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // String 2 (right)
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = thick2;
+      ctx.beginPath();
+      for (let x = jx; x <= stringR; x++) {
+        let y = midY;
+        if (hasHit) {
+          const transSpeed = speed / Math.sqrt(p.zRatio);
+          const transCenter = jx + transSpeed * (t - hitTime);
+          y -= amp * tr * gaussPulse(x, transCenter, sigma);
+        }
+        x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Phase flip annotation
+      if (hasHit && r < 0) {
+        ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
+        ctx.fillText('Phase flip!', jx - 10, midY - amp - 5);
+      }
+      if (hasHit && r > 0) {
+        ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
+        ctx.fillText('No flip', jx - 10, midY - amp - 5);
+      }
+    });
+
+    // Divider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(20, H / 2); ctx.lineTo(W - 20, H / 2); ctx.stroke();
+
+    // Reset
+    if (t > 8) t = 0;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 10. Mass Collision & Impedance Matching
+// =========================================================================
+function initMassCollisionImpedance() {
+  const canvas = document.getElementById('scene-mass-collision-impedance');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let mRatioSlider = document.getElementById('mci-ratio');
+  if (!mRatioSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>m\u2082/m\u2081: <input type="range" id="mci-ratio" min="0.1" max="10" step="0.1" value="1"><span class="scene-val" id="mci-ratio-val">1.0</span></label>';
+      parent.appendChild(controls);
+      mRatioSlider = document.getElementById('mci-ratio');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const mRatio = parseFloat(mRatioSlider?.value || 1);
+    document.getElementById('mci-ratio-val')?.replaceChildren(document.createTextNode(mRatio.toFixed(1)));
+
+    t += 0.02;
+    wClear(ctx, W, H);
+
+    // Elastic collision: v1' = (1-m2/m1)/(1+m2/m1) * v1, v2' = 2/(1+m2/m1) * v1
+    const v1i = 2; // initial speed of mass 1
+    const v1f = (1 - mRatio) / (1 + mRatio) * v1i;
+    const v2f = 2 / (1 + mRatio) * v1i;
+    const energyTransfer = mRatio * v2f * v2f / (v1i * v1i); // fraction of KE transferred
+
+    // Top: animation
+    const animY = H * 0.3;
+    const collisionX = W * 0.45;
+    const m1Radius = 15;
+    const m2Radius = 15 * Math.pow(mRatio, 1 / 3);
+
+    const period = 5;
+    const tMod = t % period;
+    const collisionTime = 2;
+    const hasCollided = tMod > collisionTime;
+
+    let x1, x2;
+    if (!hasCollided) {
+      x1 = 50 + v1i * 50 * tMod;
+      x2 = collisionX + m2Radius + m1Radius;
+    } else {
+      const dt = tMod - collisionTime;
+      x1 = collisionX - m1Radius + v1f * 50 * dt;
+      x2 = collisionX + m2Radius + v2f * 50 * dt;
+    }
+
+    // Draw masses
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(x1, animY, m1Radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m\u2081', x1, animY + 4);
+
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(x2, animY, m2Radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m\u2082', x2, animY + 4);
+
+    // Velocity arrows (before collision)
+    if (!hasCollided) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1 + m1Radius + 5, animY); ctx.lineTo(x1 + m1Radius + 25, animY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x1 + m1Radius + 25, animY); ctx.lineTo(x1 + m1Radius + 20, animY - 5); ctx.moveTo(x1 + m1Radius + 25, animY); ctx.lineTo(x1 + m1Radius + 20, animY + 5); ctx.stroke();
+    }
+
+    // Bottom: bar chart of energy transfer
+    const barY = H * 0.55;
+    const barH = H * 0.3;
+    const barW = W * 0.6;
+    const barL = (W - barW) / 2;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Energy Transfer Fraction', W / 2, barY - 5);
+
+    // Bar background
+    ctx.fillStyle = WCOLORS.grid; ctx.fillRect(barL, barY, barW, barH);
+
+    // Transferred energy bar
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillRect(barL, barY, barW * energyTransfer, barH);
+
+    // Reflected energy bar
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillRect(barL + barW * energyTransfer, barY, barW * (1 - energyTransfer), barH);
+
+    // Labels
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    if (energyTransfer > 0.15) {
+      ctx.fillText('Transmitted: ' + (energyTransfer * 100).toFixed(0) + '%', barL + barW * energyTransfer / 2, barY + barH / 2 + 4);
+    }
+    if (1 - energyTransfer > 0.15) {
+      ctx.fillText('Reflected: ' + ((1 - energyTransfer) * 100).toFixed(0) + '%', barL + barW * energyTransfer + barW * (1 - energyTransfer) / 2, barY + barH / 2 + 4);
+    }
+
+    // Note
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Maximum transfer at m\u2082/m\u2081 = 1 (impedance matched)', W / 2, barY + barH + 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 11. Complex Impedance
+// =========================================================================
+function initComplexImpedance() {
+  const canvas = document.getElementById('scene-complex-impedance');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let mSlider = document.getElementById('ci-m');
+  if (!mSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>m: <input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>' +
+        '<label>b: <input type="range" id="ci-b" min="0.1" max="3" step="0.1" value="0.5"><span class="scene-val" id="ci-b-val">0.5</span></label>' +
+        '<label>k: <input type="range" id="ci-k" min="0.5" max="20" step="0.5" value="5"><span class="scene-val" id="ci-k-val">5.0</span></label>';
+      parent.appendChild(controls);
+      mSlider = document.getElementById('ci-m');
+    }
+  }
+  const bSlider = document.getElementById('ci-b');
+  const kSlider = document.getElementById('ci-k');
+
+  function draw() {
+    const m = parseFloat(mSlider?.value || 1);
+    const b = parseFloat(bSlider?.value || 0.5);
+    const k = parseFloat(kSlider?.value || 5);
+    document.getElementById('ci-m-val')?.replaceChildren(document.createTextNode(m.toFixed(1)));
+    document.getElementById('ci-b-val')?.replaceChildren(document.createTextNode(b.toFixed(1)));
+    document.getElementById('ci-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const plotL = 60, plotR = W - 30, plotT = 35, plotB = H - 40;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+    const plotMidY = (plotT + plotB) / 2;
+
+    // Z(ω) = b + i(mω - k/ω)
+    // Re(Z) = b, Im(Z) = mω - k/ω
+    const omega0 = Math.sqrt(k / m);
+    const omegaMax = omega0 * 3;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Complex impedance: Z(\u03C9) = b + i(m\u03C9 \u2013 k/\u03C9)', plotL + plotW / 2, 16);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
+
+    // Find max Im(Z) range for scaling
+    let maxImZ = 0;
+    for (let i = 1; i <= 200; i++) {
+      const omega = omegaMax * i / 200;
+      const imZ = m * omega - k / omega;
+      if (Math.abs(imZ) > maxImZ) maxImZ = Math.abs(imZ);
+    }
+    maxImZ = Math.max(maxImZ, b * 2);
+
+    // Plot Re(Z) = b (constant)
+    const reY = plotMidY - (b / maxImZ) * plotH * 0.4;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(plotL, reY); ctx.lineTo(plotR, reY); ctx.stroke();
+
+    // Plot Im(Z) = mω - k/ω
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let firstPt = true;
+    for (let i = 1; i <= 300; i++) {
+      const omega = omegaMax * i / 300;
+      const imZ = m * omega - k / omega;
+      const px = plotL + (omega / omegaMax) * plotW;
+      const py = plotMidY - (imZ / maxImZ) * plotH * 0.4;
+      if (py >= plotT && py <= plotB) {
+        if (firstPt) { ctx.moveTo(px, py); firstPt = false; }
+        else ctx.lineTo(px, py);
+      }
+    }
+    ctx.stroke();
+
+    // Mark resonance: Im(Z) = 0 at ω₀
+    const resX = plotL + (omega0 / omegaMax) * plotW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(resX, plotT); ctx.lineTo(resX, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(2), resX, plotB + 14);
+    ctx.fillText('Im(Z) = 0', resX, plotT - 5);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9', plotL + plotW / 2, plotB + 30);
+
+    // Legend
+    ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillRect(plotR - 120, plotT + 5, 15, 3);
+    ctx.fillText('Re(Z) = b', plotR - 100, plotT + 10);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillRect(plotR - 120, plotT + 20, 15, 3);
+    ctx.fillText('Im(Z)', plotR - 100, plotT + 25);
+
+    // Stiffness/mass dominated labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Stiffness-dominated', plotL + (resX - plotL) / 2, plotB - 5);
+    ctx.fillText('(Im < 0)', plotL + (resX - plotL) / 2, plotB + 6);
+    ctx.fillText('Mass-dominated', resX + (plotR - resX) / 2, plotB - 5);
+    ctx.fillText('(Im > 0)', resX + (plotR - resX) / 2, plotB + 6);
+  }
+
+  mSlider?.addEventListener('input', draw);
+  bSlider?.addEventListener('input', draw);
+  kSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 10: Power
+// =========================================================================
+
+// =========================================================================
+// 12. Impedance Materials Bar Chart
+// =========================================================================
+function initImpedanceMaterials() {
+  const canvas = document.getElementById('scene-impedance-materials');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // Acoustic impedance in MRayl (10^6 kg/(m²·s))
+  const materials = [
+    { name: 'Air', Z: 0.000413, color: WCOLORS.blue },
+    { name: 'Rubber', Z: 1.5, color: WCOLORS.amber },
+    { name: 'Water', Z: 1.48, color: WCOLORS.blue },
+    { name: 'Soft tissue', Z: 1.63, color: WCOLORS.teal },
+    { name: 'Bone', Z: 7.8, color: WCOLORS.orange },
+    { name: 'Aluminum', Z: 17.0, color: WCOLORS.textDim },
+    { name: 'Steel', Z: 46.0, color: WCOLORS.axis },
+  ];
+
+  let hovered = -1;
+  let hovered2 = -1;
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const barL = 100, barT = 40;
+    const barH = (H - 80) / materials.length;
+    const newHover = Math.floor((my - barT) / barH);
+    if (newHover >= 0 && newHover < materials.length && mx > barL) {
+      if (hovered === -1) hovered = newHover;
+      else if (newHover !== hovered) hovered2 = newHover;
+    }
+    draw();
+  });
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Acoustic Impedance of Materials', W / 2, 20);
+
+    const barL = 100, barR = W - 80, barT = 40;
+    const barW = barR - barL;
+    const barH = (H - 80) / materials.length;
+    const maxZ = Math.max(...materials.map(m => m.Z));
+
+    // Use log scale
+    const logMax = Math.log10(maxZ);
+    const logMin = Math.log10(0.0003);
+    const logRange = logMax - logMin;
+
+    materials.forEach((mat, i) => {
+      const y = barT + i * barH;
+      const logZ = Math.log10(mat.Z);
+      const w = ((logZ - logMin) / logRange) * barW;
+
+      ctx.fillStyle = mat.color;
+      ctx.globalAlpha = (i === hovered || i === hovered2) ? 1.0 : 0.7;
+      ctx.fillRect(barL, y + 4, w, barH - 8);
+      ctx.globalAlpha = 1.0;
+
+      // Label
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(mat.name, barL - 5, y + barH / 2 + 4);
+
+      // Value
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(mat.Z.toFixed(mat.Z < 1 ? 4 : 1) + ' MRayl', barL + w + 5, y + barH / 2 + 4);
+    });
+
+    // Show reflection coefficient between hovered pair
+    if (hovered >= 0 && hovered2 >= 0 && hovered !== hovered2) {
+      const Z1 = materials[hovered].Z;
+      const Z2 = materials[hovered2].Z;
+      const R = Math.pow((Z2 - Z1) / (Z2 + Z1), 2);
+      const T = 1 - R;
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(materials[hovered].name + ' \u2192 ' + materials[hovered2].name +
+        ':  R = ' + (R * 100).toFixed(1) + '%   T = ' + (T * 100).toFixed(1) + '%', W / 2, H - 10);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Hover over two materials to see reflection coefficient', W / 2, H - 10);
+    }
+  }
+
+  canvas.addEventListener('mouseleave', () => { hovered = -1; hovered2 = -1; draw(); });
+  canvas.addEventListener('click', () => { hovered = -1; hovered2 = -1; draw(); });
+  draw();
+}
+
+// =========================================================================
+// 13. Wave Energy on a String
+// =========================================================================
+function initWaveEnergyString() {
+  const canvas = document.getElementById('scene-wave-energy-string');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+
+    const plotL = 40, plotR = W - 20;
+    const plotW = plotR - plotL;
+    const k = 4, omega = 4;
+    const amp = 1;
+
+    // Top: traveling wave
+    const waveT = 25, waveB = H * 0.35;
+    const waveH = waveB - waveT;
+    const waveMid = (waveT + waveB) / 2;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Traveling wave: y(x,t) = A sin(kx \u2013 \u03C9t)', plotL, waveT - 5);
+
+    // Wave axis
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, waveMid); ctx.lineTo(plotR, waveMid); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = plotL + plotW * i / 300;
+      const xNorm = (x - plotL) / plotW * 4 * Math.PI;
+      const y = waveMid - amp * Math.sin(k * xNorm - omega * t) * waveH * 0.35;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Bottom: KE and PE density
+    const enT = H * 0.45, enB = H - 20;
+    const enH = enB - enT;
+    const enMid = (enT + enB) / 2;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Energy densities', plotL, enT - 5);
+
+    // Zero line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, enB); ctx.lineTo(plotR, enB); ctx.stroke();
+
+    // KE density ∝ (∂y/∂t)² = A²ω²cos²(kx - ωt)
+    // PE density ∝ (∂y/∂x)² = A²k²cos²(kx - ωt)
+    // For traveling wave, they're equal (with appropriate scaling)
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = plotL + plotW * i / 300;
+      const xNorm = (x - plotL) / plotW * 4 * Math.PI;
+      const cosVal = Math.cos(k * xNorm - omega * t);
+      const ke = cosVal * cosVal;
+      const y = enB - ke * enH * 0.8;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // PE density (slightly offset for visibility, but identical)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = plotL + plotW * i / 300;
+      const xNorm = (x - plotL) / plotW * 4 * Math.PI;
+      const cosVal = Math.cos(k * xNorm - omega * t);
+      const pe = cosVal * cosVal;
+      const y = enB - pe * enH * 0.8;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillRect(plotR - 150, enT + 5, 15, 3);
+    ctx.fillText('KE density', plotR - 130, enT + 10);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillRect(plotR - 150, enT + 20, 15, 3);
+    ctx.fillText('PE density', plotR - 130, enT + 25);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('For a traveling wave: KE = PE everywhere (equal partition)', plotL + plotW / 2, enB + 14);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 14. Power Reflection & Transmission
+// =========================================================================
+function initPowerReflectionTransmission() {
+  const canvas = document.getElementById('scene-power-reflection-transmission');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let zSlider = document.getElementById('prt-z');
+  if (!zSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Z\u2082/Z\u2081: <input type="range" id="prt-z" min="0.1" max="5" step="0.05" value="1"><span class="scene-val" id="prt-z-val">1.0</span></label>';
+      parent.appendChild(controls);
+      zSlider = document.getElementById('prt-z');
+    }
+  }
+
+  function draw() {
+    const zRatio = parseFloat(zSlider?.value || 1);
+    document.getElementById('prt-z-val')?.replaceChildren(document.createTextNode(zRatio.toFixed(2)));
+
+    wClear(ctx, W, H);
+
+    // Left: R and T curves
+    const plotL = 60, plotR = W * 0.6, plotT = 35, plotB = H - 40;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+
+    // Right: stacked bar
+    const barL = W * 0.7, barR = W - 30, barT = 35, barB = H - 40;
+    const barW = barR - barL, barH = barB - barT;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Power reflection R and transmission T', plotL + plotW / 2, 18);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    // Grid
+    for (let v = 0.25; v < 1; v += 0.25) {
+      const y = plotB - v * plotH;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(v.toFixed(2), plotL - 4, y + 3);
+    }
+
+    const zMax = 5;
+    // R curve
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 1; i <= 200; i++) {
+      const z = zMax * i / 200;
+      const R = Math.pow((z - 1) / (z + 1), 2);
+      const px = plotL + (z / zMax) * plotW;
+      const py = plotB - R * plotH;
+      i === 1 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // T curve
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 1; i <= 200; i++) {
+      const z = zMax * i / 200;
+      const T = 4 * z / Math.pow(z + 1, 2);
+      const px = plotL + (z / zMax) * plotW;
+      const py = plotB - T * plotH;
+      i === 1 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current position marker
+    const curR = Math.pow((zRatio - 1) / (zRatio + 1), 2);
+    const curT = 1 - curR;
+    const curX = plotL + (zRatio / zMax) * plotW;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(curX, plotT); ctx.lineTo(curX, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(curX, plotB - curR * plotH, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(curX, plotB - curT * plotH, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Z₂/Z₁ = 1 marker
+    const matchX = plotL + (1 / zMax) * plotW;
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('1', matchX, plotB + 12);
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Z\u2082/Z\u2081', plotL + plotW / 2, plotB + 28);
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.red; ctx.fillRect(plotL + 10, plotT + 5, 15, 3);
+    ctx.fillText('R (reflected)', plotL + 30, plotT + 10);
+    ctx.fillStyle = WCOLORS.blue; ctx.fillRect(plotL + 10, plotT + 20, 15, 3);
+    ctx.fillText('T (transmitted)', plotL + 30, plotT + 25);
+
+    // Stacked bar
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('R + T = 1', barL + barW / 2, barT - 8);
+
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillRect(barL, barT, barW, barH * curT);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillRect(barL, barT + barH * curT, barW, barH * curR);
+
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    if (curT > 0.1) ctx.fillText('T=' + (curT * 100).toFixed(0) + '%', barL + barW / 2, barT + barH * curT / 2 + 4);
+    if (curR > 0.1) ctx.fillText('R=' + (curR * 100).toFixed(0) + '%', barL + barW / 2, barT + barH * curT + barH * curR / 2 + 4);
+  }
+
+  zSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 15. Decibel Scale
+// =========================================================================
+function initDecibelScale() {
+  const canvas = document.getElementById('scene-decibel-scale');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let distSlider = document.getElementById('db-dist');
+  if (!distSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Distance (m): <input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>';
+      parent.appendChild(controls);
+      distSlider = document.getElementById('db-dist');
+    }
+  }
+
+  const sounds = [
+    { name: 'Breathing', dB: 10, color: WCOLORS.teal },
+    { name: 'Whisper', dB: 30, color: WCOLORS.teal },
+    { name: 'Conversation', dB: 60, color: WCOLORS.amber },
+    { name: 'Traffic', dB: 80, color: WCOLORS.amber },
+    { name: 'Factory', dB: 90, color: WCOLORS.orange },
+    { name: 'Concert', dB: 110, color: WCOLORS.red },
+    { name: 'Jet engine', dB: 140, color: WCOLORS.red },
+  ];
+
+  function draw() {
+    const dist = parseFloat(distSlider?.value || 1);
+    document.getElementById('db-dist-val')?.replaceChildren(document.createTextNode(dist.toFixed(0) + ' m'));
+
+    wClear(ctx, W, H);
+
+    // 1/r² falloff: dB drops by 20 log10(r) from reference at 1m
+    const dbDrop = 20 * Math.log10(dist);
+
+    // Left: vertical dB scale
+    const scaleL = 60, scaleR = 80;
+    const scaleT = 30, scaleB = H - 25;
+    const scaleH = scaleB - scaleT;
+    const dbMin = 0, dbMax = 150;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Decibel Scale', W / 2, 16);
+
+    // Scale bar
+    const gradient = ctx.createLinearGradient(scaleL, scaleT, scaleL, scaleB);
+    gradient.addColorStop(0, WCOLORS.red);
+    gradient.addColorStop(0.3, WCOLORS.orange);
+    gradient.addColorStop(0.6, WCOLORS.amber);
+    gradient.addColorStop(1, WCOLORS.teal);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(scaleL, scaleT, scaleR - scaleL, scaleH);
+
+    // dB tick marks
+    for (let db = 0; db <= 140; db += 20) {
+      const y = scaleB - (db / dbMax) * scaleH;
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(scaleL - 5, y); ctx.lineTo(scaleR + 5, y); ctx.stroke();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(db + ' dB', scaleL - 8, y + 3);
+    }
+
+    // Sound markers
+    sounds.forEach(s => {
+      const adjDb = Math.max(0, s.dB - dbDrop);
+      const y = scaleB - (adjDb / dbMax) * scaleH;
+      const refY = scaleB - (s.dB / dbMax) * scaleH;
+
+      // Reference position (thin line if distance > 1)
+      if (dist > 1) {
+        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(scaleR + 5, refY); ctx.lineTo(scaleR + 30, refY); ctx.stroke();
+      }
+
+      // Current position
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(scaleR + 15, y, 5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(s.name + ' (' + adjDb.toFixed(0) + ' dB)', scaleR + 25, y + 4);
+    });
+
+    // Right side: intensity info
+    const infoX = W * 0.6;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('At distance ' + dist + ' m:', infoX, scaleT + 15);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('dB drop = 20 log\u2081\u2080(' + dist + ') = ' + dbDrop.toFixed(1) + ' dB', infoX, scaleT + 35);
+    ctx.fillText('Intensity \u221D 1/r\u00B2', infoX, scaleT + 55);
+    ctx.fillText('Intensity ratio: 1/' + (dist * dist).toFixed(0), infoX, scaleT + 75);
+
+    // Pain threshold line
+    const painY = scaleB - (120 / dbMax) * scaleH;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(scaleL - 10, painY); ctx.lineTo(scaleR + 20, painY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Pain threshold', scaleL - 12, painY + 3);
+  }
+
+  distSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 16. 3D Plane Wave
+// =========================================================================
+function initPlaneWave3d() {
+  const canvas = document.getElementById('scene-plane-wave-3d');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let angleSlider = document.getElementById('pw3d-angle');
+  if (!angleSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Propagation angle: <input type="range" id="pw3d-angle" min="0" max="90" step="5" value="30"><span class="scene-val" id="pw3d-angle-val">30\u00B0</span></label>';
+      parent.appendChild(controls);
+      angleSlider = document.getElementById('pw3d-angle');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const angleDeg = parseFloat(angleSlider?.value || 30);
+    const angle = angleDeg * Math.PI / 180;
+    document.getElementById('pw3d-angle-val')?.replaceChildren(document.createTextNode(angleDeg.toFixed(0) + '\u00B0'));
+
+    t += 0.03;
+    wClear(ctx, W, H);
+
+    // Simple isometric projection
+    const cx = W / 2, cy = H / 2 + 20;
+    const scale = 120;
+
+    // Propagation direction
+    const kx = Math.cos(angle);
+    const ky = Math.sin(angle);
+
+    // Isometric projection: (x,y,z) -> (screenX, screenY)
+    function project(x, y, z) {
+      const px = cx + (x - y) * 0.7 * scale;
+      const py = cy + (x + y) * 0.35 * scale - z * 0.6 * scale;
+      return { x: px, y: py };
+    }
+
+    // Draw coordinate axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    const ox = project(0, 0, 0);
+    const ax = project(1.2, 0, 0);
+    const ay = project(0, 1.2, 0);
+    const az = project(0, 0, 1.2);
+
+    ctx.beginPath(); ctx.moveTo(ox.x, ox.y); ctx.lineTo(ax.x, ax.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox.x, ox.y); ctx.lineTo(ay.x, ay.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox.x, ox.y); ctx.lineTo(az.x, az.y); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', ax.x + 8, ax.y);
+    ctx.fillText('y', ay.x - 8, ay.y);
+    ctx.fillText('z', az.x, az.y - 8);
+
+    // Draw wavefronts: planes perpendicular to k
+    const nFronts = 8;
+    const lambda = 0.35;
+    const speed = 0.5;
+
+    for (let i = 0; i < nFronts; i++) {
+      const d = (i * lambda + speed * t) % (nFronts * lambda) - nFronts * lambda / 2;
+
+      // Wavefront center along k direction
+      const fx = d * kx;
+      const fy = d * ky;
+
+      // Draw a line representing the wavefront (perpendicular to k in the xy plane)
+      const perpX = -ky;
+      const perpY = kx;
+      const halfLen = 0.8;
+
+      // Draw at two z levels for 3D effect
+      const alpha = Math.max(0.15, 1 - Math.abs(d) / (nFronts * lambda / 2));
+      ctx.strokeStyle = WCOLORS.teal;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = 2;
+
+      // Bottom and top of wavefront
+      for (let z = -0.4; z <= 0.4; z += 0.8) {
+        const p1 = project(fx - perpX * halfLen, fy - perpY * halfLen, z);
+        const p2 = project(fx + perpX * halfLen, fy + perpY * halfLen, z);
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      }
+
+      // Vertical edges
+      const p1b = project(fx - perpX * halfLen, fy - perpY * halfLen, -0.4);
+      const p1t = project(fx - perpX * halfLen, fy - perpY * halfLen, 0.4);
+      const p2b = project(fx + perpX * halfLen, fy + perpY * halfLen, -0.4);
+      const p2t = project(fx + perpX * halfLen, fy + perpY * halfLen, 0.4);
+      ctx.beginPath(); ctx.moveTo(p1b.x, p1b.y); ctx.lineTo(p1t.x, p1t.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p2b.x, p2b.y); ctx.lineTo(p2t.x, p2t.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw k vector (arrow)
+    const kLen = 0.8;
+    const kStart = project(0, 0, 0);
+    const kEnd = project(kx * kLen, ky * kLen, 0);
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
+
+    // Arrowhead
+    const arrLen = 8, arrAngle = 0.4;
+    const dx = kEnd.x - kStart.x, dy = kEnd.y - kStart.y;
+    const arrNorm = Math.sqrt(dx * dx + dy * dy);
+    const ux = dx / arrNorm, uy = dy / arrNorm;
+    ctx.beginPath();
+    ctx.moveTo(kEnd.x, kEnd.y);
+    ctx.lineTo(kEnd.x - arrLen * (ux * Math.cos(arrAngle) - uy * Math.sin(arrAngle)),
+               kEnd.y - arrLen * (uy * Math.cos(arrAngle) + ux * Math.sin(arrAngle)));
+    ctx.moveTo(kEnd.x, kEnd.y);
+    ctx.lineTo(kEnd.x - arrLen * (ux * Math.cos(-arrAngle) - uy * Math.sin(-arrAngle)),
+               kEnd.y - arrLen * (uy * Math.cos(-arrAngle) + ux * Math.sin(-arrAngle)));
+    ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k', kEnd.x + 5, kEnd.y - 5);
+
+    // Title and note
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('3D Plane Wave: constant-phase surfaces', W / 2, 16);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('Wavefronts are perpendicular to k', W / 2, H - 8);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 11: Wavepackets
+// =========================================================================
+
+// =========================================================================
+// 17. Interference Demo
+// =========================================================================
+function initInterferenceDemo() {
+  const canvas = document.getElementById('scene-interference-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let sepSlider = document.getElementById('intdemo-sep');
+  if (!sepSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>d/\u03BB: <input type="range" id="intdemo-sep" min="0.5" max="6" step="0.25" value="2"><span class="scene-val" id="intdemo-sep-val">2.0</span></label>';
+      parent.appendChild(controls);
+      sepSlider = document.getElementById('intdemo-sep');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const dOverLambda = parseFloat(sepSlider?.value || 2);
+    document.getElementById('intdemo-sep-val')?.replaceChildren(document.createTextNode(dOverLambda.toFixed(2)));
+
+    t += 0.04;
+    wClear(ctx, W, H);
+
+    const lambda = 30; // pixels
+    const d = dOverLambda * lambda;
+    const k = 2 * Math.PI / lambda;
+    const omega = 2;
+
+    // Source positions (left side)
+    const srcX = W * 0.15;
+    const srcY1 = H / 2 - d / 2;
+    const srcY2 = H / 2 + d / 2;
+
+    // Draw sources
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(srcX, srcY1, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(srcX, srcY2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('S\u2081', srcX - 8, srcY1 + 3);
+    ctx.fillText('S\u2082', srcX - 8, srcY2 + 3);
+
+    // Draw circular wavefronts from each source
+    const maxR = W * 0.85;
+    const nRings = Math.floor(maxR / lambda);
+
+    for (let ring = 0; ring < nRings; ring++) {
+      const r = ((ring * lambda + omega * t * lambda / (2 * Math.PI)) % (nRings * lambda));
+      if (r < 1) continue;
+      const alpha = Math.max(0.05, 0.3 * (1 - r / maxR));
+
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = alpha;
+      ctx.beginPath(); ctx.arc(srcX, srcY1, r, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+
+      ctx.strokeStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.arc(srcX, srcY2, r, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw interference pattern on a "screen" at right
+    const screenX = W * 0.85;
+    const screenT = 20, screenB = H - 20;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(screenX, screenT); ctx.lineTo(screenX, screenB); ctx.stroke();
+
+    // Calculate intensity pattern
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let py = screenT; py <= screenB; py++) {
+      const dy = py - H / 2;
+      const r1 = Math.sqrt((screenX - srcX) * (screenX - srcX) + (dy + d / 2) * (dy + d / 2));
+      const r2 = Math.sqrt((screenX - srcX) * (screenX - srcX) + (dy - d / 2) * (dy - d / 2));
+      const phase1 = k * r1 - omega * t;
+      const phase2 = k * r2 - omega * t;
+      const amp = Math.cos(phase1) + Math.cos(phase2);
+      const intensity = amp * amp / 4;
+      const barW = intensity * 30;
+      py === screenT ? ctx.moveTo(screenX + barW, py) : ctx.lineTo(screenX + barW, py);
+    }
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Two-source interference', W / 2, 14);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('Screen', screenX + 15, screenT - 5);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 18. Gaussian Wavepacket
+// =========================================================================
+function initGaussianWavepacket() {
+  const canvas = document.getElementById('scene-gaussian-wavepacket');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let sigmaSlider = document.getElementById('gwp-sigma');
+  if (!sigmaSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>\u03C3\u2093: <input type="range" id="gwp-sigma" min="0.3" max="3" step="0.1" value="1"><span class="scene-val" id="gwp-sigma-val">1.0</span></label>';
+      parent.appendChild(controls);
+      sigmaSlider = document.getElementById('gwp-sigma');
+    }
+  }
+
+  function draw() {
+    const sigmaX = parseFloat(sigmaSlider?.value || 1);
+    const sigmaK = 1 / (2 * sigmaX);
+    document.getElementById('gwp-sigma-val')?.replaceChildren(document.createTextNode(sigmaX.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const midW = W / 2;
+
+    // Left: x-space
+    const lL = 40, lR = midW - 15, lT = 35, lB = H - 35;
+    const lW = lR - lL, lH = lB - lT;
+    const lMid = (lT + lB) / 2;
+
+    // Right: k-space
+    const rL = midW + 25, rR = W - 20, rT = 35, rB = H - 35;
+    const rW = rR - rL, rH = rB - rT;
+
+    // Titles
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x-space: Gaussian wavepacket', lL + lW / 2, 18);
+    ctx.fillText('k-space: Fourier transform', rL + rW / 2, 18);
+
+    // Left axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(lL, lB); ctx.lineTo(lR, lB); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(lL, lMid); ctx.lineTo(lR, lMid); ctx.stroke();
+
+    // Draw Gaussian * cos(k0 * x)
+    const xRange = 8;
+    const k0 = 5;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = -xRange + 2 * xRange * i / 300;
+      const env = Math.exp(-x * x / (2 * sigmaX * sigmaX));
+      const val = env * Math.cos(k0 * x);
+      const px = lL + (x + xRange) / (2 * xRange) * lW;
+      const py = lMid - val * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Draw envelope
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = -xRange + 2 * xRange * i / 300;
+      const env = Math.exp(-x * x / (2 * sigmaX * sigmaX));
+      const px = lL + (x + xRange) / (2 * xRange) * lW;
+      const py = lMid - env * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const x = -xRange + 2 * xRange * i / 300;
+      const env = -Math.exp(-x * x / (2 * sigmaX * sigmaX));
+      const px = lL + (x + xRange) / (2 * xRange) * lW;
+      const py = lMid - env * lH * 0.4;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Right axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rR, rB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rL, rB); ctx.lineTo(rL, rT); ctx.stroke();
+
+    // FT: Gaussian centered at k0 with width sigmaK
+    const kRange = 15;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const kk = kRange * i / 300;
+      const ft = Math.exp(-(kk - k0) * (kk - k0) / (2 * sigmaK * sigmaK));
+      const px = rL + (kk / kRange) * rW;
+      const py = rB - ft * rH * 0.85;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Fill under
+    ctx.lineTo(rR, rB); ctx.lineTo(rL, rB); ctx.closePath();
+    ctx.fillStyle = 'rgba(37,99,235,0.08)'; ctx.fill();
+
+    // Mark widths
+    // sigmaX on left
+    const sigXpx = sigmaX / xRange * lW / 2;
+    const centerL = lL + lW / 2;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(centerL - sigXpx, lMid + lH * 0.35); ctx.lineTo(centerL + sigXpx, lMid + lH * 0.35); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u0394x = ' + sigmaX.toFixed(1), centerL, lMid + lH * 0.35 + 14);
+
+    // sigmaK on right
+    const k0px = rL + (k0 / kRange) * rW;
+    const sigKpx = sigmaK / kRange * rW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(k0px - sigKpx, rB - rH * 0.85 * 0.6); ctx.lineTo(k0px + sigKpx, rB - rH * 0.85 * 0.6); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui';
+    ctx.fillText('\u0394k = ' + sigmaK.toFixed(2), k0px, rB - rH * 0.85 * 0.6 + 14);
+
+    // Uncertainty relation
+    const product = sigmaX * sigmaK;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u0394x \u00B7 \u0394k = ' + product.toFixed(2) + ' \u2265 \u00BD', W / 2, H - 8);
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', lL + lW / 2, lB + 14);
+    ctx.fillText('k', rL + rW / 2, rB + 14);
+  }
+
+  sigmaSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 19. Amplitude Modulation
+// =========================================================================
+function initAmplitudeModulation() {
+  const canvas = document.getElementById('scene-amplitude-modulation');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let fcSlider = document.getElementById('am-fc');
+  if (!fcSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Carrier f<sub>c</sub>: <input type="range" id="am-fc" min="5" max="30" step="1" value="15"><span class="scene-val" id="am-fc-val">15</span></label>' +
+        '<label>Mod f<sub>m</sub>: <input type="range" id="am-fm" min="1" max="8" step="0.5" value="2"><span class="scene-val" id="am-fm-val">2.0</span></label>';
+      parent.appendChild(controls);
+      fcSlider = document.getElementById('am-fc');
+    }
+  }
+  const fmSlider = document.getElementById('am-fm');
+
+  function draw() {
+    const fc = parseFloat(fcSlider?.value || 15);
+    const fm = parseFloat(fmSlider?.value || 2);
+    document.getElementById('am-fc-val')?.replaceChildren(document.createTextNode(fc.toFixed(0)));
+    document.getElementById('am-fm-val')?.replaceChildren(document.createTextNode(fm.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const plotL = 30, plotR = W * 0.58, plotT = 5;
+    const plotW = plotR - plotL;
+    const rowH = (H - 15) / 3;
+
+    // Frequency domain on right
+    const fL = W * 0.62, fR = W - 15;
+    const fW = fR - fL;
+    const fPlotT = plotT + rowH * 2;
+    const fPlotB = plotT + rowH * 3 - 10;
+    const fPlotH = fPlotB - fPlotT;
+
+    function drawWave(arr, y0, h, color, label) {
+      const mid = y0 + h / 2;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, mid); ctx.lineTo(plotR, mid); ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < arr.length; i++) {
+        const px = plotL + plotW * i / arr.length;
+        const py = mid - arr[i] * h * 0.35;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(label, plotL, y0 + 12);
+    }
+
+    const N = 400;
+    const carrier = [], envelope = [], am = [];
+    for (let i = 0; i < N; i++) {
+      const t = i / N * 4;
+      carrier.push(Math.cos(2 * Math.PI * fc * t));
+      envelope.push(1 + 0.8 * Math.cos(2 * Math.PI * fm * t));
+      am.push((1 + 0.8 * Math.cos(2 * Math.PI * fm * t)) * Math.cos(2 * Math.PI * fc * t));
+    }
+
+    drawWave(carrier, plotT, rowH, WCOLORS.teal, 'Carrier (f_c = ' + fc + ')');
+    drawWave(envelope, plotT + rowH, rowH, WCOLORS.amber, 'Envelope (f_m = ' + fm.toFixed(1) + ')');
+    drawWave(am, plotT + 2 * rowH, rowH, WCOLORS.blue, 'AM signal');
+
+    // Frequency domain
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Frequency domain', fL + fW / 2, plotT + 12);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(fL, fPlotB); ctx.lineTo(fR, fPlotB); ctx.stroke();
+
+    const fMax = fc + fm * 3;
+    function freqToX(f) { return fL + (f / fMax) * fW; }
+
+    // Carrier spike
+    const carrX = freqToX(fc);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(carrX, fPlotB); ctx.lineTo(carrX, fPlotT + 30); ctx.stroke();
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('f_c', carrX, fPlotB + 12);
+
+    // Sidebands
+    const lsbX = freqToX(fc - fm);
+    const usbX = freqToX(fc + fm);
+    const sbH = (fPlotB - fPlotT - 30) * 0.4;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(lsbX, fPlotB); ctx.lineTo(lsbX, fPlotB - sbH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(usbX, fPlotB); ctx.lineTo(usbX, fPlotB - sbH); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui';
+    ctx.fillText('f_c\u2013f_m', lsbX, fPlotB + 12);
+    ctx.fillText('f_c+f_m', usbX, fPlotB + 12);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Sidebands at f_c \u00B1 f_m', fL + fW / 2, fPlotT + 25);
+  }
+
+  fcSlider?.addEventListener('input', draw);
+  fmSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 20. Dispersion Relations
+// =========================================================================
+function initDispersionRelations() {
+  const canvas = document.getElementById('scene-dispersion-relations');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let k0Slider = document.getElementById('disp-k0');
+  if (!k0Slider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>k\u2080: <input type="range" id="disp-k0" min="0.5" max="4" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>';
+      parent.appendChild(controls);
+      k0Slider = document.getElementById('disp-k0');
+    }
+  }
+
+  const relations = [
+    { name: 'Linear (\u03C9=ck)', fn: k => k, color: WCOLORS.teal },
+    { name: 'Deep water (\u03C9\u221D\u221Ak)', fn: k => Math.sqrt(k * 2), color: WCOLORS.amber },
+    { name: 'Capillary (\u03C9\u221Dk^(3/2))', fn: k => Math.pow(k, 1.5) * 0.7, color: WCOLORS.blue },
+    { name: 'Plasma (\u03C9\u00B2=\u03C9p\u00B2+c\u00B2k\u00B2)', fn: k => Math.sqrt(1 + k * k), color: WCOLORS.red },
+  ];
+
+  function draw() {
+    const k0 = parseFloat(k0Slider?.value || 2);
+    document.getElementById('disp-k0-val')?.replaceChildren(document.createTextNode(k0.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    const plotL = 50, plotR = W - 130, plotT = 30, plotB = H - 30;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+    const kMax = 5, omegaMax = 6;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Dispersion relations \u03C9(k)', plotL + plotW / 2, 16);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('k', plotL + plotW / 2, plotB + 18);
+    ctx.save(); ctx.translate(plotL - 30, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('\u03C9', 0, 0); ctx.restore();
+
+    // Draw each curve
+    relations.forEach((rel, idx) => {
+      ctx.strokeStyle = rel.color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const k = kMax * i / 200;
+        const omega = rel.fn(k);
+        if (omega > omegaMax) break;
+        const px = plotL + (k / kMax) * plotW;
+        const py = plotB - (omega / omegaMax) * plotH;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Mark selected point
+      const omega0 = rel.fn(k0);
+      if (omega0 <= omegaMax) {
+        const px = plotL + (k0 / kMax) * plotW;
+        const py = plotB - (omega0 / omegaMax) * plotH;
+        ctx.fillStyle = rel.color;
+        ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+
+        // vp = ω/k, vg = dω/dk
+        const vp = omega0 / k0;
+        const dk = 0.01;
+        const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
+
+        // Draw vp line (from origin)
+        ctx.strokeStyle = rel.color; ctx.lineWidth = 0.8; ctx.setLineDash([2, 4]);
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.moveTo(plotL, plotB);
+        const vpEndK = kMax;
+        const vpEndOmega = vp * vpEndK;
+        ctx.lineTo(plotL + plotW, plotB - Math.min(vpEndOmega / omegaMax, 1) * plotH);
+        ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+
+      // Legend
+      const legX = plotR + 15, legY = plotT + 15 + idx * 45;
+      ctx.fillStyle = rel.color; ctx.fillRect(legX, legY, 12, 3);
+      ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(rel.name, legX + 16, legY + 4);
+
+      if (rel.fn(k0) <= omegaMax) {
+        const vp = rel.fn(k0) / k0;
+        const dk = 0.01;
+        const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
+        ctx.fillText('vp=' + vp.toFixed(2), legX + 16, legY + 16);
+        ctx.fillText('vg=' + vg.toFixed(2), legX + 16, legY + 28);
+      }
+    });
+
+    // k0 vertical line
+    const k0x = plotL + (k0 / kMax) * plotW;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(k0x, plotT); ctx.lineTo(k0x, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('k\u2080', k0x, plotB + 14);
+  }
+
+  k0Slider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 21. Phase Velocity Demo
+// =========================================================================
+function initPhaseVelocityDemo() {
+  const canvas = document.getElementById('scene-phase-velocity-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  function tick() {
+    t += 0.02;
+    wClear(ctx, W, H);
+
+    const plotL = 30, plotR = W - 20;
+    const plotW = plotR - plotL;
+    const midY = H / 2;
+    const amp = 35;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Phase velocity: crests move at vp = \u03C9/k', W / 2, 16);
+
+    // Superpose waves with deep-water dispersion: ω = √(gk)
+    const g = 9.8;
+    const k0 = 3;
+    const nComponents = 7;
+    const dk = 0.4;
+
+    // Draw individual components lightly
+    for (let n = 0; n < nComponents; n++) {
+      const k = k0 + (n - nComponents / 2) * dk;
+      const omega = Math.sqrt(g * Math.abs(k));
+      const vp = omega / k;
+
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 0.8; ctx.globalAlpha = 0.2;
+      ctx.beginPath();
+      for (let i = 0; i <= 400; i++) {
+        const x = (i / 400) * 20;
+        const val = Math.cos(k * x - omega * t);
+        const px = plotL + plotW * i / 400;
+        const py = midY - val * amp * 0.3;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw sum (bold)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let maxSum = 0;
+    const sumVals = [];
+    for (let i = 0; i <= 400; i++) {
+      const x = (i / 400) * 20;
+      let sum = 0;
+      for (let n = 0; n < nComponents; n++) {
+        const k = k0 + (n - nComponents / 2) * dk;
+        const omega = Math.sqrt(g * Math.abs(k));
+        const envelope = Math.exp(-((n - nComponents / 2) * dk) * ((n - nComponents / 2) * dk) / (2 * 0.8 * 0.8));
+        sum += envelope * Math.cos(k * x - omega * t);
+      }
+      sumVals.push(sum);
+      if (Math.abs(sum) > maxSum) maxSum = Math.abs(sum);
+    }
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY - (sumVals[i] / Math.max(maxSum, 0.1)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Mark a crest
+    const omega0 = Math.sqrt(g * k0);
+    const vp = omega0 / k0;
+    const crestX = ((vp * t) % (2 * Math.PI / k0 * 20 / (2 * Math.PI))) * plotW / 20 + plotL;
+    if (crestX > plotL && crestX < plotR) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.beginPath(); ctx.moveTo(crestX, midY - amp - 15); ctx.lineTo(crestX - 5, midY - amp - 5); ctx.lineTo(crestX + 5, midY - amp - 5); ctx.fill();
+      ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('crest (vp)', crestX, midY - amp - 18);
+    }
+
+    // Axis
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+
+    // Info
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Deep water waves: \u03C9 = \u221A(gk)  \u2192  vp = \u221A(g/k)', W / 2, H - 10);
+    ctx.fillText('Individual components (light) each travel at their own vp', W / 2, H - 25);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 22. Group Velocity Demo
+// =========================================================================
+function initGroupVelocityDemo() {
+  const canvas = document.getElementById('scene-group-velocity-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dispSlider = document.getElementById('gvd-disp');
+  if (!dispSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Dispersion: <input type="range" id="gvd-disp" min="0" max="2" step="0.1" value="1"><span class="scene-val" id="gvd-disp-val">1.0</span></label>';
+      parent.appendChild(controls);
+      dispSlider = document.getElementById('gvd-disp');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const dispersion = parseFloat(dispSlider?.value || 1);
+    document.getElementById('gvd-disp-val')?.replaceChildren(document.createTextNode(dispersion.toFixed(1)));
+
+    t += 0.025;
+    wClear(ctx, W, H);
+
+    const plotL = 30, plotR = W - 20;
+    const plotW = plotR - plotL;
+    const midY = H / 2;
+    const amp = 45;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Group velocity: envelope moves at vg = d\u03C9/dk', W / 2, 16);
+
+    // ω(k) = c*k + α*(k-k0)² (tunable dispersion)
+    const k0 = 4, c = 1.5;
+    const alpha = dispersion * 0.3;
+
+    function omega(k) {
+      return c * k + alpha * (k - k0) * (k - k0);
+    }
+
+    const vg = c; // dω/dk at k0 = c + 2α(k-k0) = c at k=k0
+    const vp = omega(k0) / k0; // c + 0 = c at k0
+
+    // Build wavepacket
+    const sigmaK = 0.6;
+    const nK = 30;
+    const xRange = 25;
+
+    const sumVals = [];
+    let maxV = 0;
+    for (let i = 0; i <= 400; i++) {
+      const x = (i / 400) * xRange;
+      let sum = 0;
+      for (let n = 0; n < nK; n++) {
+        const k = k0 + (n - nK / 2) * 0.1;
+        const w = omega(k);
+        const weight = Math.exp(-((k - k0) * (k - k0)) / (2 * sigmaK * sigmaK));
+        sum += weight * Math.cos(k * x - w * t);
+      }
+      sumVals.push(sum);
+      if (Math.abs(sum) > maxV) maxV = Math.abs(sum);
+    }
+
+    // Draw wavepacket
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY - (sumVals[i] / Math.max(maxV, 0.1)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Draw envelope approximation
+    const envVals = [];
+    for (let i = 0; i <= 400; i++) {
+      const x = (i / 400) * xRange;
+      const envCenter = vg * t;
+      const env = Math.exp(-((x - envCenter) * (x - envCenter)) / (2 * 2 * 2));
+      envVals.push(env);
+    }
+    let maxEnv = Math.max(...envVals);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY - (envVals[i] / Math.max(maxEnv, 0.01)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY + (envVals[i] / Math.max(maxEnv, 0.01)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Mark envelope peak (vg)
+    const envPeakX = plotL + (vg * t / xRange) * plotW;
+    if (envPeakX > plotL && envPeakX < plotR) {
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp - 10); ctx.lineTo(envPeakX - 5, midY - amp); ctx.lineTo(envPeakX + 5, midY - amp); ctx.fill();
+      ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('vg', envPeakX, midY - amp - 14);
+    }
+
+    // Mark a crest (vp)
+    const crestPhase = (vp * t) % (2 * Math.PI / k0);
+    const nearestCrestX = vp * t;
+    const crestPx = plotL + (nearestCrestX / xRange) * plotW;
+    if (crestPx > plotL && crestPx < plotR) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.beginPath(); ctx.moveTo(crestPx, midY + amp + 10); ctx.lineTo(crestPx - 5, midY + amp); ctx.lineTo(crestPx + 5, midY + amp); ctx.fill();
+      ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('vp', crestPx, midY + amp + 22);
+    }
+
+    // Baseline
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+
+    // Info
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('vp = \u03C9/k = ' + vp.toFixed(2) + '    vg = d\u03C9/dk = ' + vg.toFixed(2) + (Math.abs(vp - vg) > 0.05 ? '  (vp \u2260 vg!)' : '  (vp = vg)'), W / 2, H - 10);
+
+    // Reset
+    if (vg * t > xRange * 1.2) t = 0;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 23. Wavepacket Dispersion (non-dispersive vs dispersive)
+// =========================================================================
+function initWavepacketDispersion() {
+  const canvas = document.getElementById('scene-wavepacket-dispersion');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dispSlider = document.getElementById('wpdisp-d');
+  if (!dispSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Dispersion \u03B1: <input type="range" id="wpdisp-d" min="0" max="0.5" step="0.02" value="0.15"><span class="scene-val" id="wpdisp-d-val">0.15</span></label>';
+      parent.appendChild(controls);
+      dispSlider = document.getElementById('wpdisp-d');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const alpha = parseFloat(dispSlider?.value || 0.15);
+    document.getElementById('wpdisp-d-val')?.replaceChildren(document.createTextNode(alpha.toFixed(2)));
+
+    t += 0.03;
+    wClear(ctx, W, H);
+
+    const plotL = 30, plotR = W - 20, plotW = plotR - plotL;
+    const topT = 25, topB = H / 2 - 10;
+    const botT = H / 2 + 15, botB = H - 15;
+    const topH = topB - topT, botH = botB - botT;
+    const topMid = (topT + topB) / 2;
+    const botMid = (botT + botB) / 2;
+    const amp = 0.35;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Non-dispersive (\u03C9 = ck)', plotL, topT - 3);
+    ctx.fillText('Dispersive (\u03C9 = ck + \u03B1k\u00B2)', plotL, botT - 3);
+
+    // Build packets
+    const k0 = 5, c = 1.5, sigmaK = 0.8;
+    const nK = 25;
+    const xRange = 30;
+
+    // Non-dispersive
+    const ndVals = [];
+    let ndMax = 0;
+    for (let i = 0; i <= 400; i++) {
+      const x = (i / 400) * xRange;
+      let sum = 0;
+      for (let n = 0; n < nK; n++) {
+        const k = k0 + (n - nK / 2) * 0.15;
+        const w = c * k; // linear dispersion
+        const weight = Math.exp(-((k - k0) * (k - k0)) / (2 * sigmaK * sigmaK));
+        sum += weight * Math.cos(k * x - w * t);
+      }
+      ndVals.push(sum);
+      if (Math.abs(sum) > ndMax) ndMax = Math.abs(sum);
+    }
+
+    // Dispersive
+    const dVals = [];
+    let dMax = 0;
+    for (let i = 0; i <= 400; i++) {
+      const x = (i / 400) * xRange;
+      let sum = 0;
+      for (let n = 0; n < nK; n++) {
+        const k = k0 + (n - nK / 2) * 0.15;
+        const w = c * k + alpha * k * k;
+        const weight = Math.exp(-((k - k0) * (k - k0)) / (2 * sigmaK * sigmaK));
+        sum += weight * Math.cos(k * x - w * t);
+      }
+      dVals.push(sum);
+      if (Math.abs(sum) > dMax) dMax = Math.abs(sum);
+    }
+
+    // Draw non-dispersive
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, topMid); ctx.lineTo(plotR, topMid); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = topMid - (ndVals[i] / Math.max(ndMax, 0.1)) * topH * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Draw dispersive
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, botMid); ctx.lineTo(plotR, botMid); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = botMid - (dVals[i] / Math.max(dMax, 0.1)) * botH * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Divider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, H / 2 + 2); ctx.lineTo(plotR, H / 2 + 2); ctx.stroke();
+
+    // Annotations
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Shape preserved', plotR, topT + 14);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('Pulse broadens with time', plotR, botT + 14);
+
+    // Reset
+    if (c * t > xRange * 1.3) t = 0;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
 }
