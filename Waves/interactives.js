@@ -15,6 +15,36 @@ function initSceneInteractives() {
   initPhaseLag();
   initPowerAbsorption();
   initResonanceCurve();
+  // Chapter 3
+  initCoupledOscillators();
+  initNormalModes();
+  initBeats();
+  initEigenvalueSolver();
+  // Chapter 4
+  initTwoMassNormalModes();
+  initThreeMassNormalModes();
+  initNMassChain();
+  // Chapter 5
+  initFourierDecomposition();
+  initFourierSawtooth();
+  initPluckedString();
+  // Chapter 4 (continued)
+  initNMassModesNumerical();
+  initDispersionRelationDiscrete();
+  initContinuumLimit();
+  initTravelingVsStanding();
+  // Chapter 6
+  initStringTransverseWave();
+  initSoundWaveLongitudinal();
+  initBoundaryConditionsDemo();
+  initStandingWaveModes();
+  initHelmholtzResonator();
+  // Chapter 7
+  initBeatsDemo();
+  initConsonanceDissonance();
+  initHarmonicAlignment();
+  initCircleOfFifths();
+  initScaleComparison();
 }
 
 // Color palette matching WavesC theme
@@ -1891,4 +1921,1485 @@ function initResonanceCurve() {
   gammaSlider?.addEventListener('input', draw);
   w0Slider?.addEventListener('input', draw);
   draw();
+}
+
+// =========================================================================
+// CHAPTER 3 INTERACTIVES: COUPLED OSCILLATORS
+// =========================================================================
+
+// =========================================================================
+// 1. COUPLED OSCILLATORS (Drag to displace)
+// =========================================================================
+function initCoupledOscillators() {
+  const canvas = document.getElementById('scene-coupled-oscillators');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const kappaSlider = document.getElementById('coupled-kappa');
+
+  // Layout
+  const wallL = 40, wallR = W - 40;
+  const springRegionY = 70;
+  const eq1 = wallL + (wallR - wallL) * 0.33;
+  const eq2 = wallL + (wallR - wallL) * 0.67;
+  const maxDisp = 60;
+
+  // Plot region for traces
+  const plotT = 150, plotB = H - 20, plotL = 50, plotR = W - 20;
+  const plotMidY = (plotT + plotB) / 2;
+  const plotH = plotB - plotT;
+
+  // State
+  let x1 = 0.5, x2 = 0, v1 = 0, v2 = 0;
+  let t = 0;
+  let trail1 = [], trail2 = [];
+  const maxTrail = 400;
+  let dragging = 0; // 0=none, 1=mass1, 2=mass2
+
+  function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cl = e.touches ? e.touches[0] : e;
+    return { mx: cl.clientX - rect.left, my: cl.clientY - rect.top };
+  }
+
+  function hitTest(mx, my) {
+    const m1x = eq1 + x1 * maxDisp;
+    const m2x = eq2 + x2 * maxDisp;
+    if (Math.abs(mx - m1x) < 25 && Math.abs(my - springRegionY) < 25) return 1;
+    if (Math.abs(mx - m2x) < 25 && Math.abs(my - springRegionY) < 25) return 2;
+    return 0;
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    const { mx, my } = getMousePos(e);
+    dragging = hitTest(mx, my);
+    if (dragging) { v1 = 0; v2 = 0; trail1 = []; trail2 = []; t = 0; }
+  });
+  canvas.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const { mx } = getMousePos(e);
+    if (dragging === 1) x1 = Math.max(-1, Math.min(1, (mx - eq1) / maxDisp));
+    if (dragging === 2) x2 = Math.max(-1, Math.min(1, (mx - eq2) / maxDisp));
+  });
+  canvas.addEventListener('mouseup', () => { dragging = 0; });
+  canvas.addEventListener('mouseleave', () => { dragging = 0; });
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const { mx, my } = getMousePos(e);
+    dragging = hitTest(mx, my);
+    if (dragging) { v1 = 0; v2 = 0; trail1 = []; trail2 = []; t = 0; }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left;
+    if (dragging === 1) x1 = Math.max(-1, Math.min(1, (mx - eq1) / maxDisp));
+    if (dragging === 2) x2 = Math.max(-1, Math.min(1, (mx - eq2) / maxDisp));
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = 0; });
+
+  function drawZigzagSpring(x1p, y1p, x2p, y2p, coils) {
+    const dx = x2p - x1p, dy = y2p - y1p;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+    const amplitude = 8;
+    ctx.beginPath();
+    ctx.moveTo(x1p, y1p);
+    const seg = len / (coils * 2 + 2);
+    let cx = x1p + ux * seg, cy = y1p + uy * seg;
+    ctx.lineTo(cx, cy);
+    for (let i = 0; i < coils * 2; i++) {
+      cx += ux * seg; cy += uy * seg;
+      const side = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(cx + nx * amplitude * side, cy + ny * amplitude * side);
+    }
+    cx += ux * seg; cy += uy * seg;
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(x2p, y2p);
+    ctx.stroke();
+  }
+
+  function tick() {
+    const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
+    const k = 4, m = 1;
+    const kappa = kappaRatio * k;
+    const dt = 0.018;
+
+    if (!dragging) {
+      const a1 = (-k * x1 - kappa * (x1 - x2)) / m;
+      const a2 = (-k * x2 - kappa * (x2 - x1)) / m;
+      v1 += a1 * dt; v2 += a2 * dt;
+      x1 += v1 * dt; x2 += v2 * dt;
+      t += dt;
+    }
+
+    trail1.push({ t, x: x1 }); trail2.push({ t, x: x2 });
+    if (trail1.length > maxTrail) { trail1.shift(); trail2.shift(); }
+
+    draw(kappaRatio);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(kappaRatio) {
+    wClear(ctx, W, H);
+
+    const m1x = eq1 + x1 * maxDisp;
+    const m2x = eq2 + x2 * maxDisp;
+    const y = springRegionY;
+
+    // Walls
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallL - 6, y - 30, 6, 60);
+    ctx.fillRect(wallR, y - 30, 6, 60);
+    // Hatching
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const ly = y - 25 + i * 10;
+      ctx.beginPath(); ctx.moveTo(wallL - 6, ly); ctx.lineTo(wallL - 12, ly + 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wallR + 6, ly); ctx.lineTo(wallR + 12, ly + 6); ctx.stroke();
+    }
+
+    // Springs
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    drawZigzagSpring(wallL, y, m1x - 18, y, 6);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    drawZigzagSpring(m1x + 18, y, m2x - 18, y, 6);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    drawZigzagSpring(m2x + 18, y, wallR, y, 6);
+
+    // Masses
+    const blockW = 34, blockH = 34;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.roundRect(m1x - blockW / 2, y - blockH / 2, blockW, blockH, 5); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('m₁', m1x, y + 5);
+
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.roundRect(m2x - blockW / 2, y - blockH / 2, blockW, blockH, 5); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui, sans-serif';
+    ctx.fillText('m₂', m2x, y + 5);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('k', (wallL + m1x) / 2, y - 28);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('κ', (m1x + m2x) / 2, y - 28);
+    ctx.fillStyle = WCOLORS.text; ctx.fillText('k', (m2x + wallR) / 2, y - 28);
+
+    // Equilibrium markers
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(eq1, y + 22); ctx.lineTo(eq1, y + 32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(eq2, y + 22); ctx.lineTo(eq2, y + 32); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Kappa label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, 20);
+
+    // Drag hint
+    if (trail1.length < 5) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Drag either mass ↔', W / 2, y + 50);
+    }
+
+    // --- Trace plot ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('0', plotL - 4, plotMidY + 3);
+    ctx.textAlign = 'center';
+    ctx.fillText('t', plotR + 10, plotMidY + 4);
+
+    if (trail1.length > 1) {
+      const tRange = Math.max(trail1[trail1.length - 1].t - trail1[0].t, 4);
+      const tOff = trail1[0].t;
+      const pw = plotR - plotL;
+      const ph2 = (plotH / 2) * 0.85;
+
+      // x1 trace
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < trail1.length; i++) {
+        const px = plotL + ((trail1[i].t - tOff) / tRange) * pw;
+        const py = plotMidY - trail1[i].x * ph2;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // x2 trace
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < trail2.length; i++) {
+        const px = plotL + ((trail2[i].t - tOff) / tRange) * pw;
+        const py = plotMidY - trail2[i].x * ph2;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    // Legend
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('x₁(t)', plotR - 80, plotT + 12);
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillText('x₂(t)', plotR - 40, plotT + 12);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 2. NORMAL MODES (symmetric + antisymmetric)
+// =========================================================================
+function initNormalModes() {
+  const canvas = document.getElementById('scene-normal-modes');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const kappaSlider = document.getElementById('normal-modes-kappa');
+
+  let t = 0;
+  const amplitude = 0.6;
+
+  function drawZigzagSpring(x1p, y1p, x2p, y2p, coils) {
+    const dx = x2p - x1p, dy = y2p - y1p;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+    const amp = 6;
+    ctx.beginPath();
+    ctx.moveTo(x1p, y1p);
+    const seg = len / (coils * 2 + 2);
+    let cx = x1p + ux * seg, cy = y1p + uy * seg;
+    ctx.lineTo(cx, cy);
+    for (let i = 0; i < coils * 2; i++) {
+      cx += ux * seg; cy += uy * seg;
+      const side = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(cx + nx * amp * side, cy + ny * amp * side);
+    }
+    cx += ux * seg; cy += uy * seg;
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(x2p, y2p);
+    ctx.stroke();
+  }
+
+  function drawPanel(xOff, panelW, y, label, d1, d2, omega, kappaRatio) {
+    const wallL = xOff + 15, wallR = xOff + panelW - 15;
+    const eq1 = wallL + (wallR - wallL) * 0.33;
+    const eq2 = wallL + (wallR - wallL) * 0.67;
+    const maxD = 35;
+    const m1x = eq1 + d1 * maxD, m2x = eq2 + d2 * maxD;
+
+    // Panel border
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.strokeRect(xOff + 2, 10, panelW - 4, H - 20);
+
+    // Walls
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallL - 4, y - 22, 4, 44);
+    ctx.fillRect(wallR, y - 22, 4, 44);
+
+    // Springs
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    drawZigzagSpring(wallL, y, m1x - 13, y, 5);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    drawZigzagSpring(m1x + 13, y, m2x - 13, y, 5);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    drawZigzagSpring(m2x + 13, y, wallR, y, 5);
+
+    // Masses
+    const bw = 24, bh = 24;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.roundRect(m1x - bw / 2, y - bh / 2, bw, bh, 4); ctx.fill();
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.roundRect(m2x - bw / 2, y - bh / 2, bw, bh, 4); ctx.fill();
+
+    // Arrows showing direction
+    const arrowLen = Math.abs(d1) * 18;
+    if (arrowLen > 2) {
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      // Arrow for mass 1
+      ctx.beginPath(); ctx.moveTo(m1x, y + bh / 2 + 6);
+      ctx.lineTo(m1x + Math.sign(d1) * arrowLen, y + bh / 2 + 6); ctx.stroke();
+      ctx.fillStyle = WCOLORS.red; ctx.beginPath();
+      ctx.moveTo(m1x + Math.sign(d1) * arrowLen, y + bh / 2 + 6);
+      ctx.lineTo(m1x + Math.sign(d1) * (arrowLen - 5), y + bh / 2 + 2);
+      ctx.lineTo(m1x + Math.sign(d1) * (arrowLen - 5), y + bh / 2 + 10);
+      ctx.closePath(); ctx.fill();
+      // Arrow for mass 2
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(m2x, y + bh / 2 + 6);
+      ctx.lineTo(m2x + Math.sign(d2) * arrowLen, y + bh / 2 + 6); ctx.stroke();
+      ctx.fillStyle = WCOLORS.red; ctx.beginPath();
+      ctx.moveTo(m2x + Math.sign(d2) * arrowLen, y + bh / 2 + 6);
+      ctx.lineTo(m2x + Math.sign(d2) * (arrowLen - 5), y + bh / 2 + 2);
+      ctx.lineTo(m2x + Math.sign(d2) * (arrowLen - 5), y + bh / 2 + 10);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // Label
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, xOff + panelW / 2, 28);
+
+    // Frequency
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui, sans-serif';
+    ctx.fillText(omega, xOff + panelW / 2, H - 14);
+  }
+
+  function tick() {
+    const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
+    const k = 4, m = 1;
+    const omegaS = Math.sqrt(k / m);
+    const omegaA = Math.sqrt((k + 2 * kappaRatio * k) / m);
+    const dt = 0.025;
+    t += dt;
+
+    wClear(ctx, W, H);
+
+    const panelW = W / 2;
+    const y = H / 2 + 5;
+
+    // Symmetric mode: both move same direction
+    const dSym = amplitude * Math.cos(omegaS * t);
+    drawPanel(0, panelW, y, 'Symmetric mode', dSym, dSym, 'ω_s = ' + omegaS.toFixed(2), kappaRatio);
+
+    // Antisymmetric mode: opposite directions
+    const dAnti = amplitude * Math.cos(omegaA * t);
+    drawPanel(panelW, panelW, y, 'Antisymmetric mode', dAnti, -dAnti, 'ω_a = ' + omegaA.toFixed(2), kappaRatio);
+
+    // κ/k label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 2);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 3. BEATS (energy transfer between coupled oscillators)
+// =========================================================================
+function initBeats() {
+  const canvas = document.getElementById('scene-beats');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const kappaSlider = document.getElementById('beats-kappa');
+
+  let t = 0;
+  const A0 = 0.8;
+
+  function tick() {
+    const kappaRatio = parseFloat(kappaSlider?.value || 0.15);
+    const k = 4, m = 1;
+    const omegaS = Math.sqrt(k / m);
+    const omegaA = Math.sqrt((k + 2 * kappaRatio * k) / m);
+    const omegaAvg = (omegaS + omegaA) / 2;
+    const omegaBeat = (omegaA - omegaS) / 2;
+    const dt = 0.03;
+    t += dt;
+
+    wClear(ctx, W, H);
+
+    const plotL = 50, plotR = W - 20;
+    const plotW = plotR - plotL;
+    const panelH = (H - 60) / 2;
+    const tMax = 30;
+
+    for (let panel = 0; panel < 2; panel++) {
+      const pTop = 30 + panel * (panelH + 15);
+      const pMid = pTop + panelH / 2;
+
+      // Axes
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(plotL, pTop); ctx.lineTo(plotL, pTop + panelH); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(plotL, pMid); ctx.lineTo(plotR, pMid); ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(panel === 0 ? 'x₁(t)' : 'x₂(t)', plotL - 20, pTop + 8);
+      ctx.fillText('t', plotR + 10, pMid + 4);
+
+      // Draw waveform
+      const waveColor = panel === 0 ? WCOLORS.teal : WCOLORS.blue;
+      ctx.strokeStyle = waveColor; ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      const halfH = (panelH / 2) * 0.85;
+      for (let px = 0; px <= plotW; px += 1) {
+        const tSample = (px / plotW) * tMax;
+        let val;
+        if (panel === 0) {
+          val = A0 * Math.cos(omegaBeat * tSample) * Math.cos(omegaAvg * tSample);
+        } else {
+          val = A0 * Math.sin(omegaBeat * tSample) * Math.sin(omegaAvg * tSample);
+        }
+        const py = pMid - val * halfH;
+        px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+      }
+      ctx.stroke();
+
+      // Beat envelope
+      ctx.strokeStyle = waveColor; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.globalAlpha = 0.5;
+      for (let sign = -1; sign <= 1; sign += 2) {
+        ctx.beginPath();
+        for (let px = 0; px <= plotW; px += 2) {
+          const tSample = (px / plotW) * tMax;
+          let env;
+          if (panel === 0) {
+            env = sign * A0 * Math.cos(omegaBeat * tSample);
+          } else {
+            env = sign * A0 * Math.sin(omegaBeat * tSample);
+          }
+          const py = pMid - env * halfH;
+          px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+        }
+        ctx.stroke();
+      }
+      ctx.setLineDash([]); ctx.globalAlpha = 1.0;
+
+      // Moving time marker
+      const tNow = t % tMax;
+      const markerX = plotL + (tNow / tMax) * plotW;
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(markerX, pTop); ctx.lineTo(markerX, pTop + panelH); ctx.stroke();
+    }
+
+    // Labels
+    const beatFreq = omegaBeat / Math.PI;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, 18);
+    ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right';
+    ctx.fillText('f_beat = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 4. EIGENVALUE SOLVER (visual 2×2 eigenproblem)
+// =========================================================================
+function initEigenvalueSolver() {
+  const canvas = document.getElementById('scene-eigenvalue-solver');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const kappaSlider = document.getElementById('eigen-kappa');
+
+  function draw() {
+    const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
+    const k = 4, m = 1, kappa = kappaRatio * k;
+
+    wClear(ctx, W, H);
+
+    // Matrix entries
+    const a11 = (k + kappa) / m;
+    const a12 = -kappa / m;
+    // Eigenvalues: (a11 + a11)/2 ± sqrt((a11-a11)^2/4 + a12^2) => a11 ± |a12|
+    const lambdaS = a11 + a12; // = k/m (symmetric)
+    const lambdaA = a11 - a12; // = (k + 2κ)/m (antisymmetric)
+
+    // Left side: matrix display
+    const matX = 30, matY = 40;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Equation of motion matrix  M⁻¹K:', matX, matY);
+
+    // Draw matrix brackets
+    const mxL = matX + 10, mxR = matX + 200, myT = matY + 15, myB = matY + 75;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    // Left bracket
+    ctx.beginPath();
+    ctx.moveTo(mxL + 10, myT); ctx.lineTo(mxL, myT); ctx.lineTo(mxL, myB); ctx.lineTo(mxL + 10, myB);
+    ctx.stroke();
+    // Right bracket
+    ctx.beginPath();
+    ctx.moveTo(mxR - 10, myT); ctx.lineTo(mxR, myT); ctx.lineTo(mxR, myB); ctx.lineTo(mxR - 10, myB);
+    ctx.stroke();
+
+    // Matrix entries
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '14px system-ui, sans-serif'; ctx.textAlign = 'center';
+    const cx1 = mxL + 55, cx2 = mxR - 55;
+    const ry1 = myT + 22, ry2 = myB - 10;
+    ctx.fillText('(k+κ)/m', cx1, ry1);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('−κ/m', cx2, ry1);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('−κ/m', cx1, ry2);
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('(k+κ)/m', cx2, ry2);
+
+    // Numerical values
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('= ' + a11.toFixed(1), cx1, ry1 + 16);
+    ctx.fillText('= ' + a12.toFixed(1), cx2, ry1 + 16);
+    ctx.fillText('= ' + a12.toFixed(1), cx1, ry2 + 16);
+    ctx.fillText('= ' + a11.toFixed(1), cx2, ry2 + 16);
+
+    // Right side: eigenvector plot
+    const plotCx = W - 130, plotCy = H / 2 + 10;
+    const plotR = 80;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotCx - plotR - 10, plotCy); ctx.lineTo(plotCx + plotR + 10, plotCy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotCx, plotCy - plotR - 10); ctx.lineTo(plotCx, plotCy + plotR + 10); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x₁', plotCx + plotR + 15, plotCy + 4);
+    ctx.fillText('x₂', plotCx, plotCy - plotR - 15);
+
+    // Eigenvector 1 (symmetric): (1, 1) / sqrt(2)
+    const ev1x = plotR * 0.7, ev1y = -plotR * 0.7;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev1x, plotCy + ev1y); ctx.stroke();
+    // Arrowhead
+    drawArrowHead(ctx, plotCx + ev1x, plotCy + ev1y, Math.atan2(ev1y, ev1x), WCOLORS.teal);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText('ξ_s = (1,1)', plotCx + ev1x + 5, plotCy + ev1y - 8);
+
+    // Eigenvector 2 (antisymmetric): (1, -1) / sqrt(2)
+    const ev2x = plotR * 0.7, ev2y = plotR * 0.7;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev2x, plotCy + ev2y); ctx.stroke();
+    drawArrowHead(ctx, plotCx + ev2x, plotCy + ev2y, Math.atan2(ev2y, ev2x), WCOLORS.red);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif';
+    ctx.fillText('ξ_a = (1,−1)', plotCx + ev2x + 5, plotCy + ev2y + 16);
+
+    // Eigenvalue display
+    const evY = H - 50;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Eigenvalues (ω²):', matX, evY);
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '13px system-ui, sans-serif';
+    ctx.fillText('ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + Math.sqrt(lambdaS).toFixed(2), matX, evY + 22);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + Math.sqrt(lambdaA).toFixed(2), matX, evY + 44);
+
+    // κ/k label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), W - 10, 20);
+  }
+
+  function drawArrowHead(ctx, x, y, angle, color) {
+    const size = 8;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - size * Math.cos(angle - 0.4), y - size * Math.sin(angle - 0.4));
+    ctx.lineTo(x - size * Math.cos(angle + 0.4), y - size * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  kappaSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 4 INTERACTIVES: NORMAL MODES OF N-MASS SYSTEMS
+// =========================================================================
+
+// =========================================================================
+// 5. TWO-MASS NORMAL MODES (mode shapes + animation)
+// =========================================================================
+function initTwoMassNormalModes() {
+  const canvas = document.getElementById('scene-two-mass-normal-modes');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let mode = 'both'; // 'sym', 'anti', 'both'
+  let t = 0;
+
+  // Check for mode buttons
+  const btnSym = document.getElementById('two-mass-sym');
+  const btnAnti = document.getElementById('two-mass-anti');
+  const btnBoth = document.getElementById('two-mass-both');
+  btnSym?.addEventListener('click', () => { mode = 'sym'; updateButtons(); });
+  btnAnti?.addEventListener('click', () => { mode = 'anti'; updateButtons(); });
+  btnBoth?.addEventListener('click', () => { mode = 'both'; updateButtons(); });
+
+  function updateButtons() {
+    [btnSym, btnAnti, btnBoth].forEach(b => { if (b) b.style.fontWeight = 'normal'; });
+    if (mode === 'sym' && btnSym) btnSym.style.fontWeight = 'bold';
+    if (mode === 'anti' && btnAnti) btnAnti.style.fontWeight = 'bold';
+    if (mode === 'both' && btnBoth) btnBoth.style.fontWeight = 'bold';
+  }
+  updateButtons();
+
+  function drawZigzagSpring(x1p, y1p, x2p, y2p, coils) {
+    const dx = x2p - x1p, dy = y2p - y1p;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+    const amp = 6;
+    ctx.beginPath();
+    ctx.moveTo(x1p, y1p);
+    const seg = len / (coils * 2 + 2);
+    let cx = x1p + ux * seg, cy = y1p + uy * seg;
+    ctx.lineTo(cx, cy);
+    for (let i = 0; i < coils * 2; i++) {
+      cx += ux * seg; cy += uy * seg;
+      const side = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(cx + nx * amp * side, cy + ny * amp * side);
+    }
+    cx += ux * seg; cy += uy * seg;
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(x2p, y2p);
+    ctx.stroke();
+  }
+
+  function tick() {
+    t += 0.025;
+    wClear(ctx, W, H);
+
+    const k = 4, kappa = 1.2;
+    const omegaS = Math.sqrt(k);
+    const omegaA = Math.sqrt(k + 2 * kappa);
+    const amp = 0.7;
+
+    let d1 = 0, d2 = 0;
+    if (mode === 'sym') {
+      d1 = amp * Math.cos(omegaS * t);
+      d2 = d1;
+    } else if (mode === 'anti') {
+      d1 = amp * Math.cos(omegaA * t);
+      d2 = -d1;
+    } else {
+      d1 = 0.5 * amp * Math.cos(omegaS * t) + 0.5 * amp * Math.cos(omegaA * t);
+      d2 = 0.5 * amp * Math.cos(omegaS * t) - 0.5 * amp * Math.cos(omegaA * t);
+    }
+
+    // --- Top half: physical spring-mass system ---
+    const sprY = 65;
+    const wallL = 40, wallR = W - 40;
+    const eq1 = wallL + (wallR - wallL) * 0.33;
+    const eq2 = wallL + (wallR - wallL) * 0.67;
+    const maxD = 40;
+    const m1x = eq1 + d1 * maxD, m2x = eq2 + d2 * maxD;
+
+    // Walls
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallL - 5, sprY - 20, 5, 40);
+    ctx.fillRect(wallR, sprY - 20, 5, 40);
+
+    // Springs
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    drawZigzagSpring(wallL, sprY, m1x - 14, sprY, 5);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    drawZigzagSpring(m1x + 14, sprY, m2x - 14, sprY, 5);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    drawZigzagSpring(m2x + 14, sprY, wallR, sprY, 5);
+
+    // Masses
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(m1x, sprY, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(m2x, sprY, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('1', m1x, sprY + 4);
+    ctx.fillText('2', m2x, sprY + 4);
+
+    // --- Bottom half: mode shape plot ---
+    const plotT = 120, plotB = H - 25;
+    const plotL = 80, plotR2 = W - 80;
+    const plotMidY = (plotT + plotB) / 2;
+    const plotHalfH = (plotB - plotT) / 2 * 0.8;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR2, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Mass index', (plotL + plotR2) / 2, plotB + 16);
+    ctx.save(); ctx.translate(plotL - 18, plotMidY); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Displacement', 0, 0); ctx.restore();
+
+    // Mass positions on x-axis
+    const mx1 = plotL + (plotR2 - plotL) * 0.33;
+    const mx2 = plotL + (plotR2 - plotL) * 0.67;
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
+    ctx.fillText('1', mx1, plotB + 6);
+    ctx.fillText('2', mx2, plotB + 6);
+
+    // Plot mode shape: dots connected
+    const py1 = plotMidY - d1 * plotHalfH;
+    const py2 = plotMidY - d2 * plotHalfH;
+
+    // Connect with line
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotMidY); // wall
+    ctx.lineTo(mx1, py1);
+    ctx.lineTo(mx2, py2);
+    ctx.lineTo(plotR2, plotMidY); // wall
+    ctx.stroke();
+
+    // Dots
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(mx1, py1, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(mx2, py2, 6, 0, Math.PI * 2); ctx.fill();
+
+    // Wall dots
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.beginPath(); ctx.arc(plotL, plotMidY, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(plotR2, plotMidY, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Mode label
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    const modeLabel = mode === 'sym' ? 'Symmetric mode (ω_s)' : mode === 'anti' ? 'Antisymmetric mode (ω_a)' : 'Superposition of both modes';
+    ctx.fillText(modeLabel, W / 2, 18);
+
+    // Frequency values
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('ω_s = ' + omegaS.toFixed(2), 10, H - 5);
+    ctx.fillText('ω_a = ' + omegaA.toFixed(2), 120, H - 5);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 6. THREE-MASS NORMAL MODES
+// =========================================================================
+function initThreeMassNormalModes() {
+  const canvas = document.getElementById('scene-three-mass-normal-modes');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  // Mode shapes for 3 masses between walls (normalized)
+  // Mode 1: sin(π/4), sin(2π/4), sin(3π/4) = (1, √2, 1)/2
+  // Mode 2: sin(2π/4), sin(4π/4), sin(6π/4) = (1, 0, -1)/√2
+  // Mode 3: sin(3π/4), sin(6π/4), sin(9π/4) = (1, -√2, 1)/2
+  const modes = [
+    { shape: [1, Math.SQRT2, 1], omega: 2 * Math.sin(Math.PI / 8), label: 'Mode 1', color: WCOLORS.teal },
+    { shape: [1, 0, -1], omega: 2 * Math.sin(2 * Math.PI / 8), label: 'Mode 2', color: WCOLORS.blue },
+    { shape: [1, -Math.SQRT2, 1], omega: 2 * Math.sin(3 * Math.PI / 8), label: 'Mode 3', color: WCOLORS.red },
+  ];
+  // Normalize
+  modes.forEach(m => {
+    const norm = Math.sqrt(m.shape.reduce((s, v) => s + v * v, 0));
+    m.shape = m.shape.map(v => v / norm);
+  });
+
+  function drawZigzagSpring(x1p, y1p, x2p, y2p, coils) {
+    const dx = x2p - x1p, dy = y2p - y1p;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1) return;
+    const ux = dx / len, uy = dy / len;
+    const nx = -uy, ny = ux;
+    const amp = 5;
+    ctx.beginPath();
+    ctx.moveTo(x1p, y1p);
+    const seg = len / (coils * 2 + 2);
+    let cx = x1p + ux * seg, cy = y1p + uy * seg;
+    ctx.lineTo(cx, cy);
+    for (let i = 0; i < coils * 2; i++) {
+      cx += ux * seg; cy += uy * seg;
+      const side = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(cx + nx * amp * side, cy + ny * amp * side);
+    }
+    cx += ux * seg; cy += uy * seg;
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(x2p, y2p);
+    ctx.stroke();
+  }
+
+  function tick() {
+    t += 0.022;
+    wClear(ctx, W, H);
+
+    const panelH = (H - 20) / 3;
+
+    for (let mi = 0; mi < 3; mi++) {
+      const m = modes[mi];
+      const pTop = 10 + mi * panelH;
+      const pMid = pTop + panelH / 2;
+      const cosT = Math.cos(m.omega * t);
+      const disps = m.shape.map(s => s * 0.65 * cosT);
+
+      // Spring-mass system on left
+      const sysL = 30, sysR = W * 0.48;
+      const wallL = sysL, wallR = sysR;
+      const positions = [0.25, 0.5, 0.75];
+      const maxD = 25;
+
+      // Walls
+      ctx.fillStyle = WCOLORS.axis;
+      ctx.fillRect(wallL - 4, pMid - 15, 4, 30);
+      ctx.fillRect(wallR, pMid - 15, 4, 30);
+
+      // Springs and masses
+      const massXs = positions.map((p, i) => wallL + (wallR - wallL) * p + disps[i] * maxD);
+
+      ctx.strokeStyle = m.color; ctx.lineWidth = 1.2;
+      drawZigzagSpring(wallL, pMid, massXs[0] - 10, pMid, 4);
+      for (let j = 0; j < 2; j++) {
+        drawZigzagSpring(massXs[j] + 10, pMid, massXs[j + 1] - 10, pMid, 4);
+      }
+      drawZigzagSpring(massXs[2] + 10, pMid, wallR, pMid, 4);
+
+      ctx.fillStyle = m.color;
+      massXs.forEach(mx => {
+        ctx.beginPath(); ctx.arc(mx, pMid, 10, 0, Math.PI * 2); ctx.fill();
+      });
+
+      // Mode shape plot on right
+      const plotL = W * 0.55, plotR2 = W - 20;
+      const plotHalfH = (panelH / 2) * 0.65;
+
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, pMid); ctx.lineTo(plotR2, pMid); ctx.stroke();
+
+      // Mode shape with displacement at this instant
+      const mxPositions = [plotL, ...positions.map(p => plotL + (plotR2 - plotL) * p), plotR2];
+      const mxDisps = [0, ...disps, 0];
+
+      ctx.strokeStyle = m.color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let j = 0; j < mxPositions.length; j++) {
+        const px = mxPositions[j];
+        const py = pMid - mxDisps[j] * plotHalfH;
+        j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Dots
+      for (let j = 1; j <= 3; j++) {
+        ctx.fillStyle = m.color;
+        ctx.beginPath();
+        ctx.arc(mxPositions[j], pMid - mxDisps[j] * plotHalfH, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Wall dots
+      ctx.fillStyle = WCOLORS.axis;
+      ctx.beginPath(); ctx.arc(plotL, pMid, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(plotR2, pMid, 3, 0, Math.PI * 2); ctx.fill();
+
+      // Labels
+      ctx.fillStyle = m.color; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText(m.label + '  ω = ' + m.omega.toFixed(2), sysL, pTop + 12);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 7. N-MASS CHAIN (variable N, mode selector, tridiagonal matrix)
+// =========================================================================
+function initNMassChain() {
+  const canvas = document.getElementById('scene-n-mass-chain');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const nSlider = document.getElementById('nchain-n');
+  const modeSlider = document.getElementById('nchain-mode');
+
+  let t = 0;
+
+  function tick() {
+    t += 0.025;
+    const N = parseInt(nSlider?.value || 5);
+    let modeNum = parseInt(modeSlider?.value || 1);
+    if (modeNum > N) modeNum = N;
+    if (modeSlider) modeSlider.max = N;
+
+    // Eigenfrequency for mode p: omega_p = 2*sin(p*pi/(2*(N+1)))
+    const omegaP = 2 * Math.sin(modeNum * Math.PI / (2 * (N + 1)));
+
+    // Mode shape: u_j = sin(j * p * pi / (N+1))
+    const shape = [];
+    for (let j = 1; j <= N; j++) {
+      shape.push(Math.sin(j * modeNum * Math.PI / (N + 1)));
+    }
+    // Normalize
+    const maxShape = Math.max(...shape.map(Math.abs), 0.001);
+
+    wClear(ctx, W, H);
+
+    // --- Top: animated chain ---
+    const chainY = 60;
+    const chainL = 50, chainR = W - 50;
+    const chainW = chainR - chainL;
+    const maxD = 25;
+
+    // Wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(chainL - 5, chainY - 20, 5, 40);
+    ctx.fillRect(chainR, chainY - 20, 5, 40);
+
+    const cosT = Math.cos(omegaP * t);
+    const massPositions = [];
+    for (let j = 0; j < N; j++) {
+      const eqX = chainL + chainW * (j + 1) / (N + 1);
+      const disp = (shape[j] / maxShape) * maxD * cosT * 0.7;
+      massPositions.push(eqX + disp);
+    }
+
+    // Draw springs (simple lines for many masses)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    const allPos = [chainL, ...massPositions, chainR];
+    for (let j = 0; j < allPos.length - 1; j++) {
+      // Simple zigzag
+      const x1 = allPos[j] + (j > 0 ? 8 : 0);
+      const x2 = allPos[j + 1] - (j < allPos.length - 2 ? 8 : 0);
+      const segs = 6;
+      ctx.beginPath();
+      ctx.moveTo(x1, chainY);
+      for (let s = 1; s < segs; s++) {
+        const frac = s / segs;
+        const sx = x1 + (x2 - x1) * frac;
+        const sy = chainY + (s % 2 === 1 ? 5 : -5);
+        ctx.lineTo(sx, sy);
+      }
+      ctx.lineTo(x2, chainY);
+      ctx.stroke();
+    }
+
+    // Masses
+    ctx.fillStyle = WCOLORS.teal;
+    const radius = Math.max(4, Math.min(10, 80 / N));
+    massPositions.forEach(mx => {
+      ctx.beginPath(); ctx.arc(mx, chainY, radius, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // --- Middle: mode shape plot ---
+    const plotT = 110, plotB = 190;
+    const plotL = 50, plotR2 = W * 0.55;
+    const plotMidY = (plotT + plotB) / 2;
+    const plotHalfH = (plotB - plotT) / 2 * 0.85;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR2, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Mode shape (mode ' + modeNum + ')', (plotL + plotR2) / 2, plotT - 5);
+
+    // Plot shape with walls at zero
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotMidY);
+    for (let j = 0; j < N; j++) {
+      const px = plotL + (plotR2 - plotL) * (j + 1) / (N + 1);
+      const py = plotMidY - (shape[j] / maxShape) * plotHalfH;
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(plotR2, plotMidY);
+    ctx.stroke();
+
+    // Dots
+    ctx.fillStyle = WCOLORS.blue;
+    for (let j = 0; j < N; j++) {
+      const px = plotL + (plotR2 - plotL) * (j + 1) / (N + 1);
+      const py = plotMidY - (shape[j] / maxShape) * plotHalfH;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // --- Right: tridiagonal matrix ---
+    const matL = W * 0.6, matT = 105;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('K/m matrix (' + N + '×' + N + '):', matL, matT);
+
+    const cellSize = Math.min(14, 100 / N);
+    const matStartX = matL + 5;
+    const matStartY = matT + 10;
+    const dispN = Math.min(N, 10); // display at most 10x10
+
+    for (let i = 0; i < dispN; i++) {
+      for (let j = 0; j < dispN; j++) {
+        let val = 0;
+        if (i === j) val = 2; // diagonal
+        else if (Math.abs(i - j) === 1) val = -1; // off-diagonal
+
+        let color = WCOLORS.bg;
+        if (val === 2) color = WCOLORS.teal;
+        else if (val === -1) color = WCOLORS.amber;
+
+        if (val !== 0) {
+          ctx.fillStyle = color;
+          ctx.globalAlpha = 0.7;
+          ctx.fillRect(matStartX + j * cellSize, matStartY + i * cellSize, cellSize - 1, cellSize - 1);
+          ctx.globalAlpha = 1.0;
+        } else {
+          ctx.fillStyle = 'rgba(31,42,46,0.04)';
+          ctx.fillRect(matStartX + j * cellSize, matStartY + i * cellSize, cellSize - 1, cellSize - 1);
+        }
+      }
+    }
+
+    if (N > 10) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
+      ctx.fillText('(showing 10×10 of ' + N + '×' + N + ')', matL, matStartY + dispN * cellSize + 14);
+    }
+
+    // Legend
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
+    const legY = matStartY + dispN * cellSize + 30;
+    ctx.fillRect(matL, legY, 10, 10); ctx.fillText(' = 2 (diagonal)', matL + 14, legY + 9);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillRect(matL, legY + 16, 10, 10); ctx.fillText(' = −1 (off-diag)', matL + 14, legY + 25);
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('N = ' + N + '    Mode ' + modeNum + '/' + N + '    ω = ' + omegaP.toFixed(3), 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 5 INTERACTIVES: FOURIER ANALYSIS
+// =========================================================================
+
+// =========================================================================
+// 8. FOURIER DECOMPOSITION (interactive series builder)
+// =========================================================================
+function initFourierDecomposition() {
+  const canvas = document.getElementById('scene-fourier-decomposition');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const termsSlider = document.getElementById('fourier-terms');
+  const btnSquare = document.getElementById('fourier-square');
+  const btnTriangle = document.getElementById('fourier-triangle');
+  const btnSawtooth = document.getElementById('fourier-sawtooth');
+
+  let waveType = 'square';
+
+  btnSquare?.addEventListener('click', () => { waveType = 'square'; updateBtns(); });
+  btnTriangle?.addEventListener('click', () => { waveType = 'triangle'; updateBtns(); });
+  btnSawtooth?.addEventListener('click', () => { waveType = 'sawtooth'; updateBtns(); });
+
+  function updateBtns() {
+    [btnSquare, btnTriangle, btnSawtooth].forEach(b => { if (b) b.style.fontWeight = 'normal'; });
+    const active = waveType === 'square' ? btnSquare : waveType === 'triangle' ? btnTriangle : btnSawtooth;
+    if (active) active.style.fontWeight = 'bold';
+    draw();
+  }
+
+  // Target function (period 2π, range roughly -1 to 1)
+  function targetFunc(x) {
+    // Normalize x to [0, 2π]
+    const xn = ((x % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    if (waveType === 'square') {
+      return xn < Math.PI ? 1 : -1;
+    } else if (waveType === 'triangle') {
+      if (xn < Math.PI) return -1 + 2 * xn / Math.PI;
+      return 3 - 2 * xn / Math.PI;
+    } else { // sawtooth
+      return 1 - xn / Math.PI; // goes from 1 to -1
+    }
+  }
+
+  // Fourier coefficients
+  function fourierTerm(n, x) {
+    if (waveType === 'square') {
+      // Square wave: sum of (4/π) * sin((2k-1)x)/(2k-1), k=1,2,...
+      if (n % 2 === 0) return 0;
+      return (4 / (Math.PI * n)) * Math.sin(n * x);
+    } else if (waveType === 'triangle') {
+      // Triangle: sum of (8/(π²n²)) * sin(nπ/2) * cos(nx)... using standard
+      // Triangle wave: (8/π²) * sum (-1)^k * sin((2k+1)x) / (2k+1)^2
+      if (n % 2 === 0) return 0;
+      const k = (n - 1) / 2;
+      return (8 / (Math.PI * Math.PI * n * n)) * Math.pow(-1, k) * Math.sin(n * x);
+    } else { // sawtooth
+      // Sawtooth: (2/π) * sum (-1)^(n+1) * sin(nx)/n
+      return (2 / Math.PI) * Math.pow(-1, n + 1) * Math.sin(n * x) / n;
+    }
+  }
+
+  function draw() {
+    const nTerms = parseInt(termsSlider?.value || 5);
+    wClear(ctx, W, H);
+
+    const plotL = 50, plotR = W - 20;
+    const plotT = 30, plotB = H - 30;
+    const plotMidY = (plotT + plotB) / 2;
+    const plotW = plotR - plotL;
+    const plotHalfH = (plotB - plotT) / 2 * 0.85;
+    const xMin = -0.5, xMax = 2.5 * Math.PI;
+    const xRange = xMax - xMin;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+
+    // Grid
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    for (let v = -1; v <= 1; v += 0.5) {
+      if (v === 0) continue;
+      const gy = plotMidY - v * plotHalfH;
+      ctx.beginPath(); ctx.moveTo(plotL, gy); ctx.lineTo(plotR, gy); ctx.stroke();
+    }
+    // π marks
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    for (let k = 0; k <= 2; k++) {
+      const px = plotL + (k * Math.PI - xMin) / xRange * plotW;
+      ctx.beginPath(); ctx.moveTo(px, plotMidY - 3); ctx.lineTo(px, plotMidY + 3);
+      ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
+      ctx.fillText(k === 0 ? '0' : k === 1 ? 'π' : '2π', px, plotMidY + 14);
+    }
+
+    // Target function (dashed)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px += 1) {
+      const xVal = xMin + (px / plotW) * xRange;
+      const yVal = targetFunc(xVal);
+      const py = plotMidY - yVal * plotHalfH;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Individual harmonics (light)
+    const maxShow = Math.min(nTerms, 8);
+    const harmColors = [WCOLORS.teal, WCOLORS.blue, WCOLORS.amber, WCOLORS.red, WCOLORS.orange, '#7c3aed', '#059669', '#db2777'];
+    for (let n = 1; n <= maxShow; n++) {
+      // Check if this term contributes
+      let hasContrib = false;
+      for (let px = 0; px <= plotW; px += 10) {
+        const xVal = xMin + (px / plotW) * xRange;
+        if (Math.abs(fourierTerm(n, xVal)) > 0.001) { hasContrib = true; break; }
+      }
+      if (!hasContrib) continue;
+
+      ctx.strokeStyle = harmColors[(n - 1) % harmColors.length];
+      ctx.lineWidth = 0.8; ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      for (let px = 0; px <= plotW; px += 2) {
+        const xVal = xMin + (px / plotW) * xRange;
+        const yVal = fourierTerm(n, xVal);
+        const py = plotMidY - yVal * plotHalfH;
+        px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Sum (bold)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px += 1) {
+      const xVal = xMin + (px / plotW) * xRange;
+      let sum = 0;
+      for (let n = 1; n <= nTerms; n++) {
+        sum += fourierTerm(n, xVal);
+      }
+      const py = plotMidY - sum * plotHalfH;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Title & info
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    const typeName = waveType.charAt(0).toUpperCase() + waveType.slice(1);
+    ctx.fillText(typeName + ' wave — ' + nTerms + ' term' + (nTerms > 1 ? 's' : ''), W / 2, 18);
+
+    // Legend
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.setLineDash([4, 3]); ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(plotR - 90, plotT + 8); ctx.lineTo(plotR - 60, plotT + 8); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('Target', plotR, plotT + 12);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(plotR - 90, plotT + 22); ctx.lineTo(plotR - 60, plotT + 22); ctx.stroke();
+    ctx.fillText('Sum', plotR, plotT + 26);
+  }
+
+  termsSlider?.addEventListener('input', draw);
+  updateBtns();
+}
+
+// =========================================================================
+// 9. FOURIER SAWTOOTH (with coefficient bar chart + Gibbs)
+// =========================================================================
+function initFourierSawtooth() {
+  const canvas = document.getElementById('scene-fourier-sawtooth');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const termsSlider = document.getElementById('sawtooth-terms');
+
+  function draw() {
+    const nTerms = parseInt(termsSlider?.value || 10);
+    wClear(ctx, W, H);
+
+    // Layout: waveform on left, bar chart on right
+    const waveL = 50, waveR = W * 0.58;
+    const barL = W * 0.64, barR = W - 15;
+    const plotT = 35, plotB = H - 30;
+    const plotMidY = (plotT + plotB) / 2;
+    const plotHalfH = (plotB - plotT) / 2 * 0.85;
+    const waveW = waveR - waveL;
+    const xMin = -0.3, xMax = 2.3 * Math.PI;
+    const xRange = xMax - xMin;
+
+    // --- Waveform plot ---
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(waveL, plotMidY); ctx.lineTo(waveR, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(waveL, plotT); ctx.lineTo(waveL, plotB); ctx.stroke();
+
+    // Target sawtooth (dashed)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let px = 0; px <= waveW; px += 1) {
+      const xVal = xMin + (px / waveW) * xRange;
+      const xn = ((xVal % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const yVal = 1 - xn / Math.PI;
+      const py = plotMidY - yVal * plotHalfH;
+      px === 0 ? ctx.moveTo(waveL + px, py) : ctx.lineTo(waveL + px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Fourier sum
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    let gibbsMax = 0, gibbsX = 0, gibbsY = 0;
+    for (let px = 0; px <= waveW; px += 1) {
+      const xVal = xMin + (px / waveW) * xRange;
+      let sum = 0;
+      for (let n = 1; n <= nTerms; n++) {
+        sum += (2 / Math.PI) * Math.pow(-1, n + 1) * Math.sin(n * xVal) / n;
+      }
+      const py = plotMidY - sum * plotHalfH;
+      px === 0 ? ctx.moveTo(waveL + px, py) : ctx.lineTo(waveL + px, py);
+
+      // Track Gibbs overshoot near x=0+
+      const xn = ((xVal % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      if (xn > 0 && xn < 0.5 && Math.abs(sum) > gibbsMax) {
+        gibbsMax = Math.abs(sum);
+        gibbsX = waveL + px;
+        gibbsY = py;
+      }
+    }
+    ctx.stroke();
+
+    // Gibbs annotation
+    if (nTerms >= 3 && gibbsMax > 1.05) {
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
+      ctx.beginPath(); ctx.arc(gibbsX, gibbsY, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText('Gibbs (~9%)', gibbsX + 6, gibbsY - 4);
+    }
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Sawtooth convergence', (waveL + waveR) / 2, plotT - 8);
+
+    // --- Bar chart: coefficients b_n = (-1)^(n+1) * 2/(πn) ---
+    const barW = barR - barL;
+    const maxBars = Math.min(nTerms, 20);
+    const barGap = 2;
+    const barWidth = Math.max(3, (barW - (maxBars - 1) * barGap) / maxBars);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(barL, plotMidY); ctx.lineTo(barR, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(barL, plotT); ctx.lineTo(barL, plotB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Coefficients b_n', (barL + barR) / 2, plotT - 8);
+
+    const maxCoeff = 2 / Math.PI; // b_1
+    for (let n = 1; n <= maxBars; n++) {
+      const bn = (2 / Math.PI) * Math.pow(-1, n + 1) / n;
+      const barH = (bn / maxCoeff) * plotHalfH * 0.9;
+      const bx = barL + 5 + (n - 1) * (barWidth + barGap);
+
+      ctx.fillStyle = bn > 0 ? WCOLORS.teal : WCOLORS.red;
+      ctx.globalAlpha = 0.8;
+      ctx.fillRect(bx, plotMidY - Math.max(0, barH), barWidth, Math.abs(barH));
+      ctx.globalAlpha = 1.0;
+
+      // Label for first few
+      if (maxBars <= 12 || n <= 5 || n === maxBars) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(n.toString(), bx + barWidth / 2, plotMidY + (bn > 0 ? 12 : -4));
+      }
+    }
+
+    // Formula
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('b_n = (−1)^(n+1) · 2/(πn)', barL, plotB + 14);
+
+    // Info
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('N = ' + nTerms + ' terms', 10, 18);
+  }
+
+  termsSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// 10. PLUCKED STRING (animate string modes)
+// =========================================================================
+function initPluckedString() {
+  const canvas = document.getElementById('scene-plucked-string');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const pluckSlider = document.getElementById('pluck-position');
+  const speedSlider = document.getElementById('pluck-speed');
+
+  let t = 0;
+  const nModes = 12; // number of modes to include
+
+  function tick() {
+    const pluckPos = parseFloat(pluckSlider?.value || 0.33); // fractional position along string
+    const speed = parseFloat(speedSlider?.value || 1);
+    const dt = 0.02 * speed;
+    t += dt;
+
+    wClear(ctx, W, H);
+
+    const L = 1; // string length (normalized)
+
+    // Plucked string coefficients: A_n = (2h L^2)/(n^2 π^2 d(L-d)) * sin(nπd/L)
+    // where d = pluck position, h = amplitude
+    const d = pluckPos * L;
+    const h = 1;
+    const coeffs = [];
+    for (let n = 1; n <= nModes; n++) {
+      const An = (2 * h * L * L) / (n * n * Math.PI * Math.PI * d * (L - d)) * Math.sin(n * Math.PI * d / L);
+      coeffs.push(An);
+    }
+
+    // --- Top: animated string ---
+    const strL = 50, strR = W - 50;
+    const strY = 80;
+    const strW = strR - strL;
+    const strHalfH = 50;
+
+    // Fixed ends (walls)
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(strL - 5, strY - 20, 5, 40);
+    ctx.fillRect(strR, strY - 20, 5, 40);
+
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(strL, strY); ctx.lineTo(strR, strY); ctx.stroke();
+
+    // Pluck position marker
+    const pluckX = strL + pluckPos * strW;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(pluckX, strY - 35); ctx.lineTo(pluckX, strY + 35); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('pluck', pluckX, strY - 38);
+
+    // Initial shape (dashed)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(strL, strY);
+    ctx.lineTo(pluckX, strY - strHalfH * h);
+    ctx.lineTo(strR, strY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Animated string
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= strW; px += 1) {
+      const x = px / strW; // 0 to 1
+      let y = 0;
+      for (let n = 0; n < nModes; n++) {
+        const omega_n = (n + 1) * Math.PI; // ω_n = nπc/L, c=1, L=1
+        y += coeffs[n] * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
+      }
+      const py = strY - y * strHalfH;
+      px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
+    }
+    ctx.stroke();
+
+    // --- Bottom: individual mode contributions ---
+    const modesT = 145, modesB = H - 15;
+    const modesH = modesB - modesT;
+    const modeMidY = (modesT + modesB) / 2;
+    const modeHalfH = modesH / 2 * 0.8;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(strL, modeMidY); ctx.lineTo(strR, modeMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(strL, modesT); ctx.lineTo(strL, modesB); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Individual mode contributions', (strL + strR) / 2, modesT - 5);
+
+    // Show first few modes individually (translucent)
+    const showModes = Math.min(5, nModes);
+    const modeColors = [WCOLORS.teal, WCOLORS.blue, WCOLORS.amber, WCOLORS.red, WCOLORS.orange];
+    for (let n = 0; n < showModes; n++) {
+      const omega_n = (n + 1) * Math.PI;
+      ctx.strokeStyle = modeColors[n % modeColors.length];
+      ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      for (let px = 0; px <= strW; px += 2) {
+        const x = px / strW;
+        const y = coeffs[n] * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
+        const py = modeMidY - y * modeHalfH;
+        px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Legend for modes
+    ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
+    for (let n = 0; n < showModes; n++) {
+      ctx.fillStyle = modeColors[n % modeColors.length];
+      ctx.fillText('n=' + (n + 1), strR + 5, modesT + 10 + n * 13);
+    }
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Pluck at x/L = ' + pluckPos.toFixed(2), 10, 18);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
 }
