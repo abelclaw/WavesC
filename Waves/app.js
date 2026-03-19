@@ -3170,7 +3170,7 @@ function sceneMarkup(type) {
         <div class="scene-label">Interactive 4: Race to Equilibrium</div>
         <p class="scene-caption">Three oscillators with the same &omega;<sub>0</sub> but different damping start from the same displacement. The critically damped one (amber) always returns to equilibrium fastest without overshooting. Adjust &omega;<sub>0</sub> to change the natural frequency.</p>
         <div class="interactive-scene">
-          <canvas id="scene-damping-regimes" width="550" height="280"></canvas>
+          <canvas id="scene-damping-regimes" width="580" height="380"></canvas>
           <div class="scene-controls">
             <label>&omega;<sub>0</sub>: <input type="range" id="regime-omega0" min="1" max="10" step="0.5" value="5"><span class="scene-val" id="regime-omega0-val">5.0</span></label>
           </div>

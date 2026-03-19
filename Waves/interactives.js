@@ -684,7 +684,14 @@ function initDampingRegimes() {
   const nPts = 500;
   const x0 = 1;
 
-  const plotL = 50, plotR = W - 30, plotT = 40, plotB = H - 40;
+  // Layout: three spring-mass systems on top, plot below
+  const springZoneH = 130;
+  const springY0 = 10; // top of spring zone
+  const springSpacing = W / 3;
+  const springEqY = springY0 + springZoneH * 0.45; // equilibrium line
+  const springMaxDisp = 40;
+
+  const plotL = 50, plotR = W - 25, plotT = springZoneH + 20, plotB = H - 30;
   const plotW = plotR - plotL, plotH = plotB - plotT;
   const midY = (plotT + plotB) / 2;
 
@@ -704,6 +711,62 @@ function initDampingRegimes() {
     }
   }
 
+  function drawSpringMass(cx, eqY, disp, color, label, dampLabel) {
+    const massY = eqY + disp * springMaxDisp;
+    const ceilY = springY0 + 8;
+    const bW = 32, bH = 24;
+
+    // Ceiling
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(cx - 22, ceilY, 44, 4);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath(); ctx.moveTo(cx - 16 + i * 10, ceilY); ctx.lineTo(cx - 21 + i * 10, ceilY - 5); ctx.stroke();
+    }
+
+    // Spring
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+    const sTop = ceilY + 4;
+    const sLen = Math.max(massY - bH / 2 - sTop, 15);
+    const nCoils = 6;
+    ctx.beginPath(); ctx.moveTo(cx, sTop);
+    const seg = sLen / (nCoils * 2 + 2);
+    let cy = sTop + seg;
+    ctx.lineTo(cx, cy);
+    for (let i = 0; i < nCoils; i++) {
+      const dir = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(cx + dir * 10, cy + seg);
+      cy += 2 * seg;
+      ctx.lineTo(cx, cy);
+    }
+    ctx.lineTo(cx, massY - bH / 2);
+    ctx.stroke();
+
+    // Dashpot (small, beside spring)
+    const dpX = cx + 18, dpW = 6;
+    ctx.strokeStyle = color + '50'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(dpX, sTop); ctx.lineTo(dpX, eqY - 10); ctx.stroke();
+    ctx.strokeRect(dpX - dpW / 2, eqY - 10, dpW, 14);
+    ctx.beginPath(); ctx.moveTo(dpX, eqY + 4); ctx.lineTo(dpX, massY); ctx.stroke();
+
+    // Mass block
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.roundRect(cx - bW / 2, massY - bH / 2, bW, bH, 3); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('m', cx, massY + 3);
+
+    // Eq line
+    ctx.strokeStyle = WCOLORS.textDim + '40'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(cx - 22, eqY); ctx.lineTo(cx + 22, eqY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = color; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, cx, springY0 + springZoneH - 2);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif';
+    ctx.fillText(dampLabel, cx, springY0 + springZoneH + 10);
+  }
+
   function tick() {
     t += 0.02;
     if (t > tMax) t = 0;
@@ -720,25 +783,34 @@ function initDampingRegimes() {
     const gammaC = 2 * omega0;
     const gammaOD = omega0 * 5;
 
-    // Axes
+    const curves = [
+      { gamma: gammaUD, color: WCOLORS.teal, label: 'Underdamped', dampLabel: '\u03B3 = ' + gammaUD.toFixed(1) },
+      { gamma: gammaC, color: WCOLORS.amber, label: 'Critical', dampLabel: '\u03B3 = ' + gammaC.toFixed(1) },
+      { gamma: gammaOD, color: WCOLORS.orange, label: 'Overdamped', dampLabel: '\u03B3 = ' + gammaOD.toFixed(1) },
+    ];
+
+    // --- Three spring-mass systems ---
+    for (let i = 0; i < 3; i++) {
+      const cx = springSpacing * (i + 0.5);
+      const curVal = xt(omega0, curves[i].gamma, t);
+      drawSpringMass(cx, springEqY, curVal, curves[i].color, curves[i].label, curves[i].dampLabel);
+    }
+
+    // Divider
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT - 8); ctx.lineTo(plotR, plotT - 8); ctx.stroke();
+
+    // --- x(t) plot ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotT - 5); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('x(t)', plotL - 16, plotT - 6);
+    ctx.fillText('x(t)', plotL - 16, plotT - 2);
     ctx.fillText('t', plotR + 10, midY + 4);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('x\u2080', plotL - 5, plotT + 5);
-
-    const curves = [
-      { gamma: gammaUD, color: WCOLORS.teal, label: 'Underdamped (\u03B3 = ' + gammaUD.toFixed(1) + ')' },
-      { gamma: gammaC, color: WCOLORS.amber, label: 'Critical (\u03B3 = ' + gammaC.toFixed(1) + ')' },
-      { gamma: gammaOD, color: WCOLORS.orange, label: 'Overdamped (\u03B3 = ' + gammaOD.toFixed(1) + ')' },
-    ];
 
     // Full curves (faint)
     for (const curve of curves) {
-      ctx.strokeStyle = curve.color + '30'; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = curve.color + '25'; ctx.lineWidth = 1.5;
       ctx.beginPath();
       for (let i = 0; i <= nPts; i++) {
         const tc = (i / nPts) * tMax;
@@ -750,7 +822,7 @@ function initDampingRegimes() {
       ctx.stroke();
     }
 
-    // Traced portions up to current time
+    // Traced portions
     const curIdx = Math.floor((t / tMax) * nPts);
     for (const curve of curves) {
       ctx.strokeStyle = curve.color; ctx.lineWidth = 2.5;
@@ -764,29 +836,17 @@ function initDampingRegimes() {
       }
       ctx.stroke();
 
-      // Dot at current time
+      // Dot
       const curVal = xt(omega0, curve.gamma, t);
       const dotPx = plotL + (t / tMax) * plotW;
       const dotPy = midY - curVal * (plotH / 2) * 0.85;
       ctx.fillStyle = curve.color;
-      ctx.beginPath(); ctx.arc(dotPx, dotPy, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(dotPx, dotPy, 4, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Legend
-    let ly = plotT + 5;
-    for (const curve of curves) {
-      ctx.fillStyle = curve.color; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillRect(plotL + plotW * 0.55, ly - 8, 14, 3);
-      ctx.fillText(curve.label, plotL + plotW * 0.55 + 20, ly);
-      ly += 18;
-    }
-
-    // Annotation
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Fastest return without oscillation \u2192', plotL + plotW * 0.35, plotB + 14);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(1) + ' rad/s', plotL + 5, plotT - 12);
+    // omega0 label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(1), plotR, plotT - 2);
   }
 
   omega0Slider?.addEventListener('input', () => { t = 0; });
