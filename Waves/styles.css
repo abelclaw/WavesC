@@ -2174,3 +2174,2230 @@ a {
     gap: 8px;
   }
 }
+
+/* ==========================================================================
+   WAVE INTERACTIVE SCENES
+   ========================================================================== */
+
+/* --- Shared scene child positioning --- */
+
+.oscillator-scene,
+.driven-scene,
+.coupled-scene,
+.n-modes-scene,
+.fourier-scene,
+.waves-scene,
+.music-scene,
+.ft-scene,
+.impedance-scene,
+.power-scene,
+.wavepacket-scene,
+.em-scene,
+.light-scene,
+.polarization-scene,
+.refraction-scene,
+.prism-scene,
+.color-scene,
+.antenna-scene,
+.diffraction-scene,
+.quantum-scene,
+.doppler-scene {
+  position: absolute;
+  inset: 44px 16px 16px;
+}
+
+/* ==========================================================================
+   Scene 1 — Oscillator
+   ========================================================================== */
+
+.spring-coil {
+  position: absolute;
+  left: 12%;
+  top: 8%;
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+}
+
+.coil-segment {
+  position: relative;
+  width: 28px;
+  height: 10px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: coilCompress 2.4s ease-in-out infinite;
+}
+
+@keyframes coilCompress {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.45); }
+}
+
+.spring-mass {
+  position: absolute;
+  left: 6%;
+  top: 55%;
+  width: 48px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #134e4a);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.25);
+  animation: massBob 2.4s ease-in-out infinite;
+}
+
+@keyframes massBob {
+  0%, 100% { transform: translateY(-30px); }
+  50% { transform: translateY(30px); }
+}
+
+.sine-trail {
+  position: absolute;
+  right: 6%;
+  top: 20%;
+  width: 55%;
+  height: 60%;
+  opacity: 0.8;
+  animation: trailDraw 4s linear infinite;
+}
+
+@keyframes trailDraw {
+  0% { stroke-dashoffset: 600; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.sine-trail path {
+  stroke-dasharray: 600;
+  animation: trailDraw 4s linear infinite;
+}
+
+.osc-dot {
+  position: absolute;
+  top: 48%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.4);
+  animation: oscDotMove 2.4s ease-in-out infinite;
+}
+
+@keyframes oscDotMove {
+  0%, 100% { transform: translateY(-20px); opacity: 0.9; }
+  50% { transform: translateY(20px); opacity: 1; }
+}
+
+.equilibrium-line {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 50%;
+  height: 0;
+  border-top: 2px dashed rgba(31, 42, 46, 0.2);
+}
+
+.potential-curve {
+  position: absolute;
+  right: 6%;
+  bottom: 6%;
+  width: 35%;
+  height: 30%;
+  opacity: 0.7;
+}
+
+.potential-curve svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   Scene 2 — Driven oscillator
+   ========================================================================== */
+
+.drive-piston {
+  position: absolute;
+  left: 4%;
+  top: 38%;
+  width: 30px;
+  height: 50px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--accent-2), var(--accent-3));
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+  animation: pistonDrive 2s ease-in-out infinite;
+}
+
+@keyframes pistonDrive {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+}
+
+.drive-spring {
+  position: absolute;
+  left: 14%;
+  top: 45%;
+  width: 22%;
+  display: flex;
+  gap: 0;
+  align-items: center;
+}
+
+.drive-spring .coil-segment {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+  animation: driveCoil 2s ease-in-out infinite;
+}
+
+@keyframes driveCoil {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.6); }
+}
+
+.driven-mass {
+  position: absolute;
+  left: 38%;
+  top: 35%;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  box-shadow: 0 6px 18px rgba(15, 118, 110, 0.25);
+  animation: drivenResponse 2s ease-in-out infinite;
+}
+
+@keyframes drivenResponse {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(14px); }
+  75% { transform: translateX(-10px); }
+}
+
+.resonance-glow {
+  position: absolute;
+  left: 36%;
+  top: 33%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.35), transparent 70%);
+  animation: resGlow 3s ease-in-out infinite;
+}
+
+@keyframes resGlow {
+  0%, 100% { transform: scale(0.6); opacity: 0.2; }
+  50% { transform: scale(2.2); opacity: 0.8; }
+}
+
+.amplitude-envelope {
+  position: absolute;
+  right: 6%;
+  top: 15%;
+  width: 40%;
+  height: 60%;
+  opacity: 0.7;
+}
+
+.amplitude-envelope svg {
+  width: 100%;
+  height: 100%;
+}
+
+.drive-wave {
+  position: absolute;
+  top: 52%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  opacity: 0.5;
+  animation: driveWavePulse 2s ease-in-out infinite;
+}
+
+@keyframes driveWavePulse {
+  0%, 100% { transform: scale(0.6); opacity: 0.3; }
+  50% { transform: scale(1.4); opacity: 0.8; }
+}
+
+.response-curve {
+  position: absolute;
+  right: 4%;
+  bottom: 4%;
+  width: 35%;
+  height: 28%;
+  opacity: 0.8;
+}
+
+.response-curve svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   Scene 3 — Coupled oscillators
+   ========================================================================== */
+
+.wall-left,
+.wall-right {
+  position: absolute;
+  top: 30%;
+  width: 10px;
+  height: 40%;
+  border-radius: 3px;
+  background: rgba(31, 42, 46, 0.5);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.wall-left {
+  left: 4%;
+}
+
+.wall-right {
+  right: 4%;
+}
+
+.coupled-spring {
+  position: absolute;
+  top: 46%;
+  height: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.coupled-spring .coil-segment {
+  width: 16px;
+  height: 14px;
+  border-width: 1.5px;
+}
+
+.coupled-spring.spring-1 {
+  left: 7%;
+  width: 18%;
+}
+
+.coupled-spring.spring-2 {
+  left: 37%;
+  width: 20%;
+}
+
+.coupled-spring.spring-3 {
+  left: 68%;
+  width: 18%;
+}
+
+.coupled-mass {
+  position: absolute;
+  top: 40%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.2);
+}
+
+.coupled-mass.mass-1 {
+  left: 26%;
+  background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  animation: coupledMass1 3s ease-in-out infinite;
+}
+
+.coupled-mass.mass-2 {
+  left: 58%;
+  background: linear-gradient(135deg, #0ea5e9, var(--accent));
+  animation: coupledMass2 3s ease-in-out infinite;
+}
+
+@keyframes coupledMass1 {
+  0%, 100% { transform: translateX(20px); }
+  50% { transform: translateX(-20px); }
+}
+
+@keyframes coupledMass2 {
+  0%, 100% { transform: translateX(-18px); }
+  50% { transform: translateX(18px); }
+}
+
+.beat-envelope {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 25%;
+  opacity: 0.7;
+}
+
+.beat-envelope svg {
+  width: 100%;
+  height: 100%;
+}
+
+.energy-arrow {
+  position: absolute;
+  top: 55%;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid rgba(217, 119, 6, 0.5);
+  animation: energyBounce 3s ease-in-out infinite;
+}
+
+@keyframes energyBounce {
+  0%, 100% { transform: translateX(10px) rotate(90deg); opacity: 0.3; }
+  50% { transform: translateX(-10px) rotate(-90deg); opacity: 0.8; }
+}
+
+/* ==========================================================================
+   Scene 4 — N-modes
+   ========================================================================== */
+
+.chain-wall-left,
+.chain-wall-right {
+  position: absolute;
+  top: 28%;
+  width: 8px;
+  height: 44%;
+  border-radius: 3px;
+  background: rgba(31, 42, 46, 0.5);
+}
+
+.chain-wall-left {
+  left: 4%;
+}
+
+.chain-wall-right {
+  right: 4%;
+}
+
+.chain-mass {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #0ea5e9);
+  box-shadow: 0 0 8px rgba(15, 118, 110, 0.2);
+  animation: chainOscillate 3s ease-in-out infinite;
+}
+
+@keyframes chainOscillate {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--chain-amp, 12px)); }
+}
+
+.chain-spring {
+  position: absolute;
+  top: 49%;
+  width: 8%;
+  height: 3px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--accent) 0px,
+    var(--accent) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+  opacity: 0.5;
+  animation: chainSpringStretch 3s ease-in-out infinite;
+}
+
+@keyframes chainSpringStretch {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.15); }
+}
+
+.n-modes-scene .mode-shape,
+.n-modes-scene .mode-shape-2 {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 20%;
+  height: 60%;
+  pointer-events: none;
+}
+
+.mode-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.mode-label.mode-1 {
+  right: 8%;
+  top: 18%;
+  color: rgba(99, 179, 237, 0.8);
+}
+
+.mode-label.mode-2 {
+  right: 8%;
+  bottom: 18%;
+  color: rgba(159, 122, 234, 0.8);
+}
+
+/* ==========================================================================
+   Scene 5 — Fourier series
+   ========================================================================== */
+
+.fourier-canvas {
+  position: absolute;
+  inset: 6% 8%;
+  width: 84%;
+  height: 88%;
+}
+
+.fourier-canvas .harmonic {
+  animation: harmonicShimmer 4s ease-in-out infinite;
+}
+
+.fourier-canvas .harmonic.h3 {
+  animation-delay: -0.6s;
+}
+
+.fourier-canvas .harmonic.h5 {
+  animation-delay: -1.2s;
+}
+
+@keyframes harmonicShimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.fourier-canvas .square-target {
+  animation: squareFlash 4s ease-in-out infinite;
+}
+
+@keyframes squareFlash {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+.freq-label {
+  position: absolute;
+  bottom: 8%;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  animation: freqLabelPop 4s ease-in-out infinite;
+}
+
+@keyframes freqLabelPop {
+  0%, 100% { transform: scale(0.9); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.sum-arrow {
+  position: absolute;
+  right: 10%;
+  top: 50%;
+  width: 24px;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 2px;
+}
+
+.sum-arrow::after {
+  content: "";
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid var(--accent-2);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* ==========================================================================
+   Scene 6 — Waves (traveling wave)
+   ========================================================================== */
+
+.wave-canvas {
+  position: absolute;
+  inset: 10% 4%;
+  width: 92%;
+  height: 50%;
+}
+
+.wave-canvas .traveling-wave {
+  animation: wavePropagateStroke 3s linear infinite;
+  stroke-dasharray: 800;
+}
+
+@keyframes wavePropagateStroke {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -160; }
+}
+
+.wave-canvas .traveling-wave-2 {
+  animation: wavePropagateStroke 3s linear infinite;
+  animation-delay: -1s;
+  stroke-dasharray: 800;
+}
+
+.medium-dot {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(15, 118, 110, 0.5);
+  animation: mediumOscillate 3s ease-in-out infinite;
+}
+
+@keyframes mediumOscillate {
+  0%, 100% { transform: translateY(-14px); }
+  50% { transform: translateY(14px); }
+}
+
+.wave-direction-arrow {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: 60px;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 2px;
+  animation: arrowPulse 3s ease-in-out infinite;
+}
+
+.wave-direction-arrow::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid var(--accent-2);
+  border-top: 5.5px solid transparent;
+  border-bottom: 5.5px solid transparent;
+}
+
+@keyframes arrowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.crest-label,
+.trough-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.crest-label {
+  left: 25%;
+  top: 22%;
+}
+
+.trough-label {
+  left: 45%;
+  top: 68%;
+}
+
+.wavelength-bracket {
+  position: absolute;
+  left: 20%;
+  bottom: 10%;
+  width: 25%;
+  height: 12px;
+  border: 2px solid rgba(31, 42, 46, 0.25);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.wavelength-bracket::after {
+  content: "lambda";
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  font-family: var(--display);
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================================
+   Scene 7 — Music (string harmonics)
+   ========================================================================== */
+
+.string-bridge-left,
+.string-bridge-right {
+  position: absolute;
+  top: 10%;
+  width: 8px;
+  height: 80%;
+  border-radius: 3px;
+  background: rgba(31, 42, 46, 0.4);
+}
+
+.string-bridge-left {
+  left: 2%;
+}
+
+.string-bridge-right {
+  right: 2%;
+}
+
+.harmonics-canvas {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 4%;
+  height: 92%;
+}
+
+.string-mode {
+  animation: stringVibrate 2.5s ease-in-out infinite;
+}
+
+.string-mode.m2 {
+  animation-duration: 1.8s;
+}
+
+.string-mode.m3 {
+  animation-duration: 1.4s;
+}
+
+.string-mode.m4 {
+  animation-duration: 1.1s;
+}
+
+@keyframes stringVibrate {
+  0%, 100% { opacity: 0.6; transform: scaleY(1); }
+  25% { opacity: 1; transform: scaleY(1.15); }
+  75% { opacity: 1; transform: scaleY(0.85); }
+}
+
+.harmonic-label {
+  position: absolute;
+  right: 6%;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  animation: harmonicLabelPulse 3s ease-in-out infinite;
+}
+
+@keyframes harmonicLabelPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.note-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 6px rgba(217, 119, 6, 0.35);
+  animation: notePulse 2s ease-in-out infinite;
+}
+
+@keyframes notePulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ==========================================================================
+   Scene 8 — Fourier Transform
+   ========================================================================== */
+
+.ft-scene {
+  display: flex;
+  align-items: stretch;
+}
+
+.time-domain,
+.freq-domain {
+  position: absolute;
+  top: 8%;
+  width: 38%;
+  height: 55%;
+}
+
+.time-domain {
+  left: 4%;
+}
+
+.freq-domain {
+  right: 4%;
+}
+
+.time-domain svg,
+.freq-domain svg {
+  width: 100%;
+  height: 100%;
+}
+
+.time-signal {
+  animation: signalOsc 3s ease-in-out infinite;
+}
+
+@keyframes signalOsc {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.lorentzian-peak {
+  animation: peakGlow 3s ease-in-out infinite;
+}
+
+@keyframes peakGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.envelope-decay,
+.envelope-decay-2 {
+  opacity: 0.5;
+}
+
+.domain-label {
+  position: absolute;
+  bottom: -4px;
+  right: 8px;
+  font-family: var(--display);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.peak-label {
+  position: absolute;
+  bottom: -4px;
+  left: 42%;
+  font-family: var(--display);
+  font-size: 0.7rem;
+  color: rgba(159, 122, 234, 0.9);
+}
+
+.width-label {
+  position: absolute;
+  bottom: 22%;
+  left: 56%;
+  font-family: var(--display);
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.ft-arrow {
+  position: absolute;
+  left: 44%;
+  top: 28%;
+  width: 12%;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ft-arrow::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 2px;
+}
+
+.ft-arrow::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 10px solid var(--accent-2);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.arrow-particle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  animation: arrowParticleFlow 1.5s linear infinite;
+}
+
+@keyframes arrowParticleFlow {
+  0% { left: 0; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+/* ==========================================================================
+   Scene 9 — Impedance
+   ========================================================================== */
+
+.medium-1,
+.medium-2 {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+
+.medium-1 {
+  left: 0;
+  background: rgba(99, 179, 237, 0.06);
+  border-radius: 8px 0 0 8px;
+}
+
+.medium-2 {
+  right: 0;
+  background: rgba(72, 187, 120, 0.06);
+  border-radius: 0 8px 8px 0;
+}
+
+.boundary-line {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  bottom: 4%;
+  width: 3px;
+  background: rgba(31, 42, 46, 0.35);
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+.incident-wave,
+.reflected-wave,
+.transmitted-wave {
+  position: absolute;
+  height: 30%;
+}
+
+.incident-wave {
+  left: 2%;
+  top: 20%;
+  width: 46%;
+  animation: incidentSlide 3s linear infinite;
+}
+
+@keyframes incidentSlide {
+  0% { transform: translateX(-10px); }
+  100% { transform: translateX(10px); }
+}
+
+.reflected-wave {
+  left: 2%;
+  top: 55%;
+  width: 46%;
+  animation: reflectedSlide 3s linear infinite;
+}
+
+@keyframes reflectedSlide {
+  0% { transform: translateX(8px); }
+  100% { transform: translateX(-8px); }
+}
+
+.transmitted-wave {
+  right: 2%;
+  top: 25%;
+  width: 46%;
+  animation: transmittedSlide 3s linear infinite;
+}
+
+@keyframes transmittedSlide {
+  0% { transform: translateX(-8px); }
+  100% { transform: translateX(8px); }
+}
+
+.z-label {
+  position: absolute;
+  top: 8%;
+  font-family: var(--display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.z1-label {
+  left: 18%;
+}
+
+.z2-label {
+  right: 18%;
+}
+
+.inc-arrow,
+.ref-arrow,
+.trans-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  animation: impArrowPulse 2s ease-in-out infinite;
+}
+
+.inc-arrow {
+  top: 36%;
+  border-left: 6px solid rgba(99, 179, 237, 0.7);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
+.ref-arrow {
+  top: 70%;
+  border-right: 6px solid rgba(237, 137, 54, 0.6);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
+.trans-arrow {
+  top: 40%;
+  border-left: 6px solid rgba(72, 187, 120, 0.7);
+  border-top: 3px solid transparent;
+  border-bottom: 3px solid transparent;
+}
+
+@keyframes impArrowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* ==========================================================================
+   Scene 10 — Power / energy transport
+   ========================================================================== */
+
+.power-wave {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 10%;
+  height: 42%;
+}
+
+.power-wave path {
+  animation: powerWaveSlide 3s linear infinite;
+  stroke-dasharray: 600;
+}
+
+@keyframes powerWaveSlide {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -120; }
+}
+
+.intensity-bar {
+  position: absolute;
+  bottom: 18%;
+  width: 6%;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.7), rgba(15, 118, 110, 0.2));
+  animation: intensityPulse 3s ease-in-out infinite;
+}
+
+@keyframes intensityPulse {
+  0%, 100% { transform: scaleY(0.6); opacity: 0.5; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.power-arrow {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 8%;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 2px;
+}
+
+.power-arrow::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid var(--accent-2);
+  border-top: 5.5px solid transparent;
+  border-bottom: 5.5px solid transparent;
+}
+
+.energy-particle {
+  position: absolute;
+  top: 6%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  animation: energyFlow 3s linear infinite;
+}
+
+@keyframes energyFlow {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(200px); opacity: 0; }
+}
+
+.power-label {
+  position: absolute;
+  right: 6%;
+  bottom: 6%;
+  font-family: var(--display);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Scene 11 — Wavepackets
+   ========================================================================== */
+
+.gaussian-envelope {
+  position: absolute;
+  left: 25%;
+  top: 15%;
+  width: 50%;
+  height: 70%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(159, 122, 234, 0.12), transparent 70%);
+  animation: envelopeSpread 5s ease-in-out infinite;
+}
+
+@keyframes envelopeSpread {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.3); }
+}
+
+.packet-canvas {
+  position: absolute;
+  inset: 10% 6%;
+  width: 88%;
+  height: 50%;
+}
+
+.carrier-wave {
+  animation: carrierSlide 2.5s linear infinite;
+  stroke-dasharray: 500;
+}
+
+@keyframes carrierSlide {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -60; }
+}
+
+.envelope-top,
+.envelope-bottom {
+  opacity: 0.7;
+}
+
+.group-arrow,
+.phase-arrow {
+  position: absolute;
+  padding: 3px 10px;
+  font-family: var(--display);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  border-radius: 8px;
+}
+
+.group-arrow {
+  left: 35%;
+  bottom: 16%;
+  background: rgba(159, 122, 234, 0.7);
+  animation: groupSlide 5s linear infinite;
+}
+
+@keyframes groupSlide {
+  0% { transform: translateX(-20px); }
+  100% { transform: translateX(20px); }
+}
+
+.phase-arrow {
+  left: 50%;
+  bottom: 8%;
+  background: rgba(99, 179, 237, 0.7);
+  animation: phaseSlide 2.5s linear infinite;
+}
+
+@keyframes phaseSlide {
+  0% { transform: translateX(-30px); }
+  100% { transform: translateX(30px); }
+}
+
+.dispersion-dot {
+  position: absolute;
+  top: 45%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(159, 122, 234, 0.6);
+  animation: disperse 5s ease-in-out infinite;
+}
+
+@keyframes disperse {
+  0%, 100% { transform: translateX(0) scale(1); opacity: 0.8; }
+  50% { transform: translateX(var(--disp-x, 12px)) scale(1.4); opacity: 0.4; }
+}
+
+/* ==========================================================================
+   Scene 12 — EM waves
+   ========================================================================== */
+
+.propagation-axis {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 50%;
+  height: 2px;
+  background: rgba(31, 42, 46, 0.25);
+  border-radius: 2px;
+}
+
+.propagation-axis::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid rgba(31, 42, 46, 0.3);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.e-field-arrow {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(237, 137, 54, 0.8), transparent);
+  transform-origin: bottom center;
+  animation: eFieldOsc 3s ease-in-out infinite;
+}
+
+@keyframes eFieldOsc {
+  0%, 100% { transform: scaleY(1); }
+  25% { transform: scaleY(-0.6); }
+  75% { transform: scaleY(1.2); }
+}
+
+.b-field-arrow {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(72, 187, 120, 0.8), transparent);
+  transform-origin: left center;
+  animation: bFieldOsc 3s ease-in-out infinite;
+}
+
+@keyframes bFieldOsc {
+  0%, 100% { transform: scaleX(1); }
+  25% { transform: scaleX(-0.6); }
+  75% { transform: scaleX(1.2); }
+}
+
+.e-wave-path,
+.b-wave-path {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  pointer-events: none;
+}
+
+.e-wave-path {
+  top: 15%;
+  height: 35%;
+  animation: eWaveSlide 3s linear infinite;
+}
+
+.b-wave-path {
+  top: 50%;
+  height: 35%;
+  animation: bWaveSlide 3s linear infinite;
+}
+
+.e-wave-path svg,
+.b-wave-path svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes eWaveSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-20px); }
+}
+
+@keyframes bWaveSlide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-20px); }
+}
+
+.field-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.e-label {
+  left: 6%;
+  top: 18%;
+  color: rgba(237, 137, 54, 0.9);
+}
+
+.b-label {
+  left: 6%;
+  bottom: 12%;
+  color: rgba(72, 187, 120, 0.9);
+}
+
+.k-label {
+  right: 4%;
+  top: 46%;
+  color: rgba(31, 42, 46, 0.5);
+}
+
+/* ==========================================================================
+   Scene 13 — Light
+   ========================================================================== */
+
+.beam-core {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 46%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 220, 80, 0.9), rgba(255, 200, 50, 0.6));
+  box-shadow: 0 0 16px rgba(255, 200, 50, 0.4);
+}
+
+.e-oscillation {
+  position: absolute;
+  top: 30%;
+  width: 4px;
+  height: 40%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(237, 137, 54, 0.7), rgba(237, 137, 54, 0.1));
+  transform-origin: center bottom;
+  animation: eOsc 2s ease-in-out infinite;
+}
+
+@keyframes eOsc {
+  0%, 100% { transform: scaleY(1); }
+  25% { transform: scaleY(-0.5); }
+  75% { transform: scaleY(1.1); }
+}
+
+.beam-glow {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 35%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 220, 80, 0.2), transparent 70%);
+  animation: beamGlow 3s ease-in-out infinite;
+}
+
+@keyframes beamGlow {
+  0%, 100% { opacity: 0.4; transform: scaleY(0.8); }
+  50% { opacity: 0.9; transform: scaleY(1.2); }
+}
+
+.photon-dot {
+  position: absolute;
+  top: 47%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 220, 80, 0.9);
+  box-shadow: 0 0 8px rgba(255, 200, 50, 0.6);
+  animation: photonTravel 2s linear infinite;
+}
+
+@keyframes photonTravel {
+  0% { transform: translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateX(120px); opacity: 0; }
+}
+
+.spectrum-bar {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 8%;
+  height: 10px;
+  border-radius: 999px;
+  display: flex;
+  overflow: hidden;
+}
+
+.spectrum-segment {
+  flex: 1;
+}
+
+.spectrum-segment.red { background: rgba(255, 50, 50, 0.7); }
+.spectrum-segment.orange { background: rgba(255, 165, 0, 0.7); }
+.spectrum-segment.yellow { background: rgba(255, 255, 0, 0.7); }
+.spectrum-segment.green { background: rgba(50, 205, 50, 0.7); }
+.spectrum-segment.blue { background: rgba(30, 144, 255, 0.7); }
+.spectrum-segment.violet { background: rgba(148, 0, 211, 0.7); }
+
+/* ==========================================================================
+   Scene 14 — Polarization
+   ========================================================================== */
+
+.pol-axis {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 2px;
+  background: rgba(31, 42, 46, 0.15);
+  border-radius: 2px;
+}
+
+.linear-pol,
+.circular-pol {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 30%;
+}
+
+.linear-pol {
+  top: 12%;
+}
+
+.circular-pol {
+  top: 55%;
+}
+
+.pol-arrow {
+  position: absolute;
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  transform-origin: center bottom;
+}
+
+.pol-arrow.linear {
+  background: linear-gradient(180deg, rgba(99, 179, 237, 0.8), transparent);
+  animation: linearPolOsc 2s ease-in-out infinite;
+}
+
+@keyframes linearPolOsc {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(-1); }
+}
+
+.pol-arrow.circular {
+  background: linear-gradient(180deg, rgba(159, 122, 234, 0.7), transparent);
+  animation: circularPolRot 3s linear infinite;
+}
+
+@keyframes circularPolRot {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.pol-helix {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 4%;
+  height: 24%;
+}
+
+.pol-helix svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pol-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.linear-label {
+  right: 6%;
+  top: 18%;
+}
+
+.circular-label {
+  right: 6%;
+  top: 60%;
+}
+
+/* ==========================================================================
+   Scene 15 — Refraction
+   ========================================================================== */
+
+.medium-air {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  height: 50%;
+  background: rgba(135, 206, 250, 0.08);
+  border-radius: 8px 8px 0 0;
+}
+
+.medium-glass {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: 50%;
+  background: rgba(99, 179, 237, 0.12);
+  border-radius: 0 0 8px 8px;
+}
+
+.refraction-boundary {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 50%;
+  height: 3px;
+  background: rgba(31, 42, 46, 0.3);
+  border-radius: 2px;
+  transform: translateY(-50%);
+}
+
+.normal-line {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  bottom: 10%;
+  width: 0;
+  border-left: 2px dashed rgba(31, 42, 46, 0.2);
+  transform: translateX(-50%);
+}
+
+.incident-ray {
+  position: absolute;
+  left: 22%;
+  top: 8%;
+  width: 4px;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(99, 179, 237, 0.9), rgba(99, 179, 237, 0.4));
+  border-radius: 2px;
+  transform: rotate(-25deg);
+  transform-origin: bottom center;
+  animation: incidentRayPulse 3s ease-in-out infinite;
+}
+
+@keyframes incidentRayPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.refracted-ray {
+  position: absolute;
+  left: 48%;
+  top: 50%;
+  width: 4px;
+  height: 44%;
+  background: linear-gradient(180deg, rgba(72, 187, 120, 0.5), rgba(72, 187, 120, 0.9));
+  border-radius: 2px;
+  transform: rotate(-15deg);
+  transform-origin: top center;
+  animation: refractedRayPulse 3s ease-in-out infinite;
+}
+
+@keyframes refractedRayPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.reflected-ray-small {
+  position: absolute;
+  left: 60%;
+  top: 8%;
+  width: 3px;
+  height: 44%;
+  background: linear-gradient(180deg, rgba(237, 137, 54, 0.3), rgba(237, 137, 54, 0.6));
+  border-radius: 2px;
+  transform: rotate(25deg);
+  transform-origin: bottom center;
+  opacity: 0.5;
+}
+
+.wavefront-line {
+  position: absolute;
+  width: 30%;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.wavefront-line.inc {
+  left: 12%;
+  background: rgba(99, 179, 237, 0.4);
+  transform: rotate(-25deg);
+  animation: wfSlideDown 3s linear infinite;
+}
+
+.wavefront-line.ref {
+  left: 35%;
+  background: rgba(72, 187, 120, 0.3);
+  transform: rotate(-15deg);
+  animation: wfSlideDown 3s linear infinite;
+}
+
+@keyframes wfSlideDown {
+  0% { opacity: 0; transform: translateY(-10px) rotate(inherit); }
+  50% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(10px) rotate(inherit); }
+}
+
+.angle-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.angle-label.theta1 {
+  left: 52%;
+  top: 34%;
+}
+
+.angle-label.theta2 {
+  left: 52%;
+  top: 58%;
+}
+
+.medium-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.medium-label.air-label {
+  right: 8%;
+  top: 8%;
+}
+
+.medium-label.glass-label {
+  right: 8%;
+  bottom: 8%;
+}
+
+/* ==========================================================================
+   Scene 16 — Prisms
+   ========================================================================== */
+
+.prism-body {
+  position: absolute;
+  left: 30%;
+  top: 10%;
+  width: 40%;
+  height: 80%;
+}
+
+.prism-body svg {
+  width: 100%;
+  height: 100%;
+}
+
+.white-beam {
+  position: absolute;
+  left: 4%;
+  top: 38%;
+  width: 30%;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 240, 0.7));
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  animation: beamEnter 3s ease-in-out infinite;
+}
+
+@keyframes beamEnter {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.spectrum-ray {
+  position: absolute;
+  right: 4%;
+  width: 28%;
+  height: 3px;
+  border-radius: 999px;
+  transform-origin: left center;
+  animation: spectrumSpread 4s ease-in-out infinite;
+}
+
+.spectrum-ray:nth-child(3) { top: 30%; }
+.spectrum-ray:nth-child(4) { top: 36%; }
+.spectrum-ray:nth-child(5) { top: 42%; }
+.spectrum-ray:nth-child(6) { top: 48%; }
+.spectrum-ray:nth-child(7) { top: 54%; }
+.spectrum-ray:nth-child(8) { top: 60%; }
+
+@keyframes spectrumSpread {
+  0%, 100% { transform: scaleX(0.7) rotate(var(--ray-angle, 0deg)); opacity: 0.5; }
+  50% { transform: scaleX(1) rotate(var(--ray-angle, 0deg)); opacity: 1; }
+}
+
+.prism-photon {
+  position: absolute;
+  top: 40%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  animation: prismPhotonFlow 3s linear infinite;
+}
+
+@keyframes prismPhotonFlow {
+  0% { transform: translateX(0); opacity: 0; }
+  15% { opacity: 1; }
+  50% { opacity: 1; }
+  100% { transform: translateX(180px); opacity: 0; }
+}
+
+/* ==========================================================================
+   Scene 17 — Color mixing
+   ========================================================================== */
+
+.color-circle {
+  position: absolute;
+  width: 36%;
+  height: 55%;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  animation: colorPulse 4s ease-in-out infinite;
+}
+
+.color-circle.red {
+  left: 18%;
+  top: 8%;
+  background: radial-gradient(circle, rgba(255, 60, 60, 0.55), rgba(255, 60, 60, 0.1));
+}
+
+.color-circle.green {
+  right: 18%;
+  top: 8%;
+  background: radial-gradient(circle, rgba(50, 205, 50, 0.55), rgba(50, 205, 50, 0.1));
+  animation-delay: -1.3s;
+}
+
+.color-circle.blue {
+  left: 32%;
+  bottom: 8%;
+  background: radial-gradient(circle, rgba(30, 144, 255, 0.55), rgba(30, 144, 255, 0.1));
+  animation-delay: -2.6s;
+}
+
+@keyframes colorPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.color-overlap {
+  position: absolute;
+  width: 14%;
+  height: 20%;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+.color-overlap.rg {
+  left: 42%;
+  top: 18%;
+  background: rgba(255, 255, 0, 0.45);
+}
+
+.color-overlap.gb {
+  right: 32%;
+  top: 50%;
+  background: rgba(0, 255, 255, 0.45);
+}
+
+.color-overlap.rb {
+  left: 30%;
+  top: 50%;
+  background: rgba(255, 0, 255, 0.45);
+}
+
+.color-overlap-center {
+  position: absolute;
+  left: 42%;
+  top: 38%;
+  width: 12%;
+  height: 18%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  animation: whitePulse 4s ease-in-out infinite;
+}
+
+@keyframes whitePulse {
+  0%, 100% { transform: scale(0.85); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+.color-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  animation: colorDotFloat 5s ease-in-out infinite;
+}
+
+@keyframes colorDotFloat {
+  0%, 100% { transform: translate(0, 0); opacity: 0.4; }
+  50% { transform: translate(4px, -6px); opacity: 0.9; }
+}
+
+.color-label,
+.mix-label {
+  position: absolute;
+  font-family: var(--display);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.r-label { left: 22%; top: 6%; color: rgba(255, 60, 60, 0.8); }
+.g-label { right: 22%; top: 6%; color: rgba(50, 205, 50, 0.8); }
+.b-label { left: 40%; bottom: 4%; color: rgba(30, 144, 255, 0.8); }
+
+.mix-label {
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.yellow-label { left: 42%; top: 12%; }
+.cyan-label { right: 28%; top: 52%; }
+.magenta-label { left: 24%; top: 52%; }
+.white-label { left: 46%; top: 40%; color: rgba(31, 42, 46, 0.6); }
+
+/* ==========================================================================
+   Scene 18 — Antennas
+   ========================================================================== */
+
+.dipole-rod {
+  position: absolute;
+  left: calc(50% - 3px);
+  top: 20%;
+  width: 6px;
+  height: 60%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(31, 42, 46, 0.6), rgba(31, 42, 46, 0.35));
+}
+
+.dipole-feed {
+  position: absolute;
+  left: calc(50% - 6px);
+  top: calc(50% - 6px);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.5);
+  animation: feedPulse 2s ease-in-out infinite;
+}
+
+@keyframes feedPulse {
+  0%, 100% { transform: scale(0.8); box-shadow: 0 0 6px rgba(217, 119, 6, 0.3); }
+  50% { transform: scale(1.2); box-shadow: 0 0 18px rgba(217, 119, 6, 0.6); }
+}
+
+.wavefront-circle {
+  position: absolute;
+  top: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(99, 179, 237, 0.35);
+  transform: translate(-50%, -50%);
+  animation: wavefrontExpand 3s ease-out infinite;
+}
+
+@keyframes wavefrontExpand {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+.radiation-lobe {
+  position: absolute;
+  left: calc(50% - 40px);
+  width: 80px;
+  height: 55px;
+  border-radius: 50%;
+  border: 2px solid rgba(72, 187, 120, 0.3);
+  background: rgba(72, 187, 120, 0.06);
+  animation: lobePulse 3s ease-in-out infinite;
+}
+
+.radiation-lobe.lobe-top {
+  top: 12%;
+}
+
+.radiation-lobe.lobe-bottom {
+  bottom: 12%;
+}
+
+@keyframes lobePulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.9; }
+}
+
+.rad-arrow {
+  position: absolute;
+  left: calc(50% - 2px);
+  top: calc(50% - 2px);
+  width: 35px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(237, 137, 54, 0.4);
+  transform-origin: left center;
+  animation: radArrowPulse 3s ease-in-out infinite;
+}
+
+@keyframes radArrowPulse {
+  0%, 100% { opacity: 0.2; transform: rotate(var(--rad-angle, 0deg)) scaleX(0.6); }
+  50% { opacity: 0.7; transform: rotate(var(--rad-angle, 0deg)) scaleX(1); }
+}
+
+.antenna-label {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Scene 19 — Diffraction
+   ========================================================================== */
+
+.diff-barrier {
+  position: absolute;
+  left: 38%;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: rgba(31, 42, 46, 0.5);
+  border-radius: 3px;
+}
+
+.diff-slit {
+  position: absolute;
+  left: 37%;
+  top: 40%;
+  width: 12px;
+  height: 20%;
+  background: transparent;
+  z-index: 2;
+  box-shadow:
+    -2px 0 0 rgba(31, 42, 46, 0.5),
+    2px 0 0 rgba(31, 42, 46, 0.5);
+}
+
+.incoming-wavefront {
+  position: absolute;
+  top: 10%;
+  height: 80%;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(99, 179, 237, 0.45);
+  animation: incomingWfSlide 3s linear infinite;
+}
+
+@keyframes incomingWfSlide {
+  0% { transform: translateX(0); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translateX(60px); opacity: 0; }
+}
+
+.huygens-wavelet {
+  position: absolute;
+  left: 42%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(72, 187, 120, 0.35);
+  transform: translate(-10%, -50%);
+  animation: huygensExpand 3.5s ease-out infinite;
+}
+
+@keyframes huygensExpand {
+  0% { transform: translate(-10%, -50%) scale(0.2); opacity: 0.8; }
+  100% { transform: translate(-10%, -50%) scale(2.5); opacity: 0; }
+}
+
+.intensity-screen {
+  position: absolute;
+  right: 4%;
+  top: 10%;
+  width: 8%;
+  height: 80%;
+}
+
+.intensity-screen svg {
+  width: 100%;
+  height: 100%;
+}
+
+.diffraction-dot {
+  position: absolute;
+  right: 8%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(99, 179, 237, 0.7);
+  animation: diffDotPulse 3s ease-in-out infinite;
+}
+
+@keyframes diffDotPulse {
+  0%, 100% { transform: scale(0.7); opacity: 0.4; }
+  50% { transform: scale(1.4); opacity: 1; }
+}
+
+/* ==========================================================================
+   Scene 20 — Quantum (particle in a well)
+   ========================================================================== */
+
+.potential-well {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 8%;
+  height: 82%;
+}
+
+.potential-well svg {
+  width: 100%;
+  height: 100%;
+}
+
+.wavefunction-canvas {
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  top: 12%;
+  height: 70%;
+}
+
+.psi-1 {
+  animation: psiOsc 3s ease-in-out infinite;
+}
+
+.psi-2 {
+  animation: psiOsc 2.2s ease-in-out infinite;
+  animation-delay: -0.5s;
+}
+
+.psi-3 {
+  animation: psiOsc 1.6s ease-in-out infinite;
+  animation-delay: -1s;
+}
+
+@keyframes psiOsc {
+  0%, 100% { opacity: 0.5; transform: scaleY(1); }
+  50% { opacity: 1; transform: scaleY(1.08); }
+}
+
+.energy-level-line {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: rgba(31, 42, 46, 0.2);
+  border-radius: 2px;
+  animation: levelGlow 4s ease-in-out infinite;
+}
+
+.energy-level-line span {
+  position: absolute;
+  right: -30px;
+  top: -8px;
+  font-family: var(--display);
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+@keyframes levelGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+.prob-dot {
+  position: absolute;
+  top: 55%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(99, 179, 237, 0.6);
+  animation: probJump 3s ease-in-out infinite;
+}
+
+@keyframes probJump {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-20px); opacity: 1; }
+  70% { transform: translateY(10px); opacity: 0.7; }
+}
+
+.quantum-label {
+  position: absolute;
+  right: 6%;
+  bottom: 6%;
+  font-family: var(--display);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   Scene 21 — Doppler effect
+   ========================================================================== */
+
+.doppler-source {
+  position: absolute;
+  left: 42%;
+  top: calc(50% - 10px);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-2), #f59e0b);
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.4);
+  animation: dopplerMove 4s ease-in-out infinite;
+}
+
+@keyframes dopplerMove {
+  0%, 100% { transform: translateX(-40px); }
+  50% { transform: translateX(40px); }
+}
+
+.doppler-wavefront {
+  position: absolute;
+  top: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(99, 179, 237, 0.3);
+  transform: translate(-50%, -50%);
+  animation: dopplerExpand 4s ease-out infinite;
+}
+
+@keyframes dopplerExpand {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.7; border-color: rgba(99, 179, 237, 0.6); }
+  100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+}
+
+.observer-ahead,
+.observer-behind {
+  position: absolute;
+  top: calc(50% - 14px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.observer-ahead {
+  right: 6%;
+}
+
+.observer-behind {
+  left: 6%;
+}
+
+.obs-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(31, 42, 46, 0.35);
+  border: 2px solid rgba(31, 42, 46, 0.25);
+}
+
+.obs-label {
+  font-family: var(--display);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.source-velocity-arrow {
+  position: absolute;
+  left: 45%;
+  top: 28%;
+  width: 50px;
+  height: 3px;
+  background: var(--accent-2);
+  border-radius: 2px;
+  animation: velArrowSlide 4s ease-in-out infinite;
+}
+
+.source-velocity-arrow::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid var(--accent-2);
+  border-top: 5.5px solid transparent;
+  border-bottom: 5.5px solid transparent;
+}
+
+@keyframes velArrowSlide {
+  0%, 100% { transform: translateX(-30px); opacity: 0.5; }
+  50% { transform: translateX(30px); opacity: 1; }
+}
+
+.compressed-wave {
+  position: absolute;
+  top: 42%;
+  width: 3px;
+  height: 16%;
+  border-radius: 2px;
+  background: rgba(99, 179, 237, 0.5);
+  animation: compWavePulse 2s ease-in-out infinite;
+}
+
+@keyframes compWavePulse {
+  0%, 100% { transform: scaleY(0.7); opacity: 0.4; }
+  50% { transform: scaleY(1.3); opacity: 0.9; }
+}
+
+.stretched-wave {
+  position: absolute;
+  top: 42%;
+  width: 3px;
+  height: 16%;
+  border-radius: 2px;
+  background: rgba(237, 137, 54, 0.4);
+  animation: stretchWavePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes stretchWavePulse {
+  0%, 100% { transform: scaleY(1.2); opacity: 0.4; }
+  50% { transform: scaleY(0.6); opacity: 0.8; }
+}
