@@ -208,23 +208,6 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["complex-numbers", "differential-equations"]
     },
     {
-      heading: "Complex Numbers",
-      body: `<p>Complex numbers are a wonderful invention. They make complicated equations look really simple. Being able to take the square root of anything is unbelievably helpful. <span class="inline-math-link" data-math="complex-numbers">Complex Numbers &rarr;</span></p>
-
-<p>To see how important complex numbers are for solving equations, consider how sophisticated mathematics needs to be to solve some equations. The equation $3x - 4 = 0$ has a solution $x = 4/3$ which is a simple <strong>rational number</strong>. To solve $x^2 - 2 = 0$, we need <strong>irrational numbers</strong>: $x = \\sqrt{2}$. To solve $x^2 + 4 = 0$ we need <strong>complex numbers</strong>: $x = \\pm 2i$, with $i = \\sqrt{-1}$.</p>
-
-<p>Now the punch line: to solve $ax^3 + bx^2 + cx + d = 0$, we still need <em>only</em> complex numbers. Complex numbers are the end of the road. Any polynomial equation can be solved with complex numbers. This is the <strong>Fundamental Theorem of Algebra</strong>.</p>
-
-<p>Exponentials are for linear differential equations what complex numbers are for algebraic equations. Any linear differential equation can be solved by exponentials. If we had $a \\, (d^3/dt^3)x + b \\, (d^2/dt^2)x + c \\, (d/dt)x + dx = 0$, we can factor this into $(d/dt - r_1)(d/dt - r_2)(d/dt - r_3)x(t) = 0$. Each factor gives a solution of the form $x(t) = e^{ir_j t}$. So we're always going to have exponential solutions to linear equations.</p>
-
-<p>A quick review of complex arithmetic: any complex number can be written as $z = a + bi$ with $a$ and $b$ real. Addition and multiplication follow from $i^2 = -1$. The <strong>complex conjugate</strong> is $\\bar{z} = a - bi$. A key identity is $z\\bar{z} = a^2 + b^2$, which is always real. The trick to dividing complex numbers is to multiply top and bottom by the conjugate of the denominator: $1/z = \\bar{z}/(z\\bar{z}) = (a - bi)/(a^2 + b^2)$.</p>
-
-<p>Any complex number can also be written in polar form as $z = re^{i\\theta} = a + bi$, where $a = r\\cos\\theta$, $b = r\\sin\\theta$, and $r = \\sqrt{a^2 + b^2}$. Here $r$ is the <strong>modulus</strong> and $\\theta$ is the <strong>phase</strong> of the complex number.</p>`,
-      interactive: null,
-      interactiveCaption: null,
-      mathLinks: ["complex-numbers"]
-    },
-    {
       heading: "Problems",
       body: `<p><strong>Problem 1 (Conceptual):</strong> Explain in your own words why Hooke's law is universal for small displacements. What mathematical tool makes this argument work?</p>
 
