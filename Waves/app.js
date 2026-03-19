@@ -30,116 +30,116 @@ const mathLessons = [
     id: "complex-numbers",
     title: "Complex Numbers & Euler's Formula",
     sections: [
-      { heading: "Why complex numbers?", body: "Real numbers lie on a line. But many physical problems -- especially oscillations and waves -- naturally involve two coupled quantities (amplitude and phase, or position and velocity). Complex numbers let you package both into a single object z = x + iy, turning two-dimensional problems into one-dimensional algebra.", interactive: null },
-      { heading: "Basic arithmetic", body: "Addition is component-wise: (a+bi) + (c+di) = (a+c) + (b+d)i. Multiplication uses i^2 = -1: (a+bi)(c+di) = (ac-bd) + (ad+bc)i. The complex conjugate z* = x - iy gives you |z|^2 = z z* = x^2 + y^2, which is the squared distance from the origin in the complex plane.", interactive: null },
-      { heading: "Polar form and Euler's formula", body: "Any complex number can be written as z = r e^(i theta) where r = |z| is the magnitude and theta = arg(z) is the angle from the positive real axis. Euler's formula e^(i theta) = cos(theta) + i sin(theta) is the bridge between exponentials and trigonometry. It makes oscillation problems vastly easier because differentiation just multiplies by i omega.", interactive: "euler-circle" },
-      { heading: "Why physicists love e^(i omega t)", body: "When you write x(t) = Re[A e^(i omega t)], differentiating becomes trivial: dx/dt = Re[i omega A e^(i omega t)]. The complex exponential turns differential equations into algebraic equations. After solving for the complex amplitude, you take the real part at the end.", interactive: null }
+      { heading: "Why complex numbers?", body: "Real numbers lie on a line. But many physical problems -- especially oscillations and waves -- naturally involve two coupled quantities (amplitude and phase, or position and velocity). Complex numbers let you package both into a single object $z = x + iy$, turning two-dimensional problems into one-dimensional algebra.", interactive: null },
+      { heading: "Basic arithmetic", body: "Addition is component-wise: $(a+bi) + (c+di) = (a+c) + (b+d)i$. Multiplication uses $i^2 = -1$: $(a+bi)(c+di) = (ac-bd) + (ad+bc)i$. The complex conjugate $z^* = x - iy$ gives you $|z|^2 = z z^* = x^2 + y^2$, which is the squared distance from the origin in the complex plane.", interactive: null },
+      { heading: "Polar form and Euler's formula", body: "Any complex number can be written as $z = r e^{i\\\\theta}$ where $r = |z|$ is the magnitude and $\\\\theta = \\\\arg(z)$ is the angle from the positive real axis. Euler's formula $$e^{i\\\\theta} = \\\\cos(\\\\theta) + i\\\\sin(\\\\theta)$$ is the bridge between exponentials and trigonometry. It makes oscillation problems vastly easier because differentiation just multiplies by $i\\\\omega$.", interactive: "euler-circle" },
+      { heading: "Why physicists love $e^{i\\\\omega t}$", body: "When you write $x(t) = \\\\text{Re}[A e^{i\\\\omega t}]$, differentiating becomes trivial: $dx/dt = \\\\text{Re}[i\\\\omega A e^{i\\\\omega t}]$. The complex exponential turns differential equations into algebraic equations. After solving for the complex amplitude, you take the real part at the end.", interactive: null }
     ],
     exercises: [
-      { question: "Write z = 3 + 4i in polar form. What are r and theta?", answer: "r = sqrt(9+16) = 5, theta = arctan(4/3) approximately 53.1 degrees. So z = 5 e^(i arctan(4/3))." },
-      { question: "Compute (1+i)^4 using polar form.", answer: "1+i = sqrt(2) e^(i pi/4). Raising to the 4th power: (sqrt(2))^4 e^(i 4 pi/4) = 4 e^(i pi) = -4." },
-      { question: "Show that |e^(i theta)| = 1 for any real theta.", answer: "|e^(i theta)|^2 = e^(i theta) e^(-i theta) = e^0 = 1, so |e^(i theta)| = 1. The complex exponential always lies on the unit circle." }
+      { question: "Write $z = 3 + 4i$ in polar form. What are $r$ and $\\\\theta$?", answer: "$r = \\\\sqrt{9+16} = 5$, $\\\\theta = \\\\arctan(4/3) \\\\approx 53.1°$. So $z = 5 e^{i\\\\arctan(4/3)}$." },
+      { question: "Compute $(1+i)^4$ using polar form.", answer: "$1+i = \\\\sqrt{2}\\, e^{i\\\\pi/4}$. Raising to the 4th power: $(\\\\sqrt{2})^4 e^{i \\\\cdot 4\\\\pi/4} = 4 e^{i\\\\pi} = -4$." },
+      { question: "Show that $|e^{i\\\\theta}| = 1$ for any real $\\\\theta$.", answer: "$|e^{i\\\\theta}|^2 = e^{i\\\\theta} e^{-i\\\\theta} = e^0 = 1$, so $|e^{i\\\\theta}| = 1$. The complex exponential always lies on the unit circle." }
     ]
   },
   {
     id: "taylor-series",
     title: "Taylor Series & Approximations",
     sections: [
-      { heading: "The idea of local approximation", body: "A Taylor series approximates a function near a point by matching its value and all its derivatives there. f(x) = f(a) + f'(a)(x-a) + f''(a)(x-a)^2/2! + ... The more terms you keep, the better the approximation over a wider range.", interactive: null },
-      { heading: "Leading-order approximations", body: "In physics, we often only need the first nontrivial term. For small x: sin(x) approximately equals x, cos(x) approximately equals 1 - x^2/2, e^x approximately equals 1 + x, (1+x)^n approximately equals 1 + nx. These approximations are the workhorses of physics, valid when x is much less than 1.", interactive: null },
-      { heading: "Taylor expansion of potentials", body: "Near a minimum of V(x), V'(x_0) = 0, so V(x) approximately equals V(x_0) + (1/2)V''(x_0)(x - x_0)^2. This is why every potential near equilibrium looks like a harmonic oscillator -- the quadratic term always dominates for small displacements.", interactive: null },
-      { heading: "When approximations break down", body: "Taylor approximations fail when the expansion parameter is not small. For the discrete dispersion relation omega = 2 omega_0 |sin(ka/2)|, the approximation omega approximately equals omega_0 ka works only when ka is much less than 1, i.e., wavelengths much longer than the lattice spacing.", interactive: null }
+      { heading: "The idea of local approximation", body: "A Taylor series approximates a function near a point by matching its value and all its derivatives there. $$f(x) = f(a) + f'(a)(x-a) + \\\\frac{f''(a)}{2!}(x-a)^2 + \\\\cdots$$ The more terms you keep, the better the approximation over a wider range.", interactive: null },
+      { heading: "Leading-order approximations", body: "In physics, we often only need the first nontrivial term. For small $x$: $\\\\sin(x) \\\\approx x$, $\\\\cos(x) \\\\approx 1 - x^2/2$, $e^x \\\\approx 1 + x$, $(1+x)^n \\\\approx 1 + nx$. These approximations are the workhorses of physics, valid when $x \\\\ll 1$.", interactive: null },
+      { heading: "Taylor expansion of potentials", body: "Near a minimum of $V(x)$, $V'(x_0) = 0$, so $V(x) \\\\approx V(x_0) + \\\\frac{1}{2}V''(x_0)(x - x_0)^2$. This is why every potential near equilibrium looks like a harmonic oscillator -- the quadratic term always dominates for small displacements.", interactive: null },
+      { heading: "When approximations break down", body: "Taylor approximations fail when the expansion parameter is not small. For the discrete dispersion relation $\\\\omega = 2\\\\omega_0 |\\\\sin(ka/2)|$, the approximation $\\\\omega \\\\approx \\\\omega_0 ka$ works only when $ka \\\\ll 1$, i.e., wavelengths much longer than the lattice spacing.", interactive: null }
     ],
     exercises: [
-      { question: "Expand cos(x) to fourth order about x = 0.", answer: "cos(x) = 1 - x^2/2! + x^4/4! - ... = 1 - x^2/2 + x^4/24." },
-      { question: "For a pendulum, the exact restoring torque involves sin(theta). For small angles, why does the period not depend on amplitude?", answer: "For small theta, sin(theta) approximately equals theta, making the equation of motion linear: theta'' = -(g/L) theta. The frequency omega = sqrt(g/L) is independent of amplitude because the equation is linear." },
-      { question: "What is the leading correction to the approximation sin(x) approximately equals x?", answer: "sin(x) = x - x^3/6 + ..., so the leading correction is -x^3/6. The relative error is about x^2/6." }
+      { question: "Expand $\\\\cos(x)$ to fourth order about $x = 0$.", answer: "$\\\\cos(x) = 1 - \\\\frac{x^2}{2!} + \\\\frac{x^4}{4!} - \\\\cdots = 1 - \\\\frac{x^2}{2} + \\\\frac{x^4}{24}$." },
+      { question: "For a pendulum, the exact restoring torque involves $\\\\sin(\\\\theta)$. For small angles, why does the period not depend on amplitude?", answer: "For small $\\\\theta$, $\\\\sin(\\\\theta) \\\\approx \\\\theta$, making the equation of motion linear: $\\\\ddot{\\\\theta} = -(g/L)\\\\theta$. The frequency $\\\\omega = \\\\sqrt{g/L}$ is independent of amplitude because the equation is linear." },
+      { question: "What is the leading correction to the approximation $\\\\sin(x) \\\\approx x$?", answer: "$\\\\sin(x) = x - x^3/6 + \\\\cdots$, so the leading correction is $-x^3/6$. The relative error is about $x^2/6$." }
     ]
   },
   {
     id: "solving-odes",
     title: "Solving Linear ODEs",
     sections: [
-      { heading: "The exponential ansatz", body: "For a linear ODE with constant coefficients like a x'' + b x' + c x = 0, guess x = e^(alpha t). Substituting gives (a alpha^2 + b alpha + c) e^(alpha t) = 0. Since e^(alpha t) is never zero, the characteristic equation a alpha^2 + b alpha + c = 0 determines alpha.", interactive: null },
-      { heading: "The characteristic equation", body: "The characteristic equation is a polynomial in alpha whose roots give the time dependence of the solution. For a second-order equation, there are two roots. Real roots give exponential growth or decay. Complex roots alpha = sigma +/- i omega give oscillation: e^(sigma t)(A cos(omega t) + B sin(omega t)).", interactive: null },
-      { heading: "Particular solutions for driven systems", body: "For x'' + gamma x' + omega_0^2 x = F_0 cos(omega_d t), try x_p = Re[z_0 e^(-i omega_d t)]. Substitute to get z_0 = F_0 / (omega_0^2 - omega_d^2 - i gamma omega_d). The real part gives the steady-state amplitude and phase.", interactive: null },
-      { heading: "General solution = homogeneous + particular", body: "The general solution is x(t) = x_h(t) + x_p(t), where x_h contains two arbitrary constants set by initial conditions and x_p is the particular solution. For a damped system, x_h dies away exponentially, leaving only x_p at long times.", interactive: null }
+      { heading: "The exponential ansatz", body: "For a linear ODE with constant coefficients like $a\\\\ddot{x} + b\\\\dot{x} + cx = 0$, guess $x = e^{\\\\alpha t}$. Substituting gives $(a\\\\alpha^2 + b\\\\alpha + c)e^{\\\\alpha t} = 0$. Since $e^{\\\\alpha t}$ is never zero, the characteristic equation $a\\\\alpha^2 + b\\\\alpha + c = 0$ determines $\\\\alpha$.", interactive: null },
+      { heading: "The characteristic equation", body: "The characteristic equation is a polynomial in $\\\\alpha$ whose roots give the time dependence of the solution. For a second-order equation, there are two roots. Real roots give exponential growth or decay. Complex roots $\\\\alpha = \\\\sigma \\\\pm i\\\\omega$ give oscillation: $e^{\\\\sigma t}(A\\\\cos(\\\\omega t) + B\\\\sin(\\\\omega t))$.", interactive: null },
+      { heading: "Particular solutions for driven systems", body: "For $\\\\ddot{x} + \\\\gamma\\\\dot{x} + \\\\omega_0^2 x = F_0\\\\cos(\\\\omega_d t)$, try $x_p = \\\\text{Re}[z_0 e^{-i\\\\omega_d t}]$. Substitute to get $z_0 = F_0/(\\\\omega_0^2 - \\\\omega_d^2 - i\\\\gamma\\\\omega_d)$. The real part gives the steady-state amplitude and phase.", interactive: null },
+      { heading: "General solution = homogeneous + particular", body: "The general solution is $x(t) = x_h(t) + x_p(t)$, where $x_h$ contains two arbitrary constants set by initial conditions and $x_p$ is the particular solution. For a damped system, $x_h$ dies away exponentially, leaving only $x_p$ at long times.", interactive: null }
     ],
     exercises: [
-      { question: "Find the general solution of x'' + 4x = 0.", answer: "Characteristic equation: alpha^2 + 4 = 0, so alpha = +/- 2i. General solution: x(t) = A cos(2t) + B sin(2t), or equivalently x(t) = C cos(2t + phi)." },
-      { question: "Solve x'' + 2x' + x = 0 and classify the damping.", answer: "alpha^2 + 2 alpha + 1 = (alpha + 1)^2 = 0, so alpha = -1 (repeated root). x(t) = (A + Bt) e^(-t). This is critically damped." },
-      { question: "For x'' + x' + x = cos(2t), find the steady-state amplitude.", answer: "z_0 = 1/(1 - 4 - 2i) = 1/(-3 - 2i) = (-3 + 2i)/13. Amplitude = |z_0| = sqrt(9+4)/13 = sqrt(13)/13 = 1/sqrt(13)." }
+      { question: "Find the general solution of $\\\\ddot{x} + 4x = 0$.", answer: "Characteristic equation: $\\\\alpha^2 + 4 = 0$, so $\\\\alpha = \\\\pm 2i$. General solution: $x(t) = A\\\\cos(2t) + B\\\\sin(2t)$, or equivalently $x(t) = C\\\\cos(2t + \\\\phi)$." },
+      { question: "Solve $\\\\ddot{x} + 2\\\\dot{x} + x = 0$ and classify the damping.", answer: "$\\\\alpha^2 + 2\\\\alpha + 1 = (\\\\alpha + 1)^2 = 0$, so $\\\\alpha = -1$ (repeated root). $x(t) = (A + Bt)e^{-t}$. This is critically damped." },
+      { question: "For $\\\\ddot{x} + \\\\dot{x} + x = \\\\cos(2t)$, find the steady-state amplitude.", answer: "$z_0 = 1/(1 - 4 - 2i) = 1/(-3 - 2i) = (-3 + 2i)/13$. Amplitude $= |z_0| = \\\\sqrt{9+4}/13 = \\\\sqrt{13}/13 = 1/\\\\sqrt{13}$." }
     ]
   },
   {
     id: "eigenvalues",
     title: "Eigenvalues & Normal Modes",
     sections: [
-      { heading: "The eigenvalue equation", body: "An eigenvalue problem asks: for what values of lambda does A v = lambda v have a nonzero solution v? This happens exactly when det(A - lambda I) = 0. The values of lambda are eigenvalues; the corresponding vectors v are eigenvectors.", interactive: null },
-      { heading: "Physical meaning: normal modes", body: "For coupled oscillators, the equations of motion can be written as M x'' = -K x. Guessing x = v e^(i omega t) gives K v = omega^2 M v, an eigenvalue problem. Each eigenvalue omega^2 gives a normal mode frequency, and the eigenvector v gives the pattern of motion in that mode.", interactive: null },
-      { heading: "The determinant condition", body: "For a 2x2 matrix [[a,b],[c,d]], det(A - lambda I) = (a-lambda)(d-lambda) - bc = 0 gives lambda^2 - (a+d) lambda + (ad-bc) = 0. The sum of eigenvalues equals the trace, and the product equals the determinant.", interactive: null },
-      { heading: "Diagonalization", body: "If a matrix has n linearly independent eigenvectors, it can be diagonalized: A = P D P^(-1), where D is the diagonal matrix of eigenvalues and P has eigenvectors as columns. In the eigenvector basis, the coupled system decouples into independent oscillators.", interactive: null }
+      { heading: "The eigenvalue equation", body: "An eigenvalue problem asks: for what values of $\\\\lambda$ does $A\\\\vec{v} = \\\\lambda\\\\vec{v}$ have a nonzero solution $\\\\vec{v}$? This happens exactly when $\\\\det(A - \\\\lambda I) = 0$. The values of $\\\\lambda$ are eigenvalues; the corresponding vectors $\\\\vec{v}$ are eigenvectors.", interactive: null },
+      { heading: "Physical meaning: normal modes", body: "For coupled oscillators, the equations of motion can be written as $M\\\\ddot{x} = -Kx$. Guessing $x = \\\\vec{v}\\,e^{i\\\\omega t}$ gives $K\\\\vec{v} = \\\\omega^2 M\\\\vec{v}$, an eigenvalue problem. Each eigenvalue $\\\\omega^2$ gives a normal mode frequency, and the eigenvector $\\\\vec{v}$ gives the pattern of motion in that mode.", interactive: null },
+      { heading: "The determinant condition", body: "For a 2x2 matrix $\\\\begin{bmatrix}a & b\\\\\\\\c & d\\\\end{bmatrix}$, $\\\\det(A - \\\\lambda I) = (a-\\\\lambda)(d-\\\\lambda) - bc = 0$ gives $\\\\lambda^2 - (a+d)\\\\lambda + (ad-bc) = 0$. The sum of eigenvalues equals the trace, and the product equals the determinant.", interactive: null },
+      { heading: "Diagonalization", body: "If a matrix has $n$ linearly independent eigenvectors, it can be diagonalized: $A = PDP^{-1}$, where $D$ is the diagonal matrix of eigenvalues and $P$ has eigenvectors as columns. In the eigenvector basis, the coupled system decouples into independent oscillators.", interactive: null }
     ],
     exercises: [
-      { question: "Find the eigenvalues of the matrix [[3,1],[1,3]].", answer: "det([[3-lambda,1],[1,3-lambda]]) = (3-lambda)^2 - 1 = 0, so lambda = 3 +/- 1 = 4 or 2. Eigenvectors: (1,1) for lambda=4 and (1,-1) for lambda=2." },
-      { question: "Two identical masses m connected by springs with k and coupling kappa. What are the normal mode frequencies?", answer: "omega_1^2 = k/m (symmetric mode, masses move together) and omega_2^2 = (k + 2 kappa)/m (antisymmetric mode, masses move oppositely)." },
-      { question: "Why must the eigenvalues of a real symmetric matrix be real?", answer: "If A v = lambda v, take the conjugate transpose: v^dagger A = lambda* v^dagger (since A = A^dagger). Then v^dagger A v = lambda |v|^2 = lambda* |v|^2, so lambda = lambda*." }
+      { question: "Find the eigenvalues of the matrix $\\\\begin{bmatrix}3 & 1\\\\\\\\1 & 3\\\\end{bmatrix}$.", answer: "$\\\\det\\\\begin{bmatrix}3-\\\\lambda & 1\\\\\\\\1 & 3-\\\\lambda\\\\end{bmatrix} = (3-\\\\lambda)^2 - 1 = 0$, so $\\\\lambda = 3 \\\\pm 1 = 4$ or $2$. Eigenvectors: $(1,1)$ for $\\\\lambda=4$ and $(1,-1)$ for $\\\\lambda=2$." },
+      { question: "Two identical masses $m$ connected by springs with $k$ and coupling $\\\\kappa$. What are the normal mode frequencies?", answer: "$\\\\omega_1^2 = k/m$ (symmetric mode, masses move together) and $\\\\omega_2^2 = (k + 2\\\\kappa)/m$ (antisymmetric mode, masses move oppositely)." },
+      { question: "Why must the eigenvalues of a real symmetric matrix be real?", answer: "If $A\\\\vec{v} = \\\\lambda\\\\vec{v}$, take the conjugate transpose: $\\\\vec{v}^\\\\dagger A = \\\\lambda^* \\\\vec{v}^\\\\dagger$ (since $A = A^\\\\dagger$). Then $\\\\vec{v}^\\\\dagger A\\\\vec{v} = \\\\lambda|\\\\vec{v}|^2 = \\\\lambda^*|\\\\vec{v}|^2$, so $\\\\lambda = \\\\lambda^*$." }
     ]
   },
   {
     id: "matrix-methods",
     title: "Matrix Methods for Coupled Systems",
     sections: [
-      { heading: "Matrix multiplication", body: "The element (AB)_ij = sum_k A_ik B_kj. Physically, if A and B each represent a transformation, AB represents doing B first, then A. Matrix multiplication is associative but not commutative in general.", interactive: null },
-      { heading: "Coupled equations as matrix problems", body: "The system x_1'' = -2 omega_0^2 x_1 + omega_0^2 x_2 and x_2'' = omega_0^2 x_1 - 2 omega_0^2 x_2 can be written as x'' = -M x with M = omega_0^2 [[2,-1],[-1,2]]. Diagonalizing M solves the coupled system.", interactive: null },
-      { heading: "The Jones vector for polarization", body: "A polarization state is described by a 2-vector (E_x, E_y). Optical elements like polarizers and wave plates act as 2x2 matrices. A linear polarizer along x is [[1,0],[0,0]]. A quarter-wave plate is [[1,0],[0,i]]. The output polarization is the matrix times the input Jones vector.", interactive: null }
+      { heading: "Matrix multiplication", body: "The element $(AB)_{ij} = \\\\sum_k A_{ik} B_{kj}$. Physically, if $A$ and $B$ each represent a transformation, $AB$ represents doing $B$ first, then $A$. Matrix multiplication is associative but not commutative in general.", interactive: null },
+      { heading: "Coupled equations as matrix problems", body: "The system $\\\\ddot{x}_1 = -2\\\\omega_0^2 x_1 + \\\\omega_0^2 x_2$ and $\\\\ddot{x}_2 = \\\\omega_0^2 x_1 - 2\\\\omega_0^2 x_2$ can be written as $\\\\ddot{x} = -Mx$ with $M = \\\\omega_0^2\\\\begin{bmatrix}2 & -1\\\\\\\\-1 & 2\\\\end{bmatrix}$. Diagonalizing $M$ solves the coupled system.", interactive: null },
+      { heading: "The Jones vector for polarization", body: "A polarization state is described by a 2-vector $(E_x, E_y)$. Optical elements like polarizers and wave plates act as 2x2 matrices. A linear polarizer along $x$ is $\\\\begin{bmatrix}1 & 0\\\\\\\\0 & 0\\\\end{bmatrix}$. A quarter-wave plate is $\\\\begin{bmatrix}1 & 0\\\\\\\\0 & i\\\\end{bmatrix}$. The output polarization is the matrix times the input Jones vector.", interactive: null }
     ],
     exercises: [
-      { question: "Compute [[1,2],[3,4]] times [[5],[6]].", answer: "[[1*5+2*6],[3*5+4*6]] = [[17],[39]]." },
-      { question: "What is the Jones vector for right circular polarization, and what happens when you pass it through a linear polarizer along x?", answer: "Right circular: (1/sqrt(2))(1, -i). Through x-polarizer [[1,0],[0,0]]: result is (1/sqrt(2))(1, 0). The intensity is 1/2 of the input." },
-      { question: "If A and B are 2x2 matrices, is AB = BA in general? Give a counterexample.", answer: "No. For A = [[1,1],[0,1]] and B = [[1,0],[1,1]]: AB = [[2,1],[1,1]] but BA = [[1,1],[1,2]]. They differ." }
+      { question: "Compute $\\\\begin{bmatrix}1 & 2\\\\\\\\3 & 4\\\\end{bmatrix}\\\\begin{bmatrix}5\\\\\\\\6\\\\end{bmatrix}$.", answer: "$\\\\begin{bmatrix}1\\\\cdot5+2\\\\cdot6\\\\\\\\3\\\\cdot5+4\\\\cdot6\\\\end{bmatrix} = \\\\begin{bmatrix}17\\\\\\\\39\\\\end{bmatrix}$." },
+      { question: "What is the Jones vector for right circular polarization, and what happens when you pass it through a linear polarizer along $x$?", answer: "Right circular: $\\\\frac{1}{\\\\sqrt{2}}(1, -i)$. Through $x$-polarizer $\\\\begin{bmatrix}1 & 0\\\\\\\\0 & 0\\\\end{bmatrix}$: result is $\\\\frac{1}{\\\\sqrt{2}}(1, 0)$. The intensity is $1/2$ of the input." },
+      { question: "If $A$ and $B$ are 2x2 matrices, is $AB = BA$ in general? Give a counterexample.", answer: "No. For $A = \\\\begin{bmatrix}1 & 1\\\\\\\\0 & 1\\\\end{bmatrix}$ and $B = \\\\begin{bmatrix}1 & 0\\\\\\\\1 & 1\\\\end{bmatrix}$: $AB = \\\\begin{bmatrix}2 & 1\\\\\\\\1 & 1\\\\end{bmatrix}$ but $BA = \\\\begin{bmatrix}1 & 1\\\\\\\\1 & 2\\\\end{bmatrix}$. They differ." }
     ]
   },
   {
     id: "orthogonality",
     title: "Orthogonality & Inner Products",
     sections: [
-      { heading: "Inner products of functions", body: "The inner product of two functions on [0, L] is <f, g> = integral from 0 to L of f(x) g(x) dx. Two functions are orthogonal if <f, g> = 0. This generalizes the dot product of vectors to infinite-dimensional function spaces.", interactive: null },
-      { heading: "Orthogonality of sines and cosines", body: "On [0, L], the functions sin(n pi x / L) are mutually orthogonal: integral of sin(n pi x / L) sin(m pi x / L) dx = 0 when n is not equal to m, and = L/2 when n = m. Similarly for cosines. This orthogonality is what makes Fourier analysis work.", interactive: null },
-      { heading: "Kronecker delta and completeness", body: "Orthonormality is expressed as <phi_n, phi_m> = delta_{nm}, where the Kronecker delta is 1 if n=m and 0 otherwise. A set is complete if any function in the space can be expanded as f = sum c_n phi_n, with c_n = <phi_n, f>.", interactive: null },
-      { heading: "Extracting coefficients", body: "If f = sum c_n phi_n and the phi_n are orthonormal, then c_m = <phi_m, f> = integral phi_m(x) f(x) dx. Each coefficient is computed independently thanks to orthogonality. This is the key step in Fourier analysis.", interactive: null }
+      { heading: "Inner products of functions", body: "The inner product of two functions on $[0, L]$ is $\\\\langle f, g\\\\rangle = \\\\int_0^L f(x)\\,g(x)\\,dx$. Two functions are orthogonal if $\\\\langle f, g\\\\rangle = 0$. This generalizes the dot product of vectors to infinite-dimensional function spaces.", interactive: null },
+      { heading: "Orthogonality of sines and cosines", body: "On $[0, L]$, the functions $\\\\sin(n\\\\pi x/L)$ are mutually orthogonal: $\\\\int \\\\sin(n\\\\pi x/L)\\\\sin(m\\\\pi x/L)\\,dx = 0$ when $n \\\\neq m$, and $= L/2$ when $n = m$. Similarly for cosines. This orthogonality is what makes Fourier analysis work.", interactive: null },
+      { heading: "Kronecker delta and completeness", body: "Orthonormality is expressed as $\\\\langle\\\\phi_n,\\\\phi_m\\\\rangle = \\\\delta_{nm}$, where the Kronecker delta is 1 if $n=m$ and 0 otherwise. A set is complete if any function in the space can be expanded as $f = \\\\sum c_n\\\\phi_n$, with $c_n = \\\\langle\\\\phi_n, f\\\\rangle$.", interactive: null },
+      { heading: "Extracting coefficients", body: "If $f = \\\\sum c_n\\\\phi_n$ and the $\\\\phi_n$ are orthonormal, then $c_m = \\\\langle\\\\phi_m, f\\\\rangle = \\\\int \\\\phi_m(x)\\,f(x)\\,dx$. Each coefficient is computed independently thanks to orthogonality. This is the key step in Fourier analysis.", interactive: null }
     ],
     exercises: [
-      { question: "Verify that sin(pi x / L) and sin(2 pi x / L) are orthogonal on [0, L].", answer: "Integral of sin(pi x/L) sin(2 pi x/L) dx from 0 to L = integral of (1/2)[cos(pi x/L) - cos(3 pi x/L)] dx = 0, since both cosines integrate to zero over a full number of half-periods." },
-      { question: "For the expansion f(x) = sum b_n sin(n pi x / L), derive the formula for b_n.", answer: "Multiply both sides by sin(m pi x / L) and integrate: integral f(x) sin(m pi x/L) dx = sum b_n (L/2) delta_{nm} = b_m L/2. So b_m = (2/L) integral f(x) sin(m pi x/L) dx." }
+      { question: "Verify that $\\\\sin(\\\\pi x/L)$ and $\\\\sin(2\\\\pi x/L)$ are orthogonal on $[0, L]$.", answer: "$\\\\int_0^L \\\\sin(\\\\pi x/L)\\\\sin(2\\\\pi x/L)\\,dx = \\\\int_0^L \\\\frac{1}{2}[\\\\cos(\\\\pi x/L) - \\\\cos(3\\\\pi x/L)]\\,dx = 0$, since both cosines integrate to zero over a full number of half-periods." },
+      { question: "For the expansion $f(x) = \\\\sum b_n\\\\sin(n\\\\pi x/L)$, derive the formula for $b_n$.", answer: "Multiply both sides by $\\\\sin(m\\\\pi x/L)$ and integrate: $\\\\int f(x)\\\\sin(m\\\\pi x/L)\\,dx = \\\\sum b_n(L/2)\\\\delta_{nm} = b_m L/2$. So $b_m = (2/L)\\\\int f(x)\\\\sin(m\\\\pi x/L)\\,dx$." }
     ]
   },
   {
     id: "integration-techniques",
     title: "Integration Techniques for Waves",
     sections: [
-      { heading: "Integration by parts", body: "integral u dv = uv - integral v du. Choose u to be the function that simplifies when differentiated, and dv to be the function that is easy to integrate. Common in wave physics: integrating x sin(nx) dx, or computing Fourier coefficients of piecewise functions.", interactive: null },
-      { heading: "Trig integrals", body: "integral sin^2(x) dx = x/2 - sin(2x)/4. integral sin(ax)cos(bx) dx uses the product-to-sum identity. integral sin(ax)sin(bx) dx over a full period gives zero unless a = b (orthogonality). These show up constantly in energy and power calculations.", interactive: null },
-      { heading: "Gaussian integrals", body: "integral from -infinity to infinity of e^(-a x^2) dx = sqrt(pi/a). With x^2 in front: integral x^2 e^(-a x^2) dx = sqrt(pi)/(2 a^(3/2)). These appear in wavepacket calculations and quantum mechanics.", interactive: null }
+      { heading: "Integration by parts", body: "$\\\\int u\\,dv = uv - \\\\int v\\,du$. Choose $u$ to be the function that simplifies when differentiated, and $dv$ to be the function that is easy to integrate. Common in wave physics: integrating $\\\\int x\\\\sin(nx)\\,dx$, or computing Fourier coefficients of piecewise functions.", interactive: null },
+      { heading: "Trig integrals", body: "$\\\\int \\\\sin^2(x)\\,dx = x/2 - \\\\sin(2x)/4$. $\\\\int \\\\sin(ax)\\\\cos(bx)\\,dx$ uses the product-to-sum identity. $\\\\int \\\\sin(ax)\\\\sin(bx)\\,dx$ over a full period gives zero unless $a = b$ (orthogonality). These show up constantly in energy and power calculations.", interactive: null },
+      { heading: "Gaussian integrals", body: "$$\\\\int_{-\\\\infty}^{\\\\infty} e^{-ax^2}\\,dx = \\\\sqrt{\\\\pi/a}$$ With $x^2$ in front: $\\\\int x^2 e^{-ax^2}\\,dx = \\\\sqrt{\\\\pi}/(2a^{3/2})$. These appear in wavepacket calculations and quantum mechanics.", interactive: null }
     ],
     exercises: [
-      { question: "Compute integral from 0 to pi of x sin(x) dx using integration by parts.", answer: "u = x, dv = sin(x) dx. Then du = dx, v = -cos(x). integral = [-x cos(x)] from 0 to pi + integral cos(x) dx = pi + [sin(x)] from 0 to pi = pi." },
-      { question: "Show that the time-averaged value of sin^2(omega t) is 1/2.", answer: "Average over one period T = 2pi/omega: (1/T) integral sin^2(omega t) dt = (1/T)(T/2) = 1/2. Alternatively, sin^2 = (1 - cos(2 omega t))/2, and the cosine averages to zero." },
-      { question: "Evaluate integral from -infinity to infinity of e^(-x^2/2) dx.", answer: "This is a Gaussian with a = 1/2, so the result is sqrt(pi/(1/2)) = sqrt(2 pi)." }
+      { question: "Compute $\\\\int_0^\\\\pi x\\\\sin(x)\\,dx$ using integration by parts.", answer: "$u = x$, $dv = \\\\sin(x)\\,dx$. Then $du = dx$, $v = -\\\\cos(x)$. $\\\\int = [-x\\\\cos(x)]_0^\\\\pi + \\\\int \\\\cos(x)\\,dx = \\\\pi + [\\\\sin(x)]_0^\\\\pi = \\\\pi$." },
+      { question: "Show that the time-averaged value of $\\\\sin^2(\\\\omega t)$ is $1/2$.", answer: "Average over one period $T = 2\\\\pi/\\\\omega$: $(1/T)\\\\int \\\\sin^2(\\\\omega t)\\,dt = (1/T)(T/2) = 1/2$. Alternatively, $\\\\sin^2 = (1 - \\\\cos(2\\\\omega t))/2$, and the cosine averages to zero." },
+      { question: "Evaluate $\\\\int_{-\\\\infty}^{\\\\infty} e^{-x^2/2}\\,dx$.", answer: "This is a Gaussian with $a = 1/2$, so the result is $\\\\sqrt{\\\\pi/(1/2)} = \\\\sqrt{2\\\\pi}$." }
     ]
   },
   {
     id: "fourier-math",
     title: "Fourier Series Mathematics",
     sections: [
-      { heading: "The Fourier coefficients formula", body: "For a function with period L: a_0 = (2/L) integral f(x) dx, a_n = (2/L) integral f(x) cos(2 pi n x / L) dx, b_n = (2/L) integral f(x) sin(2 pi n x / L) dx. These formulas extract the nth harmonic from f by exploiting orthogonality.", interactive: null },
-      { heading: "Convergence of Fourier series", body: "For a piecewise smooth function, the Fourier series converges to f(x) at points of continuity and to the average of left and right limits at jumps. The rate of convergence depends on smoothness: smoother functions have faster-decaying coefficients.", interactive: null },
-      { heading: "Parseval's theorem", body: "The total energy (mean square value) of a signal equals the sum of the squared Fourier coefficients: (1/L) integral |f(x)|^2 dx = |a_0|^2/4 + (1/2) sum (|a_n|^2 + |b_n|^2). Energy is conserved between the time/space domain and the frequency domain.", interactive: null },
-      { heading: "Exponential form", body: "Using c_n = (1/L) integral f(x) e^(-i 2 pi n x / L) dx, the Fourier series becomes f(x) = sum c_n e^(i 2 pi n x / L). The exponential form is more compact and is the stepping stone to the Fourier transform.", interactive: null }
+      { heading: "The Fourier coefficients formula", body: "For a function with period $L$: $$a_0 = \\\\frac{2}{L}\\\\int f(x)\\,dx, \\\\quad a_n = \\\\frac{2}{L}\\\\int f(x)\\\\cos\\\\!\\\\left(\\\\frac{2\\\\pi n x}{L}\\\\right)dx, \\\\quad b_n = \\\\frac{2}{L}\\\\int f(x)\\\\sin\\\\!\\\\left(\\\\frac{2\\\\pi n x}{L}\\\\right)dx$$ These formulas extract the $n$th harmonic from $f$ by exploiting orthogonality.", interactive: null },
+      { heading: "Convergence of Fourier series", body: "For a piecewise smooth function, the Fourier series converges to $f(x)$ at points of continuity and to the average of left and right limits at jumps. The rate of convergence depends on smoothness: smoother functions have faster-decaying coefficients.", interactive: null },
+      { heading: "Parseval's theorem", body: "The total energy (mean square value) of a signal equals the sum of the squared Fourier coefficients: $$\\\\frac{1}{L}\\\\int |f(x)|^2\\,dx = \\\\frac{|a_0|^2}{4} + \\\\frac{1}{2}\\\\sum\\\\left(|a_n|^2 + |b_n|^2\\\\right)$$ Energy is conserved between the time/space domain and the frequency domain.", interactive: null },
+      { heading: "Exponential form", body: "Using $c_n = \\\\frac{1}{L}\\\\int f(x)\\,e^{-i2\\\\pi nx/L}\\,dx$, the Fourier series becomes $f(x) = \\\\sum c_n\\,e^{i2\\\\pi nx/L}$. The exponential form is more compact and is the stepping stone to the Fourier transform.", interactive: null }
     ],
     exercises: [
-      { question: "Compute the Fourier sine coefficients b_n for the sawtooth wave f(x) = x on [0, L].", answer: "b_n = (2/L) integral_0^L x sin(2 pi n x/L) dx. Integration by parts gives b_n = -L/(n pi). The series is f(x) = -(L/pi) sum (1/n) sin(2 pi n x/L)." },
-      { question: "Why does the Fourier series of a square wave only contain odd harmonics?", answer: "A square wave is an odd function with half-wave symmetry: f(x + L/2) = -f(x). This symmetry forces all even Fourier coefficients to vanish." },
+      { question: "Compute the Fourier sine coefficients $b_n$ for the sawtooth wave $f(x) = x$ on $[0, L]$.", answer: "$b_n = \\\\frac{2}{L}\\\\int_0^L x\\\\sin(2\\\\pi nx/L)\\,dx$. Integration by parts gives $b_n = -L/(n\\\\pi)$. The series is $f(x) = -\\\\frac{L}{\\\\pi}\\\\sum \\\\frac{1}{n}\\\\sin(2\\\\pi nx/L)$." },
+      { question: "Why does the Fourier series of a square wave only contain odd harmonics?", answer: "A square wave is an odd function with half-wave symmetry: $f(x + L/2) = -f(x)$. This symmetry forces all even Fourier coefficients to vanish." },
       { question: "State Parseval's theorem in words and explain what it means physically.", answer: "The total power of a signal equals the sum of the powers of its harmonic components. Energy is neither created nor destroyed by the Fourier decomposition -- it is just redistributed among frequencies." }
     ]
   },
@@ -147,89 +147,89 @@ const mathLessons = [
     id: "fourier-transform-math",
     title: "Fourier Transform Mathematics",
     sections: [
-      { heading: "The L to infinity limit", body: "As the period L goes to infinity, the discrete frequencies k_n = 2 pi n / L become continuous, the spacing Delta k = 2 pi / L shrinks to dk, and the sum over n becomes an integral over k. The Fourier series coefficients become the Fourier transform f-tilde(k).", interactive: null },
-      { heading: "The delta function", body: "The Dirac delta function delta(x) is zero everywhere except at x = 0, with integral delta(x) dx = 1. Its Fourier transform is 1 (constant), meaning a perfectly localized spike contains all frequencies equally. Conversely, a single frequency e^(ikx) transforms to a delta function delta(k - k_0).", interactive: null },
-      { heading: "Convolution theorem", body: "The Fourier transform of a product is a convolution, and vice versa. If h(x) = integral f(x') g(x - x') dx', then h-tilde(k) = f-tilde(k) g-tilde(k). This is immensely useful: multiplication in one domain corresponds to convolution in the other.", interactive: null },
-      { heading: "Uncertainty principle", body: "A function cannot be simultaneously narrow in both x and k. Quantitatively, Delta x Delta k >= 1/2. For Gaussian wavepackets, equality holds. This is the mathematical backbone of the Heisenberg uncertainty principle in quantum mechanics.", interactive: null }
+      { heading: "The $L \\\\to \\\\infty$ limit", body: "As the period $L$ goes to infinity, the discrete frequencies $k_n = 2\\\\pi n/L$ become continuous, the spacing $\\\\Delta k = 2\\\\pi/L$ shrinks to $dk$, and the sum over $n$ becomes an integral over $k$. The Fourier series coefficients become the Fourier transform $\\\\tilde{f}(k)$.", interactive: null },
+      { heading: "The delta function", body: "The Dirac delta function $\\\\delta(x)$ is zero everywhere except at $x = 0$, with $\\\\int \\\\delta(x)\\,dx = 1$. Its Fourier transform is 1 (constant), meaning a perfectly localized spike contains all frequencies equally. Conversely, a single frequency $e^{ikx}$ transforms to a delta function $\\\\delta(k - k_0)$.", interactive: null },
+      { heading: "Convolution theorem", body: "The Fourier transform of a product is a convolution, and vice versa. If $h(x) = \\\\int f(x')\\,g(x - x')\\,dx'$, then $\\\\tilde{h}(k) = \\\\tilde{f}(k)\\,\\\\tilde{g}(k)$. This is immensely useful: multiplication in one domain corresponds to convolution in the other.", interactive: null },
+      { heading: "Uncertainty principle", body: "A function cannot be simultaneously narrow in both $x$ and $k$. Quantitatively, $\\\\Delta x\\,\\\\Delta k \\\\geq 1/2$. For Gaussian wavepackets, equality holds. This is the mathematical backbone of the Heisenberg uncertainty principle in quantum mechanics.", interactive: null }
     ],
     exercises: [
-      { question: "What is the Fourier transform of a Gaussian f(x) = e^(-x^2/(2 sigma^2))?", answer: "f-tilde(k) = sigma sqrt(2 pi) e^(-sigma^2 k^2/2). A Gaussian transforms to a Gaussian. The wider the original (large sigma), the narrower the transform." },
-      { question: "Show that the Fourier transform of f'(x) is ik f-tilde(k).", answer: "FT[f'] = integral f'(x) e^(-ikx) dx. Integrate by parts: [f e^(-ikx)] (vanishes at infinity) + ik integral f(x) e^(-ikx) dx = ik f-tilde(k)." },
-      { question: "If a wavepacket has spatial width Delta x = 1 nm, what is the minimum spread in wavenumber?", answer: "Delta k >= 1/(2 Delta x) = 0.5 nm^(-1) = 5 x 10^8 m^(-1). You cannot have a pulse narrower than 1 nm without this minimum spread in k." }
+      { question: "What is the Fourier transform of a Gaussian $f(x) = e^{-x^2/(2\\\\sigma^2)}$?", answer: "$\\\\tilde{f}(k) = \\\\sigma\\\\sqrt{2\\\\pi}\\,e^{-\\\\sigma^2 k^2/2}$. A Gaussian transforms to a Gaussian. The wider the original (large $\\\\sigma$), the narrower the transform." },
+      { question: "Show that the Fourier transform of $f'(x)$ is $ik\\,\\\\tilde{f}(k)$.", answer: "$\\\\text{FT}[f'] = \\\\int f'(x)\\,e^{-ikx}\\,dx$. Integrate by parts: $[f\\,e^{-ikx}]$ (vanishes at infinity) $+ ik\\\\int f(x)\\,e^{-ikx}\\,dx = ik\\,\\\\tilde{f}(k)$." },
+      { question: "If a wavepacket has spatial width $\\\\Delta x = 1$ nm, what is the minimum spread in wavenumber?", answer: "$\\\\Delta k \\\\geq 1/(2\\\\Delta x) = 0.5\\;\\\\text{nm}^{-1} = 5 \\\\times 10^8\\;\\\\text{m}^{-1}$. You cannot have a pulse narrower than 1 nm without this minimum spread in $k$." }
     ]
   },
   {
     id: "pde-basics",
     title: "Partial Differential Equations",
     sections: [
-      { heading: "Partial derivatives", body: "A partial derivative d f/d x treats all other variables as constants. For f(x,t) = sin(kx - omega t), d f/d x = k cos(kx - omega t) and d f/d t = -omega cos(kx - omega t). The wave equation relates the second partial derivatives in space and time.", interactive: null },
-      { heading: "Separation of variables", body: "To solve d^2 u/dt^2 = v^2 d^2 u/dx^2, guess u(x,t) = X(x) T(t). Then T''/T = v^2 X''/X. Since the left side depends only on t and the right only on x, both must equal a constant. This splits one PDE into two ODEs.", interactive: null },
-      { heading: "Boundary conditions", body: "A PDE needs boundary conditions to have a unique solution. Fixed ends: u(0,t) = u(L,t) = 0 select standing wave modes sin(n pi x/L). Free ends give cosine modes. The boundary conditions determine which normal modes are allowed.", interactive: null },
-      { heading: "The wave equation and its solutions", body: "d^2 u/dt^2 = v^2 d^2 u/dx^2 has general solution u = f(x - vt) + g(x + vt): any shape traveling right plus any shape traveling left. Standing waves sin(kx)cos(omega t) are the special case where the right and left movers have equal amplitude.", interactive: null }
+      { heading: "Partial derivatives", body: "A partial derivative $\\\\partial f/\\\\partial x$ treats all other variables as constants. For $f(x,t) = \\\\sin(kx - \\\\omega t)$, $\\\\partial f/\\\\partial x = k\\\\cos(kx - \\\\omega t)$ and $\\\\partial f/\\\\partial t = -\\\\omega\\\\cos(kx - \\\\omega t)$. The wave equation relates the second partial derivatives in space and time.", interactive: null },
+      { heading: "Separation of variables", body: "To solve $\\\\frac{\\\\partial^2 u}{\\\\partial t^2} = v^2 \\\\frac{\\\\partial^2 u}{\\\\partial x^2}$, guess $u(x,t) = X(x)T(t)$. Then $T''/T = v^2 X''/X$. Since the left side depends only on $t$ and the right only on $x$, both must equal a constant. This splits one PDE into two ODEs.", interactive: null },
+      { heading: "Boundary conditions", body: "A PDE needs boundary conditions to have a unique solution. Fixed ends: $u(0,t) = u(L,t) = 0$ select standing wave modes $\\\\sin(n\\\\pi x/L)$. Free ends give cosine modes. The boundary conditions determine which normal modes are allowed.", interactive: null },
+      { heading: "The wave equation and its solutions", body: "$\\\\frac{\\\\partial^2 u}{\\\\partial t^2} = v^2 \\\\frac{\\\\partial^2 u}{\\\\partial x^2}$ has general solution $u = f(x - vt) + g(x + vt)$: any shape traveling right plus any shape traveling left. Standing waves $\\\\sin(kx)\\\\cos(\\\\omega t)$ are the special case where the right and left movers have equal amplitude.", interactive: null }
     ],
     exercises: [
-      { question: "Verify that u(x,t) = A sin(kx) cos(omega t) satisfies the wave equation if omega = vk.", answer: "d^2u/dt^2 = -omega^2 A sin(kx) cos(omega t). v^2 d^2u/dx^2 = -v^2 k^2 A sin(kx) cos(omega t). These are equal when omega^2 = v^2 k^2, i.e. omega = vk." },
-      { question: "For a string of length L with fixed ends, what are the allowed wavelengths?", answer: "The mode shapes are sin(n pi x/L), so k_n = n pi / L and lambda_n = 2L/n. The longest wavelength is lambda_1 = 2L (the fundamental)." },
-      { question: "Why does separation of variables work? What is the key assumption?", answer: "It assumes the solution factors as u(x,t) = X(x)T(t). When substituted into the PDE, the variables separate, and since a function of t alone cannot equal a function of x alone (unless both are constant), each side must equal the same constant." }
+      { question: "Verify that $u(x,t) = A\\\\sin(kx)\\\\cos(\\\\omega t)$ satisfies the wave equation if $\\\\omega = vk$.", answer: "$\\\\partial^2 u/\\\\partial t^2 = -\\\\omega^2 A\\\\sin(kx)\\\\cos(\\\\omega t)$. $v^2\\\\partial^2 u/\\\\partial x^2 = -v^2 k^2 A\\\\sin(kx)\\\\cos(\\\\omega t)$. These are equal when $\\\\omega^2 = v^2 k^2$, i.e. $\\\\omega = vk$." },
+      { question: "For a string of length $L$ with fixed ends, what are the allowed wavelengths?", answer: "The mode shapes are $\\\\sin(n\\\\pi x/L)$, so $k_n = n\\\\pi/L$ and $\\\\lambda_n = 2L/n$. The longest wavelength is $\\\\lambda_1 = 2L$ (the fundamental)." },
+      { question: "Why does separation of variables work? What is the key assumption?", answer: "It assumes the solution factors as $u(x,t) = X(x)T(t)$. When substituted into the PDE, the variables separate, and since a function of $t$ alone cannot equal a function of $x$ alone (unless both are constant), each side must equal the same constant." }
     ]
   },
   {
     id: "vector-calculus",
     title: "Vector Calculus for EM Waves",
     sections: [
-      { heading: "Gradient", body: "The gradient grad f = (df/dx, df/dy, df/dz) points in the direction of steepest increase. Its magnitude is the rate of change in that direction. For electromagnetic waves, the gradient of the scalar potential is related to the electric field.", interactive: null },
-      { heading: "Divergence", body: "div F = dF_x/dx + dF_y/dy + dF_z/dz measures the net outward flux per unit volume. Gauss's law div E = rho/epsilon_0 says charges are sources of electric field lines. In vacuum (rho = 0), div E = 0.", interactive: null },
-      { heading: "Curl", body: "curl F measures the circulation per unit area. Faraday's law curl E = -dB/dt says a changing magnetic field creates a circulating electric field. Ampere's law curl B = mu_0 epsilon_0 dE/dt says a changing electric field creates a circulating magnetic field. These two curls are the engine of electromagnetic waves.", interactive: null },
-      { heading: "The vector identity for wave equations", body: "curl(curl F) = grad(div F) - nabla^2 F. Since div E = 0 in vacuum, curl(curl E) = -nabla^2 E. Combined with curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt, this gives the wave equation nabla^2 E = mu_0 epsilon_0 d^2E/dt^2.", interactive: null }
+      { heading: "Gradient", body: "The gradient $\\\\nabla f = (\\\\partial f/\\\\partial x,\\, \\\\partial f/\\\\partial y,\\, \\\\partial f/\\\\partial z)$ points in the direction of steepest increase. Its magnitude is the rate of change in that direction. For electromagnetic waves, the gradient of the scalar potential is related to the electric field.", interactive: null },
+      { heading: "Divergence", body: "$\\\\nabla \\\\cdot \\\\vec{F} = \\\\partial F_x/\\\\partial x + \\\\partial F_y/\\\\partial y + \\\\partial F_z/\\\\partial z$ measures the net outward flux per unit volume. Gauss's law $\\\\nabla \\\\cdot \\\\vec{E} = \\\\rho/\\\\epsilon_0$ says charges are sources of electric field lines. In vacuum ($\\\\rho = 0$), $\\\\nabla \\\\cdot \\\\vec{E} = 0$.", interactive: null },
+      { heading: "Curl", body: "$\\\\nabla \\\\times \\\\vec{F}$ measures the circulation per unit area. Faraday's law $\\\\nabla \\\\times \\\\vec{E} = -\\\\partial\\\\vec{B}/\\\\partial t$ says a changing magnetic field creates a circulating electric field. Ampere's law $\\\\nabla \\\\times \\\\vec{B} = \\\\mu_0\\\\epsilon_0\\,\\\\partial\\\\vec{E}/\\\\partial t$ says a changing electric field creates a circulating magnetic field. These two curls are the engine of electromagnetic waves.", interactive: null },
+      { heading: "The vector identity for wave equations", body: "$\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{F}) = \\\\nabla(\\\\nabla \\\\cdot \\\\vec{F}) - \\\\nabla^2\\\\vec{F}$. Since $\\\\nabla \\\\cdot \\\\vec{E} = 0$ in vacuum, $\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{E}) = -\\\\nabla^2\\\\vec{E}$. Combined with $\\\\nabla \\\\times \\\\vec{E} = -\\\\partial\\\\vec{B}/\\\\partial t$ and $\\\\nabla \\\\times \\\\vec{B} = \\\\mu_0\\\\epsilon_0\\,\\\\partial\\\\vec{E}/\\\\partial t$, this gives the wave equation $\\\\nabla^2\\\\vec{E} = \\\\mu_0\\\\epsilon_0\\,\\\\partial^2\\\\vec{E}/\\\\partial t^2$.", interactive: null }
     ],
     exercises: [
-      { question: "Compute the divergence of F = (x^2, xy, z).", answer: "div F = 2x + x + 1 = 3x + 1." },
-      { question: "Why does div B = 0 imply there are no magnetic monopoles?", answer: "div B = 0 means the net magnetic flux out of any closed surface is zero. Every field line that enters a region must also leave it. There is no point source of magnetic field lines (no monopole)." },
-      { question: "Starting from curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt, derive the wave equation for E.", answer: "Take curl of the first: curl(curl E) = -d/dt(curl B) = -mu_0 epsilon_0 d^2E/dt^2. Use curl(curl E) = -nabla^2 E (since div E = 0) to get nabla^2 E = mu_0 epsilon_0 d^2E/dt^2." }
+      { question: "Compute the divergence of $\\\\vec{F} = (x^2,\\, xy,\\, z)$.", answer: "$\\\\nabla \\\\cdot \\\\vec{F} = 2x + x + 1 = 3x + 1$." },
+      { question: "Why does $\\\\nabla \\\\cdot \\\\vec{B} = 0$ imply there are no magnetic monopoles?", answer: "$\\\\nabla \\\\cdot \\\\vec{B} = 0$ means the net magnetic flux out of any closed surface is zero. Every field line that enters a region must also leave it. There is no point source of magnetic field lines (no monopole)." },
+      { question: "Starting from $\\\\nabla \\\\times \\\\vec{E} = -\\\\partial\\\\vec{B}/\\\\partial t$ and $\\\\nabla \\\\times \\\\vec{B} = \\\\mu_0\\\\epsilon_0\\,\\\\partial\\\\vec{E}/\\\\partial t$, derive the wave equation for $\\\\vec{E}$.", answer: "Take curl of the first: $\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{E}) = -\\\\partial/\\\\partial t(\\\\nabla \\\\times \\\\vec{B}) = -\\\\mu_0\\\\epsilon_0\\,\\\\partial^2\\\\vec{E}/\\\\partial t^2$. Use $\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{E}) = -\\\\nabla^2\\\\vec{E}$ (since $\\\\nabla \\\\cdot \\\\vec{E} = 0$) to get $\\\\nabla^2\\\\vec{E} = \\\\mu_0\\\\epsilon_0\\,\\\\partial^2\\\\vec{E}/\\\\partial t^2$." }
     ]
   },
   {
     id: "probability-waves",
     title: "Probability & Wavefunctions",
     sections: [
-      { heading: "Probability density", body: "In quantum mechanics, the wavefunction psi(x,t) is a complex-valued function whose squared magnitude |psi(x,t)|^2 gives the probability density. The probability of finding the particle between x and x+dx is |psi|^2 dx.", interactive: null },
-      { heading: "Normalization", body: "The total probability must be 1: integral from -infinity to infinity of |psi(x)|^2 dx = 1. This fixes the overall amplitude of the wavefunction. Not all solutions of the Schrodinger equation are normalizable -- only the physically meaningful ones.", interactive: null },
-      { heading: "Expectation values", body: "The expected value of position is <x> = integral x |psi|^2 dx. For any observable A with operator A-hat, <A> = integral psi* A-hat psi dx. The variance (Delta x)^2 = <x^2> - <x>^2 measures the spread of the probability distribution.", interactive: null },
-      { heading: "Connection to waves", body: "A plane wave psi = e^(i(kx - omega t)) has a definite momentum p = hbar k but is completely delocalized. A wavepacket is localized but has a spread of momenta. The uncertainty principle Delta x Delta p >= hbar/2 follows directly from the wave nature of quantum particles.", interactive: null }
+      { heading: "Probability density", body: "In quantum mechanics, the wavefunction $\\\\psi(x,t)$ is a complex-valued function whose squared magnitude $|\\\\psi(x,t)|^2$ gives the probability density. The probability of finding the particle between $x$ and $x+dx$ is $|\\\\psi|^2\\,dx$.", interactive: null },
+      { heading: "Normalization", body: "The total probability must be 1: $\\\\int_{-\\\\infty}^{\\\\infty} |\\\\psi(x)|^2\\,dx = 1$. This fixes the overall amplitude of the wavefunction. Not all solutions of the Schrodinger equation are normalizable -- only the physically meaningful ones.", interactive: null },
+      { heading: "Expectation values", body: "The expected value of position is $\\\\langle x\\\\rangle = \\\\int x\\,|\\\\psi|^2\\,dx$. For any observable $A$ with operator $\\\\hat{A}$, $\\\\langle A\\\\rangle = \\\\int \\\\psi^* \\\\hat{A}\\\\psi\\,dx$. The variance $(\\\\Delta x)^2 = \\\\langle x^2\\\\rangle - \\\\langle x\\\\rangle^2$ measures the spread of the probability distribution.", interactive: null },
+      { heading: "Connection to waves", body: "A plane wave $\\\\psi = e^{i(kx - \\\\omega t)}$ has a definite momentum $p = \\\\hbar k$ but is completely delocalized. A wavepacket is localized but has a spread of momenta. The uncertainty principle $\\\\Delta x\\,\\\\Delta p \\\\geq \\\\hbar/2$ follows directly from the wave nature of quantum particles.", interactive: null }
     ],
     exercises: [
-      { question: "Normalize psi(x) = A e^(-|x|/a) by finding A.", answer: "integral |A|^2 e^(-2|x|/a) dx = 2|A|^2 integral_0^infinity e^(-2x/a) dx = 2|A|^2 (a/2) = |A|^2 a = 1. So A = 1/sqrt(a)." },
-      { question: "For a particle in a box with psi_n = sqrt(2/L) sin(n pi x/L), compute <x>.", answer: "<x> = (2/L) integral_0^L x sin^2(n pi x/L) dx = L/2. By symmetry, the expected position is always the center of the box." },
-      { question: "Why can the wavefunction be complex even though probabilities must be real?", answer: "The wavefunction is an amplitude, not a probability. The probability |psi|^2 = psi* psi is always real and non-negative. The complex phase of psi encodes information about momentum and time evolution." }
+      { question: "Normalize $\\\\psi(x) = Ae^{-|x|/a}$ by finding $A$.", answer: "$\\\\int |A|^2 e^{-2|x|/a}\\,dx = 2|A|^2\\\\int_0^\\\\infty e^{-2x/a}\\,dx = 2|A|^2(a/2) = |A|^2 a = 1$. So $A = 1/\\\\sqrt{a}$." },
+      { question: "For a particle in a box with $\\\\psi_n = \\\\sqrt{2/L}\\\\sin(n\\\\pi x/L)$, compute $\\\\langle x\\\\rangle$.", answer: "$\\\\langle x\\\\rangle = (2/L)\\\\int_0^L x\\\\sin^2(n\\\\pi x/L)\\,dx = L/2$. By symmetry, the expected position is always the center of the box." },
+      { question: "Why can the wavefunction be complex even though probabilities must be real?", answer: "The wavefunction is an amplitude, not a probability. The probability $|\\\\psi|^2 = \\\\psi^*\\\\psi$ is always real and non-negative. The complex phase of $\\\\psi$ encodes information about momentum and time evolution." }
     ]
   },
   {
     id: "trig-identities",
     title: "Trigonometric Identities for Waves",
     sections: [
-      { heading: "Sum and difference formulas", body: "cos(A +/- B) = cos A cos B -/+ sin A sin B. sin(A +/- B) = sin A cos B +/- cos A sin B. These are essential for decomposing wave sums and deriving beat frequencies.", interactive: null },
-      { heading: "Product-to-sum formulas", body: "sin A sin B = (1/2)[cos(A-B) - cos(A+B)]. cos A cos B = (1/2)[cos(A-B) + cos(A+B)]. sin A cos B = (1/2)[sin(A+B) + sin(A-B)]. These convert products of oscillations into sums of different frequencies.", interactive: null },
-      { heading: "Beating", body: "cos(omega_1 t) + cos(omega_2 t) = 2 cos((omega_1-omega_2)t/2) cos((omega_1+omega_2)t/2). When omega_1 and omega_2 are close, this is a fast oscillation at the average frequency modulated by a slow envelope at half the difference frequency. The envelope is the beat.", interactive: null },
-      { heading: "Phase shifts and phasors", body: "A cos(omega t) + B sin(omega t) = C cos(omega t + phi), where C = sqrt(A^2 + B^2) and tan(phi) = -B/A. This lets you combine two oscillations at the same frequency into a single cosine with a phase shift.", interactive: null }
+      { heading: "Sum and difference formulas", body: "$\\\\cos(A \\\\pm B) = \\\\cos A\\\\cos B \\\\mp \\\\sin A\\\\sin B$. $\\\\sin(A \\\\pm B) = \\\\sin A\\\\cos B \\\\pm \\\\cos A\\\\sin B$. These are essential for decomposing wave sums and deriving beat frequencies.", interactive: null },
+      { heading: "Product-to-sum formulas", body: "$\\\\sin A\\\\sin B = \\\\tfrac{1}{2}[\\\\cos(A-B) - \\\\cos(A+B)]$. $\\\\cos A\\\\cos B = \\\\tfrac{1}{2}[\\\\cos(A-B) + \\\\cos(A+B)]$. $\\\\sin A\\\\cos B = \\\\tfrac{1}{2}[\\\\sin(A+B) + \\\\sin(A-B)]$. These convert products of oscillations into sums of different frequencies.", interactive: null },
+      { heading: "Beating", body: "$$\\\\cos(\\\\omega_1 t) + \\\\cos(\\\\omega_2 t) = 2\\\\cos\\\\!\\\\left(\\\\frac{\\\\omega_1-\\\\omega_2}{2}t\\\\right)\\\\cos\\\\!\\\\left(\\\\frac{\\\\omega_1+\\\\omega_2}{2}t\\\\right)$$ When $\\\\omega_1$ and $\\\\omega_2$ are close, this is a fast oscillation at the average frequency modulated by a slow envelope at half the difference frequency. The envelope is the beat.", interactive: null },
+      { heading: "Phase shifts and phasors", body: "$A\\\\cos(\\\\omega t) + B\\\\sin(\\\\omega t) = C\\\\cos(\\\\omega t + \\\\phi)$, where $C = \\\\sqrt{A^2 + B^2}$ and $\\\\tan(\\\\phi) = -B/A$. This lets you combine two oscillations at the same frequency into a single cosine with a phase shift.", interactive: null }
     ],
     exercises: [
-      { question: "Derive the beat formula: cos(omega_1 t) + cos(omega_2 t) = 2 cos(Delta omega t/2) cos(omega_bar t), where Delta omega = omega_1 - omega_2 and omega_bar = (omega_1 + omega_2)/2.", answer: "Write omega_1 = omega_bar + Delta omega/2 and omega_2 = omega_bar - Delta omega/2. Then use cos A + cos B = 2 cos((A-B)/2) cos((A+B)/2)." },
-      { question: "Use a trig identity to show that sin^2(x) + cos^2(x) = 1.", answer: "From cos(A-B) = cos A cos B + sin A sin B, set A = B = x: cos(0) = cos^2(x) + sin^2(x), and cos(0) = 1." },
-      { question: "Write 3 cos(omega t) + 4 sin(omega t) as C cos(omega t + phi). Find C and phi.", answer: "C = sqrt(9 + 16) = 5. tan(phi) = -4/3, so phi = -arctan(4/3) approximately -53.1 degrees. The combined oscillation is 5 cos(omega t - 53.1 degrees)." }
+      { question: "Derive the beat formula: $\\\\cos(\\\\omega_1 t) + \\\\cos(\\\\omega_2 t) = 2\\\\cos(\\\\Delta\\\\omega\\, t/2)\\\\cos(\\\\bar{\\\\omega}\\, t)$, where $\\\\Delta\\\\omega = \\\\omega_1 - \\\\omega_2$ and $\\\\bar{\\\\omega} = (\\\\omega_1 + \\\\omega_2)/2$.", answer: "Write $\\\\omega_1 = \\\\bar{\\\\omega} + \\\\Delta\\\\omega/2$ and $\\\\omega_2 = \\\\bar{\\\\omega} - \\\\Delta\\\\omega/2$. Then use $\\\\cos A + \\\\cos B = 2\\\\cos\\\\!\\\\left(\\\\frac{A-B}{2}\\\\right)\\\\cos\\\\!\\\\left(\\\\frac{A+B}{2}\\\\right)$." },
+      { question: "Use a trig identity to show that $\\\\sin^2(x) + \\\\cos^2(x) = 1$.", answer: "From $\\\\cos(A-B) = \\\\cos A\\\\cos B + \\\\sin A\\\\sin B$, set $A = B = x$: $\\\\cos(0) = \\\\cos^2(x) + \\\\sin^2(x)$, and $\\\\cos(0) = 1$." },
+      { question: "Write $3\\\\cos(\\\\omega t) + 4\\\\sin(\\\\omega t)$ as $C\\\\cos(\\\\omega t + \\\\phi)$. Find $C$ and $\\\\phi$.", answer: "$C = \\\\sqrt{9 + 16} = 5$. $\\\\tan(\\\\phi) = -4/3$, so $\\\\phi = -\\\\arctan(4/3) \\\\approx -53.1°$. The combined oscillation is $5\\\\cos(\\\\omega t - 53.1°)$." }
     ]
   },
   {
     id: "dimensional-analysis",
     title: "Dimensional Analysis & Scaling",
     sections: [
-      { heading: "Checking units", body: "Every equation in physics must be dimensionally consistent. If the left side has units of meters per second, the right side must too. This provides an instant check on any formula. The wave equation d^2u/dt^2 = v^2 d^2u/dx^2 works because [1/t^2] = [v^2/x^2] = [1/t^2].", interactive: null },
-      { heading: "Scaling arguments", body: "Dimensional analysis can predict how quantities scale. The speed of waves on a string must depend on tension T (force, [MLT^-2]) and linear density mu ([ML^-1]). The only combination with units of speed is sqrt(T/mu). No detailed derivation needed!", interactive: null },
-      { heading: "Natural units and dimensionless numbers", body: "The quality factor Q = omega_0/gamma is dimensionless: it counts the number of oscillations in a decay time. The Mach number M = v_source/v_wave is dimensionless and determines whether shock waves form (M > 1). Dimensionless ratios often identify the important physics.", interactive: null }
+      { heading: "Checking units", body: "Every equation in physics must be dimensionally consistent. If the left side has units of meters per second, the right side must too. This provides an instant check on any formula. The wave equation $\\\\partial^2 u/\\\\partial t^2 = v^2\\,\\\\partial^2 u/\\\\partial x^2$ works because $[1/t^2] = [v^2/x^2] = [1/t^2]$.", interactive: null },
+      { heading: "Scaling arguments", body: "Dimensional analysis can predict how quantities scale. The speed of waves on a string must depend on tension $T$ (force, $[MLT^{-2}]$) and linear density $\\\\mu$ ($[ML^{-1}]$). The only combination with units of speed is $\\\\sqrt{T/\\\\mu}$. No detailed derivation needed!", interactive: null },
+      { heading: "Natural units and dimensionless numbers", body: "The quality factor $Q = \\\\omega_0/\\\\gamma$ is dimensionless: it counts the number of oscillations in a decay time. The Mach number $M = v_{\\\\text{source}}/v_{\\\\text{wave}}$ is dimensionless and determines whether shock waves form ($M > 1$). Dimensionless ratios often identify the important physics.", interactive: null }
     ],
     exercises: [
-      { question: "Use dimensional analysis to find the speed of sound in terms of bulk modulus B ([ML^-1T^-2]) and density rho ([ML^-3]).", answer: "[v] = [L T^-1]. B/rho has units [L^2 T^-2], so v = sqrt(B/rho). This is the correct answer." },
-      { question: "The de Broglie wavelength lambda = h/p. Check the dimensions.", answer: "[h] = [ML^2T^-1] (energy times time). [p] = [MLT^-1]. [h/p] = [L]. So lambda has units of length, as required." },
-      { question: "A pendulum of length L swings under gravity g. Use dimensional analysis to find the period.", answer: "[T] = [T^1]. L/g has units [T^2], so T must be proportional to sqrt(L/g). Dimensional analysis gives T = C sqrt(L/g) where C is a dimensionless constant (which turns out to be 2pi)." }
+      { question: "Use dimensional analysis to find the speed of sound in terms of bulk modulus $B$ ($[ML^{-1}T^{-2}]$) and density $\\\\rho$ ($[ML^{-3}]$).", answer: "$[v] = [LT^{-1}]$. $B/\\\\rho$ has units $[L^2T^{-2}]$, so $v = \\\\sqrt{B/\\\\rho}$. This is the correct answer." },
+      { question: "The de Broglie wavelength $\\\\lambda = h/p$. Check the dimensions.", answer: "$[h] = [ML^2T^{-1}]$ (energy times time). $[p] = [MLT^{-1}]$. $[h/p] = [L]$. So $\\\\lambda$ has units of length, as required." },
+      { question: "A pendulum of length $L$ swings under gravity $g$. Use dimensional analysis to find the period.", answer: "$[T] = [T^1]$. $L/g$ has units $[T^2]$, so $T$ must be proportional to $\\\\sqrt{L/g}$. Dimensional analysis gives $T = C\\\\sqrt{L/g}$ where $C$ is a dimensionless constant (which turns out to be $2\\\\pi$)." }
     ]
   }
 ];
@@ -253,25 +253,25 @@ const chapters = [
     ],
     pitfalls: [
       "Thinking Hooke's law is special to springs rather than universal near equilibrium.",
-      "Confusing angular frequency omega_0 with ordinary frequency f = omega_0 / 2pi.",
-      "Forgetting that the damped solution still oscillates (underdamped) unless gamma >= 2 omega_0."
+      "Confusing angular frequency $\\\\omega_0$ with ordinary frequency $f = \\\\omega_0/2\\\\pi$.",
+      "Forgetting that the damped solution still oscillates (underdamped) unless $\\\\gamma \\\\geq 2\\\\omega_0$."
     ],
     terms: {
       "hookes-law": {
-        short: "Restoring force proportional to displacement: F = -kx.",
+        short: "Restoring force proportional to displacement: $F = -kx$.",
         long: "Hooke's law is not limited to springs. Any system displaced a small amount from stable equilibrium experiences a restoring force proportional to displacement, because the first nonzero term in a Taylor expansion of the potential about a minimum is quadratic."
       },
       sho: {
-        short: "A system whose motion is described by x(t) = A cos(omega_0 t + phi).",
-        long: "The simple harmonic oscillator is the foundation of the entire course. Its solution is sinusoidal with frequency omega_0 = sqrt(k/m), amplitude A, and phase phi set by initial conditions. Every later topic is built on this."
+        short: "A system whose motion is described by $x(t) = A\\\\cos(\\\\omega_0 t + \\\\phi)$.",
+        long: "The simple harmonic oscillator is the foundation of the entire course. Its solution is sinusoidal with frequency $\\\\omega_0 = \\\\sqrt{k/m}$, amplitude $A$, and phase $\\\\phi$ set by initial conditions. Every later topic is built on this."
       },
       linearity: {
-        short: "If x1 and x2 are solutions, so is any combination a x1 + b x2.",
+        short: "If $x_1$ and $x_2$ are solutions, so is any combination $ax_1 + bx_2$.",
         long: "Linearity means the equation of motion has no powers or products of the unknown. It guarantees superposition, which is the reason Fourier analysis works and why complex exponentials are so powerful for solving wave problems."
       },
       damping: {
         short: "Energy loss that causes oscillation amplitude to decay.",
-        long: "Adding a velocity-dependent friction term gamma dx/dt introduces three regimes: underdamped (oscillates with decaying envelope), critically damped, and overdamped (exponential return with no oscillation)."
+        long: "Adding a velocity-dependent friction term $\\\\gamma\\,dx/dt$ introduces three regimes: underdamped (oscillates with decaying envelope), critically damped, and overdamped (exponential return with no oscillation)."
       }
     },
     derivations: [
@@ -279,21 +279,21 @@ const chapters = [
         title: "Hooke's law from Taylor expansion",
         teaser: "Expand any potential about its minimum and keep the leading term.",
         steps: [
-          "Write the potential energy V(x) and note that at equilibrium x=0, V'(0) = 0 by definition.",
-          "Taylor expand: V(x) = V(0) + V''(0) x^2 / 2 + higher order terms.",
-          "The force is F = -dV/dx = -V''(0) x, which is Hooke's law with k = V''(0)."
+          "Write the potential energy $V(x)$ and note that at equilibrium $x=0$, $V'(0) = 0$ by definition.",
+          "Taylor expand: $V(x) = V(0) + \\\\frac{1}{2}V''(0)\\,x^2 + \\\\cdots$",
+          "The force is $F = -dV/dx = -V''(0)\\,x$, which is Hooke's law with $k = V''(0)$."
         ],
         result: "Any potential near a stable minimum gives a linear restoring force, so oscillation is the universal response to small displacement."
       },
       {
         title: "Solving the damped oscillator",
-        teaser: "Guess an exponential x = A e^(alpha t) and find the two roots.",
+        teaser: "Guess an exponential $x = Ae^{\\\\alpha t}$ and find the two roots.",
         steps: [
-          "Substitute x = A e^(alpha t) into x'' + gamma x' + omega_0^2 x = 0.",
-          "Get the characteristic equation alpha^2 + gamma alpha + omega_0^2 = 0.",
-          "Solve: alpha = -gamma/2 +/- sqrt(gamma^2/4 - omega_0^2). For gamma < 2 omega_0, the square root is imaginary, giving oscillation inside a decaying envelope."
+          "Substitute $x = Ae^{\\\\alpha t}$ into $\\\\ddot{x} + \\\\gamma\\\\dot{x} + \\\\omega_0^2 x = 0$.",
+          "Get the characteristic equation $\\\\alpha^2 + \\\\gamma\\\\alpha + \\\\omega_0^2 = 0$.",
+          "Solve: $\\\\alpha = -\\\\gamma/2 \\\\pm \\\\sqrt{\\\\gamma^2/4 - \\\\omega_0^2}$. For $\\\\gamma < 2\\\\omega_0$, the square root is imaginary, giving oscillation inside a decaying envelope."
         ],
-        result: "x(t) = A e^(-gamma t / 2) cos(omega_d t + phi) with omega_d = sqrt(omega_0^2 - gamma^2/4), showing oscillation at a slightly lower frequency than the natural frequency."
+        result: "$x(t) = Ae^{-\\\\gamma t/2}\\\\cos(\\\\omega_d t + \\\\phi)$ with $\\\\omega_d = \\\\sqrt{\\\\omega_0^2 - \\\\gamma^2/4}$, showing oscillation at a slightly lower frequency than the natural frequency."
       }
     ],
     deepDives: [
@@ -303,12 +303,12 @@ const chapters = [
       },
       {
         title: "AI tutor prompt",
-        body: "Why does the complex exponential e^(i omega t) make solving linear oscillator equations easier than working directly with sines and cosines?"
+        body: "Why does the complex exponential $e^{i\\\\omega t}$ make solving linear oscillator equations easier than working directly with sines and cosines?"
       }
     ],
     quickActions: {
       intuition: "Everything near equilibrium oscillates because every smooth potential looks like a parabola at the bottom. The frequency depends on the curvature of the potential and the inertia of the system.",
-      formal: "The chapter derives x'' + gamma x' + omega_0^2 x = F(t) from Taylor expansion, solves the homogeneous case with complex exponentials, and classifies damping regimes by the discriminant.",
+      formal: "The chapter derives $\\\\ddot{x} + \\\\gamma\\\\dot{x} + \\\\omega_0^2 x = F(t)$ from Taylor expansion, solves the homogeneous case with complex exponentials, and classifies damping regimes by the discriminant.",
       quiz: "Checkpoint: explain why a pendulum, a vibrating molecule, and a mass on a spring all satisfy the same equation of motion near equilibrium."
     },
     prompts: [
@@ -344,20 +344,20 @@ const chapters = [
     ],
     terms: {
       "driving-frequency": {
-        short: "The frequency omega_d of the externally applied force.",
+        short: "The frequency $\\\\omega_d$ of the externally applied force.",
         long: "The driving frequency is set by whatever pushes the oscillator. In steady state, the oscillator responds at exactly this frequency, not at its natural frequency. The distinction is crucial."
       },
       resonance: {
         short: "Maximum response when driving frequency matches natural frequency.",
-        long: "Resonance occurs near omega_d = omega_0. The amplitude peaks to a value inversely proportional to the damping rate gamma. Sharper resonances mean more selective frequency response."
+        long: "Resonance occurs near $\\\\omega_d = \\\\omega_0$. The amplitude peaks to a value inversely proportional to the damping rate $\\\\gamma$. Sharper resonances mean more selective frequency response."
       },
       "amplitude-response": {
         short: "How the steady-state amplitude depends on drive frequency.",
-        long: "The amplitude A(omega_d) = (F_0/m) / sqrt((omega_0^2 - omega_d^2)^2 + (gamma omega_d)^2) is a Lorentzian curve centered near omega_0 with width proportional to gamma."
+        long: "The amplitude $A(\\\\omega_d) = \\\\frac{F_0/m}{\\\\sqrt{(\\\\omega_0^2 - \\\\omega_d^2)^2 + (\\\\gamma\\\\omega_d)^2}}$ is a Lorentzian curve centered near $\\\\omega_0$ with width proportional to $\\\\gamma$."
       },
       quality_factor: {
-        short: "Q = omega_0 / gamma measures resonance sharpness.",
-        long: "The quality factor counts roughly how many oscillations occur before the energy decays by a factor of e. High Q means narrow resonance peak and selective frequency response."
+        short: "$Q = \\\\omega_0/\\\\gamma$ measures resonance sharpness.",
+        long: "The quality factor counts roughly how many oscillations occur before the energy decays by a factor of $e$. High $Q$ means narrow resonance peak and selective frequency response."
       }
     },
     derivations: [
@@ -365,11 +365,11 @@ const chapters = [
         title: "Steady-state solution for a driven oscillator",
         teaser: "Use a complex exponential ansatz to turn the ODE into algebra.",
         steps: [
-          "Write the driving force as Re(F_0/m e^(-i omega_d t)) and guess z(t) = z_0 e^(-i omega_d t).",
-          "Substitute into z'' + gamma z' + omega_0^2 z = (F_0/m) e^(-i omega_d t) to get z_0 = (F_0/m) / (omega_0^2 - omega_d^2 - i gamma omega_d).",
-          "Take x(t) = Re[z(t)] and extract the amplitude and phase shift as functions of omega_d."
+          "Write the driving force as $\\\\text{Re}(\\\\frac{F_0}{m}e^{-i\\\\omega_d t})$ and guess $z(t) = z_0 e^{-i\\\\omega_d t}$.",
+          "Substitute into $\\\\ddot{z} + \\\\gamma\\\\dot{z} + \\\\omega_0^2 z = \\\\frac{F_0}{m}e^{-i\\\\omega_d t}$ to get $z_0 = \\\\frac{F_0/m}{\\\\omega_0^2 - \\\\omega_d^2 - i\\\\gamma\\\\omega_d}$.",
+          "Take $x(t) = \\\\text{Re}[z(t)]$ and extract the amplitude and phase shift as functions of $\\\\omega_d$."
         ],
-        result: "The amplitude peaks near omega_d = omega_0 with height proportional to 1/gamma, and the phase shifts through pi/2 at resonance."
+        result: "The amplitude peaks near $\\\\omega_d = \\\\omega_0$ with height proportional to $1/\\\\gamma$, and the phase shifts through $\\\\pi/2$ at resonance."
       }
     ],
     deepDives: [
@@ -384,7 +384,7 @@ const chapters = [
     ],
     quickActions: {
       intuition: "Resonance is the oscillator's sweet spot: drive at the natural frequency and the system absorbs energy most efficiently. Damping is what keeps the amplitude finite.",
-      formal: "The chapter solves x'' + gamma x' + omega_0^2 x = (F_0/m)cos(omega_d t) using complex exponentials, finds the Lorentzian amplitude response, and separates transients from steady state.",
+      formal: "The chapter solves $\\\\ddot{x} + \\\\gamma\\\\dot{x} + \\\\omega_0^2 x = (F_0/m)\\\\cos(\\\\omega_d t)$ using complex exponentials, finds the Lorentzian amplitude response, and separates transients from steady state.",
       quiz: "Checkpoint: why does the steady-state response oscillate at the driving frequency rather than the natural frequency?"
     },
     prompts: [
@@ -437,9 +437,9 @@ const chapters = [
         title: "Normal modes of two coupled masses",
         teaser: "Write coupled equations, guess oscillatory solutions, and find the eigenfrequencies.",
         steps: [
-          "Write equations of motion: m x1'' = -(k + kappa) x1 + kappa x2 and m x2'' = kappa x1 - (k + kappa) x2.",
-          "Define sum and difference coordinates: x_s = x1 + x2 and x_f = x1 - x2.",
-          "These decouple into independent oscillator equations with omega_s = sqrt(k/m) and omega_f = sqrt((k + 2 kappa)/m)."
+          "Write equations of motion: $m\\\\ddot{x}_1 = -(k + \\\\kappa)x_1 + \\\\kappa x_2$ and $m\\\\ddot{x}_2 = \\\\kappa x_1 - (k + \\\\kappa)x_2$.",
+          "Define sum and difference coordinates: $x_s = x_1 + x_2$ and $x_f = x_1 - x_2$.",
+          "These decouple into independent oscillator equations with $\\\\omega_s = \\\\sqrt{k/m}$ and $\\\\omega_f = \\\\sqrt{(k + 2\\\\kappa)/m}$."
         ],
         result: "Two normal modes emerge: a slow symmetric mode (masses move together) and a fast antisymmetric mode (masses move oppositely). General motion is their superposition."
       }
@@ -457,7 +457,7 @@ const chapters = [
     quickActions: {
       intuition: "Coupled oscillators cannot be understood one at a time. The system has collective modes, and energy sloshes between the masses at the beat frequency.",
       formal: "The chapter diagonalizes the coupled equations of motion using sum and difference coordinates, finding eigenfrequencies and explaining beats as mode interference.",
-      quiz: "Checkpoint: if the coupling spring constant kappa equals zero, what happens to the two normal mode frequencies and why?"
+      quiz: "Checkpoint: if the coupling spring constant $\\\\kappa$ equals zero, what happens to the two normal mode frequencies and why?"
     },
     prompts: [
       "Why does coupling create two distinct frequencies instead of one?",
@@ -483,7 +483,7 @@ const chapters = [
     goals: [
       "Solve the N-mass coupled system and identify the normal mode shapes as sine functions.",
       "Take the continuum limit and derive the wave equation.",
-      "Understand the dispersion relation omega(k) = 2 omega_0 |sin(k a / 2)| for the discrete chain."
+      "Understand the dispersion relation $\\\\omega(k) = 2\\\\omega_0|\\\\sin(ka/2)|$ for the discrete chain."
     ],
     pitfalls: [
       "Forgetting that boundary conditions (fixed walls) select only certain allowed wavelengths.",
@@ -492,16 +492,16 @@ const chapters = [
     ],
     terms: {
       "normal-mode-patterns": {
-        short: "Sine-shaped displacement patterns for N masses.",
-        long: "For N masses on springs with fixed endpoints, the normal modes are x_n proportional to sin(n pi j / (N+1)), where j labels the mode. Higher j means more nodes and higher frequency."
+        short: "Sine-shaped displacement patterns for $N$ masses.",
+        long: "For $N$ masses on springs with fixed endpoints, the normal modes are $x_n \\\\propto \\\\sin(n\\\\pi j/(N+1))$, where $j$ labels the mode. Higher $j$ means more nodes and higher frequency."
       },
       "wave-equation": {
-        short: "d^2A/dt^2 = v^2 d^2A/dx^2, the fundamental equation for waves.",
-        long: "The wave equation governs vibrations of strings, sound in air, electromagnetic waves, and much more. Its general solution is any function of (x - vt) plus any function of (x + vt), representing left- and right-moving waves."
+        short: "$\\\\partial^2 A/\\\\partial t^2 = v^2\\,\\\\partial^2 A/\\\\partial x^2$, the fundamental equation for waves.",
+        long: "The wave equation governs vibrations of strings, sound in air, electromagnetic waves, and much more. Its general solution is any function of $(x - vt)$ plus any function of $(x + vt)$, representing left- and right-moving waves."
       },
       "dispersion-relation": {
-        short: "The relationship between frequency omega and wavenumber k.",
-        long: "For a discrete chain, omega = 2 omega_0 |sin(ka/2)| is nonlinear, meaning different wavelengths travel at different speeds. In the continuum limit, this becomes omega = v k, which is dispersionless."
+        short: "The relationship between frequency $\\\\omega$ and wavenumber $k$.",
+        long: "For a discrete chain, $\\\\omega = 2\\\\omega_0|\\\\sin(ka/2)|$ is nonlinear, meaning different wavelengths travel at different speeds. In the continuum limit, this becomes $\\\\omega = vk$, which is dispersionless."
       }
     },
     derivations: [
@@ -509,11 +509,11 @@ const chapters = [
         title: "From N masses to the wave equation",
         teaser: "Start with the discrete equations, guess sinusoidal modes, and take the continuum limit.",
         steps: [
-          "Write m x_n'' = k(x_{n-1} - 2x_n + x_{n+1}) for each interior mass.",
-          "Guess x_n = B e^(ipn) e^(i omega t). Substitution gives omega^2 = 2 omega_0^2 (1 - cos p).",
-          "In the continuum limit (a -> 0, keeping k a^2 / m = v^2 fixed), the difference operator becomes a second derivative, yielding the wave equation."
+          "Write $m\\\\ddot{x}_n = k(x_{n-1} - 2x_n + x_{n+1})$ for each interior mass.",
+          "Guess $x_n = Be^{ipn}e^{i\\\\omega t}$. Substitution gives $\\\\omega^2 = 2\\\\omega_0^2(1 - \\\\cos p)$.",
+          "In the continuum limit ($a \\\\to 0$, keeping $ka^2/m = v^2$ fixed), the difference operator becomes a second derivative, yielding the wave equation."
         ],
-        result: "The wave equation d^2A/dt^2 = v^2 d^2A/dx^2 emerges naturally from the continuum limit of coupled oscillators, with v = sqrt(T/mu)."
+        result: "The wave equation $\\\\partial^2 A/\\\\partial t^2 = v^2\\,\\\\partial^2 A/\\\\partial x^2$ emerges naturally from the continuum limit of coupled oscillators, with $v = \\\\sqrt{T/\\\\mu}$."
       }
     ],
     deepDives: [
@@ -565,15 +565,15 @@ const chapters = [
     terms: {
       "fourier-series": {
         short: "Decomposition of a periodic function into sine and cosine harmonics.",
-        long: "f(x) = a_0/2 + sum of a_n cos(2 pi n x / L) + b_n sin(2 pi n x / L). The coefficients a_n and b_n are found by integrating f against each basis function. This works because sines and cosines are orthogonal over a full period."
+        long: "$f(x) = a_0/2 + \\\\sum [a_n\\\\cos(2\\\\pi nx/L) + b_n\\\\sin(2\\\\pi nx/L)]$. The coefficients $a_n$ and $b_n$ are found by integrating $f$ against each basis function. This works because sines and cosines are orthogonal over a full period."
       },
       orthogonality: {
         short: "Different harmonics integrate to zero against each other.",
-        long: "The integral of sin(n x) cos(m x) over a period vanishes unless n = m, and similarly for sin-sin and cos-cos pairs. This orthogonality lets us isolate each Fourier coefficient independently."
+        long: "The integral of $\\\\sin(nx)\\\\cos(mx)$ over a period vanishes unless $n = m$, and similarly for sin-sin and cos-cos pairs. This orthogonality lets us isolate each Fourier coefficient independently."
       },
       harmonics: {
         short: "Integer multiples of the fundamental frequency.",
-        long: "The n-th harmonic has frequency n times the fundamental. Higher harmonics capture finer detail in the waveform. Musical timbre is largely determined by the relative strengths of the harmonics."
+        long: "The $n$-th harmonic has frequency $n$ times the fundamental. Higher harmonics capture finer detail in the waveform. Musical timbre is largely determined by the relative strengths of the harmonics."
       }
     },
     derivations: [
@@ -581,9 +581,9 @@ const chapters = [
         title: "Deriving the Fourier coefficients",
         teaser: "Multiply by a basis function and integrate, using orthogonality to isolate each coefficient.",
         steps: [
-          "Start with f(x) = a_0/2 + sum a_n cos(2 pi n x / L) + b_n sin(2 pi n x / L).",
-          "Multiply both sides by cos(2 pi m x / L) and integrate over [0, L].",
-          "By orthogonality, only the n = m term survives, giving a_m = (2/L) integral of f(x) cos(2 pi m x / L) dx."
+          "Start with $f(x) = a_0/2 + \\\\sum [a_n\\\\cos(2\\\\pi nx/L) + b_n\\\\sin(2\\\\pi nx/L)]$.",
+          "Multiply both sides by $\\\\cos(2\\\\pi mx/L)$ and integrate over $[0, L]$.",
+          "By orthogonality, only the $n = m$ term survives, giving $a_m = \\\\frac{2}{L}\\\\int f(x)\\\\cos(2\\\\pi mx/L)\\,dx$."
         ],
         result: "Each Fourier coefficient extracts one harmonic from the signal independently, thanks to the orthogonality of the trigonometric basis."
       }
@@ -595,7 +595,7 @@ const chapters = [
       },
       {
         title: "AI tutor prompt",
-        body: "Why do the Fourier coefficients of a square wave decrease as 1/n for odd n and vanish for even n?"
+        body: "Why do the Fourier coefficients of a square wave decrease as $1/n$ for odd $n$ and vanish for even $n$?"
       }
     ],
     quickActions: {
@@ -621,27 +621,27 @@ const chapters = [
     conceptTitle: "Disturbances that carry energy without transporting matter",
     conceptCaption: "Sound waves in air and vibrations in strings both satisfy the same wave equation, but the physical mechanisms differ.",
     explanation: [
-      "This chapter derives the <term key='wave-eq-string'>wave equation for strings</term> from Newton's second law applied to a small segment under tension. The wave speed v = sqrt(T/mu) depends on tension and linear mass density.",
-      "<term key='sound-waves'>Sound waves</term> in air arise from pressure and density oscillations. The speed of sound depends on the bulk modulus and density, and for an ideal gas involves the ratio of specific heats gamma."
+      "This chapter derives the <term key='wave-eq-string'>wave equation for strings</term> from Newton's second law applied to a small segment under tension. The wave speed $v = \\\\sqrt{T/\\\\mu}$ depends on tension and linear mass density.",
+      "<term key='sound-waves'>Sound waves</term> in air arise from pressure and density oscillations. The speed of sound depends on the bulk modulus and density, and for an ideal gas involves the ratio of specific heats $\\\\gamma$."
     ],
     goals: [
       "Derive the wave equation for transverse waves on a string under tension.",
-      "Derive the speed of sound in a gas and understand why it depends on gamma.",
+      "Derive the speed of sound in a gas and understand why it depends on $\\\\gamma$.",
       "Distinguish longitudinal from transverse waves and identify examples of each."
     ],
     pitfalls: [
-      "Confusing the displacement A(x,t) of a string element with the density variation in a sound wave.",
+      "Confusing the displacement $A(x,t)$ of a string element with the density variation in a sound wave.",
       "Thinking sound waves are transverse (they are longitudinal in a gas).",
       "Forgetting that the speed of sound in air depends on temperature through the ideal gas law."
     ],
     terms: {
       "wave-eq-string": {
-        short: "d^2A/dt^2 = (T/mu) d^2A/dx^2 for a string under tension T.",
-        long: "Newton's second law on a small segment of string gives a restoring force proportional to the curvature of the string. This yields the wave equation with speed v = sqrt(T/mu), where mu is mass per unit length."
+        short: "$\\\\partial^2 A/\\\\partial t^2 = (T/\\\\mu)\\,\\\\partial^2 A/\\\\partial x^2$ for a string under tension $T$.",
+        long: "Newton's second law on a small segment of string gives a restoring force proportional to the curvature of the string. This yields the wave equation with speed $v = \\\\sqrt{T/\\\\mu}$, where $\\\\mu$ is mass per unit length."
       },
       "sound-waves": {
         short: "Longitudinal pressure oscillations that propagate through a medium.",
-        long: "Sound is a compression wave. The speed in an ideal gas is v = sqrt(gamma P / rho) = sqrt(gamma k_B T / m_molecule). The adiabatic exponent gamma = (f+2)/f depends on the degrees of freedom f of the gas molecules."
+        long: "Sound is a compression wave. The speed in an ideal gas is $v = \\\\sqrt{\\\\gamma P/\\\\rho} = \\\\sqrt{\\\\gamma k_B T/m_{\\\\text{mol}}}$. The adiabatic exponent $\\\\gamma = (f+2)/f$ depends on the degrees of freedom $f$ of the gas molecules."
       },
       "longitudinal-transverse": {
         short: "Oscillation parallel to or perpendicular to the direction of wave travel.",
@@ -653,11 +653,11 @@ const chapters = [
         title: "Wave equation from a vibrating string",
         teaser: "Apply Newton's second law to a small segment of string and keep the leading-order term.",
         steps: [
-          "Consider a small segment of string of length Delta x under tension T with displacement A(x,t).",
-          "The net transverse force is T [dA/dx at x + Delta x] - T [dA/dx at x] = T (d^2A/dx^2) Delta x.",
-          "Set this equal to mu Delta x (d^2A/dt^2) and cancel Delta x to get the wave equation."
+          "Consider a small segment of string of length $\\\\Delta x$ under tension $T$ with displacement $A(x,t)$.",
+          "The net transverse force is $T[\\\\partial A/\\\\partial x]_{x+\\\\Delta x} - T[\\\\partial A/\\\\partial x]_x = T(\\\\partial^2 A/\\\\partial x^2)\\\\Delta x$.",
+          "Set this equal to $\\\\mu\\,\\\\Delta x\\,(\\\\partial^2 A/\\\\partial t^2)$ and cancel $\\\\Delta x$ to get the wave equation."
         ],
-        result: "d^2A/dt^2 = (T/mu) d^2A/dx^2, with wave speed v = sqrt(T/mu). Tighter strings vibrate faster, heavier strings vibrate slower."
+        result: "$\\\\partial^2 A/\\\\partial t^2 = (T/\\\\mu)\\,\\\\partial^2 A/\\\\partial x^2$, with wave speed $v = \\\\sqrt{T/\\\\mu}$. Tighter strings vibrate faster, heavier strings vibrate slower."
       }
     ],
     deepDives: [
@@ -725,9 +725,9 @@ const chapters = [
         title: "Why the perfect fifth sounds consonant",
         teaser: "Compare the harmonic series of two notes with a 3:2 frequency ratio.",
         steps: [
-          "Let the fundamental be f_0 with harmonics f_0, 2f_0, 3f_0, 4f_0, ...",
-          "The perfect fifth has fundamental (3/2)f_0 with harmonics (3/2)f_0, 3f_0, (9/2)f_0, 6f_0, ...",
-          "The 3rd harmonic of f_0 matches the 2nd harmonic of (3/2)f_0. Many harmonics align, so there are no dissonant beats."
+          "Let the fundamental be $f_0$ with harmonics $f_0, 2f_0, 3f_0, 4f_0, \\\\ldots$",
+          "The perfect fifth has fundamental $(3/2)f_0$ with harmonics $(3/2)f_0, 3f_0, (9/2)f_0, 6f_0, \\\\ldots$",
+          "The 3rd harmonic of $f_0$ matches the 2nd harmonic of $(3/2)f_0$. Many harmonics align, so there are no dissonant beats."
         ],
         result: "Simple frequency ratios produce harmonic alignment, which the ear perceives as consonance. Complex ratios create beating among nearby harmonics, heard as dissonance."
       }
@@ -775,20 +775,20 @@ const chapters = [
     ],
     pitfalls: [
       "Confusing Fourier series (discrete frequencies) with Fourier transforms (continuous spectrum).",
-      "Getting factors of 2pi wrong when switching between frequency and angular frequency conventions.",
+      "Getting factors of $2\\\\pi$ wrong when switching between frequency and angular frequency conventions.",
       "Interpreting the Fourier transform of a real signal as purely real (it is generally complex)."
     ],
     terms: {
       "fourier-transform": {
-        short: "f-tilde(k) = (1/2pi) integral of f(x) e^(-ikx) dx.",
+        short: "$\\\\tilde{f}(k) = \\\\frac{1}{2\\\\pi}\\\\int f(x)\\,e^{-ikx}\\,dx$.",
         long: "The Fourier transform decomposes a non-periodic function into a continuous superposition of plane waves. The inverse transform recovers the original function from its spectral content."
       },
       lorentzian: {
-        short: "The spectral shape of a damped oscillator: 1/[(omega - omega_0)^2 + (gamma/2)^2].",
-        long: "A Lorentzian peak appears whenever a system has a characteristic frequency with finite damping. Its full width at half maximum equals gamma, the damping rate. It is the Fourier transform of an exponentially decaying sinusoid."
+        short: "The spectral shape of a damped oscillator: $1/[(\\\\omega - \\\\omega_0)^2 + (\\\\gamma/2)^2]$.",
+        long: "A Lorentzian peak appears whenever a system has a characteristic frequency with finite damping. Its full width at half maximum equals $\\\\gamma$, the damping rate. It is the Fourier transform of an exponentially decaying sinusoid."
       },
       "power-spectrum": {
-        short: "|f-tilde(omega)|^2, the intensity at each frequency.",
+        short: "$|\\\\tilde{f}(\\\\omega)|^2$, the intensity at each frequency.",
         long: "The power spectrum shows how much energy is associated with each frequency component. It is what you see on an audio equalizer or spectrum analyzer."
       }
     },
@@ -797,11 +797,11 @@ const chapters = [
         title: "From Fourier series to Fourier transform",
         teaser: "Take the period L to infinity and watch discrete sums become integrals.",
         steps: [
-          "Start with the exponential Fourier series: f(x) = sum c_n e^(i k_n x), where k_n = 2pi n / L.",
-          "Define Delta k = 2pi / L, so the sum becomes sum f-tilde(k_n) e^(i k_n x) Delta k.",
-          "As L -> infinity, Delta k -> dk and the sum becomes an integral: f(x) = integral f-tilde(k) e^(ikx) dk."
+          "Start with the exponential Fourier series: $f(x) = \\\\sum c_n\\,e^{ik_n x}$, where $k_n = 2\\\\pi n/L$.",
+          "Define $\\\\Delta k = 2\\\\pi/L$, so the sum becomes $\\\\sum \\\\tilde{f}(k_n)\\,e^{ik_n x}\\,\\\\Delta k$.",
+          "As $L \\\\to \\\\infty$, $\\\\Delta k \\\\to dk$ and the sum becomes an integral: $f(x) = \\\\int \\\\tilde{f}(k)\\,e^{ikx}\\,dk$."
         ],
-        result: "The Fourier transform pair f-tilde(k) = (1/2pi) integral f(x) e^(-ikx) dx and f(x) = integral f-tilde(k) e^(ikx) dk replaces the discrete coefficients of the Fourier series."
+        result: "The Fourier transform pair $\\\\tilde{f}(k) = \\\\frac{1}{2\\\\pi}\\\\int f(x)\\,e^{-ikx}\\,dx$ and $f(x) = \\\\int \\\\tilde{f}(k)\\,e^{ikx}\\,dk$ replaces the discrete coefficients of the Fourier series."
       }
     ],
     deepDives: [
@@ -816,7 +816,7 @@ const chapters = [
     ],
     quickActions: {
       intuition: "The Fourier transform is the universal translator between time and frequency. Any signal can be broken into its frequency ingredients, and the recipe is invertible.",
-      formal: "The chapter derives the Fourier transform from the L -> infinity limit of Fourier series, computes the transform of a damped sinusoid to get a Lorentzian, and introduces the power spectrum.",
+      formal: "The chapter derives the Fourier transform from the $L \\\\to \\\\infty$ limit of Fourier series, computes the transform of a damped sinusoid to get a Lorentzian, and introduces the power spectrum.",
       quiz: "Checkpoint: what is the Fourier transform of a pure sinusoid that lasts forever, and how does it change if the sinusoid is damped?"
     },
     prompts: [
@@ -838,7 +838,7 @@ const chapters = [
     conceptCaption: "When a wave hits a junction between two media, impedance mismatch determines how much energy bounces back versus passes through.",
     explanation: [
       "At a boundary between two media, a wave splits into <term key='reflected-wave'>reflected</term> and <term key='transmitted-wave'>transmitted</term> components. The amplitudes are determined by matching the wave and its derivative at the junction.",
-      "<term key='impedance'>Impedance</term> Z = sqrt(T mu) (for strings) or Z = rho v (for sound) captures everything about a medium relevant to wave transmission. Reflection vanishes when impedances are matched."
+      "<term key='impedance'>Impedance</term> $Z = \\\\sqrt{T\\\\mu}$ (for strings) or $Z = \\\\rho v$ (for sound) captures everything about a medium relevant to wave transmission. Reflection vanishes when impedances are matched."
     ],
     goals: [
       "Apply boundary conditions at a junction to find reflection and transmission coefficients.",
@@ -853,15 +853,15 @@ const chapters = [
     terms: {
       "reflected-wave": {
         short: "The part of the wave that bounces back from a boundary.",
-        long: "The reflection coefficient r = (Z1 - Z2)/(Z1 + Z2) gives the ratio of reflected to incident amplitude. It can be positive or negative depending on which medium has higher impedance."
+        long: "The reflection coefficient $r = (Z_1 - Z_2)/(Z_1 + Z_2)$ gives the ratio of reflected to incident amplitude. It can be positive or negative depending on which medium has higher impedance."
       },
       "transmitted-wave": {
         short: "The part of the wave that passes through a boundary.",
-        long: "The transmission coefficient t = 2 Z1 / (Z1 + Z2) gives the transmitted amplitude relative to the incident amplitude. Note t can exceed 1 because amplitude and power are different quantities."
+        long: "The transmission coefficient $t = 2Z_1/(Z_1 + Z_2)$ gives the transmitted amplitude relative to the incident amplitude. Note $t$ can exceed 1 because amplitude and power are different quantities."
       },
       impedance: {
-        short: "A medium's resistance to wave motion: Z = rho v.",
-        long: "Impedance encapsulates both the inertia and the stiffness of a medium. Two media with matched impedances transmit waves perfectly. Mismatch causes reflection, with the extreme cases being fixed-end (Z2 = infinity) and free-end (Z2 = 0)."
+        short: "A medium's resistance to wave motion: $Z = \\\\rho v$.",
+        long: "Impedance encapsulates both the inertia and the stiffness of a medium. Two media with matched impedances transmit waves perfectly. Mismatch causes reflection, with the extreme cases being fixed-end ($Z_2 = \\\\infty$) and free-end ($Z_2 = 0$)."
       }
     },
     derivations: [
@@ -869,11 +869,11 @@ const chapters = [
         title: "Reflection and transmission coefficients from boundary conditions",
         teaser: "Match continuity of displacement and force at the junction to solve for the ratios.",
         steps: [
-          "At x = 0, the string is continuous: A_incident(0,t) + A_reflected(0,t) = A_transmitted(0,t), giving A_I + A_R = A_T.",
-          "The force (tension times slope) must also match: T1 (dA_L/dx) = T2 (dA_R/dx), which gives Z1(A_I - A_R) = Z2 A_T.",
-          "Solve the two equations: A_R/A_I = (Z1 - Z2)/(Z1 + Z2) and A_T/A_I = 2Z1/(Z1 + Z2)."
+          "At $x = 0$, the string is continuous: $A_I(0,t) + A_R(0,t) = A_T(0,t)$, giving $A_I + A_R = A_T$.",
+          "The force (tension times slope) must also match: $T_1(\\\\partial A_L/\\\\partial x) = T_2(\\\\partial A_R/\\\\partial x)$, which gives $Z_1(A_I - A_R) = Z_2 A_T$.",
+          "Solve the two equations: $A_R/A_I = (Z_1 - Z_2)/(Z_1 + Z_2)$ and $A_T/A_I = 2Z_1/(Z_1 + Z_2)$."
         ],
-        result: "Impedance mismatch controls reflection. Perfect matching (Z1 = Z2) means no reflection. Maximum reflection occurs when the impedances are very different."
+        result: "Impedance mismatch controls reflection. Perfect matching ($Z_1 = Z_2$) means no reflection. Maximum reflection occurs when the impedances are very different."
       }
     ],
     deepDives: [
@@ -910,7 +910,7 @@ const chapters = [
     conceptCaption: "The power transmitted by a wave equals the impedance times the velocity squared, connecting amplitude and frequency to energy flow.",
     explanation: [
       "Waves carry both <term key='kinetic-energy'>kinetic energy</term> (from the motion of the medium) and <term key='potential-energy'>potential energy</term> (from the stretching or compression of the medium). For a traveling wave, these are equal at every point.",
-      "The <term key='power-wave'>power</term> transmitted by a wave is P = Z (dA/dt)^2, proportional to the impedance and the square of the velocity. This connects directly to the reflection and transmission coefficients from the previous chapter."
+      "The <term key='power-wave'>power</term> transmitted by a wave is $P = Z(\\\\partial A/\\\\partial t)^2$, proportional to the impedance and the square of the velocity. This connects directly to the reflection and transmission coefficients from the previous chapter."
     ],
     goals: [
       "Derive kinetic and potential energy densities for a wave on a string.",
@@ -924,16 +924,16 @@ const chapters = [
     ],
     terms: {
       "kinetic-energy": {
-        short: "KE per length = (1/2) mu (dA/dt)^2 from the motion of the medium.",
+        short: "KE per length $= \\\\frac{1}{2}\\\\mu(\\\\partial A/\\\\partial t)^2$ from the motion of the medium.",
         long: "Each bit of the medium has kinetic energy from its transverse velocity. For a traveling sinusoidal wave, the kinetic energy density oscillates in space and time."
       },
       "potential-energy": {
-        short: "PE per length = (1/2) T (dA/dx)^2 from stretching of the medium.",
+        short: "PE per length $= \\\\frac{1}{2}T(\\\\partial A/\\\\partial x)^2$ from stretching of the medium.",
         long: "The potential energy comes from the string being stretched beyond its equilibrium length. For a traveling wave, the PE density exactly equals the KE density at every point."
       },
       "power-wave": {
-        short: "P = Z (dA/dt)^2, the rate of energy transport.",
-        long: "Power is force times velocity. For a wave, the transverse force is T dA/dx and the transverse velocity is dA/dt. Their product gives P = -T (dA/dx)(dA/dt) = Z (dA/dt)^2 for a right-moving wave."
+        short: "$P = Z(\\\\partial A/\\\\partial t)^2$, the rate of energy transport.",
+        long: "Power is force times velocity. For a wave, the transverse force is $T\\,\\\\partial A/\\\\partial x$ and the transverse velocity is $\\\\partial A/\\\\partial t$. Their product gives $P = -T(\\\\partial A/\\\\partial x)(\\\\partial A/\\\\partial t) = Z(\\\\partial A/\\\\partial t)^2$ for a right-moving wave."
       }
     },
     derivations: [
@@ -941,11 +941,11 @@ const chapters = [
         title: "Energy conservation at a boundary",
         teaser: "Check that incident power equals reflected plus transmitted power using the impedance coefficients.",
         steps: [
-          "Write P_I = Z1 A_I^2 omega^2 / 2, P_R = Z1 A_R^2 omega^2 / 2, P_T = Z2 A_T^2 omega^2 / 2.",
-          "Substitute A_R = r A_I and A_T = t A_I with r = (Z1-Z2)/(Z1+Z2) and t = 2Z1/(Z1+Z2).",
-          "Compute P_R + P_T = Z1 r^2 A_I^2 omega^2/2 + Z2 t^2 A_I^2 omega^2/2 and verify it equals P_I."
+          "Write $P_I = Z_1 A_I^2\\\\omega^2/2$, $P_R = Z_1 A_R^2\\\\omega^2/2$, $P_T = Z_2 A_T^2\\\\omega^2/2$.",
+          "Substitute $A_R = rA_I$ and $A_T = tA_I$ with $r = (Z_1-Z_2)/(Z_1+Z_2)$ and $t = 2Z_1/(Z_1+Z_2)$.",
+          "Compute $P_R + P_T = Z_1 r^2 A_I^2\\\\omega^2/2 + Z_2 t^2 A_I^2\\\\omega^2/2$ and verify it equals $P_I$."
         ],
-        result: "Energy is conserved at the boundary: P_R/P_I + P_T/P_I = r^2 + (Z2/Z1) t^2 = 1, even though the amplitude transmission coefficient can exceed 1."
+        result: "Energy is conserved at the boundary: $P_R/P_I + P_T/P_I = r^2 + (Z_2/Z_1)t^2 = 1$, even though the amplitude transmission coefficient can exceed 1."
       }
     ],
     deepDives: [
@@ -960,7 +960,7 @@ const chapters = [
     ],
     quickActions: {
       intuition: "A wave is an energy delivery system. The impedance of the medium determines how much power is carried for a given amplitude of oscillation.",
-      formal: "The chapter derives KE and PE densities for a string wave, shows their equality for traveling waves, defines power as Z(dA/dt)^2, and verifies energy conservation at boundaries.",
+      formal: "The chapter derives KE and PE densities for a string wave, shows their equality for traveling waves, defines power as $Z(\\\\partial A/\\\\partial t)^2$, and verifies energy conservation at boundaries.",
       quiz: "Checkpoint: for a standing wave, the time-averaged power flow is zero. Explain why in terms of the phase relationship between force and velocity."
     },
     prompts: [
@@ -982,7 +982,7 @@ const chapters = [
     conceptCaption: "A wavepacket carries information at the group velocity, and its width grows over time if different frequencies travel at different speeds.",
     explanation: [
       "A <term key='wavepacket'>wavepacket</term> is a localized pulse built from a superposition of plane waves with a narrow range of frequencies. In a Gaussian wavepacket, the width in real space and the width in frequency space are inversely related.",
-      "The <term key='group-velocity'>group velocity</term> v_g = d omega / dk is the speed at which the envelope (and the energy) moves. It differs from the <term key='phase-velocity'>phase velocity</term> v_p = omega / k in dispersive media, causing the packet to spread over time."
+      "The <term key='group-velocity'>group velocity</term> $v_g = d\\\\omega/dk$ is the speed at which the envelope (and the energy) moves. It differs from the <term key='phase-velocity'>phase velocity</term> $v_p = \\\\omega/k$ in dispersive media, causing the packet to spread over time."
     ],
     goals: [
       "Construct a wavepacket as a superposition of plane waves with a Gaussian envelope.",
@@ -997,14 +997,14 @@ const chapters = [
     terms: {
       wavepacket: {
         short: "A localized wave pulse built from a range of frequencies.",
-        long: "A wavepacket is a superposition of plane waves, typically with a Gaussian envelope. The width sigma_x in position and sigma_k in wavenumber satisfy sigma_x sigma_k >= 1/2, the uncertainty relation."
+        long: "A wavepacket is a superposition of plane waves, typically with a Gaussian envelope. The width $\\\\sigma_x$ in position and $\\\\sigma_k$ in wavenumber satisfy $\\\\sigma_x\\\\sigma_k \\\\geq 1/2$, the uncertainty relation."
       },
       "group-velocity": {
-        short: "v_g = d omega / dk, the speed of the envelope.",
-        long: "The group velocity determines how fast the peak of a wavepacket moves and at what speed energy and information travel. For non-dispersive media, v_g = v_p. For dispersive media, they differ."
+        short: "$v_g = d\\\\omega/dk$, the speed of the envelope.",
+        long: "The group velocity determines how fast the peak of a wavepacket moves and at what speed energy and information travel. For non-dispersive media, $v_g = v_p$. For dispersive media, they differ."
       },
       "phase-velocity": {
-        short: "v_p = omega / k, the speed of individual crests.",
+        short: "$v_p = \\\\omega/k$, the speed of individual crests.",
         long: "Phase velocity is the speed at which a single crest of a monochromatic wave travels. It can exceed the speed of light in some media, but this does not violate causality because information travels at the group velocity."
       }
     },
@@ -1013,11 +1013,11 @@ const chapters = [
         title: "Group velocity from the dispersion relation",
         teaser: "Expand omega(k) near the carrier frequency and identify the envelope speed.",
         steps: [
-          "Write a wavepacket as integral of f-tilde(k) e^(i(kx - omega(k)t)) dk, peaked near k_0.",
-          "Taylor expand omega(k) about k_0: omega = omega_0 + (d omega/dk)|_{k_0} (k - k_0) + ...",
-          "The leading-order phase factor gives e^(i(k_0 x - omega_0 t)) times an envelope that depends on (x - v_g t), where v_g = d omega/dk at k_0."
+          "Write a wavepacket as $\\\\int \\\\tilde{f}(k)\\,e^{i(kx - \\\\omega(k)t)}\\,dk$, peaked near $k_0$.",
+          "Taylor expand $\\\\omega(k)$ about $k_0$: $\\\\omega = \\\\omega_0 + (d\\\\omega/dk)|_{k_0}(k - k_0) + \\\\cdots$",
+          "The leading-order phase factor gives $e^{i(k_0 x - \\\\omega_0 t)}$ times an envelope that depends on $(x - v_g t)$, where $v_g = d\\\\omega/dk$ at $k_0$."
         ],
-        result: "The envelope travels at the group velocity v_g = d omega / dk. Higher-order terms in the expansion cause the envelope to spread (dispersion)."
+        result: "The envelope travels at the group velocity $v_g = d\\\\omega/dk$. Higher-order terms in the expansion cause the envelope to spread (dispersion)."
       }
     ],
     deepDives: [
@@ -1027,12 +1027,12 @@ const chapters = [
       },
       {
         title: "AI tutor prompt",
-        body: "How does the time-bandwidth product sigma_t sigma_omega >= 1/2 limit how short a radar pulse can be at a given frequency?"
+        body: "How does the time-bandwidth product $\\\\sigma_t\\\\sigma_\\\\omega \\\\geq 1/2$ limit how short a radar pulse can be at a given frequency?"
       }
     ],
     quickActions: {
       intuition: "A wavepacket is the answer to how to send a localized signal using waves. The group velocity carries the information, and dispersion is the enemy of keeping signals sharp.",
-      formal: "The chapter constructs Gaussian wavepackets, Taylor-expands the dispersion relation to identify group velocity, and computes packet spreading from the second derivative of omega(k).",
+      formal: "The chapter constructs Gaussian wavepackets, Taylor-expands the dispersion relation to identify group velocity, and computes packet spreading from the second derivative of $\\\\omega(k)$.",
       quiz: "Checkpoint: in deep water, surface wave phase velocity is twice the group velocity. What does this mean for the crests inside a wave group?"
     },
     prompts: [
@@ -1073,7 +1073,7 @@ const chapters = [
       },
       "shock-waves": {
         short: "Waves produced when a source exceeds the wave speed.",
-        long: "When a source moves faster than the wave speed, wavefronts pile up into a cone (Mach cone) producing a shock wave. The half-angle of the cone is sin(theta) = v_wave / v_source."
+        long: "When a source moves faster than the wave speed, wavefronts pile up into a cone (Mach cone) producing a shock wave. The half-angle of the cone is $\\\\sin(\\\\theta) = v_{\\\\text{wave}}/v_{\\\\text{source}}$."
       },
       "sonar": {
         short: "Using reflected sound waves to detect objects.",
@@ -1085,11 +1085,11 @@ const chapters = [
         title: "The Mach cone geometry",
         teaser: "Track wavefronts emitted by a supersonic source and find the cone angle.",
         steps: [
-          "A source at speed v_s emits a wavefront which expands as a sphere of radius v_w t after time t.",
-          "The source has moved a distance v_s t. The envelope of all these spheres forms a cone.",
-          "The half-angle satisfies sin(theta) = v_w t / (v_s t) = v_w / v_s = 1 / M, where M is the Mach number."
+          "A source at speed $v_s$ emits a wavefront which expands as a sphere of radius $v_w t$ after time $t$.",
+          "The source has moved a distance $v_s t$. The envelope of all these spheres forms a cone.",
+          "The half-angle satisfies $\\\\sin(\\\\theta) = v_w t/(v_s t) = v_w/v_s = 1/M$, where $M$ is the Mach number."
         ],
-        result: "The Mach cone half-angle theta = arcsin(1/M) gets sharper as the source moves faster relative to the wave speed."
+        result: "The Mach cone half-angle $\\\\theta = \\\\arcsin(1/M)$ gets sharper as the source moves faster relative to the wave speed."
       }
     ],
     deepDives: [
@@ -1123,33 +1123,33 @@ const chapters = [
     slug: "light",
     pdf: "./lectures/13-Light.pdf",
     conceptTitle: "Light is an electromagnetic wave",
-    conceptCaption: "Maxwell's equations predict electromagnetic waves traveling at c = 1/sqrt(mu_0 epsilon_0), unifying electricity, magnetism, and optics.",
+    conceptCaption: "Maxwell's equations predict electromagnetic waves traveling at $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$, unifying electricity, magnetism, and optics.",
     explanation: [
-      "Maxwell's equations, when combined, yield the <term key='em-wave-equation'>electromagnetic wave equation</term> for both E and B fields. The predicted speed is c = 1/sqrt(mu_0 epsilon_0), which matches the measured speed of light.",
+      "Maxwell's equations, when combined, yield the <term key='em-wave-equation'>electromagnetic wave equation</term> for both $\\\\vec{E}$ and $\\\\vec{B}$ fields. The predicted speed is $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$, which matches the measured speed of light.",
       "The <term key='em-spectrum'>electromagnetic spectrum</term> spans from radio waves to gamma rays. All are the same phenomenon at different frequencies. Light is the tiny visible slice of this spectrum."
     ],
     goals: [
       "Derive the electromagnetic wave equation from Maxwell's equations in vacuum.",
-      "Identify the speed of light in terms of fundamental electromagnetic constants.",
+      "Identify the speed of light $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$ in terms of fundamental electromagnetic constants.",
       "Survey the electromagnetic spectrum from radio to gamma rays."
     ],
     pitfalls: [
       "Thinking light needs a medium to propagate (it does not; the aether does not exist).",
-      "Confusing the electric and magnetic field amplitudes (B = E/c in vacuum).",
-      "Forgetting that EM waves are transverse: E and B are perpendicular to the propagation direction."
+      "Confusing the electric and magnetic field amplitudes ($B = E/c$ in vacuum).",
+      "Forgetting that EM waves are transverse: $\\\\vec{E}$ and $\\\\vec{B}$ are perpendicular to the propagation direction."
     ],
     terms: {
       "em-wave-equation": {
-        short: "(d^2/dt^2 - c^2 nabla^2) E = 0, derived from Maxwell's equations.",
-        long: "By taking the curl of Faraday's law and substituting Ampere's law, you get a wave equation for E (and similarly for B). The wave speed is c = 1/sqrt(mu_0 epsilon_0) = 3 x 10^8 m/s."
+        short: "$(\\\\partial^2/\\\\partial t^2 - c^2\\\\nabla^2)\\\\vec{E} = 0$, derived from Maxwell's equations.",
+        long: "By taking the curl of Faraday's law and substituting Ampere's law, you get a wave equation for $\\\\vec{E}$ (and similarly for $\\\\vec{B}$). The wave speed is $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0} = 3 \\\\times 10^8$ m/s."
       },
       "em-spectrum": {
         short: "The full range of electromagnetic wave frequencies.",
         long: "Radio (km wavelengths), microwave (cm), infrared (microns), visible (400-700 nm), ultraviolet, X-rays, gamma rays are all electromagnetic waves differing only in frequency."
       },
       "index-of-refraction": {
-        short: "n = c/v, the factor by which light slows in a medium.",
-        long: "In a material, electromagnetic waves interact with charges in the medium, effectively slowing the wave. The index of refraction n determines the wavelength inside the medium as lambda = lambda_0 / n."
+        short: "$n = c/v$, the factor by which light slows in a medium.",
+        long: "In a material, electromagnetic waves interact with charges in the medium, effectively slowing the wave. The index of refraction $n$ determines the wavelength inside the medium as $\\\\lambda = \\\\lambda_0/n$."
       }
     },
     derivations: [
@@ -1157,11 +1157,11 @@ const chapters = [
         title: "Deriving the EM wave equation from Maxwell's equations",
         teaser: "Take the curl of Faraday's law and substitute Ampere's law.",
         steps: [
-          "Start with curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt (in vacuum).",
-          "Take the curl of the first equation: curl(curl E) = -d/dt(curl B) = -mu_0 epsilon_0 d^2E/dt^2.",
-          "Use the identity curl(curl E) = grad(div E) - nabla^2 E, and div E = 0 gives nabla^2 E = mu_0 epsilon_0 d^2E/dt^2."
+          "Start with $\\\\nabla \\\\times \\\\vec{E} = -\\\\partial\\\\vec{B}/\\\\partial t$ and $\\\\nabla \\\\times \\\\vec{B} = \\\\mu_0\\\\epsilon_0\\,\\\\partial\\\\vec{E}/\\\\partial t$ (in vacuum).",
+          "Take the curl of the first equation: $\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{E}) = -\\\\partial/\\\\partial t(\\\\nabla \\\\times \\\\vec{B}) = -\\\\mu_0\\\\epsilon_0\\,\\\\partial^2\\\\vec{E}/\\\\partial t^2$.",
+          "Use the identity $\\\\nabla \\\\times (\\\\nabla \\\\times \\\\vec{E}) = \\\\nabla(\\\\nabla \\\\cdot \\\\vec{E}) - \\\\nabla^2\\\\vec{E}$, and $\\\\nabla \\\\cdot \\\\vec{E} = 0$ gives $\\\\nabla^2\\\\vec{E} = \\\\mu_0\\\\epsilon_0\\,\\\\partial^2\\\\vec{E}/\\\\partial t^2$."
         ],
-        result: "The wave equation (d^2/dt^2 - c^2 nabla^2) E = 0 with c = 1/sqrt(mu_0 epsilon_0) proves that light is an electromagnetic wave."
+        result: "The wave equation $(\\\\partial^2/\\\\partial t^2 - c^2\\\\nabla^2)\\\\vec{E} = 0$ with $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$ proves that light is an electromagnetic wave."
       }
     ],
     deepDives: [
@@ -1175,8 +1175,8 @@ const chapters = [
       }
     ],
     quickActions: {
-      intuition: "Light is oscillating electric and magnetic fields that regenerate each other as they travel. Maxwell's equations predict the speed exactly: c = 1/sqrt(mu_0 epsilon_0).",
-      formal: "The chapter derives the electromagnetic wave equation from Maxwell's equations in vacuum, identifies c, and surveys the full electromagnetic spectrum.",
+      intuition: "Light is oscillating electric and magnetic fields that regenerate each other as they travel. Maxwell's equations predict the speed exactly: $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$.",
+      formal: "The chapter derives the electromagnetic wave equation from Maxwell's equations in vacuum, identifies $c$, and surveys the full electromagnetic spectrum.",
       quiz: "Checkpoint: what is the relationship between the electric and magnetic field amplitudes in an electromagnetic plane wave?"
     },
     prompts: [
@@ -1212,26 +1212,26 @@ const chapters = [
     ],
     terms: {
       "polarization-vector": {
-        short: "The complex vector E_0 specifying the direction and phase of the electric field.",
-        long: "E_0 = (E_x, E_y e^(i phi), 0) for a wave propagating in z. The relative phase phi between x and y components determines whether the polarization is linear, circular, or elliptical."
+        short: "The complex vector $\\\\vec{E}_0$ specifying the direction and phase of the electric field.",
+        long: "$\\\\vec{E}_0 = (E_x,\\, E_y e^{i\\\\phi},\\, 0)$ for a wave propagating in $z$. The relative phase $\\\\phi$ between $x$ and $y$ components determines whether the polarization is linear, circular, or elliptical."
       },
       "linear-polarization": {
-        short: "E field oscillates in a single fixed direction.",
-        long: "When E_x and E_y are in phase (phi = 0 or pi), the electric field oscillates along a line. The direction can be at any angle in the xy plane."
+        short: "$\\\\vec{E}$ field oscillates in a single fixed direction.",
+        long: "When $E_x$ and $E_y$ are in phase ($\\\\phi = 0$ or $\\\\pi$), the electric field oscillates along a line. The direction can be at any angle in the $xy$ plane."
       },
       "circular-polarization": {
-        short: "E field vector rotates, tracing a circle.",
-        long: "When E_x and E_y have equal magnitude and differ in phase by pi/2, the tip of the E vector traces a circle. Left-handed and right-handed circular polarizations correspond to opposite senses of rotation."
+        short: "$\\\\vec{E}$ field vector rotates, tracing a circle.",
+        long: "When $E_x$ and $E_y$ have equal magnitude and differ in phase by $\\\\pi/2$, the tip of the $\\\\vec{E}$ vector traces a circle. Left-handed and right-handed circular polarizations correspond to opposite senses of rotation."
       }
     },
     derivations: [
       {
         title: "Circular polarization from phase-shifted components",
-        teaser: "Set E_x and E_y equal in magnitude with a pi/2 phase difference.",
+        teaser: "Set $E_x$ and $E_y$ equal in magnitude with a $\\\\pi/2$ phase difference.",
         steps: [
-          "Write E_0 = (E_0, i E_0, 0), so that E = (E_0 cos(kz - omega t), -E_0 sin(kz - omega t), 0).",
-          "At fixed z, the tip of E traces a circle in the xy plane as t advances.",
-          "The handedness depends on the sign of the phase: +i gives left-handed, -i gives right-handed."
+          "Write $\\\\vec{E}_0 = (E_0,\\, iE_0,\\, 0)$, so that $\\\\vec{E} = (E_0\\\\cos(kz - \\\\omega t),\\, -E_0\\\\sin(kz - \\\\omega t),\\, 0)$.",
+          "At fixed $z$, the tip of $\\\\vec{E}$ traces a circle in the $xy$ plane as $t$ advances.",
+          "The handedness depends on the sign of the phase: $+i$ gives left-handed, $-i$ gives right-handed."
         ],
         result: "Circular polarization is just two perpendicular linear oscillations with a quarter-wave phase shift. Any polarization can be decomposed into a sum of left and right circular states."
       }
@@ -1269,7 +1269,7 @@ const chapters = [
     conceptTitle: "Light bends when it changes speed",
     conceptCaption: "Snell's law governs how light rays change direction at an interface, leading to lenses, total internal reflection, and fiber optics.",
     explanation: [
-      "<term key='snells-law'>Snell's law</term> n1 sin(theta_1) = n2 sin(theta_2) follows from requiring the wavefronts to be continuous at the boundary. Light bends toward the normal when entering a denser medium.",
+      "<term key='snells-law'>Snell's law</term> $n_1\\\\sin(\\\\theta_1) = n_2\\\\sin(\\\\theta_2)$ follows from requiring the wavefronts to be continuous at the boundary. Light bends toward the normal when entering a denser medium.",
       "When light goes from a denser to a less dense medium, there exists a critical angle beyond which all light is reflected. This <term key='total-internal-reflection'>total internal reflection</term> is the principle behind fiber optics."
     ],
     goals: [
@@ -1284,12 +1284,12 @@ const chapters = [
     ],
     terms: {
       "snells-law": {
-        short: "n1 sin(theta_1) = n2 sin(theta_2), the law of refraction.",
-        long: "Snell's law follows from the requirement that wave crests match at the boundary. Since the speed changes (v = c/n), the wavelength changes, forcing the direction to change to maintain phase matching."
+        short: "$n_1\\\\sin(\\\\theta_1) = n_2\\\\sin(\\\\theta_2)$, the law of refraction.",
+        long: "Snell's law follows from the requirement that wave crests match at the boundary. Since the speed changes ($v = c/n$), the wavelength changes, forcing the direction to change to maintain phase matching."
       },
       "total-internal-reflection": {
         short: "Complete reflection when light hits a less dense medium beyond the critical angle.",
-        long: "When n1 > n2 and sin(theta_1) > n2/n1, there is no real refraction angle. All light is reflected back. The critical angle is theta_c = arcsin(n2/n1). This is how fiber optic cables guide light."
+        long: "When $n_1 > n_2$ and $\\\\sin(\\\\theta_1) > n_2/n_1$, there is no real refraction angle. All light is reflected back. The critical angle is $\\\\theta_c = \\\\arcsin(n_2/n_1)$. This is how fiber optic cables guide light."
       },
       "fermats-principle": {
         short: "Light follows the path of least time.",
@@ -1301,9 +1301,9 @@ const chapters = [
         title: "Snell's law from wavefront matching",
         teaser: "Require that the phase of the wave be continuous along the boundary between two media.",
         steps: [
-          "A plane wave hits a flat boundary. The wavefronts in medium 1 make angle theta_1 with the boundary.",
-          "The distance between wavefronts along the boundary must be the same on both sides: lambda_1/sin(theta_1) = lambda_2/sin(theta_2).",
-          "Since lambda = lambda_0 / n, this gives n1 sin(theta_1) = n2 sin(theta_2)."
+          "A plane wave hits a flat boundary. The wavefronts in medium 1 make angle $\\\\theta_1$ with the boundary.",
+          "The distance between wavefronts along the boundary must be the same on both sides: $\\\\lambda_1/\\\\sin(\\\\theta_1) = \\\\lambda_2/\\\\sin(\\\\theta_2)$.",
+          "Since $\\\\lambda = \\\\lambda_0/n$, this gives $n_1\\\\sin(\\\\theta_1) = n_2\\\\sin(\\\\theta_2)$."
         ],
         result: "Snell's law is a geometric consequence of phase matching at a boundary combined with the change in wavelength."
       }
@@ -1321,7 +1321,7 @@ const chapters = [
     quickActions: {
       intuition: "Light bends at a boundary because its speed changes but its frequency cannot. The wavefronts have to match at the interface, which forces a change in direction.",
       formal: "The chapter derives Snell's law from wavefront matching, computes the critical angle for total internal reflection, and applies these to fiber optics and atmospheric refraction.",
-      quiz: "Checkpoint: what is the critical angle for total internal reflection in glass (n = 1.5) surrounded by air?"
+      quiz: "Checkpoint: what is the critical angle for total internal reflection in glass ($n = 1.5$) surrounded by air?"
     },
     prompts: [
       "Why does the frequency of light not change when it enters a new medium?",
@@ -1341,7 +1341,7 @@ const chapters = [
     conceptTitle: "Accelerating charges radiate; prisms separate colors",
     conceptCaption: "Charges must accelerate to produce electromagnetic radiation. Dispersion in glass makes a prism split white light into its spectrum.",
     explanation: [
-      "The <term key='larmor-formula'>Larmor formula</term> says that an accelerating charge radiates power proportional to the acceleration squared. The radiation pattern has the characteristic sin^2(theta) angular dependence.",
+      "The <term key='larmor-formula'>Larmor formula</term> says that an accelerating charge radiates power proportional to the acceleration squared. The radiation pattern has the characteristic $\\\\sin^2(\\\\theta)$ angular dependence.",
       "A <term key='prism'>prism</term> separates white light because the index of refraction depends on wavelength (dispersion). Blue light bends more than red because glass has higher n at shorter wavelengths."
     ],
     goals: [
@@ -1352,11 +1352,11 @@ const chapters = [
     pitfalls: [
       "Thinking a charge moving at constant velocity radiates (it does not in its rest frame).",
       "Confusing dispersion (n depends on wavelength) with diffraction (wave bending around obstacles).",
-      "Forgetting the 1/R dependence of the radiation field versus 1/R^2 for the Coulomb field."
+      "Forgetting the $1/R$ dependence of the radiation field versus $1/R^2$ for the Coulomb field."
     ],
     terms: {
       "larmor-formula": {
-        short: "P = q^2 a^2 / (6 pi epsilon_0 c^3), power radiated by an accelerating charge.",
+        short: "$P = q^2 a^2/(6\\\\pi\\\\epsilon_0 c^3)$, power radiated by an accelerating charge.",
         long: "The Larmor formula shows that the power radiated is proportional to the square of the acceleration. It applies to non-relativistic charges and explains why antennas need oscillating currents."
       },
       prism: {
@@ -1365,19 +1365,19 @@ const chapters = [
       },
       dispersion: {
         short: "The dependence of wave speed (or refractive index) on wavelength.",
-        long: "Dispersion causes a prism to split white light and a wavepacket to spread out. In glass, electrons in the material respond differently to different frequencies, making n(lambda) a decreasing function."
+        long: "Dispersion causes a prism to split white light and a wavepacket to spread out. In glass, electrons in the material respond differently to different frequencies, making $n(\\\\lambda)$ a decreasing function."
       }
     },
     derivations: [
       {
-        title: "Why the radiation field falls as 1/R",
+        title: "Why the radiation field falls as $1/R$",
         teaser: "Use Purcell's argument about field-line kinks from a suddenly accelerated charge.",
         steps: [
           "A charge suddenly accelerates. The news travels outward at speed c, creating a shell.",
           "Inside the shell, the field points to the new position. Outside, it points to the old position. In the shell, the field line connects, creating a tangential (radiative) component.",
-          "The tangential component E_theta = (q a sin(theta)) / (4 pi epsilon_0 c^2 R) falls as 1/R, unlike the Coulomb field which falls as 1/R^2."
+          "The tangential component $E_\\\\theta = \\\\frac{qa\\\\sin(\\\\theta)}{4\\\\pi\\\\epsilon_0 c^2 R}$ falls as $1/R$, unlike the Coulomb field which falls as $1/R^2$."
         ],
-        result: "The radiation field decays as 1/R, so the radiated power per solid angle goes as 1/R^2, meaning the total power integrated over a sphere is independent of R: energy is truly carried away to infinity."
+        result: "The radiation field decays as $1/R$, so the radiated power per solid angle goes as $1/R^2$, meaning the total power integrated over a sphere is independent of $R$: energy is truly carried away to infinity."
       }
     ],
     deepDives: [
@@ -1392,8 +1392,8 @@ const chapters = [
     ],
     quickActions: {
       intuition: "Only acceleration produces radiation. A prism separates colors because glass slows different wavelengths by different amounts, bending blue more than red.",
-      formal: "The chapter derives the Larmor formula for radiation from accelerating charges, explains the sin^2 theta radiation pattern, and connects dispersion n(lambda) to the separation of colors in a prism.",
-      quiz: "Checkpoint: why does the radiation field fall as 1/R while the Coulomb field falls as 1/R^2?"
+      formal: "The chapter derives the Larmor formula for radiation from accelerating charges, explains the $\\\\sin^2\\\\theta$ radiation pattern, and connects dispersion $n(\\\\lambda)$ to the separation of colors in a prism.",
+      quiz: "Checkpoint: why does the radiation field fall as $1/R$ while the Coulomb field falls as $1/R^2$?"
     },
     prompts: [
       "What physical mechanism causes the index of refraction to depend on wavelength?",
@@ -1485,8 +1485,8 @@ const chapters = [
     conceptTitle: "Arranged sources create directed radiation patterns",
     conceptCaption: "By combining multiple oscillating sources with specific spacings and phases, antennas can focus electromagnetic energy into narrow beams.",
     explanation: [
-      "A single oscillating charge radiates with a sin^2(theta) pattern. An <term key='antenna-array'>antenna array</term> combines multiple sources to create interference patterns that focus energy in preferred directions.",
-      "The radiation pattern from N equally spaced sources with phase difference delta between adjacent elements produces sharp <term key='lobes'>lobes</term> whose width decreases as N increases."
+      "A single oscillating charge radiates with a $\\\\sin^2(\\\\theta)$ pattern. An <term key='antenna-array'>antenna array</term> combines multiple sources to create interference patterns that focus energy in preferred directions.",
+      "The radiation pattern from $N$ equally spaced sources with phase difference $\\\\delta$ between adjacent elements produces sharp <term key='lobes'>lobes</term> whose width decreases as $N$ increases."
     ],
     goals: [
       "Compute the radiation pattern of two sources with a phase difference.",
@@ -1508,8 +1508,8 @@ const chapters = [
         long: "The main lobe is the direction of maximum radiation. Side lobes appear at other angles where partial constructive interference occurs. More elements produce narrower main lobes."
       },
       "array-factor": {
-        short: "I = I_0 sin^2(N Delta/2) / sin^2(Delta/2) for N sources.",
-        long: "The array factor captures the interference pattern of N equally spaced sources. It produces sharp peaks when Delta = 2 pi m (constructive interference from all sources) and has N-2 smaller side lobes between main peaks."
+        short: "$I = I_0\\\\sin^2(N\\\\Delta/2)/\\\\sin^2(\\\\Delta/2)$ for $N$ sources.",
+        long: "The array factor captures the interference pattern of $N$ equally spaced sources. It produces sharp peaks when $\\\\Delta = 2\\\\pi m$ (constructive interference from all sources) and has $N-2$ smaller side lobes between main peaks."
       }
     },
     derivations: [
@@ -1517,11 +1517,11 @@ const chapters = [
         title: "Radiation pattern from N equally spaced sources",
         teaser: "Sum the contributions from N sources with progressive phase shifts.",
         steps: [
-          "Each source contributes E_j = E_0 e^(i j Delta) where Delta = k d sin(theta) + delta_0 is the phase difference between adjacent sources.",
-          "Sum the geometric series: E_total = E_0 (1 - e^(i N Delta)) / (1 - e^(i Delta)).",
-          "Take |E_total|^2 to get I = I_0 sin^2(N Delta/2) / sin^2(Delta/2)."
+          "Each source contributes $E_j = E_0 e^{ij\\\\Delta}$ where $\\\\Delta = kd\\\\sin(\\\\theta) + \\\\delta_0$ is the phase difference between adjacent sources.",
+          "Sum the geometric series: $E_{\\\\text{total}} = E_0(1 - e^{iN\\\\Delta})/(1 - e^{i\\\\Delta})$.",
+          "Take $|E_{\\\\text{total}}|^2$ to get $I = I_0\\\\sin^2(N\\\\Delta/2)/\\\\sin^2(\\\\Delta/2)$."
         ],
-        result: "The intensity pattern has sharp peaks of height N^2 I_0 separated by N-2 smaller side lobes, giving directional radiation that sharpens with more sources."
+        result: "The intensity pattern has sharp peaks of height $N^2 I_0$ separated by $N-2$ smaller side lobes, giving directional radiation that sharpens with more sources."
       }
     ],
     deepDives: [
@@ -1536,12 +1536,12 @@ const chapters = [
     ],
     quickActions: {
       intuition: "An antenna array is interference engineering. By carefully spacing sources and controlling their phases, you can send energy in a chosen direction and suppress it elsewhere.",
-      formal: "The chapter sums fields from N phase-shifted sources using geometric series to derive the array factor, then analyzes the width and direction of the main lobe as functions of N, d, and delta.",
+      formal: "The chapter sums fields from $N$ phase-shifted sources using geometric series to derive the array factor, then analyzes the width and direction of the main lobe as functions of $N$, $d$, and $\\\\delta$.",
       quiz: "Checkpoint: for two sources separated by half a wavelength with no extra phase shift, in what directions do you get constructive and destructive interference?"
     },
     prompts: [
       "How does increasing the number of array elements affect the radiation pattern?",
-      "What is the physical role of the phase shift delta_0 between adjacent elements?"
+      "What is the physical role of the phase shift $\\\\delta_0$ between adjacent elements?"
     ],
     mathPrereqs: ["fourier-math", "trig-identities", "integration-techniques"],
     lectureContent: [
@@ -1566,7 +1566,7 @@ const chapters = [
       "Understand the Rayleigh criterion for resolving two closely spaced sources."
     ],
     pitfalls: [
-      "Confusing single-slit diffraction (sinc^2 envelope) with multi-slit interference (sharp peaks).",
+      "Confusing single-slit diffraction ($\\\\text{sinc}^2$ envelope) with multi-slit interference (sharp peaks).",
       "Thinking diffraction only matters when the slit is smaller than the wavelength (it matters whenever they are comparable).",
       "Forgetting that more slits make peaks sharper but do not change their positions."
     ],
@@ -1577,11 +1577,11 @@ const chapters = [
       },
       "diffraction-pattern": {
         short: "The intensity distribution produced by a wave passing through an aperture.",
-        long: "For a single slit of width a, the intensity pattern is I = I_0 sinc^2(pi a sin theta / lambda). The central maximum has angular width 2 lambda / a, and narrower slits produce wider patterns."
+        long: "For a single slit of width $a$, the intensity pattern is $I = I_0\\\\,\\\\text{sinc}^2(\\\\pi a\\\\sin\\\\theta/\\\\lambda)$. The central maximum has angular width $2\\\\lambda/a$, and narrower slits produce wider patterns."
       },
       "diffraction-grating": {
         short: "Many equally spaced slits that produce sharp spectral peaks.",
-        long: "A diffraction grating uses N slits to produce intensity peaks at angles where d sin theta = m lambda. With many slits, the peaks become extremely narrow, allowing precise wavelength measurement."
+        long: "A diffraction grating uses $N$ slits to produce intensity peaks at angles where $d\\\\sin\\\\theta = m\\\\lambda$. With many slits, the peaks become extremely narrow, allowing precise wavelength measurement."
       }
     },
     derivations: [
@@ -1589,11 +1589,11 @@ const chapters = [
         title: "Diffraction grating pattern from N slits",
         teaser: "Apply the N-source antenna result from the previous chapter to N slits.",
         steps: [
-          "Each slit acts as a Huygens source. For N slits spaced by d, the phase difference between adjacent slits for angle theta is Delta = 2 pi d sin(theta) / lambda.",
-          "The intensity follows the array factor: I = I_0 sin^2(N Delta/2) / sin^2(Delta/2).",
-          "Main maxima occur when Delta = 2 pi m, giving d sin(theta) = m lambda. The peak width scales as 1/N."
+          "Each slit acts as a Huygens source. For $N$ slits spaced by $d$, the phase difference between adjacent slits for angle $\\\\theta$ is $\\\\Delta = 2\\\\pi d\\\\sin(\\\\theta)/\\\\lambda$.",
+          "The intensity follows the array factor: $I = I_0\\\\sin^2(N\\\\Delta/2)/\\\\sin^2(\\\\Delta/2)$.",
+          "Main maxima occur when $\\\\Delta = 2\\\\pi m$, giving $d\\\\sin(\\\\theta) = m\\\\lambda$. The peak width scales as $1/N$."
         ],
-        result: "The diffraction grating equation d sin(theta) = m lambda gives the positions of the bright fringes. More slits mean sharper peaks and better spectral resolution."
+        result: "The diffraction grating equation $d\\\\sin(\\\\theta) = m\\\\lambda$ gives the positions of the bright fringes. More slits mean sharper peaks and better spectral resolution."
       }
     ],
     deepDives: [
@@ -1608,12 +1608,12 @@ const chapters = [
     ],
     quickActions: {
       intuition: "Diffraction is what happens when waves encounter edges or openings comparable to their wavelength. The pattern is computed by treating each point in the aperture as a tiny source and summing their contributions.",
-      formal: "The chapter applies Huygens' principle and the N-source array factor to derive the single-slit and multi-slit diffraction patterns, connecting them to the grating equation d sin theta = m lambda.",
+      formal: "The chapter applies Huygens' principle and the $N$-source array factor to derive the single-slit and multi-slit diffraction patterns, connecting them to the grating equation $d\\\\sin\\\\theta = m\\\\lambda$.",
       quiz: "Checkpoint: how does the angular width of the central maximum for single-slit diffraction scale with slit width?"
     },
     prompts: [
       "What determines the resolving power of a diffraction grating?",
-      "Why does the single-slit pattern have minima at sin(theta) = m lambda / a?"
+      "Why does the single-slit pattern have minima at $\\\\sin(\\\\theta) = m\\\\lambda/a$?"
     ],
     mathPrereqs: ["fourier-transform-math", "integration-techniques"],
     lectureContent: [
@@ -1629,7 +1629,7 @@ const chapters = [
     conceptTitle: "Particles are waves too",
     conceptCaption: "Quantum mechanics extends wave-particle duality: electrons diffract, photons come in quanta, and the Schrodinger equation is a wave equation.",
     explanation: [
-      "The course comes full circle: just as we went from oscillators to waves, quantum mechanics says particles like electrons also behave as <term key='matter-waves'>matter waves</term>. The de Broglie wavelength lambda = h/p connects momentum to wavelength.",
+      "The course comes full circle: just as we went from oscillators to waves, quantum mechanics says particles like electrons also behave as <term key='matter-waves'>matter waves</term>. The de Broglie wavelength $\\\\lambda = h/p$ connects momentum to wavelength.",
       "The <term key='schrodinger-equation'>Schrodinger equation</term> is the wave equation for quantum particles. Its solutions are wavefunctions whose squared magnitude gives the probability of finding the particle at each position."
     ],
     goals: [
@@ -1644,15 +1644,15 @@ const chapters = [
     ],
     terms: {
       "matter-waves": {
-        short: "Particles have a wavelength lambda = h/p (de Broglie).",
+        short: "Particles have a wavelength $\\\\lambda = h/p$ (de Broglie).",
         long: "De Broglie proposed that all particles have wave properties with wavelength inversely proportional to momentum. This was confirmed by electron diffraction experiments. It is the foundation of quantum mechanics."
       },
       "schrodinger-equation": {
-        short: "The quantum wave equation: i hbar d psi/dt = H psi.",
-        long: "The Schrodinger equation governs how the quantum wavefunction evolves in time. For a particle in a potential V(x), it becomes -hbar^2/(2m) d^2 psi/dx^2 + V(x) psi = E psi for stationary states."
+        short: "The quantum wave equation: $i\\\\hbar\\,\\\\partial\\\\psi/\\\\partial t = \\\\hat{H}\\\\psi$.",
+        long: "The Schrodinger equation governs how the quantum wavefunction evolves in time. For a particle in a potential $V(x)$, it becomes $-\\\\frac{\\\\hbar^2}{2m}\\\\frac{d^2\\\\psi}{dx^2} + V(x)\\\\psi = E\\\\psi$ for stationary states."
       },
       "uncertainty-principle": {
-        short: "Delta x Delta p >= hbar/2: position and momentum cannot both be precisely known.",
+        short: "$\\\\Delta x\\,\\\\Delta p \\\\geq \\\\hbar/2$: position and momentum cannot both be precisely known.",
         long: "The uncertainty principle is a direct consequence of wave mechanics. A wavefunction localized in a narrow region requires a broad range of momenta (wavelengths), and vice versa. It is the quantum version of the wavepacket bandwidth relation."
       }
     },
@@ -1661,9 +1661,9 @@ const chapters = [
         title: "Energy quantization in a box from standing waves",
         teaser: "Apply boundary conditions to the Schrodinger equation and get discrete energy levels.",
         steps: [
-          "For a particle in a box of width L with infinite walls, the wavefunction must vanish at x = 0 and x = L.",
-          "The solutions are psi_n = A sin(n pi x / L), just like standing waves on a string with fixed ends.",
-          "The allowed wavenumbers k_n = n pi / L give energies E_n = hbar^2 k_n^2 / (2m) = n^2 pi^2 hbar^2 / (2mL^2)."
+          "For a particle in a box of width $L$ with infinite walls, the wavefunction must vanish at $x = 0$ and $x = L$.",
+          "The solutions are $\\\\psi_n = A\\\\sin(n\\\\pi x/L)$, just like standing waves on a string with fixed ends.",
+          "The allowed wavenumbers $k_n = n\\\\pi/L$ give energies $E_n = \\\\hbar^2 k_n^2/(2m) = n^2\\\\pi^2\\\\hbar^2/(2mL^2)$."
         ],
         result: "Energy is quantized because only certain standing waves fit in the box, exactly like the normal modes of a string. The quantum number n labels the mode."
       }
@@ -1717,15 +1717,15 @@ const chapters = [
     terms: {
       "doppler-effect": {
         short: "Frequency shift due to relative motion between source and observer.",
-        long: "For a stationary observer and a source moving at speed v_s, the received frequency is nu' = nu c_s / (c_s + v_s), where v_s is positive for receding motion. For a moving observer and stationary source, nu' = nu (c_s + v_o) / c_s."
+        long: "For a stationary observer and a source moving at speed $v_s$, the received frequency is $\\\\nu' = \\\\nu\\,c_s/(c_s + v_s)$, where $v_s$ is positive for receding motion. For a moving observer and stationary source, $\\\\nu' = \\\\nu(c_s + v_o)/c_s$."
       },
       "mach-cone": {
         short: "The cone-shaped shock front from a supersonic source.",
-        long: "When v_s > c_s, the source outruns its wavefronts. All the accumulated wavefronts pile up along a cone with half-angle theta = arcsin(c_s / v_s). This is heard as a sonic boom."
+        long: "When $v_s > c_s$, the source outruns its wavefronts. All the accumulated wavefronts pile up along a cone with half-angle $\\\\theta = \\\\arcsin(c_s/v_s)$. This is heard as a sonic boom."
       },
       "relativistic-doppler": {
         short: "The Doppler formula including time dilation from special relativity.",
-        long: "For light, the Doppler effect depends only on relative velocity (not on who moves) and includes a time dilation factor: f' = f sqrt((1-beta)/(1+beta)) where beta = v/c. This is used in measuring the expansion of the universe."
+        long: "For light, the Doppler effect depends only on relative velocity (not on who moves) and includes a time dilation factor: $f' = f\\\\sqrt{(1-\\\\beta)/(1+\\\\beta)}$ where $\\\\beta = v/c$. This is used in measuring the expansion of the universe."
       }
     },
     derivations: [
@@ -1733,11 +1733,11 @@ const chapters = [
         title: "Doppler shift for a moving source",
         teaser: "Track the spacing between successive wavefronts emitted by a moving source.",
         steps: [
-          "A source emits wavefronts separated by period T. In time T, the source moves v_s T.",
-          "Ahead of the source, consecutive wavefronts are separated by lambda' = (c_s - v_s) T = (c_s - v_s)/nu.",
-          "The observed frequency is nu' = c_s / lambda' = nu c_s / (c_s - v_s), which is higher (blue-shifted)."
+          "A source emits wavefronts separated by period $T$. In time $T$, the source moves $v_s T$.",
+          "Ahead of the source, consecutive wavefronts are separated by $\\\\lambda' = (c_s - v_s)T = (c_s - v_s)/\\\\nu$.",
+          "The observed frequency is $\\\\nu' = c_s/\\\\lambda' = \\\\nu\\,c_s/(c_s - v_s)$, which is higher (blue-shifted)."
         ],
-        result: "The Doppler formula nu' = nu c_s / (c_s -/+ v_s) gives a higher frequency when the source approaches and a lower frequency when it recedes."
+        result: "The Doppler formula $\\\\nu' = \\\\nu\\,c_s/(c_s \\\\mp v_s)$ gives a higher frequency when the source approaches and a lower frequency when it recedes."
       }
     ],
     deepDives: [
@@ -1779,10 +1779,10 @@ const chapterTeachingNotes = {
   },
   "driven-oscillators": {
     "lede": "Driving a damped oscillator at its natural frequency produces the largest response. This is resonance, and it appears everywhere from bridge collapses to radio tuning.",
-    "bridge": "The key move is to replace cos(omega t) with Re(e^(-i omega t)), solve the complex equation algebraically, and then read off the amplitude and phase of the real solution.",
+    "bridge": "The key move is to replace $\\\\cos(\\\\omega t)$ with $\\\\text{Re}(e^{-i\\\\omega t})$, solve the complex equation algebraically, and then read off the amplitude and phase of the real solution.",
     "mastery": [
       "Solve for the steady-state amplitude and phase as functions of driving frequency.",
-      "Identify the resonance peak, its width (gamma), and the quality factor Q = omega_0 / gamma.",
+      "Identify the resonance peak, its width ($\\\\gamma$), and the quality factor $Q = \\\\omega_0/\\\\gamma$.",
       "Explain why the transient solution dies away and only the steady state survives at long times."
     ]
   },
@@ -1800,13 +1800,13 @@ const chapterTeachingNotes = {
     "bridge": "The chapter moves from 2 masses to 3 to N, then lets N go to infinity. Watch how the discrete dispersion relation becomes linear in that limit.",
     "mastery": [
       "Solve the N-mass system and recognize the sinusoidal normal mode shapes.",
-      "Derive the discrete dispersion relation omega = 2 omega_0 |sin(ka/2)| and take the continuum limit.",
+      "Derive the discrete dispersion relation $\\\\omega = 2\\\\omega_0|\\\\sin(ka/2)|$ and take the continuum limit.",
       "Explain why boundary conditions determine the set of allowed normal modes."
     ]
   },
   "fourier-series": {
     "lede": "Fourier series is the mathematical formalization of the idea that any periodic function can be built from simple harmonics.",
-    "bridge": "The orthogonality of sines and cosines is the engine that makes Fourier analysis work. Once you understand why the integral of sin(nx)cos(mx) over a period vanishes for n not equal to m, everything else follows.",
+    "bridge": "The orthogonality of sines and cosines is the engine that makes Fourier analysis work. Once you understand why $\\\\int \\\\sin(nx)\\\\cos(mx)\\,dx$ over a period vanishes for $n \\\\neq m$, everything else follows.",
     "mastery": [
       "Write down the Fourier series and derive the coefficient formulas from orthogonality.",
       "Compute the Fourier series of common waveforms like the sawtooth and square wave.",
@@ -1818,7 +1818,7 @@ const chapterTeachingNotes = {
     "bridge": "For strings, the restoring force is tension acting on curvature. For sound, it is pressure differences driving density changes. Both lead to the same mathematical equation.",
     "mastery": [
       "Derive the wave equation for a string from Newton's second law on a small element.",
-      "Derive the speed of sound in an ideal gas in terms of gamma, pressure, and density.",
+      "Derive the speed of sound in an ideal gas in terms of $\\\\gamma$, pressure, and density.",
       "Distinguish longitudinal from transverse waves and give examples of each."
     ]
   },
@@ -1837,7 +1837,7 @@ const chapterTeachingNotes = {
     "mastery": [
       "Derive the Fourier transform from the L -> infinity limit of the exponential Fourier series.",
       "Compute the Fourier transform of a damped sinusoid and identify the Lorentzian spectral shape.",
-      "Interpret the power spectrum |f-tilde(omega)|^2 and relate its width to the damping rate."
+      "Interpret the power spectrum $|\\\\tilde{f}(\\\\omega)|^2$ and relate its width to the damping rate."
     ]
   },
   "reflection-impedance": {
@@ -1851,11 +1851,11 @@ const chapterTeachingNotes = {
   },
   "power": {
     "lede": "Waves carry energy. The power transmitted depends on the impedance of the medium and the square of the oscillation velocity.",
-    "bridge": "The key result is P = Z (dA/dt)^2. From this, energy conservation at a boundary follows directly from the reflection and transmission coefficients.",
+    "bridge": "The key result is $P = Z(\\\\partial A/\\\\partial t)^2$. From this, energy conservation at a boundary follows directly from the reflection and transmission coefficients.",
     "mastery": [
       "Derive kinetic and potential energy densities for a wave on a string.",
       "Show that power equals impedance times velocity squared for a traveling wave.",
-      "Verify energy conservation at a boundary: P_reflected + P_transmitted = P_incident."
+      "Verify energy conservation at a boundary: $P_{\\\\text{reflected}} + P_{\\\\text{transmitted}} = P_{\\\\text{incident}}$."
     ]
   },
   "wavepackets": {
@@ -1863,7 +1863,7 @@ const chapterTeachingNotes = {
     "bridge": "The distinction between group velocity and phase velocity is the central idea. Taylor-expanding the dispersion relation around the carrier frequency gives both the envelope speed and the spreading rate.",
     "mastery": [
       "Construct a Gaussian wavepacket and relate its spatial width to its spectral width.",
-      "Derive the group velocity as d omega / dk and distinguish it from phase velocity.",
+      "Derive the group velocity as $d\\\\omega/dk$ and distinguish it from phase velocity.",
       "Explain dispersion as the spreading of a wavepacket in a medium where v depends on frequency."
     ]
   },
@@ -1878,10 +1878,10 @@ const chapterTeachingNotes = {
   },
   "light": {
     "lede": "Light is an electromagnetic wave. Maxwell's equations predict its speed, and the electromagnetic spectrum spans from radio to gamma rays.",
-    "bridge": "The derivation of the EM wave equation from Maxwell's equations is the central calculation. Everything else follows from recognizing that 1/sqrt(mu_0 epsilon_0) = c.",
+    "bridge": "The derivation of the EM wave equation from Maxwell's equations is the central calculation. Everything else follows from recognizing that $1/\\\\sqrt{\\\\mu_0\\\\epsilon_0} = c$.",
     "mastery": [
       "Derive the electromagnetic wave equation from Maxwell's equations in vacuum.",
-      "Identify c = 1/sqrt(mu_0 epsilon_0) and explain why this was a revolutionary prediction.",
+      "Identify $c = 1/\\\\sqrt{\\\\mu_0\\\\epsilon_0}$ and explain why this was a revolutionary prediction.",
       "Survey the electromagnetic spectrum and relate wavelength/frequency to physical phenomena."
     ]
   },
@@ -1907,9 +1907,9 @@ const chapterTeachingNotes = {
     "lede": "Accelerating charges produce radiation, and prisms separate light by wavelength because the index of refraction depends on frequency.",
     "bridge": "The chapter connects two ideas: the Larmor formula for how radiation is generated, and dispersion for how it is separated by wavelength in a prism.",
     "mastery": [
-      "State the Larmor formula and explain the sin^2 theta angular pattern of radiation.",
+      "State the Larmor formula and explain the $\\\\sin^2\\\\theta$ angular pattern of radiation.",
       "Explain why only accelerating charges radiate electromagnetic waves.",
-      "Describe how dispersion n(lambda) in glass causes a prism to separate white light into colors."
+      "Describe how dispersion $n(\\\\lambda)$ in glass causes a prism to separate white light into colors."
     ]
   },
   "color": {
@@ -1923,7 +1923,7 @@ const chapterTeachingNotes = {
   },
   "antennas": {
     "lede": "Antenna arrays use constructive and destructive interference from multiple sources to create directional radiation patterns.",
-    "bridge": "The radiation pattern of N sources is a geometric series in the phase. The result is the array factor, which gives sharp peaks whose width decreases as 1/N.",
+    "bridge": "The radiation pattern of $N$ sources is a geometric series in the phase. The result is the array factor, which gives sharp peaks whose width decreases as $1/N$.",
     "mastery": [
       "Derive the array factor for N equally spaced sources.",
       "Explain how the beam direction can be steered by adjusting the phase between elements.",
@@ -1935,7 +1935,7 @@ const chapterTeachingNotes = {
     "bridge": "The diffraction grating result is just the antenna array result applied to slits. The only new idea is Huygens' principle, which justifies treating each slit as a source.",
     "mastery": [
       "Apply Huygens' principle to compute diffraction patterns.",
-      "Derive the grating equation d sin theta = m lambda and explain the sharpening with more slits.",
+      "Derive the grating equation $d\\\\sin\\\\theta = m\\\\lambda$ and explain the sharpening with more slits.",
       "State the Rayleigh criterion and explain its implications for the resolving power of telescopes."
     ]
   },
@@ -1943,7 +1943,7 @@ const chapterTeachingNotes = {
     "lede": "Quantum mechanics is where everything in the course converges: particles are waves, energy is quantized, and the Schrodinger equation is a wave equation.",
     "bridge": "The particle-in-a-box problem is exactly the vibrating-string problem with fixed ends. Quantized energy levels are just the allowed standing wave modes.",
     "mastery": [
-      "Explain wave-particle duality and the de Broglie relation lambda = h/p.",
+      "Explain wave-particle duality and the de Broglie relation $\\\\lambda = h/p$.",
       "Solve the particle-in-a-box problem and connect it to standing waves on a string.",
       "State the uncertainty principle and derive it from the properties of wavepackets."
     ]
