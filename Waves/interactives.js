@@ -3403,3 +3403,2108 @@ function initPluckedString() {
 
   tick();
 }
+
+// =========================================================================
+// CHAPTER 4 (continued): N-Mass Normal Modes (Numerical)
+// =========================================================================
+function initNMassModesNumerical() {
+  const canvas = document.getElementById('scene-n-mass-modes-numerical');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // Create controls
+  let nSlider = document.getElementById('nmm-n');
+  if (!nSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>N: <input type="range" id="nmm-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="nmm-n-val">8</span></label>' +
+        '<label>Mode j: <input type="range" id="nmm-j" min="1" max="8" step="1" value="1"><span class="scene-val" id="nmm-j-val">1</span></label>';
+      parent.appendChild(controls);
+      nSlider = document.getElementById('nmm-n');
+    }
+  }
+  const jSlider = document.getElementById('nmm-j');
+
+  let t = 0;
+
+  function tick() {
+    const N = parseInt(nSlider?.value || 8);
+    const j = Math.min(parseInt(jSlider?.value || 1), N);
+    if (jSlider) jSlider.max = N;
+    if (parseInt(jSlider?.value || 1) > N && jSlider) jSlider.value = N;
+
+    document.getElementById('nmm-n-val')?.replaceChildren(document.createTextNode(N));
+    document.getElementById('nmm-j-val')?.replaceChildren(document.createTextNode(j));
+
+    const omega0 = 1;
+    const omegaJ = 2 * omega0 * Math.sin(j * Math.PI / (2 * (N + 1)));
+
+    t += 0.03;
+
+    wClear(ctx, W, H);
+
+    const margin = 50;
+    const chainL = margin + 10;
+    const chainR = W - margin - 10;
+    const chainW = chainR - chainL;
+    const midY = H / 2;
+    const maxAmp = 50;
+    const amplitude = Math.cos(omegaJ * t);
+
+    // Draw walls
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(chainL - 8, midY - 40, 6, 80);
+    ctx.fillRect(chainR + 2, midY - 40, 6, 80);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const wy = midY - 35 + i * 14;
+      ctx.beginPath(); ctx.moveTo(chainL - 8, wy); ctx.lineTo(chainL - 14, wy + 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(chainR + 8, wy); ctx.lineTo(chainR + 14, wy + 7); ctx.stroke();
+    }
+
+    // Compute mode shape displacements
+    const positions = [];
+    for (let n = 1; n <= N; n++) {
+      const yDisp = Math.sin(n * j * Math.PI / (N + 1)) * amplitude * maxAmp;
+      const xPos = chainL + (n / (N + 1)) * chainW;
+      positions.push({ x: xPos, y: midY + yDisp });
+    }
+
+    // Connecting lines (springs)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(chainL, midY);
+    for (let i = 0; i < positions.length; i++) {
+      ctx.lineTo(positions[i].x, positions[i].y);
+    }
+    ctx.lineTo(chainR, midY);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Equilibrium dashed line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(chainL, midY); ctx.lineTo(chainR, midY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Masses
+    for (let i = 0; i < positions.length; i++) {
+      const p = positions[i];
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Mode shape envelope (ghost)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(chainL, midY);
+    for (let n = 1; n <= N; n++) {
+      const yEnv = Math.sin(n * j * Math.PI / (N + 1)) * maxAmp;
+      const xPos = chainL + (n / (N + 1)) * chainW;
+      ctx.lineTo(xPos, midY + yEnv);
+    }
+    ctx.lineTo(chainR, midY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(chainL, midY);
+    for (let n = 1; n <= N; n++) {
+      const yEnv = -Math.sin(n * j * Math.PI / (N + 1)) * maxAmp;
+      const xPos = chainL + (n / (N + 1)) * chainW;
+      ctx.lineTo(xPos, midY + yEnv);
+    }
+    ctx.lineTo(chainR, midY);
+    ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Normal Mode ' + j + ' of ' + N + ' masses', W / 2, 20);
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2C7C = 2\u03C9\u2080 sin(j\u03C0/2(N+1)) = ' + omegaJ.toFixed(3) + ' \u03C9\u2080', W / 2, H - 10);
+
+    requestAnimationFrame(tick);
+  }
+
+  nSlider?.addEventListener('input', () => {});
+  jSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 4 (continued): Dispersion Relation (Discrete)
+// =========================================================================
+function initDispersionRelationDiscrete() {
+  const canvas = document.getElementById('scene-dispersion-relation-discrete');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let nSlider = document.getElementById('drd-n');
+  if (!nSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>N: <input type="range" id="drd-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="drd-n-val">8</span></label>' +
+        '<label>Highlight mode: <input type="range" id="drd-mode" min="1" max="8" step="1" value="1"><span class="scene-val" id="drd-mode-val">1</span></label>';
+      parent.appendChild(controls);
+      nSlider = document.getElementById('drd-n');
+    }
+  }
+  const modeSlider = document.getElementById('drd-mode');
+
+  const plotL = 60, plotR = W - 30, plotT = 35, plotB = H - 35;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  function draw() {
+    const N = parseInt(nSlider?.value || 8);
+    const selMode = Math.min(parseInt(modeSlider?.value || 1), N);
+    if (modeSlider) modeSlider.max = N;
+    if (parseInt(modeSlider?.value || 1) > N && modeSlider) modeSlider.value = N;
+
+    document.getElementById('drd-n-val')?.replaceChildren(document.createTextNode(N));
+    document.getElementById('drd-mode-val')?.replaceChildren(document.createTextNode(selMode));
+
+    wClear(ctx, W, H);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    const pMax = Math.PI * 1.15;
+    const omegaMax = 2.3;
+
+    // Brillouin zone boundary at p = pi
+    const bzX = plotL + (Math.PI / pMax) * plotW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([5, 3]);
+    ctx.beginPath(); ctx.moveTo(bzX, plotT); ctx.lineTo(bzX, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('p = \u03C0', bzX, plotB + 14);
+    ctx.fillText('Brillouin zone', bzX, plotT - 6);
+
+    // Continuous dispersion curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const p = (i / 300) * pMax;
+      const omega = 2 * Math.abs(Math.sin(p / 2));
+      const px = plotL + (p / pMax) * plotW;
+      const py = plotB - (omega / omegaMax) * plotH;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Linear approximation
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const p = (i / 200) * pMax;
+      const omega = p;
+      if (omega > omegaMax) break;
+      const px = plotL + (p / pMax) * plotW;
+      const py = plotB - (omega / omegaMax) * plotH;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Discrete allowed values
+    for (let j = 1; j <= N; j++) {
+      const p = j * Math.PI / (N + 1);
+      const omega = 2 * Math.abs(Math.sin(p / 2));
+      const px = plotL + (p / pMax) * plotW;
+      const py = plotB - (omega / omegaMax) * plotH;
+
+      const isSelected = (j === selMode);
+      ctx.fillStyle = isSelected ? WCOLORS.red : WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(px, py, isSelected ? 7 : 4, 0, Math.PI * 2); ctx.fill();
+      if (isSelected) {
+        ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText('j=' + j + ', \u03C9=' + omega.toFixed(2) + '\u03C9\u2080', px + 10, py - 4);
+      }
+    }
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9 / \u03C9\u2080', plotL - 30, plotT - 6);
+    ctx.fillText('p (wave number)', plotL + plotW / 2, plotB + 28);
+
+    // Y-axis ticks
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    for (let v = 0; v <= 2; v += 0.5) {
+      const py = plotB - (v / omegaMax) * plotH;
+      ctx.beginPath(); ctx.moveTo(plotL - 3, py); ctx.lineTo(plotL, py); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
+      ctx.fillText(v.toFixed(1), plotL - 6, py + 3);
+    }
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('\u2014 \u03C9 = 2\u03C9\u2080|sin(p/2)|', plotL + 5, plotT + 14);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('-- \u03C9 = \u03C9\u2080p (linear)', plotL + 5, plotT + 28);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Dispersion Relation: Discrete Chain', W / 2, 16);
+  }
+
+  nSlider?.addEventListener('input', draw);
+  modeSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 4 (continued): Continuum Limit
+// =========================================================================
+function initContinuumLimit() {
+  const canvas = document.getElementById('scene-continuum-limit');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let nSlider = document.getElementById('cl-n');
+  if (!nSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>N: <input type="range" id="cl-n" min="3" max="100" step="1" value="6"><span class="scene-val" id="cl-n-val">6</span></label>' +
+        '<label>Mode: <input type="range" id="cl-mode" min="1" max="4" step="1" value="1"><span class="scene-val" id="cl-mode-val">1</span></label>';
+      parent.appendChild(controls);
+      nSlider = document.getElementById('cl-n');
+    }
+  }
+  const modeSlider = document.getElementById('cl-mode');
+
+  let t = 0;
+
+  const topH = H * 0.5;
+  const botT = H * 0.55;
+  const botB = H - 15;
+
+  function tick() {
+    const N = parseInt(nSlider?.value || 6);
+    const j = Math.min(parseInt(modeSlider?.value || 1), Math.min(N, 4));
+    if (modeSlider) modeSlider.max = Math.min(N, 4);
+
+    document.getElementById('cl-n-val')?.replaceChildren(document.createTextNode(N));
+    document.getElementById('cl-mode-val')?.replaceChildren(document.createTextNode(j));
+
+    t += 0.03;
+
+    const omega0 = 1;
+    const omegaJ = 2 * omega0 * Math.sin(j * Math.PI / (2 * (N + 1)));
+    const amplitude = Math.cos(omegaJ * t);
+
+    wClear(ctx, W, H);
+
+    const margin = 40;
+    const chainL = margin + 20;
+    const chainR = W - margin - 20;
+    const chainW = chainR - chainL;
+    const midY = topH / 2 + 10;
+    const maxAmp = topH * 0.35;
+
+    // === Top: Mode shape ===
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Mode ' + j + ' with N = ' + N + ' masses', W / 2, 16);
+
+    // Walls
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(chainL - 6, midY - 25, 4, 50);
+    ctx.fillRect(chainR + 2, midY - 25, 4, 50);
+
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(chainL, midY); ctx.lineTo(chainR, midY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Continuous sine curve (what it converges to)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const frac = i / 200;
+      const yDisp = Math.sin(frac * j * Math.PI) * amplitude * maxAmp;
+      const px = chainL + frac * chainW;
+      i === 0 ? ctx.moveTo(px, midY + yDisp) : ctx.lineTo(px, midY + yDisp);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Discrete masses with connecting lines
+    const positions = [];
+    for (let n = 1; n <= N; n++) {
+      const frac = n / (N + 1);
+      const yDisp = Math.sin(n * j * Math.PI / (N + 1)) * amplitude * maxAmp;
+      positions.push({ x: chainL + frac * chainW, y: midY + yDisp });
+    }
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = N > 30 ? 1.5 : 1; ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(chainL, midY);
+    for (const p of positions) ctx.lineTo(p.x, p.y);
+    ctx.lineTo(chainR, midY);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (N <= 50) {
+      const radius = Math.max(2, 6 - N * 0.08);
+      for (const p of positions) {
+        ctx.fillStyle = WCOLORS.teal;
+        ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // === Bottom: Dispersion comparison ===
+    const dL = 60, dR = W - 30;
+    const dW = dR - dL, dH = botB - botT;
+    const pMax = Math.PI * 1.1;
+    const omMax = 2.3;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dL, botT); ctx.lineTo(dL, botB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dL, botB); ctx.lineTo(dR, botB); ctx.stroke();
+
+    // Discrete dispersion
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const p = (i / 200) * pMax;
+      const om = 2 * Math.abs(Math.sin(p / 2));
+      const px = dL + (p / pMax) * dW;
+      const py = botB - (om / omMax) * dH;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Linear dispersion (continuum limit)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const p = (i / 200) * pMax;
+      const om = p;
+      if (om > omMax) break;
+      const px = dL + (p / pMax) * dW;
+      const py = botB - (om / omMax) * dH;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    for (let jj = 1; jj <= Math.min(N, 4); jj++) {
+      const p = jj * Math.PI / (N + 1);
+      const om = 2 * Math.abs(Math.sin(p / 2));
+      const px = dL + (p / pMax) * dW;
+      const py = botB - (om / omMax) * dH;
+      ctx.fillStyle = (jj === j) ? WCOLORS.red : WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(px, py, (jj === j) ? 5 : 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Dispersion: discrete vs continuum', dL + dW / 2, botT - 4);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillText('\u03C9', dL - 14, botT + 6);
+    ctx.fillText('p', dR + 10, botB + 4);
+
+    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('discrete', dR - 80, botT + 12);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('linear', dR - 80, botT + 24);
+
+    requestAnimationFrame(tick);
+  }
+
+  nSlider?.addEventListener('input', () => {});
+  modeSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 4 (continued): Traveling vs Standing Waves
+// =========================================================================
+function initTravelingVsStanding() {
+  const canvas = document.getElementById('scene-traveling-vs-standing');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let kSlider = document.getElementById('tvs-k');
+  if (!kSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>k: <input type="range" id="tvs-k" min="1" max="6" step="0.5" value="2"><span class="scene-val" id="tvs-k-val">2.0</span></label>' +
+        '<button id="tvs-mode-btn" style="margin-left:10px;padding:2px 10px;font-size:11px;cursor:pointer;">Show: Both</button>';
+      parent.appendChild(controls);
+      kSlider = document.getElementById('tvs-k');
+    }
+  }
+  const modeBtn = document.getElementById('tvs-mode-btn');
+
+  let viewMode = 0; // 0 = both, 1 = traveling only, 2 = standing only
+  const modeLabels = ['Both', 'Traveling', 'Standing'];
+  modeBtn?.addEventListener('click', () => {
+    viewMode = (viewMode + 1) % 3;
+    if (modeBtn) modeBtn.textContent = 'Show: ' + modeLabels[viewMode];
+  });
+
+  let t = 0;
+
+  function tick() {
+    const k = parseFloat(kSlider?.value || 2);
+    const omega = k * 1.5;
+    document.getElementById('tvs-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
+
+    t += 0.03;
+
+    wClear(ctx, W, H);
+
+    const showTrav = (viewMode === 0 || viewMode === 1);
+    const showStand = (viewMode === 0 || viewMode === 2);
+
+    let travL, travR, standL, standR;
+    if (viewMode === 0) {
+      travL = 30; travR = W / 2 - 15;
+      standL = W / 2 + 15; standR = W - 30;
+    } else if (viewMode === 1) {
+      travL = 30; travR = W - 30;
+      standL = 0; standR = 0;
+    } else {
+      standL = 30; standR = W - 30;
+      travL = 0; travR = 0;
+    }
+
+    const midY = H / 2;
+    const amp = 50;
+    const steps = 200;
+
+    // --- Traveling wave ---
+    if (showTrav) {
+      const twW = travR - travL;
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Traveling Wave: f(x \u2212 vt)', (travL + travR) / 2, 20);
+
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(travL, midY); ctx.lineTo(travR, midY); ctx.stroke();
+
+      // Ghost (previous positions)
+      for (let g = 1; g <= 3; g++) {
+        const tg = t - g * 0.15;
+        ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.15;
+        ctx.beginPath();
+        for (let i = 0; i <= steps; i++) {
+          const frac = i / steps;
+          const x = frac * 2 * Math.PI * 3 / k;
+          const y = Math.sin(k * x - omega * tg) * amp;
+          const px = travL + frac * twW;
+          i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps;
+        const x = frac * 2 * Math.PI * 3 / k;
+        const y = Math.sin(k * x - omega * t) * amp;
+        const px = travL + frac * twW;
+        i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+      }
+      ctx.stroke();
+
+      // Direction arrow
+      ctx.fillStyle = WCOLORS.amber; ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      const arrowX = (travL + travR) / 2;
+      ctx.beginPath(); ctx.moveTo(arrowX - 20, H - 25); ctx.lineTo(arrowX + 20, H - 25); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(arrowX + 20, H - 25);
+      ctx.lineTo(arrowX + 12, H - 30);
+      ctx.lineTo(arrowX + 12, H - 20);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('v = \u03C9/k', arrowX, H - 10);
+    }
+
+    // --- Standing wave ---
+    if (showStand) {
+      const swW = standR - standL;
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Standing Wave: 2cos(kx)cos(\u03C9t)', (standL + standR) / 2, 20);
+
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(standL, midY); ctx.lineTo(standR, midY); ctx.stroke();
+
+      // Envelope
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps;
+        const x = frac * 2 * Math.PI * 3 / k;
+        const y = 2 * Math.cos(k * x) * amp;
+        const px = standL + frac * swW;
+        i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps;
+        const x = frac * 2 * Math.PI * 3 / k;
+        const y = -2 * Math.cos(k * x) * amp;
+        const px = standL + frac * swW;
+        i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps;
+        const x = frac * 2 * Math.PI * 3 / k;
+        const y = 2 * Math.cos(k * x) * Math.cos(omega * t) * amp;
+        const px = standL + frac * swW;
+        i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+      }
+      ctx.stroke();
+
+      // Nodes
+      const xMax = 2 * Math.PI * 3 / k;
+      for (let n = 0; n < 20; n++) {
+        const xNode = (Math.PI / 2 + n * Math.PI) / k;
+        if (xNode > xMax) break;
+        const px = standL + (xNode / xMax) * swW;
+        ctx.fillStyle = WCOLORS.red;
+        ctx.beginPath(); ctx.arc(px, midY, 4, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('\u25CF nodes', standL + 5, H - 10);
+    }
+
+    // Divider
+    if (viewMode === 0) {
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(W / 2, 30); ctx.lineTo(W / 2, H - 5); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  kSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: String Transverse Wave
+// =========================================================================
+function initStringTransverseWave() {
+  const canvas = document.getElementById('scene-string-transverse-wave');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  let posSlider = document.getElementById('stw-pos');
+  if (!posSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Segment position: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>' +
+        '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>';
+      parent.appendChild(controls);
+      posSlider = document.getElementById('stw-pos');
+    }
+  }
+  const ampSlider = document.getElementById('stw-amp');
+
+  function tick() {
+    const segPos = parseFloat(posSlider?.value || 0.5);
+    const A = parseFloat(ampSlider?.value || 0.8);
+    document.getElementById('stw-pos-val')?.replaceChildren(document.createTextNode(segPos.toFixed(2)));
+    document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
+
+    t += 0.03;
+    wClear(ctx, W, H);
+
+    const stringL = 50, stringR = W - 50;
+    const stringW = stringR - stringL;
+    const midY = H / 2;
+    const maxAmp = 60 * A;
+
+    // Wave: Gaussian-modulated sinusoid traveling right
+    const v = 2.0;
+    const sigma = 0.12;
+    function waveY(xFrac, time) {
+      const center = ((v * time) % 2.0) - 0.3;
+      const dx = xFrac - center;
+      return maxAmp * Math.exp(-dx * dx / (2 * sigma * sigma)) * Math.sin(15 * xFrac - 8 * time);
+    }
+
+    function waveDY(xFrac, time) {
+      const eps = 0.002;
+      return (waveY(xFrac + eps, time) - waveY(xFrac - eps, time)) / (2 * eps * stringW);
+    }
+
+    function waveD2Y(xFrac, time) {
+      const eps = 0.002;
+      return (waveY(xFrac + eps, time) - 2 * waveY(xFrac, time) + waveY(xFrac - eps, time)) / ((eps * stringW) * (eps * stringW));
+    }
+
+    // Draw string
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const frac = i / 300;
+      const y = waveY(frac, t);
+      const px = stringL + frac * stringW;
+      i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+    }
+    ctx.stroke();
+
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Highlighted segment
+    const segFrac = segPos;
+    const segPixel = stringL + segFrac * stringW;
+    const segY = waveY(segFrac, t);
+    const d2y = waveD2Y(segFrac, t);
+
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 4;
+    ctx.beginPath();
+    for (let i = -15; i <= 15; i++) {
+      const localFrac = segFrac + (i / 300);
+      if (localFrac < 0 || localFrac > 1) continue;
+      const y = waveY(localFrac, t);
+      const px = stringL + localFrac * stringW;
+      if (i === -15) ctx.moveTo(px, midY - y); else ctx.lineTo(px, midY - y);
+    }
+    ctx.stroke();
+
+    // Tension force arrows at ends
+    const arrowLen = 40;
+    const leftFrac = segFrac - 15 / 300;
+    const rightFrac = segFrac + 15 / 300;
+    const leftY = waveY(leftFrac, t);
+    const rightY = waveY(rightFrac, t);
+    const leftSlope = waveDY(leftFrac, t);
+    const rightSlope = waveDY(rightFrac, t);
+
+    // Left end
+    const leftPx = stringL + leftFrac * stringW;
+    const leftPy = midY - leftY;
+    const lAngle = Math.atan(-leftSlope * stringW);
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    const lDx = -Math.cos(lAngle) * arrowLen;
+    const lDy = Math.sin(lAngle) * arrowLen;
+    ctx.beginPath(); ctx.moveTo(leftPx, leftPy); ctx.lineTo(leftPx + lDx, leftPy + lDy); ctx.stroke();
+    ctx.fillStyle = WCOLORS.blue;
+    const lAx = leftPx + lDx, lAy = leftPy + lDy;
+    ctx.beginPath();
+    ctx.moveTo(lAx, lAy);
+    ctx.lineTo(lAx + 8 * Math.cos(lAngle + 0.4), lAy - 8 * Math.sin(lAngle + 0.4));
+    ctx.lineTo(lAx + 8 * Math.cos(lAngle - 0.4), lAy - 8 * Math.sin(lAngle - 0.4));
+    ctx.closePath(); ctx.fill();
+
+    // Right end
+    const rightPx = stringL + rightFrac * stringW;
+    const rightPy = midY - rightY;
+    const rAngle = Math.atan(-rightSlope * stringW);
+    const rDx = Math.cos(rAngle) * arrowLen;
+    const rDy = -Math.sin(rAngle) * arrowLen;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(rightPx, rightPy); ctx.lineTo(rightPx + rDx, rightPy + rDy); ctx.stroke();
+    ctx.fillStyle = WCOLORS.blue;
+    const rAx = rightPx + rDx, rAy = rightPy + rDy;
+    ctx.beginPath();
+    ctx.moveTo(rAx, rAy);
+    ctx.lineTo(rAx - 8 * Math.cos(rAngle + 0.4), rAy + 8 * Math.sin(rAngle + 0.4));
+    ctx.lineTo(rAx - 8 * Math.cos(rAngle - 0.4), rAy + 8 * Math.sin(rAngle - 0.4));
+    ctx.closePath(); ctx.fill();
+
+    // Net transverse force (proportional to curvature)
+    const netForce = d2y * 8000;
+    const clampedForce = Math.max(-40, Math.min(40, netForce));
+    if (Math.abs(clampedForce) > 2) {
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(segPixel, midY - segY);
+      ctx.lineTo(segPixel, midY - segY - clampedForce);
+      ctx.stroke();
+      ctx.fillStyle = WCOLORS.red;
+      const tipY = midY - segY - clampedForce;
+      const dir = clampedForce > 0 ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(segPixel, tipY);
+      ctx.lineTo(segPixel - 5, tipY + dir * 8);
+      ctx.lineTo(segPixel + 5, tipY + dir * 8);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Transverse Wave on a String', W / 2, 16);
+
+    ctx.font = '10px system-ui';
+    ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'left';
+    ctx.fillText('T (tension)', 10, H - 25);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('F_net \u221D curvature \u2202\u00B2y/\u2202x\u00B2', 10, H - 10);
+
+    const curvature = d2y * 1000;
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    const curvLabel = Math.abs(curvature) < 0.5 ? 'Flat (no net force)' : ('Curved: F_net ' + (curvature > 0 ? '\u2191' : '\u2193'));
+    ctx.fillText(curvLabel, W - 10, H - 10);
+
+    requestAnimationFrame(tick);
+  }
+
+  posSlider?.addEventListener('input', () => {});
+  ampSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: Sound Wave (Longitudinal)
+// =========================================================================
+function initSoundWaveLongitudinal() {
+  const canvas = document.getElementById('scene-sound-wave-longitudinal');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let wlSlider = document.getElementById('swl-wl');
+  if (!wlSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Wavelength: <input type="range" id="swl-wl" min="40" max="200" step="5" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>';
+      parent.appendChild(controls);
+      wlSlider = document.getElementById('swl-wl');
+    }
+  }
+
+  let t = 0;
+  const gridCols = 50;
+  const gridRows = 10;
+
+  function tick() {
+    const wavelength = parseFloat(wlSlider?.value || 100);
+    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wavelength.toFixed(0)));
+
+    t += 0.05;
+    wClear(ctx, W, H);
+
+    const gridL = 30;
+    const gridR = W - 30;
+    const gridT = 40;
+    const gridB = H - 50;
+    const gridW = gridR - gridL;
+    const gridH = gridB - gridT;
+
+    const k = 2 * Math.PI / wavelength;
+    const omega = k * 80;
+    const ampDisp = 8;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Longitudinal Sound Wave: Compression & Rarefaction', W / 2, 16);
+
+    // Molecules
+    for (let row = 0; row < gridRows; row++) {
+      const baseY = gridT + (row + 0.5) * gridH / gridRows;
+      for (let col = 0; col < gridCols; col++) {
+        const baseX = gridL + (col + 0.5) * gridW / gridCols;
+        const disp = ampDisp * Math.sin(k * baseX - omega * t);
+        const density = -k * ampDisp * Math.cos(k * baseX - omega * t);
+        const normDens = density / (k * ampDisp);
+
+        const r = Math.round(15 + 20 * normDens);
+        const g = Math.round(42 + 30 * normDens);
+        const b = Math.round(46 + 30 * normDens);
+        const alpha = 0.4 + 0.5 * (1 + normDens) / 2;
+        const radius = 2.2 + 0.8 * (1 + normDens) / 2;
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(baseX + disp, baseY, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Density color bar
+    const barL = gridL + 20, barR = gridR - 20, barY = gridB + 14, barH = 10;
+    for (let px = barL; px <= barR; px++) {
+      const frac = (px - barL) / (barR - barL);
+      const val = Math.sin(k * (gridL + frac * gridW) - omega * t);
+      const dens = -val;
+      const normD = (dens + 1) / 2;
+      const cR = Math.round(15 + 40 * normD);
+      const cG = Math.round(42 + 60 * normD);
+      const cB = Math.round(46 + 60 * normD);
+      ctx.fillStyle = `rgb(${cR}, ${cG}, ${cB})`;
+      ctx.fillRect(px, barY, 1, barH);
+    }
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Compression', barL + 30, barY + barH + 12);
+    ctx.fillText('Rarefaction', barR - 30, barY + barH + 12);
+
+    // Wavelength bracket
+    if (wavelength < gridW - 20) {
+      const bY = gridT - 5;
+      const bL2 = gridL + gridW * 0.3;
+      const bR2 = bL2 + wavelength;
+      if (bR2 < gridR) {
+        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(bL2, bY); ctx.lineTo(bR2, bY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bL2, bY - 4); ctx.lineTo(bL2, bY + 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(bR2, bY - 4); ctx.lineTo(bR2, bY + 4); ctx.stroke();
+        ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('\u03BB = ' + wavelength.toFixed(0) + ' px', (bL2 + bR2) / 2, bY - 6);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  wlSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: Boundary Conditions Demo
+// =========================================================================
+function initBoundaryConditionsDemo() {
+  const canvas = document.getElementById('scene-boundary-conditions-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let modeSlider = document.getElementById('bcd-mode');
+  if (!modeSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<button id="bcd-ff" class="scene-btn active" style="font-size:11px;padding:2px 8px;cursor:pointer;">Both Fixed</button>' +
+        '<button id="bcd-fo" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px;">Fixed-Free</button>' +
+        '<button id="bcd-oo" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px;">Both Free</button>' +
+        '<label style="margin-left:10px;">Mode n: <input type="range" id="bcd-mode" min="1" max="6" step="1" value="1"><span class="scene-val" id="bcd-mode-val">1</span></label>';
+      parent.appendChild(controls);
+      modeSlider = document.getElementById('bcd-mode');
+    }
+  }
+
+  let bcType = 0;
+  const bcLabels = ['Both Fixed', 'Fixed-Free', 'Both Free'];
+  document.getElementById('bcd-ff')?.addEventListener('click', () => { bcType = 0; updateBtns(); });
+  document.getElementById('bcd-fo')?.addEventListener('click', () => { bcType = 1; updateBtns(); });
+  document.getElementById('bcd-oo')?.addEventListener('click', () => { bcType = 2; updateBtns(); });
+
+  function updateBtns() {
+    ['bcd-ff', 'bcd-fo', 'bcd-oo'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.style.fontWeight = (i === bcType) ? 'bold' : 'normal';
+    });
+  }
+
+  let t = 0;
+
+  function modeShape(xFrac, n, bc) {
+    if (bc === 0) return Math.sin(n * Math.PI * xFrac);
+    if (bc === 1) return Math.sin((n - 0.5) * Math.PI * xFrac);
+    return Math.cos(n * Math.PI * xFrac);
+  }
+
+  function modeFreqLabel(n, bc) {
+    if (bc === 0) return 'f = ' + n + ' f\u2081';
+    if (bc === 1) return 'f = ' + (2 * n - 1) + '/2 f\u2081';
+    return 'f = ' + n + ' f\u2081';
+  }
+
+  function tick() {
+    const n = parseInt(modeSlider?.value || 1);
+    document.getElementById('bcd-mode-val')?.replaceChildren(document.createTextNode(n));
+
+    t += 0.04;
+    wClear(ctx, W, H);
+
+    const stringL = 60, stringR = W - 60;
+    const stringW = stringR - stringL;
+    const midY = H / 2;
+    const maxAmp = 60;
+
+    let omegaN;
+    if (bcType === 0) omegaN = n;
+    else if (bcType === 1) omegaN = (n - 0.5);
+    else omegaN = n;
+
+    const cosT = Math.cos(omegaN * t);
+
+    // Boundary indicators
+    if (bcType === 0 || bcType === 1) {
+      ctx.fillStyle = WCOLORS.axis;
+      ctx.fillRect(stringL - 6, midY - 30, 5, 60);
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(stringL - 6, midY - 25 + i * 16);
+        ctx.lineTo(stringL - 12, midY - 20 + i * 16);
+        ctx.stroke();
+      }
+    }
+    if (bcType === 0) {
+      ctx.fillStyle = WCOLORS.axis;
+      ctx.fillRect(stringR + 1, midY - 30, 5, 60);
+      for (let i = 0; i < 4; i++) {
+        ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(stringR + 6, midY - 25 + i * 16);
+        ctx.lineTo(stringR + 12, midY - 20 + i * 16);
+        ctx.stroke();
+      }
+    }
+    if (bcType === 1) {
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      const freeY = midY - modeShape(1.0, n, bcType) * cosT * maxAmp;
+      ctx.beginPath(); ctx.moveTo(stringR + 2, midY - 50); ctx.lineTo(stringR + 2, midY + 50); ctx.stroke();
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(stringR + 2, freeY, 5, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (bcType === 2) {
+      const leftFreeY = midY - modeShape(0, n, bcType) * cosT * maxAmp;
+      const rightFreeY = midY - modeShape(1, n, bcType) * cosT * maxAmp;
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(stringL - 2, midY - 50); ctx.lineTo(stringL - 2, midY + 50); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(stringR + 2, midY - 50); ctx.lineTo(stringR + 2, midY + 50); ctx.stroke();
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(stringL - 2, leftFreeY, 5, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(stringR + 2, rightFreeY, 5, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Mode shape envelope
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.35;
+    for (let sign = -1; sign <= 1; sign += 2) {
+      ctx.beginPath();
+      for (let i = 0; i <= 200; i++) {
+        const frac = i / 200;
+        const y = sign * modeShape(frac, n, bcType) * maxAmp;
+        const px = stringL + frac * stringW;
+        i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    // Animated mode
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const frac = i / 300;
+      const y = modeShape(frac, n, bcType) * cosT * maxAmp;
+      const px = stringL + frac * stringW;
+      i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+    }
+    ctx.stroke();
+
+    // Mark nodes
+    for (let i = 1; i <= 300; i++) {
+      const frac1 = (i - 1) / 300;
+      const frac2 = i / 300;
+      const y1 = modeShape(frac1, n, bcType);
+      const y2 = modeShape(frac2, n, bcType);
+      if (y1 * y2 < 0) {
+        const zerFrac = frac1 + (0 - y1) / (y2 - y1) * (frac2 - frac1);
+        const px = stringL + zerFrac * stringW;
+        ctx.fillStyle = WCOLORS.red;
+        ctx.beginPath(); ctx.arc(px, midY, 4, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // Antinodes
+    for (let i = 2; i <= 298; i++) {
+      const frac0 = (i - 1) / 300, frac1 = i / 300, frac2 = (i + 1) / 300;
+      const y0 = Math.abs(modeShape(frac0, n, bcType));
+      const y1 = Math.abs(modeShape(frac1, n, bcType));
+      const y2 = Math.abs(modeShape(frac2, n, bcType));
+      if (y1 > y0 && y1 > y2 && y1 > 0.5) {
+        const px = stringL + frac1 * stringW;
+        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(px, midY - maxAmp * 1.1); ctx.lineTo(px, midY + maxAmp * 1.1); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(bcLabels[bcType] + '  |  Mode n = ' + n, W / 2, 18);
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
+    ctx.fillText(modeFreqLabel(n, bcType), W / 2, H - 8);
+
+    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF node', stringL, H - 8);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2502 antinode', stringL + 55, H - 8);
+
+    requestAnimationFrame(tick);
+  }
+
+  modeSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: Standing Wave Modes (Three rows)
+// =========================================================================
+function initStandingWaveModes() {
+  const canvas = document.getElementById('scene-standing-wave-modes');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  const configs = [
+    { label: 'Both Fixed', bc: 'ff' },
+    { label: 'Fixed-Free', bc: 'fo' },
+    { label: 'Both Free', bc: 'oo' }
+  ];
+  const numModes = 4;
+
+  function modeShape(xFrac, n, bc) {
+    if (bc === 'ff') return Math.sin(n * Math.PI * xFrac);
+    if (bc === 'fo') return Math.sin((n - 0.5) * Math.PI * xFrac);
+    return Math.cos(n * Math.PI * xFrac);
+  }
+
+  function freqLabel(n, bc) {
+    if (bc === 'ff') return n + 'f\u2081';
+    if (bc === 'fo') return (2 * n - 1) + '/2 f\u2081';
+    return n + 'f\u2081';
+  }
+
+  function tick() {
+    t += 0.03;
+    wClear(ctx, W, H);
+
+    const rowH = (H - 20) / 3;
+    const modeW = (W - 100) / numModes;
+    const labelW = 70;
+
+    for (let r = 0; r < 3; r++) {
+      const cfg = configs[r];
+      const rowTop = 10 + r * rowH;
+      const midY = rowTop + rowH / 2;
+      const amp = rowH * 0.32;
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(cfg.label, labelW - 5, midY + 4);
+
+      if (r > 0) {
+        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(0, rowTop); ctx.lineTo(W, rowTop); ctx.stroke();
+      }
+
+      for (let m = 0; m < numModes; m++) {
+        const n = m + 1;
+        const modeL = labelW + m * modeW + 10;
+        const modeR = modeL + modeW - 20;
+        const mW = modeR - modeL;
+
+        let omegaN;
+        if (cfg.bc === 'ff') omegaN = n;
+        else if (cfg.bc === 'fo') omegaN = (n - 0.5);
+        else omegaN = n;
+
+        const cosT = Math.cos(omegaN * t);
+
+        // Equilibrium
+        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(modeL, midY); ctx.lineTo(modeR, midY); ctx.stroke();
+
+        // Animated wave
+        ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i <= 100; i++) {
+          const frac = i / 100;
+          const y = modeShape(frac, n, cfg.bc) * cosT * amp;
+          const px = modeL + frac * mW;
+          i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+        }
+        ctx.stroke();
+
+        // Envelope
+        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 0.7; ctx.globalAlpha = 0.3;
+        for (let sign = -1; sign <= 1; sign += 2) {
+          ctx.beginPath();
+          for (let i = 0; i <= 100; i++) {
+            const frac = i / 100;
+            const y = sign * modeShape(frac, n, cfg.bc) * amp;
+            const px = modeL + frac * mW;
+            i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
+          }
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        // Boundary markers
+        if (cfg.bc === 'ff' || cfg.bc === 'fo') {
+          ctx.fillStyle = WCOLORS.axis;
+          ctx.fillRect(modeL - 3, midY - 8, 3, 16);
+        }
+        if (cfg.bc === 'ff') {
+          ctx.fillRect(modeR, midY - 8, 3, 16);
+        }
+        if (cfg.bc === 'fo') {
+          ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(modeR, midY - modeShape(1, n, cfg.bc) * cosT * amp, 3, 0, Math.PI * 2); ctx.stroke();
+        }
+        if (cfg.bc === 'oo') {
+          ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(modeL, midY - modeShape(0, n, cfg.bc) * cosT * amp, 3, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(modeR, midY - modeShape(1, n, cfg.bc) * cosT * amp, 3, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        // Frequency label
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText(freqLabel(n, cfg.bc), modeL + mW / 2, midY + amp + 14);
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: Helmholtz Resonator
+// =========================================================================
+function initHelmholtzResonator() {
+  const canvas = document.getElementById('scene-helmholtz-resonator');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let aSlider = document.getElementById('hr-a');
+  if (!aSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Neck area A: <input type="range" id="hr-a" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="hr-a-val">4.0</span></label>' +
+        '<label>Volume V: <input type="range" id="hr-v" min="20" max="200" step="5" value="80"><span class="scene-val" id="hr-v-val">80</span></label>' +
+        '<label>Neck length L: <input type="range" id="hr-l" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="hr-l-val">5.0</span></label>';
+      parent.appendChild(controls);
+      aSlider = document.getElementById('hr-a');
+    }
+  }
+  const vSlider = document.getElementById('hr-v');
+  const lSlider = document.getElementById('hr-l');
+
+  let t = 0;
+
+  // Seeded random for stable molecule positions
+  function seededRandom(seed) {
+    let s = seed;
+    return function() {
+      s = (s * 16807 + 0) % 2147483647;
+      return s / 2147483647;
+    };
+  }
+
+  function tick() {
+    const A = parseFloat(aSlider?.value || 4);
+    const V = parseFloat(vSlider?.value || 80);
+    const L = parseFloat(lSlider?.value || 5);
+    document.getElementById('hr-a-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
+    document.getElementById('hr-v-val')?.replaceChildren(document.createTextNode(V.toFixed(0)));
+    document.getElementById('hr-l-val')?.replaceChildren(document.createTextNode(L.toFixed(1)));
+
+    const cs = 343;
+    const fRes = (cs / (2 * Math.PI)) * Math.sqrt(A / (V * L));
+
+    t += 0.04;
+    wClear(ctx, W, H);
+
+    const bottleX = W * 0.3;
+    const bottleCenterY = H * 0.55;
+
+    const neckW = 10 + A * 3;
+    const neckH = 15 + L * 4;
+    const bodyW = 100 * Math.sqrt(V / 80);
+    const bodyH = bodyW * 0.8;
+
+    const neckTop = bottleCenterY - bodyH / 2 - neckH;
+    const neckBot = bottleCenterY - bodyH / 2;
+    const bodyBot = bottleCenterY + bodyH / 2;
+
+    const omega = fRes * 0.01;
+    const neckDisp = 8 * Math.sin(omega * t);
+
+    // Bottle shape
+    ctx.fillStyle = 'rgba(15, 118, 110, 0.12)';
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bottleX - neckW / 2, neckTop);
+    ctx.lineTo(bottleX - neckW / 2, neckBot);
+    ctx.quadraticCurveTo(bottleX - bodyW / 2 - 10, neckBot, bottleX - bodyW / 2, neckBot + bodyH * 0.3);
+    ctx.lineTo(bottleX - bodyW / 2, bodyBot - 10);
+    ctx.quadraticCurveTo(bottleX - bodyW / 2, bodyBot, bottleX - bodyW / 4, bodyBot);
+    ctx.lineTo(bottleX + bodyW / 4, bodyBot);
+    ctx.quadraticCurveTo(bottleX + bodyW / 2, bodyBot, bottleX + bodyW / 2, bodyBot - 10);
+    ctx.lineTo(bottleX + bodyW / 2, neckBot + bodyH * 0.3);
+    ctx.quadraticCurveTo(bottleX + bodyW / 2 + 10, neckBot, bottleX + neckW / 2, neckBot);
+    ctx.lineTo(bottleX + neckW / 2, neckTop);
+    ctx.fill();
+    ctx.stroke();
+
+    // Air molecules in neck
+    const rng = seededRandom(42);
+    const numNeckMols = Math.max(3, Math.round(A * 1.5));
+    ctx.fillStyle = WCOLORS.blue;
+    for (let i = 0; i < numNeckMols; i++) {
+      const frac = (i + 0.5) / numNeckMols;
+      const mx = bottleX + (rng() * 0.6 - 0.3) * neckW * 0.5;
+      const my = neckTop + frac * neckH + neckDisp;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Body air compression indicator
+    const bodyComp = Math.sin(omega * t);
+    const bodyAlpha = 0.15 + 0.15 * bodyComp;
+    ctx.fillStyle = `rgba(15, 118, 110, ${bodyAlpha})`;
+    ctx.fillRect(bottleX - bodyW / 2 + 5, neckBot + 5, bodyW - 10, bodyH - 10);
+
+    // Spring analogy (right half)
+    const springX = W * 0.7;
+    const springTop2 = neckTop + 10;
+    const springBot2 = bodyBot - 10;
+    const springMid = (springTop2 + springBot2) / 2;
+    const massBlockY = springMid - 30 + neckDisp * 2;
+
+    // Spring coils
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    const sCoils = 6;
+    const sW2 = 15;
+    ctx.beginPath();
+    ctx.moveTo(springX, springBot2);
+    const totalSpringLen = springBot2 - massBlockY - 15;
+    const sSegLen = totalSpringLen / (sCoils * 2 + 2);
+    let sy = springBot2 - sSegLen;
+    ctx.lineTo(springX, sy);
+    for (let i = 0; i < sCoils; i++) {
+      const midPt = sy - sSegLen;
+      ctx.lineTo(springX + sW2 * ((i % 2 === 0) ? 1 : -1), midPt);
+      sy = midPt - sSegLen;
+      ctx.lineTo(springX, sy);
+    }
+    ctx.lineTo(springX, massBlockY + 15);
+    ctx.stroke();
+
+    // Mass block
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillRect(springX - 18, massBlockY - 12, 36, 24);
+    ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m', springX, massBlockY + 4);
+
+    // Wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(springX - 20, springBot2, 40, 4);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Neck air = mass', springX, massBlockY - 20);
+    ctx.fillText('Body air = spring', springX, springBot2 + 18);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('A (neck area)', bottleX + neckW / 2 + 5, neckTop + neckH / 2);
+    ctx.fillText('L (neck length)', bottleX + neckW / 2 + 5, neckTop + neckH / 2 + 12);
+    ctx.fillText('V (body volume)', bottleX + bodyW / 2 + 5, bottleCenterY);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Helmholtz Resonator', W / 2, 16);
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
+    ctx.fillText('f = (c\u209B/2\u03C0)\u221A(A/VL) = ' + fRes.toFixed(1) + ' Hz', W / 2, H - 8);
+
+    requestAnimationFrame(tick);
+  }
+
+  aSlider?.addEventListener('input', () => {});
+  vSlider?.addEventListener('input', () => {});
+  lSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 7: Beats Demo
+// =========================================================================
+function initBeatsDemo() {
+  const canvas = document.getElementById('scene-beats-demo');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let dfSlider = document.getElementById('bd-df');
+  if (!dfSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>\u0394f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="3"><span class="scene-val" id="bd-df-val">3.0</span></label>';
+      parent.appendChild(controls);
+      dfSlider = document.getElementById('bd-df');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const df = parseFloat(dfSlider?.value || 3);
+    document.getElementById('bd-df-val')?.replaceChildren(document.createTextNode(df.toFixed(1)));
+
+    t += 0.015;
+    wClear(ctx, W, H);
+
+    const f1 = 40;
+    const f2 = f1 + df;
+    const omega1 = 2 * Math.PI * f1 * 0.01;
+    const omega2 = 2 * Math.PI * f2 * 0.01;
+
+    const plotL = 30, plotR = W - 20;
+    const plotW = plotR - plotL;
+    const topY = H * 0.25;
+    const botY = H * 0.68;
+    const ampSmall = 25;
+    const ampBig = 45;
+    const xRange = 12;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Beat Pattern: f\u2081 = ' + f1 + ' Hz, f\u2082 = ' + f2.toFixed(1) + ' Hz', W / 2, 14);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, topY); ctx.lineTo(plotR, topY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, botY); ctx.lineTo(plotR, botY); ctx.stroke();
+
+    const steps = 500;
+    // Wave 1
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const tLocal = t + (i / steps) * xRange;
+      const y = Math.sin(omega1 * tLocal) * ampSmall;
+      const px = plotL + (i / steps) * plotW;
+      i === 0 ? ctx.moveTo(px, topY - y) : ctx.lineTo(px, topY - y);
+    }
+    ctx.stroke();
+    // Wave 2
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const tLocal = t + (i / steps) * xRange;
+      const y = Math.sin(omega2 * tLocal) * ampSmall;
+      const px = plotL + (i / steps) * plotW;
+      i === 0 ? ctx.moveTo(px, topY - y) : ctx.lineTo(px, topY - y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.globalAlpha = 0.6; ctx.fillText('f\u2081', plotL + 3, topY - ampSmall - 3);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('f\u2082', plotL + 20, topY - ampSmall - 3);
+    ctx.globalAlpha = 1;
+
+    // Sum
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const tLocal = t + (i / steps) * xRange;
+      const y = (Math.sin(omega1 * tLocal) + Math.sin(omega2 * tLocal)) * ampBig / 2;
+      const px = plotL + (i / steps) * plotW;
+      i === 0 ? ctx.moveTo(px, botY - y) : ctx.lineTo(px, botY - y);
+    }
+    ctx.stroke();
+
+    // Beat envelope
+    if (df > 0.1) {
+      const omegaBeat = Math.PI * df * 0.01;
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const tLocal = t + (i / steps) * xRange;
+        const env = Math.cos(omegaBeat * tLocal) * ampBig;
+        const px = plotL + (i / steps) * plotW;
+        i === 0 ? ctx.moveTo(px, botY - env) : ctx.lineTo(px, botY - env);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const tLocal = t + (i / steps) * xRange;
+        const env = -Math.cos(omegaBeat * tLocal) * ampBig;
+        const px = plotL + (i / steps) * plotW;
+        i === 0 ? ctx.moveTo(px, botY - env) : ctx.lineTo(px, botY - env);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Sum: beat pattern', plotL + 3, botY - ampBig - 8);
+
+    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Beat frequency = |f\u2081 \u2212 f\u2082| = ' + df.toFixed(1) + ' Hz', W / 2, H - 8);
+
+    if (df > 0.1) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('envelope', plotR - 5, botY - ampBig - 3);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  dfSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 7: Consonance & Dissonance
+// =========================================================================
+function initConsonanceDissonance() {
+  const canvas = document.getElementById('scene-consonance-dissonance');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let ratioSlider = document.getElementById('cd-ratio');
+  if (!ratioSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>Frequency ratio: <input type="range" id="cd-ratio" min="1.0" max="2.0" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>';
+      parent.appendChild(controls);
+      ratioSlider = document.getElementById('cd-ratio');
+    }
+  }
+
+  let t = 0;
+
+  function tick() {
+    const ratio = parseFloat(ratioSlider?.value || 1.5);
+    document.getElementById('cd-ratio-val')?.replaceChildren(document.createTextNode(ratio.toFixed(2)));
+
+    t += 0.02;
+    wClear(ctx, W, H);
+
+    const f1 = 100;
+    const f2 = f1 * ratio;
+    const numHarmonics = 8;
+    const tolerance = 0.04;
+
+    const specL = 50, specR = W - 20;
+    const specW = specR - specL;
+    const specH = H * 0.4;
+    const specTop = 30;
+    const specBot = specTop + specH;
+
+    const fMax = f1 * (numHarmonics + 1);
+
+    // Axis
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(specL, specBot); ctx.lineTo(specR, specBot); ctx.stroke();
+
+    // Harmonics of f1
+    for (let n = 1; n <= numHarmonics; n++) {
+      const f = f1 * n;
+      if (f > fMax) break;
+      const px = specL + (f / fMax) * specW;
+
+      let matched = false;
+      let nearBeat = false;
+      for (let m = 1; m <= numHarmonics; m++) {
+        const f2h = f2 * m;
+        const diff = Math.abs(f - f2h) / f;
+        if (diff < 0.005) { matched = true; break; }
+        if (diff < tolerance && diff >= 0.005) { nearBeat = true; }
+      }
+
+      ctx.strokeStyle = matched ? '#16a34a' : (nearBeat ? WCOLORS.red : WCOLORS.teal);
+      ctx.lineWidth = matched ? 3 : 2;
+      ctx.globalAlpha = matched ? 1 : 0.7;
+      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, specTop + 10); ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(n + 'f\u2081', px, specBot + 10);
+    }
+
+    // Harmonics of f2
+    for (let m = 1; m <= numHarmonics; m++) {
+      const f = f2 * m;
+      if (f > fMax) break;
+      const px = specL + (f / fMax) * specW;
+
+      let matched = false;
+      let nearBeat = false;
+      for (let n = 1; n <= numHarmonics; n++) {
+        const f1h = f1 * n;
+        const diff = Math.abs(f - f1h) / f;
+        if (diff < 0.005) { matched = true; break; }
+        if (diff < tolerance && diff >= 0.005) { nearBeat = true; }
+      }
+
+      ctx.strokeStyle = matched ? '#16a34a' : (nearBeat ? WCOLORS.red : WCOLORS.amber);
+      ctx.lineWidth = matched ? 3 : 1.5;
+      ctx.globalAlpha = matched ? 1 : 0.6;
+      ctx.setLineDash(matched ? [] : [3, 2]);
+      ctx.beginPath(); ctx.moveTo(px, specBot); ctx.lineTo(px, specTop + 25); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(m + 'f\u2082', px, specTop + 6);
+    }
+
+    // Combined waveform
+    const waveTop = specBot + 25;
+    const waveMid = waveTop + (H - waveTop - 20) / 2;
+    const waveAmp = (H - waveTop - 30) / 2 * 0.8;
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(specL, waveMid); ctx.lineTo(specR, waveMid); ctx.stroke();
+
+    const omega1 = 2 * Math.PI * f1 * 0.003;
+    const omega2 = 2 * Math.PI * f2 * 0.003;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const tLocal = t + (i / 400) * 8;
+      const y = (Math.sin(omega1 * tLocal) + Math.sin(omega2 * tLocal)) / 2 * waveAmp;
+      const px = specL + (i / 400) * specW;
+      i === 0 ? ctx.moveTo(px, waveMid - y) : ctx.lineTo(px, waveMid - y);
+    }
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Harmonic Series: f\u2082/f\u2081 = ' + ratio.toFixed(2), W / 2, 16);
+
+    // Identify interval
+    const intervals = [
+      { r: 1.0, name: 'Unison' }, { r: 1.125, name: 'Maj 2nd (9/8)' },
+      { r: 1.2, name: 'Min 3rd (6/5)' }, { r: 1.25, name: 'Maj 3rd (5/4)' },
+      { r: 1.333, name: 'Perfect 4th (4/3)' }, { r: 1.5, name: 'Perfect 5th (3/2)' },
+      { r: 1.667, name: 'Maj 6th (5/3)' }, { r: 1.8, name: 'Min 7th (9/5)' },
+      { r: 2.0, name: 'Octave' }
+    ];
+    let closestName = '';
+    let closestDist = 1;
+    for (const iv of intervals) {
+      const d = Math.abs(ratio - iv.r);
+      if (d < closestDist) { closestDist = d; closestName = iv.name; }
+    }
+    if (closestDist < 0.03) {
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('\u2248 ' + closestName, W - 25, 16);
+    }
+
+    // Legend
+    ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#16a34a'; ctx.fillText('\u25CF aligned', specL, specTop + 6);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF near-beat', specL + 55, specTop + 6);
+
+    requestAnimationFrame(tick);
+  }
+
+  ratioSlider?.addEventListener('input', () => {});
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 7: Harmonic Alignment
+// =========================================================================
+function initHarmonicAlignment() {
+  const canvas = document.getElementById('scene-harmonic-alignment');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const intervals = [
+    { name: 'Octave', ratio: 2 / 1, label: '2:1' },
+    { name: 'Fifth', ratio: 3 / 2, label: '3:2' },
+    { name: 'Fourth', ratio: 4 / 3, label: '4:3' },
+    { name: 'Maj 3rd', ratio: 5 / 4, label: '5:4' },
+    { name: 'Min 3rd', ratio: 6 / 5, label: '6:5' }
+  ];
+
+  let btnContainer = document.getElementById('ha-btns');
+  if (!btnContainer) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.id = 'ha-btns';
+      let html = '';
+      intervals.forEach((iv, i) => {
+        html += '<button id="ha-btn-' + i + '" style="font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">' + iv.name + '</button>';
+      });
+      controls.innerHTML = html;
+      parent.appendChild(controls);
+      btnContainer = controls;
+    }
+  }
+
+  let selected = 1;
+
+  intervals.forEach((iv, i) => {
+    document.getElementById('ha-btn-' + i)?.addEventListener('click', () => {
+      selected = i;
+      draw();
+    });
+  });
+
+  function draw() {
+    wClear(ctx, W, H);
+    const iv = intervals[selected];
+    const numH = 12;
+
+    const barL = 60, barR = W - 30;
+    const barW = barR - barL;
+    const barH = 20;
+    const bar1Y = H * 0.25;
+    const bar2Y = H * 0.45;
+    const alignY = H * 0.7;
+
+    const f1 = 100;
+    const f2 = f1 * iv.ratio;
+    const fMax = f1 * (numH + 1);
+
+    // Update button styles
+    intervals.forEach((_, i) => {
+      const btn = document.getElementById('ha-btn-' + i);
+      if (btn) btn.style.fontWeight = (i === selected) ? 'bold' : 'normal';
+    });
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Harmonic Alignment: ' + iv.name + ' (' + iv.label + ')', W / 2, 18);
+
+    // Frequency axis
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(barL, alignY + 10); ctx.lineTo(barR, alignY + 10); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    for (let tickVal = 0; tickVal <= Math.floor(fMax / 100); tickVal++) {
+      const px = barL + (tickVal * 100 / fMax) * barW;
+      ctx.beginPath(); ctx.moveTo(px, alignY + 10); ctx.lineTo(px, alignY + 14); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
+      ctx.fillText((tickVal * 100) + '', px, alignY + 24);
+    }
+
+    // Note 1 bars
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Note 1 (' + f1 + ' Hz)', barL - 5, bar1Y + 5);
+
+    for (let n = 1; n <= numH; n++) {
+      const f = f1 * n;
+      if (f > fMax) break;
+      const px = barL + (f / fMax) * barW;
+
+      let aligned = false;
+      for (let m = 1; m <= numH; m++) {
+        if (Math.abs(f - f2 * m) / f < 0.005) { aligned = true; break; }
+      }
+
+      ctx.fillStyle = aligned ? '#16a34a' : WCOLORS.teal;
+      ctx.fillRect(px - 3, bar1Y - barH / 2, 6, barH);
+
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(n + '', px, bar1Y - barH / 2 - 3);
+    }
+
+    // Note 2 bars
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Note 2 (' + f2.toFixed(0) + ' Hz)', barL - 5, bar2Y + 5);
+
+    for (let m = 1; m <= numH; m++) {
+      const f = f2 * m;
+      if (f > fMax) break;
+      const px = barL + (f / fMax) * barW;
+
+      let aligned = false;
+      for (let n = 1; n <= numH; n++) {
+        if (Math.abs(f - f1 * n) / f < 0.005) { aligned = true; break; }
+      }
+
+      ctx.fillStyle = aligned ? '#16a34a' : WCOLORS.amber;
+      ctx.fillRect(px - 3, bar2Y - barH / 2, 6, barH);
+
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(m + '', px, bar2Y + barH / 2 + 10);
+    }
+
+    // Alignment lines
+    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 1; ctx.setLineDash([3, 2]); ctx.globalAlpha = 0.5;
+    for (let n = 1; n <= numH; n++) {
+      const fh = f1 * n;
+      if (fh > fMax) break;
+      for (let m = 1; m <= numH; m++) {
+        const fh2 = f2 * m;
+        if (Math.abs(fh - fh2) / fh < 0.005) {
+          const px = barL + (fh / fMax) * barW;
+          ctx.beginPath(); ctx.moveTo(px, bar1Y + barH / 2); ctx.lineTo(px, bar2Y - barH / 2); ctx.stroke();
+        }
+      }
+    }
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+    // Combined axis view
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Combined on frequency axis:', barL, alignY - 5);
+
+    for (let n = 1; n <= numH; n++) {
+      const f = f1 * n;
+      if (f > fMax) break;
+      const px = barL + (f / fMax) * barW;
+      ctx.fillStyle = WCOLORS.teal; ctx.globalAlpha = 0.6;
+      ctx.fillRect(px - 2, alignY - 10, 4, 20);
+      ctx.globalAlpha = 1;
+    }
+    for (let m = 1; m <= numH; m++) {
+      const f = f2 * m;
+      if (f > fMax) break;
+      const px = barL + (f / fMax) * barW;
+      ctx.fillStyle = WCOLORS.amber; ctx.globalAlpha = 0.6;
+      ctx.fillRect(px - 2, alignY - 10, 4, 20);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Ratio = ' + iv.label + ' = ' + iv.ratio.toFixed(4), W / 2, H - 6);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 7: Circle of Fifths
+// =========================================================================
+function initCircleOfFifths() {
+  const canvas = document.getElementById('scene-circle-of-fifths');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const noteNames = ['C', 'G', 'D', 'A', 'E', 'B', 'F\u266F/G\u266D', 'D\u266D', 'A\u266D', 'E\u266D', 'B\u266D', 'F'];
+
+  let tuning = 0; // 0 = equal, 1 = pythagorean
+  let highlighted = 0;
+
+  let btnET = document.getElementById('cof-et');
+  if (!btnET) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<button id="cof-et" style="font-size:11px;padding:2px 8px;cursor:pointer;font-weight:bold;">Equal Tempered</button>' +
+        '<button id="cof-py" style="font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px;">Pythagorean</button>' +
+        '<label style="margin-left:10px;">Note: <input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>';
+      parent.appendChild(controls);
+      btnET = document.getElementById('cof-et');
+    }
+  }
+
+  document.getElementById('cof-et')?.addEventListener('click', () => { tuning = 0; updateBtns(); draw(); });
+  document.getElementById('cof-py')?.addEventListener('click', () => { tuning = 1; updateBtns(); draw(); });
+  const noteSlider = document.getElementById('cof-note');
+  noteSlider?.addEventListener('input', () => { highlighted = parseInt(noteSlider.value); draw(); });
+
+  function updateBtns() {
+    const et = document.getElementById('cof-et');
+    const py = document.getElementById('cof-py');
+    if (et) et.style.fontWeight = tuning === 0 ? 'bold' : 'normal';
+    if (py) py.style.fontWeight = tuning === 1 ? 'bold' : 'normal';
+  }
+
+  function draw() {
+    document.getElementById('cof-note-val')?.replaceChildren(document.createTextNode(noteNames[highlighted]));
+
+    wClear(ctx, W, H);
+
+    const cx = W / 2;
+    const cy = H / 2 + 5;
+    const R = Math.min(W, H) * 0.35;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Circle of Fifths (' + (tuning === 0 ? 'Equal Tempered' : 'Pythagorean') + ')', W / 2, 16);
+
+    // Circle
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+
+    // Angular positions
+    const angles = [];
+    if (tuning === 0) {
+      for (let i = 0; i < 12; i++) {
+        angles.push(-Math.PI / 2 + i * (2 * Math.PI / 12));
+      }
+    } else {
+      const pyCents = 1200 * Math.log2(3 / 2);
+      for (let i = 0; i < 12; i++) {
+        const totalCents = i * pyCents;
+        const angle = -Math.PI / 2 + (totalCents % 1200) / 1200 * (2 * Math.PI);
+        angles.push(angle);
+      }
+    }
+
+    // Connecting lines
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
+    for (let i = 0; i < 12; i++) {
+      const a1 = angles[i];
+      const a2 = angles[(i + 1) % 12];
+      const x1 = cx + R * Math.cos(a1);
+      const y1 = cy + R * Math.sin(a1);
+      const x2 = cx + R * Math.cos(a2);
+      const y2 = cy + R * Math.sin(a2);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // Highlight path
+    if (highlighted > 0) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5; ctx.globalAlpha = 0.6;
+      for (let i = 0; i < highlighted; i++) {
+        const a1 = angles[i];
+        const a2 = angles[i + 1];
+        const x1 = cx + R * Math.cos(a1);
+        const y1 = cy + R * Math.sin(a1);
+        const x2 = cx + R * Math.cos(a2);
+        const y2 = cy + R * Math.sin(a2);
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Note markers
+    for (let i = 0; i < 12; i++) {
+      const a = angles[i];
+      const x = cx + R * Math.cos(a);
+      const y = cy + R * Math.sin(a);
+
+      const isHL = (i === highlighted);
+      const radius = isHL ? 16 : 12;
+      ctx.fillStyle = isHL ? WCOLORS.teal : '#fff';
+      ctx.strokeStyle = isHL ? WCOLORS.teal : WCOLORS.axis;
+      ctx.lineWidth = isHL ? 2.5 : 1.5;
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = isHL ? '#fff' : WCOLORS.text;
+      ctx.font = (isHL ? 'bold ' : '') + '11px system-ui';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(noteNames[i], x, y);
+    }
+    ctx.textBaseline = 'alphabetic';
+
+    // Pythagorean comma
+    if (tuning === 1) {
+      const overshootCents = 12 * 1200 * Math.log2(3 / 2) - 7 * 1200;
+      const overshootAngle = -Math.PI / 2 + overshootCents / 1200 * (2 * Math.PI);
+
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      const startA = -Math.PI / 2;
+      const endA = overshootAngle;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R + 20, Math.min(startA, endA), Math.max(startA, endA));
+      ctx.stroke();
+
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('Pythagorean comma', cx + R * 0.3, H - 22);
+      ctx.fillText('(' + overshootCents.toFixed(1) + ' cents)', cx + R * 0.3, H - 10);
+    }
+
+    if (tuning === 0) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Circle closes exactly: 12 fifths = 7 octaves', W / 2, H - 10);
+    }
+  }
+
+  draw();
+}
+
+// =========================================================================
+// CHAPTER 7: Scale Comparison
+// =========================================================================
+function initScaleComparison() {
+  const canvas = document.getElementById('scene-scale-comparison');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const justRatios = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2];
+  const justNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B', "C'"];
+  const pythRatios = [1, 9/8, 81/64, 4/3, 3/2, 27/16, 243/128, 2];
+  const eqSemitones = [0, 2, 4, 5, 7, 9, 11, 12];
+  const eqRatios = eqSemitones.map(s => Math.pow(2, s / 12));
+
+  let hoveredNote = -1;
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    hoveredNote = -1;
+    const barL = 80, barR = W - 30;
+    const barW = barR - barL;
+    for (let i = 0; i < 8; i++) {
+      const cents = 1200 * Math.log2(justRatios[i]);
+      const px = barL + (cents / 1200) * barW;
+      if (Math.abs(mx - px) < 12 && my > 30 && my < H - 30) {
+        hoveredNote = i;
+        break;
+      }
+    }
+    draw();
+  });
+  canvas.addEventListener('mouseleave', () => { hoveredNote = -1; draw(); });
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const barL = 80, barR = W - 30;
+    const barW = barR - barL;
+    const rowH = (H - 80) / 3;
+    const scales = [
+      { name: 'Just', ratios: justRatios, color: WCOLORS.teal, y: 55 },
+      { name: 'Pythagorean', ratios: pythRatios, color: WCOLORS.amber, y: 55 + rowH },
+      { name: 'Equal Tempered', ratios: eqRatios, color: WCOLORS.blue, y: 55 + 2 * rowH }
+    ];
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Scale Comparison: Just vs Pythagorean vs Equal Tempered', W / 2, 16);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    for (const sc of scales) {
+      ctx.beginPath(); ctx.moveTo(barL, sc.y); ctx.lineTo(barR, sc.y); ctx.stroke();
+    }
+
+    // Cent ticks
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    for (let c = 0; c <= 1200; c += 200) {
+      const px = barL + (c / 1200) * barW;
+      for (const sc of scales) {
+        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(px, sc.y - 15); ctx.lineTo(px, sc.y + 15); ctx.stroke();
+      }
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText(c + '\u00A2', px, H - 5);
+    }
+    ctx.fillText('cents', barR + 5, H - 5);
+
+    // Notes
+    for (let si = 0; si < scales.length; si++) {
+      const sc = scales[si];
+
+      ctx.fillStyle = sc.color; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(sc.name, barL - 8, sc.y + 4);
+
+      for (let i = 0; i < 8; i++) {
+        const cents = 1200 * Math.log2(sc.ratios[i]);
+        const px = barL + (cents / 1200) * barW;
+
+        const isHovered = (hoveredNote === i);
+        ctx.fillStyle = sc.color;
+        ctx.globalAlpha = isHovered ? 1 : 0.8;
+
+        ctx.fillRect(px - 2, sc.y - 12, 4, 24);
+
+        if (si === 0) {
+          ctx.fillStyle = WCOLORS.text; ctx.font = (isHovered ? 'bold ' : '') + '9px system-ui'; ctx.textAlign = 'center';
+          ctx.fillText(justNames[i], px, 40);
+        }
+
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Hover info
+    if (hoveredNote >= 0 && hoveredNote < 8) {
+      const justCents = 1200 * Math.log2(justRatios[hoveredNote]);
+      const pythCents = 1200 * Math.log2(pythRatios[hoveredNote]);
+      const eqCents = 1200 * Math.log2(eqRatios[hoveredNote]);
+
+      const px = barL + (justCents / 1200) * barW;
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(px, 45); ctx.lineTo(px, H - 20); ctx.stroke();
+      ctx.setLineDash([]);
+
+      const boxX = Math.min(px + 15, W - 160);
+      const boxY = scales[0].y + 20;
+      ctx.fillStyle = 'rgba(250, 245, 236, 0.95)';
+      ctx.fillRect(boxX, boxY, 150, 68);
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+      ctx.strokeRect(boxX, boxY, 150, 68);
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(justNames[hoveredNote], boxX + 5, boxY + 14);
+      ctx.font = '9px system-ui';
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillText('Just: ' + justCents.toFixed(1) + '\u00A2  (ratio ' + justRatios[hoveredNote].toFixed(4) + ')', boxX + 5, boxY + 28);
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('Pyth: ' + pythCents.toFixed(1) + '\u00A2  (\u0394' + (pythCents - justCents).toFixed(1) + '\u00A2)', boxX + 5, boxY + 42);
+      ctx.fillStyle = WCOLORS.blue;
+      ctx.fillText('ET:    ' + eqCents.toFixed(1) + '\u00A2  (\u0394' + (eqCents - justCents).toFixed(1) + '\u00A2)', boxX + 5, boxY + 56);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Hover over a note to see frequency ratios and deviations', W / 2, 40);
+    }
+  }
+
+  draw();
+}
