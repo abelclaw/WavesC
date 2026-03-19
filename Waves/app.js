@@ -395,7 +395,7 @@ const chapters = [
     lectureContent: [
       { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],
-    scene: "driven"
+    scene: "driven-oscillator"
   },
   {
     number: 3,
@@ -2691,9 +2691,9 @@ function sceneMarkup(type) {
           </div>
         </div>
       `;
-    case "driven":
+    case "driven-oscillator":
       return `
-        <div class="scene-label">Interactive 1: Driven Oscillator</div>
+        <div class="scene-label">Interactive 2: Driven Oscillator</div>
         <p class="scene-caption">Sweep the driving frequency &omega;<sub>d</sub> through resonance. The left panel shows the mass responding to the sinusoidal force; the right shows the steady-state amplitude and phase vs &omega;<sub>d</sub>. At resonance (&omega;<sub>d</sub> = &omega;<sub>0</sub>), amplitude peaks and phase crosses &minus;90&deg;.</p>
         <div class="interactive-scene">
           <canvas id="scene-driven-oscillator" width="600" height="300"></canvas>
@@ -2702,6 +2702,38 @@ function sceneMarkup(type) {
             <label>&omega;<sub>0</sub>: <input type="range" id="driven-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="driven-w0-val">5.0</span></label>
             <label>&gamma;: <input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.2"><span class="scene-val" id="driven-gamma-val">0.2</span></label>
           </div>
+        </div>
+      `;
+    case "transient-decay":
+      return `
+        <div class="scene-label">Interactive 3: Transient Decay</div>
+        <p class="scene-caption">The transient (homogeneous) solution dies away exponentially, leaving only the steady-state driven response at long times.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-transient-decay" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "phase-lag":
+      return `
+        <div class="scene-label">Interactive 4: Phase Lag</div>
+        <p class="scene-caption">Observe how the phase relationship between the driving force and the oscillator response changes as the driving frequency crosses the natural frequency.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-phase-lag" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "power-absorption":
+      return `
+        <div class="scene-label">Interactive 5: Power Absorption</div>
+        <p class="scene-caption">Absorptive and elastic power contributions. The absorptive part always takes power; the elastic part averages to zero.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-power-absorption" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "resonance-curve":
+      return `
+        <div class="scene-label">Interactive 6: Resonance Curve</div>
+        <p class="scene-caption">The Lorentzian resonance curve. The peak is at the natural frequency and the width at half-maximum equals the damping coefficient.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-resonance-curve" width="600" height="300"></canvas>
         </div>
       `;
     case "coupled":
