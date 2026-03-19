@@ -4540,3 +4540,49 @@ a {
   0%, 100% { transform: scaleY(1.2); opacity: 0.4; }
   50% { transform: scaleY(0.6); opacity: 0.8; }
 }
+
+/* ===== Interactive Scene Controls ===== */
+.interactive-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.interactive-scene canvas {
+  max-width: 100%;
+  border-radius: 8px;
+  cursor: default;
+  background: #faf5ec;
+}
+
+.scene-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--body);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.scene-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.scene-controls input[type="range"] {
+  width: 100px;
+  accent-color: var(--accent);
+}
+
+.scene-val {
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 32px;
+}

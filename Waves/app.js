@@ -3128,72 +3128,47 @@ function sceneMarkup(type) {
       `;
     case "shm-spring":
       return `
-        <div class="scene-title">Mass on a spring</div>
-        <div class="shm-spring-scene">
-          <div class="shm-ceiling"></div>
-          <svg class="shm-spring-svg" viewBox="0 0 60 160" preserveAspectRatio="xMidYMid meet">
-            <line x1="30" y1="0" x2="30" y2="10" stroke="var(--accent)" stroke-width="2"/>
-            <polyline class="shm-coil" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"
-              points="30,10 45,20 15,30 45,40 15,50 45,60 15,70 45,80 15,90 45,100 30,110"/>
-            <rect class="shm-block" x="10" y="110" width="40" height="30" rx="4" fill="var(--accent)" opacity="0.85"/>
-            <text x="30" y="129" text-anchor="middle" fill="white" font-size="12" font-weight="600">m</text>
-          </svg>
-          <div class="shm-eq-line"></div>
-          <div class="shm-arrow-up">↑ F = −kx</div>
-          <div class="shm-arrow-down">↓ x</div>
+        <div class="scene-title">The Spring Lab</div>
+        <div class="interactive-scene">
+          <canvas id="scene-shm-spring" width="550" height="280"></canvas>
+          <div class="scene-controls">
+            <label>k: <input type="range" id="shm-k" min="1" max="20" step="0.5" value="4"><span class="scene-val" id="shm-k-val">4.0</span></label>
+            <label>m: <input type="range" id="shm-m" min="0.2" max="5" step="0.1" value="1"><span class="scene-val" id="shm-m-val">1.0</span></label>
+            <span class="scene-val" id="shm-omega-val"></span>
+          </div>
         </div>
       `;
     case "shm-oscillator":
       return `
-        <div class="scene-title">Simple harmonic motion</div>
-        <div class="shm-oscillator-scene">
-          <svg class="shm-osc-canvas" viewBox="0 0 320 140" preserveAspectRatio="xMidYMid meet">
-            <line x1="20" y1="70" x2="300" y2="70" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
-            <text x="305" y="74" fill="rgba(255,255,255,0.4)" font-size="10">x=0</text>
-            <path class="shm-sine-path" d="M20,70 Q57.5,10 95,70 Q132.5,130 170,70 Q207.5,10 245,70 Q282.5,130 320,70" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-            <circle class="shm-phase-dot" cx="20" cy="70" r="5" fill="var(--accent-2)"/>
-            <text x="160" y="16" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11">A</text>
-            <line x1="160" y1="20" x2="160" y2="68" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="2 2"/>
-            <text x="95" y="135" text-anchor="middle" fill="rgba(255,255,255,0.4)" font-size="10">T = 2π/ω</text>
-            <line x1="20" y1="128" x2="170" y2="128" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-            <line x1="20" y1="124" x2="20" y2="132" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-            <line x1="170" y1="124" x2="170" y2="132" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-          </svg>
+        <div class="scene-title">Phasor &amp; Wave</div>
+        <div class="interactive-scene">
+          <canvas id="scene-shm-oscillator" width="550" height="260"></canvas>
+          <div class="scene-controls">
+            <label>A: <input type="range" id="osc-amp" min="0.1" max="1" step="0.05" value="0.8"><span class="scene-val" id="osc-amp-val">0.80</span></label>
+            <label>&omega;: <input type="range" id="osc-omega" min="0.5" max="8" step="0.1" value="2"><span class="scene-val" id="osc-omega-val">2.0</span></label>
+            <label>&phi;: <input type="range" id="osc-phi" min="-3.14" max="3.14" step="0.05" value="0"><span class="scene-val" id="osc-phi-val">0.00</span></label>
+          </div>
         </div>
       `;
     case "damped-oscillator":
       return `
-        <div class="scene-title">Damped oscillation</div>
-        <div class="damped-osc-scene">
-          <svg class="damped-osc-canvas" viewBox="0 0 320 140" preserveAspectRatio="xMidYMid meet">
-            <line x1="20" y1="70" x2="300" y2="70" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
-            <path class="damped-envelope-upper" d="M20,70 Q80,70 140,70 Q200,70 300,70" fill="none" stroke="var(--accent-2)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
-            <path class="damped-envelope-lower" d="M20,70 Q80,70 140,70 Q200,70 300,70" fill="none" stroke="var(--accent-2)" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
-            <path class="damped-wave" d="M20,70 Q35,20 50,70 Q65,120 80,70 Q95,28 110,70 Q125,112 140,70 Q155,35 170,70 Q185,105 200,70 Q215,42 230,70 Q245,98 260,70 Q275,48 290,70" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-            <path class="damped-env-top" d="M20,20 Q80,32 140,47 Q200,57 290,66" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="1.5" stroke-dasharray="4 3"/>
-            <path class="damped-env-bot" d="M20,120 Q80,108 140,93 Q200,83 290,74" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="1.5" stroke-dasharray="4 3"/>
-            <text x="295" y="60" fill="rgba(237,137,54,0.7)" font-size="9">Ae<tspan baseline-shift="super" font-size="7">−γt/2</tspan></text>
-          </svg>
+        <div class="scene-title">The Damping Explorer</div>
+        <div class="interactive-scene">
+          <canvas id="scene-damped-oscillator" width="550" height="280"></canvas>
+          <div class="scene-controls">
+            <label>&gamma;: <input type="range" id="damp-gamma" min="0.2" max="20" step="0.2" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
+            <span class="scene-val">&omega;<sub>0</sub> = 5.0 (fixed)</span>
+          </div>
         </div>
       `;
     case "damping-regimes":
       return `
-        <div class="scene-title">Damping regimes</div>
-        <div class="damping-regimes-scene">
-          <svg class="damping-regimes-canvas" viewBox="0 0 320 150" preserveAspectRatio="xMidYMid meet">
-            <line x1="20" y1="110" x2="300" y2="110" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 4"/>
-            <text x="305" y="114" fill="rgba(255,255,255,0.3)" font-size="9">0</text>
-            <!-- Underdamped -->
-            <path d="M20,30 Q40,110 55,130 Q70,110 82,95 Q95,110 105,115 Q115,110 122,107 Q130,110 140,110 Q160,110 300,110" fill="none" stroke="var(--accent)" stroke-width="2" opacity="0.9"/>
-            <text x="60" y="22" fill="var(--accent)" font-size="10">underdamped</text>
-            <!-- Critically damped -->
-            <path d="M20,30 Q60,100 100,108 Q140,110 180,110 Q220,110 300,110" fill="none" stroke="var(--accent-2)" stroke-width="2" opacity="0.9"/>
-            <text x="115" y="85" fill="var(--accent-2)" font-size="10">critical</text>
-            <!-- Overdamped -->
-            <path d="M20,30 Q80,60 140,85 Q200,100 250,107 Q280,110 300,110" fill="none" stroke="var(--accent-3)" stroke-width="2" opacity="0.9"/>
-            <text x="175" y="70" fill="var(--accent-3)" font-size="10">overdamped</text>
-            <text x="15" y="28" fill="rgba(255,255,255,0.5)" font-size="10">x₀</text>
-          </svg>
+        <div class="scene-title">Race to Equilibrium</div>
+        <div class="interactive-scene">
+          <canvas id="scene-damping-regimes" width="550" height="280"></canvas>
+          <div class="scene-controls">
+            <label>&omega;<sub>0</sub>: <input type="range" id="regime-omega0" min="1" max="10" step="0.5" value="5"><span class="scene-val" id="regime-omega0-val">5.0</span></label>
+          </div>
         </div>
       `;
     default:
@@ -3203,6 +3178,7 @@ function sceneMarkup(type) {
 
 function renderScene(chapter) {
   scene.innerHTML = sceneMarkup(chapter.scene);
+  setTimeout(initSceneInteractives, 0);
 }
 
 function answerQuestion(chapter, rawQuestion) {
@@ -3477,6 +3453,7 @@ function renderLearnMode(chapter) {
       ${problemsHtml}
     </div>
   `;
+  setTimeout(initSceneInteractives, 0);
 }
 
 function applyModeVisibility() {

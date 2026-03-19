@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waves &amp; Oscillations Atlas</title>
+    <title>Waves — Interactive Book</title>
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -11,17 +11,17 @@
       onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false},{left: '\\\\(', right: '\\\\)', display: false},{left: '\\\\[', right: '\\\\]', display: true}], throwOnError: false});"></script>
   </head>
   <body>
-    <button id="sidebar-toggle" class="sidebar-toggle" aria-controls="atlas-sidebar" aria-expanded="false">Open Atlas</button>
+    <button id="sidebar-toggle" class="sidebar-toggle" aria-controls="atlas-sidebar" aria-expanded="false">Open Sidebar</button>
     <div id="sidebar-overlay" class="sidebar-overlay" hidden></div>
     <div class="page-shell">
       <aside class="sidebar" id="atlas-sidebar">
         <div class="sidebar-mobile-bar">
-          <p class="section-label">Atlas</p>
-          <button id="sidebar-close" class="sidebar-close" aria-label="Close Atlas">Close</button>
+          <p class="section-label">Waves</p>
+          <button id="sidebar-close" class="sidebar-close" aria-label="Close sidebar">Close</button>
         </div>
         <div class="brand-block">
           <p class="eyebrow">Virtual AI-Enhanced Book</p>
-          <h1>Waves &amp; Oscillations Atlas</h1>
+          <h1>Waves</h1>
           <p class="brand-copy">
             An interactive layer on top of Schwartz's Physics 15c notes with guided intuition,
             expandable derivations, animated concept sketches, and deeper study prompts.
@@ -47,7 +47,7 @@
             <p class="section-label">Chapter Map</p>
             <span id="chapter-count"></span>
           </div>
-          <nav id="chapter-nav" class="chapter-nav" aria-label="Waves and oscillations chapters"></nav>
+          <nav id="chapter-nav" class="chapter-nav" aria-label="Waves chapters"></nav>
         </div>
 
         <div class="sidebar-footer">
@@ -60,7 +60,7 @@
       <main class="main-panel">
         <section class="hero">
           <div class="hero-copy">
-            <p class="eyebrow">Physics 15c / Waves &amp; Oscillations</p>
+            <p class="eyebrow">Physics 15c / Waves</p>
             <h2 id="hero-title">Everything oscillates. When oscillators talk, waves emerge.</h2>
             <p id="hero-subtitle">
               Move chapter by chapter, reveal derivations on demand, and hover over terms to
@@ -283,6 +283,7 @@
     <script src="./lecture-content-8-11.js" defer></script>
     <script src="./lecture-content-12-16.js" defer></script>
     <script src="./lecture-content-17-21.js" defer></script>
+    <script src="./interactives.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>
