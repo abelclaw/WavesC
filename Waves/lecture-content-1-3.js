@@ -475,7 +475,7 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>When does a matrix not have an inverse? A result from linear algebra is that a matrix is not invertible if and only if its <strong>determinant is zero</strong>. Thus the equation $\\det(A - \\lambda \\mathbb{1}) = 0$ is an algebraic equation for $\\lambda$ whose solutions are the eigenvalues $\\lambda_i$.</p>
 
-<p>It is useful to know that the determinant of a $2 \\times 2$ matrix is $\\det\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix} = ad - bc$. You should have this memorized.</p>
+<p>It is useful to know that the determinant of a $2 \\times 2$ matrix is $\\det\\begin{pmatrix} a & b \\ c & d \\end{pmatrix} = ad - bc$. You should have this memorized.</p>
 
 <details class="derivation-card"><summary>Derive: Normal Mode Frequencies from the Determinant</summary><div class="derivation-body">
 <p>For our two-mass system (with equal masses $m$), the eigenvalues $-\\omega^2$ must satisfy:</p>
