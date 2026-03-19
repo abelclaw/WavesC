@@ -448,132 +448,191 @@ function initDampedOscillator() {
   const { ctx, W, H } = setup;
 
   const gammaSlider = document.getElementById('damp-gamma');
-  const omega0 = 5; // fixed natural frequency
+  const omega0 = 5;
+  const tMax = 6;
+  const x0 = 1;
+  let t = 0;
 
-  function draw() {
-    wClear(ctx, W, H);
+  // Layout
+  const massX = 55, massEqY = H / 2, massMaxDisp = 70;
+  const plotL = 140, plotR = W * 0.62, plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const midY = (plotT + plotB) / 2;
+  const rootCx = W * 0.82, rootCy = H / 2, rootR = 55;
+
+  function xt(gamma, tc) {
+    const ratio = gamma / (2 * omega0);
+    if (ratio < 1) {
+      const wu = Math.sqrt(omega0 * omega0 - (gamma / 2) * (gamma / 2));
+      return x0 * Math.exp(-gamma * tc / 2) * (Math.cos(wu * tc) + (gamma / (2 * wu)) * Math.sin(wu * tc));
+    } else if (ratio > 1) {
+      const r1 = -gamma / 2 + Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
+      const r2 = -gamma / 2 - Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
+      const A = x0 * r2 / (r2 - r1);
+      const B = -x0 * r1 / (r2 - r1);
+      return A * Math.exp(r1 * tc) + B * Math.exp(r2 * tc);
+    } else {
+      return x0 * (1 + gamma * tc / 2) * Math.exp(-gamma * tc / 2);
+    }
+  }
+
+  function tick() {
     const gamma = parseFloat(gammaSlider?.value || 2);
+    t += 0.025;
+    if (t > tMax) t = 0;
 
     document.getElementById('damp-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+    draw(gamma);
+    requestAnimationFrame(tick);
+  }
 
+  function draw(gamma) {
+    wClear(ctx, W, H);
     const Q = omega0 / gamma;
     const ratio = gamma / (2 * omega0);
+    const curX = xt(gamma, t);
 
-    // Determine regime
     let regime, regimeColor;
     if (ratio < 0.99) { regime = 'Underdamped'; regimeColor = WCOLORS.teal; }
     else if (ratio < 1.01) { regime = 'Critically damped'; regimeColor = WCOLORS.amber; }
     else { regime = 'Overdamped'; regimeColor = WCOLORS.orange; }
 
-    // Plot layout
-    const plotL = 50, plotR = W * 0.62, plotT = 35, plotB = H - 35;
-    const plotW = plotR - plotL, plotH = plotB - plotT;
-    const midY = (plotT + plotB) / 2;
+    // --- Animated mass on left ---
+    const massY = massEqY + curX * massMaxDisp;
 
-    // Root diagram (right side)
-    const rootCx = W * 0.82, rootCy = H / 2, rootR = 55;
-
-    // --- Compute x(t) ---
-    const tMax = 6;
-    const nPts = 400;
-    const x0 = 1; // initial displacement
-
-    function xt(t) {
-      if (ratio < 1) {
-        // Underdamped
-        const wu = Math.sqrt(omega0 * omega0 - (gamma / 2) * (gamma / 2));
-        return x0 * Math.exp(-gamma * t / 2) * (Math.cos(wu * t) + (gamma / (2 * wu)) * Math.sin(wu * t));
-      } else if (ratio > 1) {
-        // Overdamped
-        const r1 = -gamma / 2 + Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
-        const r2 = -gamma / 2 - Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
-        const A = x0 * r2 / (r2 - r1);
-        const B = -x0 * r1 / (r2 - r1);
-        return A * Math.exp(r1 * t) + B * Math.exp(r2 * t);
-      } else {
-        // Critical
-        return x0 * (1 + gamma * t / 2) * Math.exp(-gamma * t / 2);
-      }
+    // Wall + spring
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(massX - 25, 18, 50, 5);
+    for (let i = 0; i < 5; i++) {
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(massX - 20 + i * 10, 18); ctx.lineTo(massX - 25 + i * 10, 12); ctx.stroke();
     }
 
-    // Axes
+    // Spring coils
+    ctx.strokeStyle = regimeColor; ctx.lineWidth = 2;
+    const springTop = 23, nCoils = 7;
+    const springLen = massY - 14 - springTop;
+    ctx.beginPath();
+    ctx.moveTo(massX, springTop);
+    const segH = springLen / (nCoils * 2 + 2);
+    let cy = springTop + segH;
+    ctx.lineTo(massX, cy);
+    for (let i = 0; i < nCoils; i++) {
+      const dir = (i % 2 === 0) ? 1 : -1;
+      ctx.lineTo(massX + dir * 12, cy + segH);
+      cy += 2 * segH;
+      ctx.lineTo(massX, cy);
+    }
+    ctx.lineTo(massX, massY - 14);
+    ctx.stroke();
+
+    // Mass block
+    const bW = 36, bH = 28;
+    ctx.fillStyle = regimeColor;
+    ctx.beginPath(); ctx.roundRect(massX - bW / 2, massY - bH / 2, bW, bH, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('m', massX, massY + 4);
+
+    // Equilibrium line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(massX - 25, massEqY); ctx.lineTo(massX + 25, massEqY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('eq', massX + 20, massEqY - 3);
+
+    // Damper symbol (dashpot)
+    const dpX = massX + 28, dpW = 8;
+    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(dpX, springTop); ctx.lineTo(dpX, massEqY - 15); ctx.stroke();
+    ctx.strokeRect(dpX - dpW / 2, massEqY - 15, dpW, 20);
+    ctx.beginPath(); ctx.moveTo(dpX, massEqY + 5); ctx.lineTo(dpX, massY); ctx.stroke();
+
+    // --- x(t) plot ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x(t)', plotL - 14, plotT - 4);
+    ctx.fillText('t', plotR + 8, midY + 4);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('x(t)', plotL - 16, plotT - 4);
-    ctx.fillText('t', plotR + 10, midY + 4);
+    const nPts = 400;
 
-    // Envelope (underdamped only)
+    // Envelope (underdamped)
     if (ratio < 1) {
-      ctx.strokeStyle = 'rgba(217,119,6,0.4)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      for (let i = 0; i <= nPts; i++) {
-        const t = (i / nPts) * tMax;
-        const env = x0 * Math.exp(-gamma * t / 2);
-        const py = midY - env * (plotH / 2) * 0.85;
-        i === 0 ? ctx.moveTo(plotL + (i / nPts) * plotW, py) : ctx.lineTo(plotL + (i / nPts) * plotW, py);
+      ctx.strokeStyle = 'rgba(217,119,6,0.35)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+      for (let sign = 1; sign >= -1; sign -= 2) {
+        ctx.beginPath();
+        for (let i = 0; i <= nPts; i++) {
+          const tc = (i / nPts) * tMax;
+          const env = sign * x0 * Math.exp(-gamma * tc / 2);
+          const py = midY - env * (plotH / 2) * 0.85;
+          i === 0 ? ctx.moveTo(plotL + (i / nPts) * plotW, py) : ctx.lineTo(plotL + (i / nPts) * plotW, py);
+        }
+        ctx.stroke();
       }
-      ctx.stroke();
-      ctx.beginPath();
-      for (let i = 0; i <= nPts; i++) {
-        const t = (i / nPts) * tMax;
-        const env = -x0 * Math.exp(-gamma * t / 2);
-        const py = midY - env * (plotH / 2) * 0.85;
-        i === 0 ? ctx.moveTo(plotL + (i / nPts) * plotW, py) : ctx.lineTo(plotL + (i / nPts) * plotW, py);
-      }
-      ctx.stroke();
       ctx.setLineDash([]);
-
-      // Envelope label
       ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('\u00B1e^(\u2212\u03B3t/2)', plotR - 70, plotT + 14);
+      ctx.fillText('\u00B1e^(\u2212\u03B3t/2)', plotR - 70, plotT + 12);
     }
 
-    // x(t) curve
-    ctx.strokeStyle = regimeColor; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+    // Full x(t) curve (faded ahead of cursor)
+    ctx.strokeStyle = regimeColor + '30'; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
-      const t = (i / nPts) * tMax;
-      const val = xt(t);
+      const tc = (i / nPts) * tMax;
+      const val = xt(gamma, tc);
       const py = midY - val * (plotH / 2) * 0.85;
-      const px = plotL + (i / nPts) * plotW;
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      i === 0 ? ctx.moveTo(plotL + (i / nPts) * plotW, py) : ctx.lineTo(plotL + (i / nPts) * plotW, py);
     }
     ctx.stroke();
 
-    // Regime label and Q factor
+    // Traced portion up to current time
+    const curIdx = Math.floor((t / tMax) * nPts);
+    ctx.strokeStyle = regimeColor; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= curIdx; i++) {
+      const tc = (i / nPts) * tMax;
+      const val = xt(gamma, tc);
+      const py = midY - val * (plotH / 2) * 0.85;
+      i === 0 ? ctx.moveTo(plotL + (i / nPts) * plotW, py) : ctx.lineTo(plotL + (i / nPts) * plotW, py);
+    }
+    ctx.stroke();
+
+    // Current point on curve
+    const curPx = plotL + (t / tMax) * plotW;
+    const curPy = midY - curX * (plotH / 2) * 0.85;
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(curPx, curPy, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Connecting line from mass to plot dot
+    ctx.strokeStyle = 'rgba(217,119,6,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(massX + bW / 2 + 2, massY); ctx.lineTo(curPx, curPy); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Regime label and Q
     ctx.fillStyle = regimeColor; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText(regime, plotL + 5, plotB + 16);
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif';
     ctx.fillText('Q = \u03C9\u2080/\u03B3 = ' + Q.toFixed(1), plotL + plotW * 0.45, plotB + 16);
 
-    // --- Root diagram (complex plane) ---
+    // --- Root diagram ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    // Axes
     ctx.beginPath(); ctx.moveTo(rootCx - rootR - 15, rootCy); ctx.lineTo(rootCx + rootR + 15, rootCy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(rootCx, rootCy - rootR - 15); ctx.lineTo(rootCx, rootCy + rootR + 15); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Re', rootCx + rootR + 12, rootCy - 6);
     ctx.fillText('Im', rootCx + 8, rootCy - rootR - 8);
 
-    // Unit circle for scale
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(rootCx, rootCy, rootR * omega0 / (omega0 + 2), 0, Math.PI * 2); ctx.stroke();
 
-    // Roots
     const scale = rootR / (omega0 + 2);
     if (ratio < 1) {
       const re = -gamma / 2;
       const im = Math.sqrt(omega0 * omega0 - (gamma / 2) * (gamma / 2));
-      const rx = rootCx + re * scale;
-      const ry1 = rootCy - im * scale;
-      const ry2 = rootCy + im * scale;
       ctx.fillStyle = WCOLORS.teal;
-      ctx.beginPath(); ctx.arc(rx, ry1, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(rx, ry2, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rootCx + re * scale, rootCy - im * scale, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rootCx + re * scale, rootCy + im * scale, 6, 0, Math.PI * 2); ctx.fill();
     } else if (ratio > 1) {
       const r1 = -gamma / 2 + Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
       const r2 = -gamma / 2 - Math.sqrt((gamma / 2) * (gamma / 2) - omega0 * omega0);
@@ -589,8 +648,8 @@ function initDampedOscillator() {
     ctx.fillText('Roots of \u03B1\u00B2 + \u03B3\u03B1 + \u03C9\u2080\u00B2 = 0', rootCx, rootCy + rootR + 28);
   }
 
-  gammaSlider?.addEventListener('input', draw);
-  draw();
+  gammaSlider?.addEventListener('input', () => { t = 0; });
+  tick();
 }
 
 // =========================================================================
