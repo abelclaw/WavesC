@@ -1532,26 +1532,52 @@ function initTransientDecay() {
   const { ctx, W, H } = setup;
 
   let t = 0;
-  const w0 = 5, wd = 4, gamma = 0.8, F0 = 1;
+  let w0 = 5, wd = 4, gamma = 0.8;
   const plotL = 50, plotR = W - 20, plotT = 25, plotB = H - 25;
   const plotW = plotR - plotL, plotH = plotB - plotT;
   const midY = (plotT + plotB) / 2;
   const tMax = 12;
 
-  function getAB() {
+  // Sliders
+  const wdSlider = document.getElementById('transient-wd');
+  const w0Slider = document.getElementById('transient-w0');
+  const gammaSlider = document.getElementById('transient-gamma');
+  const wdVal = document.getElementById('transient-wd-val');
+  const w0Val = document.getElementById('transient-w0-val');
+  const gammaVal = document.getElementById('transient-gamma-val');
+  const restartBtn = document.getElementById('transient-restart');
+
+  let A, B, wu, C1, C2;
+
+  function recompute() {
     const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
-    return { A: (w0 * w0 - wd * wd) / denom, B: (gamma * wd) / denom };
+    A = (w0 * w0 - wd * wd) / denom;
+    B = (gamma * wd) / denom;
+    const wuSq = w0 * w0 - (gamma / 2) ** 2;
+    wu = wuSq > 0 ? Math.sqrt(wuSq) : 0.01;
+    const xSS0 = A;
+    const vSS0 = wd * B;
+    C1 = -xSS0;
+    C2 = -(vSS0 + (gamma / 2) * C1) / wu;
   }
 
-  const { A, B } = getAB();
-  const wu = Math.sqrt(w0 * w0 - (gamma / 2) ** 2);
+  recompute();
 
-  // Transient chosen so total x(0) = 0, x'(0) = 0
-  const xSS0 = A; // steady-state at t=0
-  const vSS0 = wd * B; // d/dt of steady-state at t=0
-  // Transient: x_h = e^{-gamma/2 t} [C1 cos(wu t) + C2 sin(wu t)]
-  const C1 = -xSS0;
-  const C2 = -(vSS0 + (gamma / 2) * C1) / wu;
+  function onSliderChange() {
+    wd = parseFloat(wdSlider.value);
+    w0 = parseFloat(w0Slider.value);
+    gamma = parseFloat(gammaSlider.value);
+    wdVal.textContent = wd.toFixed(1);
+    w0Val.textContent = w0.toFixed(1);
+    gammaVal.textContent = gamma.toFixed(1);
+    recompute();
+    t = 0;
+  }
+
+  if (wdSlider) wdSlider.addEventListener('input', onSliderChange);
+  if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
+  if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
+  if (restartBtn) restartBtn.addEventListener('click', () => { t = 0; });
 
   function xTotal(tc) {
     const ss = A * Math.cos(wd * tc) + B * Math.sin(wd * tc);
@@ -1581,11 +1607,12 @@ function initTransientDecay() {
     const nPts = 400;
 
     // Envelope of transient
+    const envAmp = Math.sqrt(C1 * C1 + C2 * C2);
     ctx.strokeStyle = WCOLORS.textDim + '30'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const tc = (i / nPts) * tMax;
-      const env = Math.sqrt(C1 * C1 + C2 * C2) * Math.exp(-gamma / 2 * tc);
+      const env = envAmp * Math.exp(-gamma / 2 * tc);
       const px = plotL + (i / nPts) * plotW;
       const py = midY - env * scale;
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
@@ -1594,7 +1621,7 @@ function initTransientDecay() {
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const tc = (i / nPts) * tMax;
-      const env = -Math.sqrt(C1 * C1 + C2 * C2) * Math.exp(-gamma / 2 * tc);
+      const env = -envAmp * Math.exp(-gamma / 2 * tc);
       const px = plotL + (i / nPts) * plotW;
       const py = midY - env * scale;
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);

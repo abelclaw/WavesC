@@ -2710,6 +2710,12 @@ function sceneMarkup(type) {
         <p class="scene-caption">The transient (homogeneous) solution dies away exponentially, leaving only the steady-state driven response at long times.</p>
         <div class="interactive-scene">
           <canvas id="scene-transient-decay" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&omega;<sub>d</sub>: <input type="range" id="transient-wd" min="0.5" max="10" step="0.1" value="4"><span class="scene-val" id="transient-wd-val">4.0</span></label>
+            <label>&omega;<sub>0</sub>: <input type="range" id="transient-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="transient-w0-val">5.0</span></label>
+            <label>&gamma;: <input type="range" id="transient-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="transient-gamma-val">0.8</span></label>
+            <button id="transient-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
+          </div>
         </div>
       `;
     case "phase-lag":
