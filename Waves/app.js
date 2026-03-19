@@ -1,0 +1,3118 @@
+const modes = [
+  {
+    id: "intuition",
+    label: "Intuition",
+    hero: "Everything oscillates. When oscillators talk, waves emerge.",
+    subtitle: "Read for physical meaning first, then open the formal machinery only when you want it."
+  },
+  {
+    id: "math",
+    label: "Math",
+    hero: "Derivations stay collapsed until you ask them to speak.",
+    subtitle: "Move between compact statements and the algebra underneath without losing your place."
+  },
+  {
+    id: "exam",
+    label: "Exam",
+    hero: "Turn the notes into checkpoints, prompts, and recoverable errors.",
+    subtitle: "Use the chapter prompts and common pitfalls to rehearse reasoning instead of memorizing results."
+  }
+];
+
+const chapters = [
+  {
+    number: 1,
+    title: "Oscillators & Linearity",
+    slug: "oscillators-linearity",
+    pdf: "./lectures/01-Oscillators-And-Linearity.pdf",
+    conceptTitle: "Everything near equilibrium oscillates",
+    conceptCaption: "Displace any system slightly from rest and a restoring force pulls it back, producing the universal language of simple harmonic motion.",
+    explanation: [
+      "Statistical mechanics starts from counting; waves start from a single oscillating thing. Any system near a stable equilibrium feels a restoring force proportional to displacement, which is <term key='hookes-law'>Hooke's law</term>. That universality is why oscillators appear everywhere in physics.",
+      "The equation of motion for a <term key='sho'>simple harmonic oscillator</term> is linear, so solutions can be added together. Damping adds an exponential decay envelope, but the oscillatory character remains. <term key='linearity'>Linearity</term> is the property that will later let us build complex waves from simple ones."
+    ],
+    goals: [
+      "Derive Hooke's law from a Taylor expansion of any potential near equilibrium.",
+      "Solve the simple harmonic oscillator equation and interpret amplitude, frequency, and phase.",
+      "Include damping and classify underdamped, critically damped, and overdamped motion."
+    ],
+    pitfalls: [
+      "Thinking Hooke's law is special to springs rather than universal near equilibrium.",
+      "Confusing angular frequency omega_0 with ordinary frequency f = omega_0 / 2pi.",
+      "Forgetting that the damped solution still oscillates (underdamped) unless gamma >= 2 omega_0."
+    ],
+    terms: {
+      "hookes-law": {
+        short: "Restoring force proportional to displacement: F = -kx.",
+        long: "Hooke's law is not limited to springs. Any system displaced a small amount from stable equilibrium experiences a restoring force proportional to displacement, because the first nonzero term in a Taylor expansion of the potential about a minimum is quadratic."
+      },
+      sho: {
+        short: "A system whose motion is described by x(t) = A cos(omega_0 t + phi).",
+        long: "The simple harmonic oscillator is the foundation of the entire course. Its solution is sinusoidal with frequency omega_0 = sqrt(k/m), amplitude A, and phase phi set by initial conditions. Every later topic is built on this."
+      },
+      linearity: {
+        short: "If x1 and x2 are solutions, so is any combination a x1 + b x2.",
+        long: "Linearity means the equation of motion has no powers or products of the unknown. It guarantees superposition, which is the reason Fourier analysis works and why complex exponentials are so powerful for solving wave problems."
+      },
+      damping: {
+        short: "Energy loss that causes oscillation amplitude to decay.",
+        long: "Adding a velocity-dependent friction term gamma dx/dt introduces three regimes: underdamped (oscillates with decaying envelope), critically damped, and overdamped (exponential return with no oscillation)."
+      }
+    },
+    derivations: [
+      {
+        title: "Hooke's law from Taylor expansion",
+        teaser: "Expand any potential about its minimum and keep the leading term.",
+        steps: [
+          "Write the potential energy V(x) and note that at equilibrium x=0, V'(0) = 0 by definition.",
+          "Taylor expand: V(x) = V(0) + V''(0) x^2 / 2 + higher order terms.",
+          "The force is F = -dV/dx = -V''(0) x, which is Hooke's law with k = V''(0)."
+        ],
+        result: "Any potential near a stable minimum gives a linear restoring force, so oscillation is the universal response to small displacement."
+      },
+      {
+        title: "Solving the damped oscillator",
+        teaser: "Guess an exponential x = A e^(alpha t) and find the two roots.",
+        steps: [
+          "Substitute x = A e^(alpha t) into x'' + gamma x' + omega_0^2 x = 0.",
+          "Get the characteristic equation alpha^2 + gamma alpha + omega_0^2 = 0.",
+          "Solve: alpha = -gamma/2 +/- sqrt(gamma^2/4 - omega_0^2). For gamma < 2 omega_0, the square root is imaginary, giving oscillation inside a decaying envelope."
+        ],
+        result: "x(t) = A e^(-gamma t / 2) cos(omega_d t + phi) with omega_d = sqrt(omega_0^2 - gamma^2/4), showing oscillation at a slightly lower frequency than the natural frequency."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Think of any object resting at the bottom of a bowl. Push it slightly and it rolls back and forth. The curvature of the bowl sets the frequency. This is the universal oscillator hiding in every stable system."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does the complex exponential e^(i omega t) make solving linear oscillator equations easier than working directly with sines and cosines?"
+      }
+    ],
+    quickActions: {
+      intuition: "Everything near equilibrium oscillates because every smooth potential looks like a parabola at the bottom. The frequency depends on the curvature of the potential and the inertia of the system.",
+      formal: "The chapter derives x'' + gamma x' + omega_0^2 x = F(t) from Taylor expansion, solves the homogeneous case with complex exponentials, and classifies damping regimes by the discriminant.",
+      quiz: "Checkpoint: explain why a pendulum, a vibrating molecule, and a mass on a spring all satisfy the same equation of motion near equilibrium."
+    },
+    prompts: [
+      "What physical quantity determines the oscillation frequency of a simple harmonic oscillator?",
+      "How does the behavior change qualitatively as damping increases from zero to above critical?"
+    ],
+    scene: "oscillator"
+  },
+  {
+    number: 2,
+    title: "Driven Oscillators",
+    slug: "driven-oscillators",
+    pdf: "./lectures/02-Driven-Oscillators.pdf",
+    conceptTitle: "Push at the right frequency and amplitude explodes",
+    conceptCaption: "A periodic driving force pumps energy into an oscillator most efficiently when the drive frequency matches the natural frequency.",
+    explanation: [
+      "When you apply a periodic force to a damped oscillator, a steady-state response emerges at the <term key='driving-frequency'>driving frequency</term>. The amplitude of this response peaks sharply when the driving frequency equals the natural frequency, a phenomenon called <term key='resonance'>resonance</term>.",
+      "The transient solution from initial conditions dies away exponentially due to damping, leaving only the driven steady-state. The <term key='amplitude-response'>amplitude response</term> and phase lag are both frequency-dependent, forming a Lorentzian peak whose width is set by damping."
+    ],
+    goals: [
+      "Solve the driven-damped oscillator using complex exponentials.",
+      "Identify the resonance peak and interpret its width in terms of damping.",
+      "Separate transient behavior from the steady-state response."
+    ],
+    pitfalls: [
+      "Forgetting that the steady-state response oscillates at the driving frequency, not the natural frequency.",
+      "Assuming resonance means infinite amplitude without accounting for damping.",
+      "Neglecting the transient solution when initial conditions matter."
+    ],
+    terms: {
+      "driving-frequency": {
+        short: "The frequency omega_d of the externally applied force.",
+        long: "The driving frequency is set by whatever pushes the oscillator. In steady state, the oscillator responds at exactly this frequency, not at its natural frequency. The distinction is crucial."
+      },
+      resonance: {
+        short: "Maximum response when driving frequency matches natural frequency.",
+        long: "Resonance occurs near omega_d = omega_0. The amplitude peaks to a value inversely proportional to the damping rate gamma. Sharper resonances mean more selective frequency response."
+      },
+      "amplitude-response": {
+        short: "How the steady-state amplitude depends on drive frequency.",
+        long: "The amplitude A(omega_d) = (F_0/m) / sqrt((omega_0^2 - omega_d^2)^2 + (gamma omega_d)^2) is a Lorentzian curve centered near omega_0 with width proportional to gamma."
+      },
+      quality_factor: {
+        short: "Q = omega_0 / gamma measures resonance sharpness.",
+        long: "The quality factor counts roughly how many oscillations occur before the energy decays by a factor of e. High Q means narrow resonance peak and selective frequency response."
+      }
+    },
+    derivations: [
+      {
+        title: "Steady-state solution for a driven oscillator",
+        teaser: "Use a complex exponential ansatz to turn the ODE into algebra.",
+        steps: [
+          "Write the driving force as Re(F_0/m e^(-i omega_d t)) and guess z(t) = z_0 e^(-i omega_d t).",
+          "Substitute into z'' + gamma z' + omega_0^2 z = (F_0/m) e^(-i omega_d t) to get z_0 = (F_0/m) / (omega_0^2 - omega_d^2 - i gamma omega_d).",
+          "Take x(t) = Re[z(t)] and extract the amplitude and phase shift as functions of omega_d."
+        ],
+        result: "The amplitude peaks near omega_d = omega_0 with height proportional to 1/gamma, and the phase shifts through pi/2 at resonance."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Pushing a child on a swing: if you push at the natural frequency, energy accumulates and the swing goes higher and higher. Push at the wrong frequency and you sometimes fight the motion."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "What happens to the resonance curve as damping approaches zero? Why is zero damping unphysical for a real system?"
+      }
+    ],
+    quickActions: {
+      intuition: "Resonance is the oscillator's sweet spot: drive at the natural frequency and the system absorbs energy most efficiently. Damping is what keeps the amplitude finite.",
+      formal: "The chapter solves x'' + gamma x' + omega_0^2 x = (F_0/m)cos(omega_d t) using complex exponentials, finds the Lorentzian amplitude response, and separates transients from steady state.",
+      quiz: "Checkpoint: why does the steady-state response oscillate at the driving frequency rather than the natural frequency?"
+    },
+    prompts: [
+      "What determines the width of the resonance peak?",
+      "How does the phase lag between driving force and response change as you sweep through resonance?"
+    ],
+    scene: "driven"
+  },
+  {
+    number: 3,
+    title: "Coupled Oscillators",
+    slug: "coupled-oscillators",
+    pdf: "./lectures/03-Coupled-Oscillators.pdf",
+    conceptTitle: "Connected oscillators share energy and create beats",
+    conceptCaption: "When two oscillators are coupled, energy flows back and forth between them. The resulting motion is a superposition of normal modes.",
+    explanation: [
+      "Coupling two oscillators creates <term key='normal-modes'>normal modes</term>: special patterns of motion where everything oscillates at a single frequency. A general motion is a superposition of these modes.",
+      "When two normal-mode frequencies are close, energy transfers back and forth between the oscillators, producing <term key='beats'>beats</term>. This is the first glimpse of how interacting oscillators behave differently from isolated ones."
+    ],
+    goals: [
+      "Set up and solve the equations of motion for two coupled masses on springs.",
+      "Find normal modes by diagonalizing the system (finding eigenvectors).",
+      "Understand beats as the interference of two close frequencies."
+    ],
+    pitfalls: [
+      "Thinking each mass oscillates independently once the coupling is included.",
+      "Confusing normal mode frequencies with the frequencies seen at individual masses.",
+      "Forgetting that beats require the two normal-mode frequencies to be close."
+    ],
+    terms: {
+      "normal-modes": {
+        short: "Patterns where the entire system oscillates at one frequency.",
+        long: "A normal mode is a collective motion pattern where all parts of the system oscillate sinusoidally at the same frequency and pass through equilibrium at the same time. Any general motion can be decomposed into normal modes."
+      },
+      beats: {
+        short: "Slow amplitude modulation from two close frequencies.",
+        long: "When two sinusoids of slightly different frequencies add, the sum oscillates at the average frequency with an amplitude that modulates at half the difference frequency. This produces audible beating in sound and energy exchange in coupled oscillators."
+      },
+      eigenvector: {
+        short: "The displacement pattern associated with a normal mode.",
+        long: "Each normal mode has an eigenvector describing the relative displacement of each mass. For two identical coupled masses, the symmetric mode has both masses moving together, and the antisymmetric mode has them moving oppositely."
+      }
+    },
+    derivations: [
+      {
+        title: "Normal modes of two coupled masses",
+        teaser: "Write coupled equations, guess oscillatory solutions, and find the eigenfrequencies.",
+        steps: [
+          "Write equations of motion: m x1'' = -(k + kappa) x1 + kappa x2 and m x2'' = kappa x1 - (k + kappa) x2.",
+          "Define sum and difference coordinates: x_s = x1 + x2 and x_f = x1 - x2.",
+          "These decouple into independent oscillator equations with omega_s = sqrt(k/m) and omega_f = sqrt((k + 2 kappa)/m)."
+        ],
+        result: "Two normal modes emerge: a slow symmetric mode (masses move together) and a fast antisymmetric mode (masses move oppositely). General motion is their superposition."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Two pendulum clocks on the same shelf will gradually synchronize through tiny vibrations transmitted through the shelf. Huygens observed this in 1665 and called it an odd sympathy."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "If you excite only one mass and hold the other still, what combination of normal modes have you created?"
+      }
+    ],
+    quickActions: {
+      intuition: "Coupled oscillators cannot be understood one at a time. The system has collective modes, and energy sloshes between the masses at the beat frequency.",
+      formal: "The chapter diagonalizes the coupled equations of motion using sum and difference coordinates, finding eigenfrequencies and explaining beats as mode interference.",
+      quiz: "Checkpoint: if the coupling spring constant kappa equals zero, what happens to the two normal mode frequencies and why?"
+    },
+    prompts: [
+      "Why does coupling create two distinct frequencies instead of one?",
+      "Under what conditions do you see pronounced beats?"
+    ],
+    scene: "coupled"
+  },
+  {
+    number: 4,
+    title: "Oscillators to Waves",
+    slug: "oscillators-to-waves",
+    pdf: "./lectures/04-Oscillators-to-Waves.pdf",
+    conceptTitle: "Chain many oscillators and a wave equation emerges",
+    conceptCaption: "As the number of coupled masses grows, the discrete normal modes turn into smooth sine-wave shapes, and the continuum limit yields the wave equation.",
+    explanation: [
+      "Extending from 2 to N coupled masses, the <term key='normal-mode-patterns'>normal mode patterns</term> become sinusoidal shapes resembling standing waves. Each mode has a distinct frequency set by how many nodes appear.",
+      "In the continuum limit of infinitely many masses with infinitesimal spacing, the discrete system becomes a continuous string obeying the <term key='wave-equation'>wave equation</term>. This is the bridge from oscillators to waves."
+    ],
+    goals: [
+      "Solve the N-mass coupled system and identify the normal mode shapes as sine functions.",
+      "Take the continuum limit and derive the wave equation.",
+      "Understand the dispersion relation omega(k) = 2 omega_0 |sin(k a / 2)| for the discrete chain."
+    ],
+    pitfalls: [
+      "Forgetting that boundary conditions (fixed walls) select only certain allowed wavelengths.",
+      "Confusing the discrete dispersion relation with the continuous linear one.",
+      "Thinking the continuum limit works perfectly at all frequencies including very high ones."
+    ],
+    terms: {
+      "normal-mode-patterns": {
+        short: "Sine-shaped displacement patterns for N masses.",
+        long: "For N masses on springs with fixed endpoints, the normal modes are x_n proportional to sin(n pi j / (N+1)), where j labels the mode. Higher j means more nodes and higher frequency."
+      },
+      "wave-equation": {
+        short: "d^2A/dt^2 = v^2 d^2A/dx^2, the fundamental equation for waves.",
+        long: "The wave equation governs vibrations of strings, sound in air, electromagnetic waves, and much more. Its general solution is any function of (x - vt) plus any function of (x + vt), representing left- and right-moving waves."
+      },
+      "dispersion-relation": {
+        short: "The relationship between frequency omega and wavenumber k.",
+        long: "For a discrete chain, omega = 2 omega_0 |sin(ka/2)| is nonlinear, meaning different wavelengths travel at different speeds. In the continuum limit, this becomes omega = v k, which is dispersionless."
+      }
+    },
+    derivations: [
+      {
+        title: "From N masses to the wave equation",
+        teaser: "Start with the discrete equations, guess sinusoidal modes, and take the continuum limit.",
+        steps: [
+          "Write m x_n'' = k(x_{n-1} - 2x_n + x_{n+1}) for each interior mass.",
+          "Guess x_n = B e^(ipn) e^(i omega t). Substitution gives omega^2 = 2 omega_0^2 (1 - cos p).",
+          "In the continuum limit (a -> 0, keeping k a^2 / m = v^2 fixed), the difference operator becomes a second derivative, yielding the wave equation."
+        ],
+        result: "The wave equation d^2A/dt^2 = v^2 d^2A/dx^2 emerges naturally from the continuum limit of coupled oscillators, with v = sqrt(T/mu)."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A slinky is a great model: push one end and the disturbance travels along it. Each coil is a mass coupled to its neighbors by the springiness of the slinky."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does the discrete chain have a maximum frequency (the cutoff) while the continuous string does not?"
+      }
+    ],
+    quickActions: {
+      intuition: "A chain of oscillators is secretly a wave in disguise. As you add more and more masses, the discrete normal modes morph into smooth traveling waves.",
+      formal: "The chapter solves the N-mass eigenvalue problem, identifies sinusoidal eigenvectors, derives the discrete dispersion relation, and takes the continuum limit to get the wave equation.",
+      quiz: "Checkpoint: what happens to the dispersion relation when the spacing between masses goes to zero?"
+    },
+    prompts: [
+      "Why must boundary conditions be specified to determine the allowed normal modes?",
+      "How does the number of normal modes relate to the number of masses?"
+    ],
+    scene: "n-modes"
+  },
+  {
+    number: 5,
+    title: "Fourier Series",
+    slug: "fourier-series",
+    pdf: "./lectures/05-Fourier-Series.pdf",
+    conceptTitle: "Any periodic function is a sum of sines and cosines",
+    conceptCaption: "Fourier series decompose complex waveforms into simple harmonics, revealing the frequency content hidden in any repeating pattern.",
+    explanation: [
+      "The <term key='fourier-series'>Fourier series</term> expresses any periodic function as a sum of sines and cosines with integer multiples of a fundamental frequency. The coefficients tell you how much of each harmonic is present.",
+      "This is the mathematical backbone of wave analysis. A square wave, a sawtooth, or any shape on a string can be built from pure harmonics. The <term key='orthogonality'>orthogonality</term> of sine and cosine functions is what makes extracting the coefficients simple."
+    ],
+    goals: [
+      "Write down the Fourier series formula with cosine and sine terms.",
+      "Compute Fourier coefficients using the orthogonality integrals.",
+      "Decompose specific waveforms (sawtooth, square wave) into their harmonic components."
+    ],
+    pitfalls: [
+      "Forgetting the factor of 2/L in the coefficient formulas.",
+      "Using a cosine series for an odd function or vice versa.",
+      "Expecting the Fourier series to converge pointwise at discontinuities (Gibbs phenomenon)."
+    ],
+    terms: {
+      "fourier-series": {
+        short: "Decomposition of a periodic function into sine and cosine harmonics.",
+        long: "f(x) = a_0/2 + sum of a_n cos(2 pi n x / L) + b_n sin(2 pi n x / L). The coefficients a_n and b_n are found by integrating f against each basis function. This works because sines and cosines are orthogonal over a full period."
+      },
+      orthogonality: {
+        short: "Different harmonics integrate to zero against each other.",
+        long: "The integral of sin(n x) cos(m x) over a period vanishes unless n = m, and similarly for sin-sin and cos-cos pairs. This orthogonality lets us isolate each Fourier coefficient independently."
+      },
+      harmonics: {
+        short: "Integer multiples of the fundamental frequency.",
+        long: "The n-th harmonic has frequency n times the fundamental. Higher harmonics capture finer detail in the waveform. Musical timbre is largely determined by the relative strengths of the harmonics."
+      }
+    },
+    derivations: [
+      {
+        title: "Deriving the Fourier coefficients",
+        teaser: "Multiply by a basis function and integrate, using orthogonality to isolate each coefficient.",
+        steps: [
+          "Start with f(x) = a_0/2 + sum a_n cos(2 pi n x / L) + b_n sin(2 pi n x / L).",
+          "Multiply both sides by cos(2 pi m x / L) and integrate over [0, L].",
+          "By orthogonality, only the n = m term survives, giving a_m = (2/L) integral of f(x) cos(2 pi m x / L) dx."
+        ],
+        result: "Each Fourier coefficient extracts one harmonic from the signal independently, thanks to the orthogonality of the trigonometric basis."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A musical instrument plays a note, but it does not sound like a pure sine wave. The richness of its timbre comes from the specific mixture of harmonics, which is exactly what the Fourier series captures."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why do the Fourier coefficients of a square wave decrease as 1/n for odd n and vanish for even n?"
+      }
+    ],
+    quickActions: {
+      intuition: "Fourier series is the idea that any repeating shape can be built from pure sine waves. The recipe tells you exactly how much of each harmonic to include.",
+      formal: "The chapter establishes Fourier series via orthogonality of trigonometric functions, derives the coefficient formulas, and demonstrates with sawtooth and square-wave examples.",
+      quiz: "Checkpoint: what is the Gibbs phenomenon and why does the Fourier series overshoot at a discontinuity?"
+    },
+    prompts: [
+      "How does the rate at which Fourier coefficients decrease relate to the smoothness of the function?",
+      "Why are only sine terms needed for an odd function?"
+    ],
+    scene: "fourier-series"
+  },
+  {
+    number: 6,
+    title: "Waves",
+    slug: "waves",
+    pdf: "./lectures/06-Waves.pdf",
+    conceptTitle: "Disturbances that carry energy without transporting matter",
+    conceptCaption: "Sound waves in air and vibrations in strings both satisfy the same wave equation, but the physical mechanisms differ.",
+    explanation: [
+      "This chapter derives the <term key='wave-eq-string'>wave equation for strings</term> from Newton's second law applied to a small segment under tension. The wave speed v = sqrt(T/mu) depends on tension and linear mass density.",
+      "<term key='sound-waves'>Sound waves</term> in air arise from pressure and density oscillations. The speed of sound depends on the bulk modulus and density, and for an ideal gas involves the ratio of specific heats gamma."
+    ],
+    goals: [
+      "Derive the wave equation for transverse waves on a string under tension.",
+      "Derive the speed of sound in a gas and understand why it depends on gamma.",
+      "Distinguish longitudinal from transverse waves and identify examples of each."
+    ],
+    pitfalls: [
+      "Confusing the displacement A(x,t) of a string element with the density variation in a sound wave.",
+      "Thinking sound waves are transverse (they are longitudinal in a gas).",
+      "Forgetting that the speed of sound in air depends on temperature through the ideal gas law."
+    ],
+    terms: {
+      "wave-eq-string": {
+        short: "d^2A/dt^2 = (T/mu) d^2A/dx^2 for a string under tension T.",
+        long: "Newton's second law on a small segment of string gives a restoring force proportional to the curvature of the string. This yields the wave equation with speed v = sqrt(T/mu), where mu is mass per unit length."
+      },
+      "sound-waves": {
+        short: "Longitudinal pressure oscillations that propagate through a medium.",
+        long: "Sound is a compression wave. The speed in an ideal gas is v = sqrt(gamma P / rho) = sqrt(gamma k_B T / m_molecule). The adiabatic exponent gamma = (f+2)/f depends on the degrees of freedom f of the gas molecules."
+      },
+      "longitudinal-transverse": {
+        short: "Oscillation parallel to or perpendicular to the direction of wave travel.",
+        long: "Sound in air is longitudinal. Waves on a string are transverse. Electromagnetic waves are transverse. The distinction matters for polarization and for what kind of medium can support the wave."
+      }
+    },
+    derivations: [
+      {
+        title: "Wave equation from a vibrating string",
+        teaser: "Apply Newton's second law to a small segment of string and keep the leading-order term.",
+        steps: [
+          "Consider a small segment of string of length Delta x under tension T with displacement A(x,t).",
+          "The net transverse force is T [dA/dx at x + Delta x] - T [dA/dx at x] = T (d^2A/dx^2) Delta x.",
+          "Set this equal to mu Delta x (d^2A/dt^2) and cancel Delta x to get the wave equation."
+        ],
+        result: "d^2A/dt^2 = (T/mu) d^2A/dx^2, with wave speed v = sqrt(T/mu). Tighter strings vibrate faster, heavier strings vibrate slower."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Pluck a guitar string and the disturbance bounces between the fixed ends. The wave carries energy back and forth but the string itself stays in place on average."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does helium make your voice sound higher? Relate it to the dependence of sound speed on molecular mass."
+      }
+    ],
+    quickActions: {
+      intuition: "Waves are disturbances that travel. The wave equation says the acceleration of each piece of the medium is proportional to the curvature of the displacement around it.",
+      formal: "The chapter derives the wave equation from Newton's second law for strings and from gas dynamics for sound, identifying wave speed in terms of material parameters.",
+      quiz: "Checkpoint: what determines the speed of sound in air and how does it change on a hot day versus a cold day?"
+    },
+    prompts: [
+      "Why can a wave carry energy without the medium moving as a whole?",
+      "How does the wave speed in a string change if you double the tension?"
+    ],
+    scene: "waves"
+  },
+  {
+    number: 7,
+    title: "Music",
+    slug: "music",
+    pdf: "./lectures/07-Music.pdf",
+    conceptTitle: "Harmonics explain why notes sound good together",
+    conceptCaption: "Musical harmony arises from the coincidence of overtone frequencies. The ear responds to the ratios of harmonics, not just individual pitches.",
+    explanation: [
+      "A vibrating string produces not just a fundamental frequency but a whole series of <term key='overtones'>overtones</term> at integer multiples. The relative amplitudes of these harmonics determine the instrument's <term key='timbre'>timbre</term>.",
+      "Two notes sound consonant when their harmonics overlap. The <term key='intervals'>musical intervals</term> -- octave (2:1), perfect fifth (3:2), perfect fourth (4:3) -- are defined by simple frequency ratios. Dissonance arises from beat frequencies in the audible range."
+    ],
+    goals: [
+      "Explain why integer frequency ratios produce consonant musical intervals.",
+      "Relate the Fourier spectrum of an instrument to its timbre.",
+      "Understand beats as the origin of dissonance between nearby frequencies."
+    ],
+    pitfalls: [
+      "Thinking timbre depends only on the fundamental frequency.",
+      "Confusing beats (amplitude modulation) with interference (spatial).",
+      "Assuming equal temperament intervals are the same as just intonation ratios."
+    ],
+    terms: {
+      overtones: {
+        short: "Frequencies above the fundamental, at integer multiples for a string.",
+        long: "A vibrating string has modes at f, 2f, 3f, etc. The strengths of these overtones depend on how the string is excited (plucked vs bowed, where along the string). They give each instrument its characteristic sound."
+      },
+      timbre: {
+        short: "The quality of a musical sound determined by its harmonic content.",
+        long: "A flute and a violin can play the same note at the same volume, yet they sound different because the mixture of overtone amplitudes differs. The Fourier spectrum reveals the timbre."
+      },
+      intervals: {
+        short: "Frequency ratios that define musical relationships between notes.",
+        long: "The octave is 2:1, the perfect fifth is 3:2, the perfect fourth is 4:3, and the major third is 5:4. These simple ratios ensure harmonic overlap between notes, producing consonance."
+      }
+    },
+    derivations: [
+      {
+        title: "Why the perfect fifth sounds consonant",
+        teaser: "Compare the harmonic series of two notes with a 3:2 frequency ratio.",
+        steps: [
+          "Let the fundamental be f_0 with harmonics f_0, 2f_0, 3f_0, 4f_0, ...",
+          "The perfect fifth has fundamental (3/2)f_0 with harmonics (3/2)f_0, 3f_0, (9/2)f_0, 6f_0, ...",
+          "The 3rd harmonic of f_0 matches the 2nd harmonic of (3/2)f_0. Many harmonics align, so there are no dissonant beats."
+        ],
+        result: "Simple frequency ratios produce harmonic alignment, which the ear perceives as consonance. Complex ratios create beating among nearby harmonics, heard as dissonance."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A flute spectrum shows a strong fundamental with rapidly decreasing overtones, making it sound pure. A violin has strong higher harmonics, giving it a rich, complex character."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does the equal temperament tuning system, which uses irrational frequency ratios, sound nearly as good as just intonation?"
+      }
+    ],
+    quickActions: {
+      intuition: "Music is applied Fourier analysis. Consonance comes from harmonic alignment, dissonance from audible beats, and timbre from the Fourier spectrum of the instrument.",
+      formal: "The chapter links Fourier series to musical harmony, derives the consonance of simple frequency ratios through harmonic coincidence, and explains timbre via spectral amplitudes.",
+      quiz: "Checkpoint: if two notes are separated by a perfect fifth, which harmonics of each note coincide?"
+    },
+    prompts: [
+      "Why do instruments playing the same note sound different?",
+      "What is the physical origin of dissonance?"
+    ],
+    scene: "music"
+  },
+  {
+    number: 8,
+    title: "Fourier Transforms",
+    slug: "fourier-transforms",
+    pdf: "./lectures/08-Fourier-Transforms.pdf",
+    conceptTitle: "From periodic decomposition to continuous spectra",
+    conceptCaption: "The Fourier transform extends Fourier series to non-periodic signals, revealing the continuous frequency content of any waveform.",
+    explanation: [
+      "The <term key='fourier-transform'>Fourier transform</term> takes a function of time (or space) and produces a function of frequency (or wavenumber). It is the limit of a Fourier series as the period goes to infinity.",
+      "For a damped oscillator, the Fourier transform reveals a <term key='lorentzian'>Lorentzian</term> peak centered at the natural frequency, with width set by the damping. The power spectrum |f-tilde(omega)|^2 is what audio spectrum analyzers display."
+    ],
+    goals: [
+      "Derive the Fourier transform as the L -> infinity limit of Fourier series.",
+      "Compute the Fourier transform of a damped oscillator and identify the Lorentzian.",
+      "Interpret the power spectrum and its relationship to spectral line shapes."
+    ],
+    pitfalls: [
+      "Confusing Fourier series (discrete frequencies) with Fourier transforms (continuous spectrum).",
+      "Getting factors of 2pi wrong when switching between frequency and angular frequency conventions.",
+      "Interpreting the Fourier transform of a real signal as purely real (it is generally complex)."
+    ],
+    terms: {
+      "fourier-transform": {
+        short: "f-tilde(k) = (1/2pi) integral of f(x) e^(-ikx) dx.",
+        long: "The Fourier transform decomposes a non-periodic function into a continuous superposition of plane waves. The inverse transform recovers the original function from its spectral content."
+      },
+      lorentzian: {
+        short: "The spectral shape of a damped oscillator: 1/[(omega - omega_0)^2 + (gamma/2)^2].",
+        long: "A Lorentzian peak appears whenever a system has a characteristic frequency with finite damping. Its full width at half maximum equals gamma, the damping rate. It is the Fourier transform of an exponentially decaying sinusoid."
+      },
+      "power-spectrum": {
+        short: "|f-tilde(omega)|^2, the intensity at each frequency.",
+        long: "The power spectrum shows how much energy is associated with each frequency component. It is what you see on an audio equalizer or spectrum analyzer."
+      }
+    },
+    derivations: [
+      {
+        title: "From Fourier series to Fourier transform",
+        teaser: "Take the period L to infinity and watch discrete sums become integrals.",
+        steps: [
+          "Start with the exponential Fourier series: f(x) = sum c_n e^(i k_n x), where k_n = 2pi n / L.",
+          "Define Delta k = 2pi / L, so the sum becomes sum f-tilde(k_n) e^(i k_n x) Delta k.",
+          "As L -> infinity, Delta k -> dk and the sum becomes an integral: f(x) = integral f-tilde(k) e^(ikx) dk."
+        ],
+        result: "The Fourier transform pair f-tilde(k) = (1/2pi) integral f(x) e^(-ikx) dx and f(x) = integral f-tilde(k) e^(ikx) dk replaces the discrete coefficients of the Fourier series."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A violin note that starts and stops has a Fourier spectrum with finite-width peaks. The longer the note is sustained, the narrower the peaks become, approaching the discrete harmonics of an infinite Fourier series."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does a signal that is sharply localized in time necessarily have a broad spread in frequency?"
+      }
+    ],
+    quickActions: {
+      intuition: "The Fourier transform is the universal translator between time and frequency. Any signal can be broken into its frequency ingredients, and the recipe is invertible.",
+      formal: "The chapter derives the Fourier transform from the L -> infinity limit of Fourier series, computes the transform of a damped sinusoid to get a Lorentzian, and introduces the power spectrum.",
+      quiz: "Checkpoint: what is the Fourier transform of a pure sinusoid that lasts forever, and how does it change if the sinusoid is damped?"
+    },
+    prompts: [
+      "How does the width of a Fourier transform peak relate to the duration of the signal?",
+      "What physical information does the power spectrum contain that the Fourier transform alone does not?"
+    ],
+    scene: "fourier-transform"
+  },
+  {
+    number: 9,
+    title: "Reflection & Impedance",
+    slug: "reflection-impedance",
+    pdf: "./lectures/09-Reflection-Transmission-Impedance.pdf",
+    conceptTitle: "Boundaries split waves into reflected and transmitted parts",
+    conceptCaption: "When a wave hits a junction between two media, impedance mismatch determines how much energy bounces back versus passes through.",
+    explanation: [
+      "At a boundary between two media, a wave splits into <term key='reflected-wave'>reflected</term> and <term key='transmitted-wave'>transmitted</term> components. The amplitudes are determined by matching the wave and its derivative at the junction.",
+      "<term key='impedance'>Impedance</term> Z = sqrt(T mu) (for strings) or Z = rho v (for sound) captures everything about a medium relevant to wave transmission. Reflection vanishes when impedances are matched."
+    ],
+    goals: [
+      "Apply boundary conditions at a junction to find reflection and transmission coefficients.",
+      "Define impedance and interpret impedance matching.",
+      "Understand why a wave inverts upon reflection from a denser medium."
+    ],
+    pitfalls: [
+      "Confusing amplitude transmission coefficient with energy transmission coefficient.",
+      "Forgetting that the transmitted wave has a different speed and wavelength in the second medium.",
+      "Thinking total reflection can only happen at a fixed end, not realizing it occurs for infinite impedance mismatch."
+    ],
+    terms: {
+      "reflected-wave": {
+        short: "The part of the wave that bounces back from a boundary.",
+        long: "The reflection coefficient r = (Z1 - Z2)/(Z1 + Z2) gives the ratio of reflected to incident amplitude. It can be positive or negative depending on which medium has higher impedance."
+      },
+      "transmitted-wave": {
+        short: "The part of the wave that passes through a boundary.",
+        long: "The transmission coefficient t = 2 Z1 / (Z1 + Z2) gives the transmitted amplitude relative to the incident amplitude. Note t can exceed 1 because amplitude and power are different quantities."
+      },
+      impedance: {
+        short: "A medium's resistance to wave motion: Z = rho v.",
+        long: "Impedance encapsulates both the inertia and the stiffness of a medium. Two media with matched impedances transmit waves perfectly. Mismatch causes reflection, with the extreme cases being fixed-end (Z2 = infinity) and free-end (Z2 = 0)."
+      }
+    },
+    derivations: [
+      {
+        title: "Reflection and transmission coefficients from boundary conditions",
+        teaser: "Match continuity of displacement and force at the junction to solve for the ratios.",
+        steps: [
+          "At x = 0, the string is continuous: A_incident(0,t) + A_reflected(0,t) = A_transmitted(0,t), giving A_I + A_R = A_T.",
+          "The force (tension times slope) must also match: T1 (dA_L/dx) = T2 (dA_R/dx), which gives Z1(A_I - A_R) = Z2 A_T.",
+          "Solve the two equations: A_R/A_I = (Z1 - Z2)/(Z1 + Z2) and A_T/A_I = 2Z1/(Z1 + Z2)."
+        ],
+        result: "Impedance mismatch controls reflection. Perfect matching (Z1 = Z2) means no reflection. Maximum reflection occurs when the impedances are very different."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Tie a light rope to a heavy rope and send a pulse along the light one. Part of the pulse continues into the heavy rope (transmitted) and part bounces back inverted (reflected) because the heavy rope acts like a partially fixed end."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why can the transmission coefficient exceed 1 without violating energy conservation?"
+      }
+    ],
+    quickActions: {
+      intuition: "Impedance is the medium's personality from the wave's perspective. Matched impedances mean smooth passage; mismatched impedances create echoes.",
+      formal: "The chapter applies continuity of displacement and force at a junction, derives reflection and transmission coefficients in terms of impedance, and checks energy conservation.",
+      quiz: "Checkpoint: what happens to a wave pulse when it reaches a fixed end, and what impedance ratio does that correspond to?"
+    },
+    prompts: [
+      "How does impedance matching work in practical applications like audio cables?",
+      "Why does the reflected wave flip when going from a lighter to a heavier medium?"
+    ],
+    scene: "impedance"
+  },
+  {
+    number: 10,
+    title: "Power",
+    slug: "power",
+    pdf: "./lectures/10-Power.pdf",
+    conceptTitle: "Waves carry energy at a rate set by impedance",
+    conceptCaption: "The power transmitted by a wave equals the impedance times the velocity squared, connecting amplitude and frequency to energy flow.",
+    explanation: [
+      "Waves carry both <term key='kinetic-energy'>kinetic energy</term> (from the motion of the medium) and <term key='potential-energy'>potential energy</term> (from the stretching or compression of the medium). For a traveling wave, these are equal at every point.",
+      "The <term key='power-wave'>power</term> transmitted by a wave is P = Z (dA/dt)^2, proportional to the impedance and the square of the velocity. This connects directly to the reflection and transmission coefficients from the previous chapter."
+    ],
+    goals: [
+      "Derive kinetic and potential energy densities for a wave on a string.",
+      "Show that energy flows at the wave speed for a traveling wave.",
+      "Verify energy conservation at a boundary using reflected and transmitted power."
+    ],
+    pitfalls: [
+      "Confusing energy density (energy per length) with total power (energy per time).",
+      "Thinking a standing wave transmits energy (it does not on average).",
+      "Forgetting that power goes as amplitude squared, not amplitude."
+    ],
+    terms: {
+      "kinetic-energy": {
+        short: "KE per length = (1/2) mu (dA/dt)^2 from the motion of the medium.",
+        long: "Each bit of the medium has kinetic energy from its transverse velocity. For a traveling sinusoidal wave, the kinetic energy density oscillates in space and time."
+      },
+      "potential-energy": {
+        short: "PE per length = (1/2) T (dA/dx)^2 from stretching of the medium.",
+        long: "The potential energy comes from the string being stretched beyond its equilibrium length. For a traveling wave, the PE density exactly equals the KE density at every point."
+      },
+      "power-wave": {
+        short: "P = Z (dA/dt)^2, the rate of energy transport.",
+        long: "Power is force times velocity. For a wave, the transverse force is T dA/dx and the transverse velocity is dA/dt. Their product gives P = -T (dA/dx)(dA/dt) = Z (dA/dt)^2 for a right-moving wave."
+      }
+    },
+    derivations: [
+      {
+        title: "Energy conservation at a boundary",
+        teaser: "Check that incident power equals reflected plus transmitted power using the impedance coefficients.",
+        steps: [
+          "Write P_I = Z1 A_I^2 omega^2 / 2, P_R = Z1 A_R^2 omega^2 / 2, P_T = Z2 A_T^2 omega^2 / 2.",
+          "Substitute A_R = r A_I and A_T = t A_I with r = (Z1-Z2)/(Z1+Z2) and t = 2Z1/(Z1+Z2).",
+          "Compute P_R + P_T = Z1 r^2 A_I^2 omega^2/2 + Z2 t^2 A_I^2 omega^2/2 and verify it equals P_I."
+        ],
+        result: "Energy is conserved at the boundary: P_R/P_I + P_T/P_I = r^2 + (Z2/Z1) t^2 = 1, even though the amplitude transmission coefficient can exceed 1."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Shake one end of a rope and you do work against the tension. That work propagates along the rope as a wave, delivering energy to wherever the wave goes."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why is the power proportional to the square of the amplitude rather than just the amplitude?"
+      }
+    ],
+    quickActions: {
+      intuition: "A wave is an energy delivery system. The impedance of the medium determines how much power is carried for a given amplitude of oscillation.",
+      formal: "The chapter derives KE and PE densities for a string wave, shows their equality for traveling waves, defines power as Z(dA/dt)^2, and verifies energy conservation at boundaries.",
+      quiz: "Checkpoint: for a standing wave, the time-averaged power flow is zero. Explain why in terms of the phase relationship between force and velocity."
+    },
+    prompts: [
+      "Why are KE and PE densities equal for a traveling wave but not for a standing wave?",
+      "How does the power scale with frequency for a fixed amplitude wave?"
+    ],
+    scene: "power"
+  },
+  {
+    number: 11,
+    title: "Wavepackets",
+    slug: "wavepackets",
+    pdf: "./lectures/11-Wavepackets.pdf",
+    conceptTitle: "Localized pulses spread when the medium is dispersive",
+    conceptCaption: "A wavepacket carries information at the group velocity, and its width grows over time if different frequencies travel at different speeds.",
+    explanation: [
+      "A <term key='wavepacket'>wavepacket</term> is a localized pulse built from a superposition of plane waves with a narrow range of frequencies. In a Gaussian wavepacket, the width in real space and the width in frequency space are inversely related.",
+      "The <term key='group-velocity'>group velocity</term> v_g = d omega / dk is the speed at which the envelope (and the energy) moves. It differs from the <term key='phase-velocity'>phase velocity</term> v_p = omega / k in dispersive media, causing the packet to spread over time."
+    ],
+    goals: [
+      "Construct a wavepacket as a superposition of plane waves with a Gaussian envelope.",
+      "Distinguish group velocity from phase velocity and know when they differ.",
+      "Understand dispersion as the spreading of a wavepacket due to frequency-dependent speed."
+    ],
+    pitfalls: [
+      "Confusing group velocity (envelope speed) with phase velocity (crest speed).",
+      "Thinking wavepackets always spread; in non-dispersive media they travel without changing shape.",
+      "Forgetting the uncertainty principle: narrower packets require broader frequency content."
+    ],
+    terms: {
+      wavepacket: {
+        short: "A localized wave pulse built from a range of frequencies.",
+        long: "A wavepacket is a superposition of plane waves, typically with a Gaussian envelope. The width sigma_x in position and sigma_k in wavenumber satisfy sigma_x sigma_k >= 1/2, the uncertainty relation."
+      },
+      "group-velocity": {
+        short: "v_g = d omega / dk, the speed of the envelope.",
+        long: "The group velocity determines how fast the peak of a wavepacket moves and at what speed energy and information travel. For non-dispersive media, v_g = v_p. For dispersive media, they differ."
+      },
+      "phase-velocity": {
+        short: "v_p = omega / k, the speed of individual crests.",
+        long: "Phase velocity is the speed at which a single crest of a monochromatic wave travels. It can exceed the speed of light in some media, but this does not violate causality because information travels at the group velocity."
+      }
+    },
+    derivations: [
+      {
+        title: "Group velocity from the dispersion relation",
+        teaser: "Expand omega(k) near the carrier frequency and identify the envelope speed.",
+        steps: [
+          "Write a wavepacket as integral of f-tilde(k) e^(i(kx - omega(k)t)) dk, peaked near k_0.",
+          "Taylor expand omega(k) about k_0: omega = omega_0 + (d omega/dk)|_{k_0} (k - k_0) + ...",
+          "The leading-order phase factor gives e^(i(k_0 x - omega_0 t)) times an envelope that depends on (x - v_g t), where v_g = d omega/dk at k_0."
+        ],
+        result: "The envelope travels at the group velocity v_g = d omega / dk. Higher-order terms in the expansion cause the envelope to spread (dispersion)."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Throw a rock into a pond. The resulting ripples spread outward, but notice that individual wave crests move faster than the packet as a whole. Crests appear at the back, travel through the group, and disappear at the front."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "How does the time-bandwidth product sigma_t sigma_omega >= 1/2 limit how short a radar pulse can be at a given frequency?"
+      }
+    ],
+    quickActions: {
+      intuition: "A wavepacket is the answer to how to send a localized signal using waves. The group velocity carries the information, and dispersion is the enemy of keeping signals sharp.",
+      formal: "The chapter constructs Gaussian wavepackets, Taylor-expands the dispersion relation to identify group velocity, and computes packet spreading from the second derivative of omega(k).",
+      quiz: "Checkpoint: in deep water, surface wave phase velocity is twice the group velocity. What does this mean for the crests inside a wave group?"
+    },
+    prompts: [
+      "Why does a narrower wavepacket in space require a broader range of frequencies?",
+      "Under what conditions does a wavepacket travel without spreading?"
+    ],
+    scene: "wavepackets"
+  },
+  {
+    number: 12,
+    title: "Wave Phenomena",
+    slug: "wave-phenomena",
+    pdf: "./lectures/12-Waves-Muller.pdf",
+    conceptTitle: "Waves in the real world: earthquakes, sonar, and beyond",
+    conceptCaption: "The same wave principles explain seismic waves, sonar, sonic booms, and many technologies used every day.",
+    explanation: [
+      "This chapter surveys wave phenomena across many domains, from <term key='seismic-waves'>seismic waves</term> that reveal Earth's interior to the sonar used by submarines and bats.",
+      "Key concepts include how wave speed depends on the medium, how <term key='shock-waves'>shock waves</term> form when a source moves faster than the wave speed, and how wave interference creates useful patterns in technology."
+    ],
+    goals: [
+      "Identify wave phenomena in diverse physical contexts from seismology to acoustics.",
+      "Understand how wave speed differences between media reveal material properties.",
+      "Explain the formation of sonic booms and Mach cones."
+    ],
+    pitfalls: [
+      "Thinking all waves behave identically regardless of the medium.",
+      "Confusing surface waves with body waves in seismology.",
+      "Assuming sonic booms only happen at the exact moment of crossing the sound barrier."
+    ],
+    terms: {
+      "seismic-waves": {
+        short: "Waves through the Earth, including P-waves and S-waves.",
+        long: "P-waves (primary) are longitudinal compression waves that travel through both solids and liquids. S-waves (secondary) are transverse shear waves that only travel through solids. Their different speeds and behaviors reveal Earth's layered structure."
+      },
+      "shock-waves": {
+        short: "Waves produced when a source exceeds the wave speed.",
+        long: "When a source moves faster than the wave speed, wavefronts pile up into a cone (Mach cone) producing a shock wave. The half-angle of the cone is sin(theta) = v_wave / v_source."
+      },
+      "sonar": {
+        short: "Using reflected sound waves to detect objects.",
+        long: "SONAR (Sound Navigation And Ranging) sends sound pulses and measures the time delay and direction of echoes. It exploits the known speed of sound in water to determine distances."
+      }
+    },
+    derivations: [
+      {
+        title: "The Mach cone geometry",
+        teaser: "Track wavefronts emitted by a supersonic source and find the cone angle.",
+        steps: [
+          "A source at speed v_s emits a wavefront which expands as a sphere of radius v_w t after time t.",
+          "The source has moved a distance v_s t. The envelope of all these spheres forms a cone.",
+          "The half-angle satisfies sin(theta) = v_w t / (v_s t) = v_w / v_s = 1 / M, where M is the Mach number."
+        ],
+        result: "The Mach cone half-angle theta = arcsin(1/M) gets sharper as the source moves faster relative to the wave speed."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A boat moving faster than the water wave speed creates a V-shaped wake. A supersonic jet creates a Mach cone of compressed air. Both are the same geometric phenomenon."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "How do seismologists use the difference in arrival times of P and S waves to locate an earthquake's epicenter?"
+      }
+    ],
+    quickActions: {
+      intuition: "The same wave equation shows up everywhere. Whether it is sound in the ocean, vibrations in the earth, or pressure from a supersonic jet, the principles of reflection, refraction, and interference apply universally.",
+      formal: "The chapter surveys wave phenomena across domains, applying reflection, transmission, Doppler, and shock-wave geometry to real-world contexts from seismology to sonar.",
+      quiz: "Checkpoint: why can S-waves not travel through the Earth's liquid outer core?"
+    },
+    prompts: [
+      "What does the absence of S-waves at certain stations tell us about the Earth's interior?",
+      "How does the SOFAR channel allow sound to travel thousands of miles in the ocean?"
+    ],
+    scene: "em-waves"
+  },
+  {
+    number: 13,
+    title: "Light",
+    slug: "light",
+    pdf: "./lectures/13-Light.pdf",
+    conceptTitle: "Light is an electromagnetic wave",
+    conceptCaption: "Maxwell's equations predict electromagnetic waves traveling at c = 1/sqrt(mu_0 epsilon_0), unifying electricity, magnetism, and optics.",
+    explanation: [
+      "Maxwell's equations, when combined, yield the <term key='em-wave-equation'>electromagnetic wave equation</term> for both E and B fields. The predicted speed is c = 1/sqrt(mu_0 epsilon_0), which matches the measured speed of light.",
+      "The <term key='em-spectrum'>electromagnetic spectrum</term> spans from radio waves to gamma rays. All are the same phenomenon at different frequencies. Light is the tiny visible slice of this spectrum."
+    ],
+    goals: [
+      "Derive the electromagnetic wave equation from Maxwell's equations in vacuum.",
+      "Identify the speed of light in terms of fundamental electromagnetic constants.",
+      "Survey the electromagnetic spectrum from radio to gamma rays."
+    ],
+    pitfalls: [
+      "Thinking light needs a medium to propagate (it does not; the aether does not exist).",
+      "Confusing the electric and magnetic field amplitudes (B = E/c in vacuum).",
+      "Forgetting that EM waves are transverse: E and B are perpendicular to the propagation direction."
+    ],
+    terms: {
+      "em-wave-equation": {
+        short: "(d^2/dt^2 - c^2 nabla^2) E = 0, derived from Maxwell's equations.",
+        long: "By taking the curl of Faraday's law and substituting Ampere's law, you get a wave equation for E (and similarly for B). The wave speed is c = 1/sqrt(mu_0 epsilon_0) = 3 x 10^8 m/s."
+      },
+      "em-spectrum": {
+        short: "The full range of electromagnetic wave frequencies.",
+        long: "Radio (km wavelengths), microwave (cm), infrared (microns), visible (400-700 nm), ultraviolet, X-rays, gamma rays are all electromagnetic waves differing only in frequency."
+      },
+      "index-of-refraction": {
+        short: "n = c/v, the factor by which light slows in a medium.",
+        long: "In a material, electromagnetic waves interact with charges in the medium, effectively slowing the wave. The index of refraction n determines the wavelength inside the medium as lambda = lambda_0 / n."
+      }
+    },
+    derivations: [
+      {
+        title: "Deriving the EM wave equation from Maxwell's equations",
+        teaser: "Take the curl of Faraday's law and substitute Ampere's law.",
+        steps: [
+          "Start with curl E = -dB/dt and curl B = mu_0 epsilon_0 dE/dt (in vacuum).",
+          "Take the curl of the first equation: curl(curl E) = -d/dt(curl B) = -mu_0 epsilon_0 d^2E/dt^2.",
+          "Use the identity curl(curl E) = grad(div E) - nabla^2 E, and div E = 0 gives nabla^2 E = mu_0 epsilon_0 d^2E/dt^2."
+        ],
+        result: "The wave equation (d^2/dt^2 - c^2 nabla^2) E = 0 with c = 1/sqrt(mu_0 epsilon_0) proves that light is an electromagnetic wave."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "A changing electric field creates a magnetic field, which in turn creates a changing electric field. This self-sustaining dance of fields propagates through space at the speed of light."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Maxwell predicted electromagnetic waves before Hertz detected them experimentally. What was the key theoretical insight that led to the prediction?"
+      }
+    ],
+    quickActions: {
+      intuition: "Light is oscillating electric and magnetic fields that regenerate each other as they travel. Maxwell's equations predict the speed exactly: c = 1/sqrt(mu_0 epsilon_0).",
+      formal: "The chapter derives the electromagnetic wave equation from Maxwell's equations in vacuum, identifies c, and surveys the full electromagnetic spectrum.",
+      quiz: "Checkpoint: what is the relationship between the electric and magnetic field amplitudes in an electromagnetic plane wave?"
+    },
+    prompts: [
+      "Why did the prediction of electromagnetic waves confirm that light is electromagnetic?",
+      "How does the speed of light in a material relate to the index of refraction?"
+    ],
+    scene: "light"
+  },
+  {
+    number: 14,
+    title: "Polarization",
+    slug: "polarization",
+    pdf: "./lectures/14-Polarization.pdf",
+    conceptTitle: "The direction of oscillation matters",
+    conceptCaption: "Electromagnetic waves can oscillate linearly, circularly, or elliptically. Polarization reveals the vector nature of light.",
+    explanation: [
+      "The electric field of a plane wave oscillates in a plane perpendicular to the propagation direction. The <term key='polarization-vector'>polarization vector</term> specifies the direction and phase of this oscillation.",
+      "<term key='linear-polarization'>Linear polarization</term> has the E field oscillating in a fixed direction. <term key='circular-polarization'>Circular polarization</term> has the E field vector rotating at the wave frequency, tracing a circle."
+    ],
+    goals: [
+      "Describe linear, circular, and elliptical polarization states.",
+      "Write polarization using the Jones vector formalism.",
+      "Understand how polarizers, wave plates, and birefringent materials manipulate polarization."
+    ],
+    pitfalls: [
+      "Thinking circularly polarized light has varying amplitude (it does not; only the direction rotates).",
+      "Confusing left and right circular polarization conventions.",
+      "Forgetting that unpolarized light cannot be described by a single Jones vector."
+    ],
+    terms: {
+      "polarization-vector": {
+        short: "The complex vector E_0 specifying the direction and phase of the electric field.",
+        long: "E_0 = (E_x, E_y e^(i phi), 0) for a wave propagating in z. The relative phase phi between x and y components determines whether the polarization is linear, circular, or elliptical."
+      },
+      "linear-polarization": {
+        short: "E field oscillates in a single fixed direction.",
+        long: "When E_x and E_y are in phase (phi = 0 or pi), the electric field oscillates along a line. The direction can be at any angle in the xy plane."
+      },
+      "circular-polarization": {
+        short: "E field vector rotates, tracing a circle.",
+        long: "When E_x and E_y have equal magnitude and differ in phase by pi/2, the tip of the E vector traces a circle. Left-handed and right-handed circular polarizations correspond to opposite senses of rotation."
+      }
+    },
+    derivations: [
+      {
+        title: "Circular polarization from phase-shifted components",
+        teaser: "Set E_x and E_y equal in magnitude with a pi/2 phase difference.",
+        steps: [
+          "Write E_0 = (E_0, i E_0, 0), so that E = (E_0 cos(kz - omega t), -E_0 sin(kz - omega t), 0).",
+          "At fixed z, the tip of E traces a circle in the xy plane as t advances.",
+          "The handedness depends on the sign of the phase: +i gives left-handed, -i gives right-handed."
+        ],
+        result: "Circular polarization is just two perpendicular linear oscillations with a quarter-wave phase shift. Any polarization can be decomposed into a sum of left and right circular states."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Put on polarized sunglasses and tilt your head while looking at a screen. The brightness changes because the screen emits linearly polarized light, and the polarizer blocks the component perpendicular to its axis."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "How does a quarter-wave plate convert linearly polarized light into circularly polarized light?"
+      }
+    ],
+    quickActions: {
+      intuition: "Polarization is the direction the electric field oscillates. Linear means it stays in one plane; circular means it corkscrews. These states can be combined to make any polarization.",
+      formal: "The chapter introduces the polarization vector and Jones formalism, decomposes general polarization into linear and circular bases, and discusses physical devices that manipulate polarization.",
+      quiz: "Checkpoint: if you pass circularly polarized light through a linear polarizer, what fraction of the intensity gets through?"
+    },
+    prompts: [
+      "Why are there only two independent polarization states for a wave traveling in a given direction?",
+      "How can you experimentally distinguish linearly polarized light from circularly polarized light?"
+    ],
+    scene: "polarization"
+  },
+  {
+    number: 15,
+    title: "Refraction",
+    slug: "refraction",
+    pdf: "./lectures/15-Refraction.pdf",
+    conceptTitle: "Light bends when it changes speed",
+    conceptCaption: "Snell's law governs how light rays change direction at an interface, leading to lenses, total internal reflection, and fiber optics.",
+    explanation: [
+      "<term key='snells-law'>Snell's law</term> n1 sin(theta_1) = n2 sin(theta_2) follows from requiring the wavefronts to be continuous at the boundary. Light bends toward the normal when entering a denser medium.",
+      "When light goes from a denser to a less dense medium, there exists a critical angle beyond which all light is reflected. This <term key='total-internal-reflection'>total internal reflection</term> is the principle behind fiber optics."
+    ],
+    goals: [
+      "Derive Snell's law from wavefront matching at a boundary.",
+      "Calculate the critical angle for total internal reflection.",
+      "Apply refraction principles to lenses, fiber optics, and atmospheric phenomena."
+    ],
+    pitfalls: [
+      "Confusing the angle of incidence with the angle measured from the surface instead of the normal.",
+      "Thinking total internal reflection can occur when going from less dense to more dense media.",
+      "Forgetting that the frequency of light stays the same across a boundary; only the wavelength changes."
+    ],
+    terms: {
+      "snells-law": {
+        short: "n1 sin(theta_1) = n2 sin(theta_2), the law of refraction.",
+        long: "Snell's law follows from the requirement that wave crests match at the boundary. Since the speed changes (v = c/n), the wavelength changes, forcing the direction to change to maintain phase matching."
+      },
+      "total-internal-reflection": {
+        short: "Complete reflection when light hits a less dense medium beyond the critical angle.",
+        long: "When n1 > n2 and sin(theta_1) > n2/n1, there is no real refraction angle. All light is reflected back. The critical angle is theta_c = arcsin(n2/n1). This is how fiber optic cables guide light."
+      },
+      "fermats-principle": {
+        short: "Light follows the path of least time.",
+        long: "Fermat's principle provides an alternative derivation of Snell's law. Light traveling from point A in medium 1 to point B in medium 2 takes the path that minimizes total travel time, which requires bending at the interface."
+      }
+    },
+    derivations: [
+      {
+        title: "Snell's law from wavefront matching",
+        teaser: "Require that the phase of the wave be continuous along the boundary between two media.",
+        steps: [
+          "A plane wave hits a flat boundary. The wavefronts in medium 1 make angle theta_1 with the boundary.",
+          "The distance between wavefronts along the boundary must be the same on both sides: lambda_1/sin(theta_1) = lambda_2/sin(theta_2).",
+          "Since lambda = lambda_0 / n, this gives n1 sin(theta_1) = n2 sin(theta_2)."
+        ],
+        result: "Snell's law is a geometric consequence of phase matching at a boundary combined with the change in wavelength."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Muller's analogy: imagine a line of people holding hands marching from pavement onto sand. The side that hits sand first slows down, causing the whole line to rotate. This is exactly how a wavefront refracts."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why do roads sometimes appear wet on hot days? Explain the mirage in terms of the temperature dependence of the refractive index of air."
+      }
+    ],
+    quickActions: {
+      intuition: "Light bends at a boundary because its speed changes but its frequency cannot. The wavefronts have to match at the interface, which forces a change in direction.",
+      formal: "The chapter derives Snell's law from wavefront matching, computes the critical angle for total internal reflection, and applies these to fiber optics and atmospheric refraction.",
+      quiz: "Checkpoint: what is the critical angle for total internal reflection in glass (n = 1.5) surrounded by air?"
+    },
+    prompts: [
+      "Why does the frequency of light not change when it enters a new medium?",
+      "How does a SOFAR channel in the ocean work by the same principle as total internal reflection?"
+    ],
+    scene: "refraction"
+  },
+  {
+    number: 16,
+    title: "Prisms",
+    slug: "prisms",
+    pdf: "./lectures/16-Prisms.pdf",
+    conceptTitle: "Accelerating charges radiate; prisms separate colors",
+    conceptCaption: "Charges must accelerate to produce electromagnetic radiation. Dispersion in glass makes a prism split white light into its spectrum.",
+    explanation: [
+      "The <term key='larmor-formula'>Larmor formula</term> says that an accelerating charge radiates power proportional to the acceleration squared. The radiation pattern has the characteristic sin^2(theta) angular dependence.",
+      "A <term key='prism'>prism</term> separates white light because the index of refraction depends on wavelength (dispersion). Blue light bends more than red because glass has higher n at shorter wavelengths."
+    ],
+    goals: [
+      "State the Larmor formula and its angular radiation pattern.",
+      "Explain why only accelerating charges radiate.",
+      "Describe how dispersion in a prism creates a spectrum."
+    ],
+    pitfalls: [
+      "Thinking a charge moving at constant velocity radiates (it does not in its rest frame).",
+      "Confusing dispersion (n depends on wavelength) with diffraction (wave bending around obstacles).",
+      "Forgetting the 1/R dependence of the radiation field versus 1/R^2 for the Coulomb field."
+    ],
+    terms: {
+      "larmor-formula": {
+        short: "P = q^2 a^2 / (6 pi epsilon_0 c^3), power radiated by an accelerating charge.",
+        long: "The Larmor formula shows that the power radiated is proportional to the square of the acceleration. It applies to non-relativistic charges and explains why antennas need oscillating currents."
+      },
+      prism: {
+        short: "A transparent wedge that separates light by wavelength.",
+        long: "Because the index of refraction of glass is higher for shorter wavelengths (normal dispersion), a prism bends blue light more than red. This spreads white light into a rainbow."
+      },
+      dispersion: {
+        short: "The dependence of wave speed (or refractive index) on wavelength.",
+        long: "Dispersion causes a prism to split white light and a wavepacket to spread out. In glass, electrons in the material respond differently to different frequencies, making n(lambda) a decreasing function."
+      }
+    },
+    derivations: [
+      {
+        title: "Why the radiation field falls as 1/R",
+        teaser: "Use Purcell's argument about field-line kinks from a suddenly accelerated charge.",
+        steps: [
+          "A charge suddenly accelerates. The news travels outward at speed c, creating a shell.",
+          "Inside the shell, the field points to the new position. Outside, it points to the old position. In the shell, the field line connects, creating a tangential (radiative) component.",
+          "The tangential component E_theta = (q a sin(theta)) / (4 pi epsilon_0 c^2 R) falls as 1/R, unlike the Coulomb field which falls as 1/R^2."
+        ],
+        result: "The radiation field decays as 1/R, so the radiated power per solid angle goes as 1/R^2, meaning the total power integrated over a sphere is independent of R: energy is truly carried away to infinity."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Newton's famous experiment: pass sunlight through a prism and see the rainbow on the wall. Then pass one color through a second prism and it does not split further, proving the colors are fundamental."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does the sky look blue and sunsets look red? Relate it to the frequency dependence of Rayleigh scattering, which comes from the Larmor formula."
+      }
+    ],
+    quickActions: {
+      intuition: "Only acceleration produces radiation. A prism separates colors because glass slows different wavelengths by different amounts, bending blue more than red.",
+      formal: "The chapter derives the Larmor formula for radiation from accelerating charges, explains the sin^2 theta radiation pattern, and connects dispersion n(lambda) to the separation of colors in a prism.",
+      quiz: "Checkpoint: why does the radiation field fall as 1/R while the Coulomb field falls as 1/R^2?"
+    },
+    prompts: [
+      "What physical mechanism causes the index of refraction to depend on wavelength?",
+      "Why does the Larmor formula predict zero radiation along the axis of acceleration?"
+    ],
+    scene: "prisms"
+  },
+  {
+    number: 17,
+    title: "Color",
+    slug: "color",
+    pdf: "./lectures/17-Color.pdf",
+    conceptTitle: "Color is a property of the eye, not just the light",
+    conceptCaption: "Human color perception depends on three types of cone cells. Color mixing, metamers, and color spaces all follow from this physiology.",
+    explanation: [
+      "Color is not simply wavelength. The human eye has three types of <term key='cone-cells'>cone cells</term>, sensitive to different ranges of wavelengths. What we perceive as a single color is determined by the ratio of responses from these three receptors.",
+      "Two physically different spectra can appear identical to the eye (<term key='metamers'>metamers</term>). The <term key='cie-color-space'>CIE color space</term> maps all perceivable colors into a 2D diagram based on the tristimulus values."
+    ],
+    goals: [
+      "Explain why three numbers (RGB) suffice to describe any perceived color.",
+      "Define metamers and why physically different spectra can look the same.",
+      "Read a CIE chromaticity diagram and understand the gamut of a display."
+    ],
+    pitfalls: [
+      "Thinking each color corresponds to a unique wavelength (many colors like brown and pink have no single wavelength).",
+      "Confusing additive color mixing (light) with subtractive color mixing (paint).",
+      "Forgetting that the RGB matching functions have negative values at some wavelengths."
+    ],
+    terms: {
+      "cone-cells": {
+        short: "Three types of photoreceptors in the retina sensitive to S (blue), M (green), and L (red) ranges.",
+        long: "Each cone type has a broad spectral sensitivity curve. Color perception depends on the relative excitation of all three types. This is why three primary colors can reproduce most visible colors."
+      },
+      metamers: {
+        short: "Physically different spectra that look identical to the eye.",
+        long: "Because we have only three types of cones, many different spectral distributions produce the same triplet of cone responses. A computer screen exploits this: it only emits three wavelengths but can match the appearance of most colors."
+      },
+      "cie-color-space": {
+        short: "A standardized map of all colors perceivable by the human eye.",
+        long: "The CIE 1931 color space uses the Wright-Guild color matching functions to assign (x, y) chromaticity coordinates to every visible color. The horseshoe-shaped gamut boundary represents monochromatic spectral colors."
+      }
+    },
+    derivations: [
+      {
+        title: "Why three primaries suffice (Grassmann's laws)",
+        teaser: "The linearity of color matching means any color can be represented as a weighted sum of three primaries.",
+        steps: [
+          "Color matching is empirically linear: if A matches B and C matches D, then A + C matches B + D (Grassmann's law).",
+          "Since we have three types of cones, any spectrum is mapped to a 3-vector (L, M, S) of cone responses.",
+          "Any two spectra that produce the same (L, M, S) are indistinguishable, so 3 numbers characterize color."
+        ],
+        result: "The three-dimensional nature of color perception is a consequence of having exactly three cone types. Color spaces like RGB and CIE are coordinate systems in this 3D perceptual space."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Mix red and green paint and you get brown. Mix red and green light and you get yellow. The difference is subtractive versus additive mixing, and both follow from how our three cone types respond."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why is there no spectral (single-wavelength) light that looks brown? What combination of wavelengths produces the perception of brown?"
+      }
+    ],
+    quickActions: {
+      intuition: "Color is not a property of light alone -- it is created by the eye. Three types of cones reduce the infinite-dimensional space of spectra to a 3D color space, explaining why RGB displays work.",
+      formal: "The chapter introduces the Wright-Guild color matching experiments, Grassmann's linearity laws, the CIE chromaticity diagram, and explains metamers through the three-cone model.",
+      quiz: "Checkpoint: why do the RGB color matching functions go negative at some wavelengths, and what does that physically mean in the color matching experiment?"
+    },
+    prompts: [
+      "How does a computer monitor that emits only three wavelengths reproduce millions of colors?",
+      "Why is the gamut of real displays smaller than the full CIE diagram?"
+    ],
+    scene: "color"
+  },
+  {
+    number: 18,
+    title: "Antennas",
+    slug: "antennas",
+    pdf: "./lectures/18-Antennas.pdf",
+    conceptTitle: "Arranged sources create directed radiation patterns",
+    conceptCaption: "By combining multiple oscillating sources with specific spacings and phases, antennas can focus electromagnetic energy into narrow beams.",
+    explanation: [
+      "A single oscillating charge radiates with a sin^2(theta) pattern. An <term key='antenna-array'>antenna array</term> combines multiple sources to create interference patterns that focus energy in preferred directions.",
+      "The radiation pattern from N equally spaced sources with phase difference delta between adjacent elements produces sharp <term key='lobes'>lobes</term> whose width decreases as N increases."
+    ],
+    goals: [
+      "Compute the radiation pattern of two sources with a phase difference.",
+      "Generalize to N sources and derive the array factor.",
+      "Understand how antenna arrays achieve directionality through interference."
+    ],
+    pitfalls: [
+      "Confusing the single-source radiation pattern with the array factor.",
+      "Forgetting that the phase difference depends on both the source spacing and the observation angle.",
+      "Thinking that adding more sources always increases the total power (it redistributes the pattern)."
+    ],
+    terms: {
+      "antenna-array": {
+        short: "Multiple sources arranged to create directional radiation through interference.",
+        long: "An antenna array uses the interference of waves from multiple sources to create a radiation pattern with narrow lobes. The spacing, number of elements, and relative phase of the sources control the beam direction and width."
+      },
+      lobes: {
+        short: "Directions of constructive interference in a radiation pattern.",
+        long: "The main lobe is the direction of maximum radiation. Side lobes appear at other angles where partial constructive interference occurs. More elements produce narrower main lobes."
+      },
+      "array-factor": {
+        short: "I = I_0 sin^2(N Delta/2) / sin^2(Delta/2) for N sources.",
+        long: "The array factor captures the interference pattern of N equally spaced sources. It produces sharp peaks when Delta = 2 pi m (constructive interference from all sources) and has N-2 smaller side lobes between main peaks."
+      }
+    },
+    derivations: [
+      {
+        title: "Radiation pattern from N equally spaced sources",
+        teaser: "Sum the contributions from N sources with progressive phase shifts.",
+        steps: [
+          "Each source contributes E_j = E_0 e^(i j Delta) where Delta = k d sin(theta) + delta_0 is the phase difference between adjacent sources.",
+          "Sum the geometric series: E_total = E_0 (1 - e^(i N Delta)) / (1 - e^(i Delta)).",
+          "Take |E_total|^2 to get I = I_0 sin^2(N Delta/2) / sin^2(Delta/2)."
+        ],
+        result: "The intensity pattern has sharp peaks of height N^2 I_0 separated by N-2 smaller side lobes, giving directional radiation that sharpens with more sources."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Imagine N speakers in a row, all playing the same note. Directly in front of them, all the sound arrives in phase and you hear maximum volume. Off to the side, the signals arrive at different times and partially cancel."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "How does a phased-array radar steer its beam electronically without physically rotating the antenna?"
+      }
+    ],
+    quickActions: {
+      intuition: "An antenna array is interference engineering. By carefully spacing sources and controlling their phases, you can send energy in a chosen direction and suppress it elsewhere.",
+      formal: "The chapter sums fields from N phase-shifted sources using geometric series to derive the array factor, then analyzes the width and direction of the main lobe as functions of N, d, and delta.",
+      quiz: "Checkpoint: for two sources separated by half a wavelength with no extra phase shift, in what directions do you get constructive and destructive interference?"
+    },
+    prompts: [
+      "How does increasing the number of array elements affect the radiation pattern?",
+      "What is the physical role of the phase shift delta_0 between adjacent elements?"
+    ],
+    scene: "antennas"
+  },
+  {
+    number: 19,
+    title: "Diffraction",
+    slug: "diffraction",
+    pdf: "./lectures/19-Diffraction.pdf",
+    conceptTitle: "Waves bend around obstacles and through slits",
+    conceptCaption: "Huygens' principle explains diffraction: every point on a wavefront acts as a new source, and their interference creates the diffraction pattern.",
+    explanation: [
+      "<term key='huygens-principle'>Huygens' principle</term> states that every point on a wavefront can be treated as a source of secondary wavelets. When a wave passes through a slit, these wavelets interfere to produce a characteristic <term key='diffraction-pattern'>diffraction pattern</term>.",
+      "A <term key='diffraction-grating'>diffraction grating</term> with many slits produces extremely sharp peaks, used in spectroscopy to precisely measure wavelengths."
+    ],
+    goals: [
+      "Apply Huygens' principle to predict diffraction through single and multiple slits.",
+      "Derive the diffraction grating intensity pattern using the antenna array result.",
+      "Understand the Rayleigh criterion for resolving two closely spaced sources."
+    ],
+    pitfalls: [
+      "Confusing single-slit diffraction (sinc^2 envelope) with multi-slit interference (sharp peaks).",
+      "Thinking diffraction only matters when the slit is smaller than the wavelength (it matters whenever they are comparable).",
+      "Forgetting that more slits make peaks sharper but do not change their positions."
+    ],
+    terms: {
+      "huygens-principle": {
+        short: "Every point on a wavefront acts as a source of secondary wavelets.",
+        long: "Huygens' principle is a powerful tool for understanding diffraction. The wave on the far side of an obstacle is entirely determined by the wave amplitude and phase at the opening, as if small sources were placed there."
+      },
+      "diffraction-pattern": {
+        short: "The intensity distribution produced by a wave passing through an aperture.",
+        long: "For a single slit of width a, the intensity pattern is I = I_0 sinc^2(pi a sin theta / lambda). The central maximum has angular width 2 lambda / a, and narrower slits produce wider patterns."
+      },
+      "diffraction-grating": {
+        short: "Many equally spaced slits that produce sharp spectral peaks.",
+        long: "A diffraction grating uses N slits to produce intensity peaks at angles where d sin theta = m lambda. With many slits, the peaks become extremely narrow, allowing precise wavelength measurement."
+      }
+    },
+    derivations: [
+      {
+        title: "Diffraction grating pattern from N slits",
+        teaser: "Apply the N-source antenna result from the previous chapter to N slits.",
+        steps: [
+          "Each slit acts as a Huygens source. For N slits spaced by d, the phase difference between adjacent slits for angle theta is Delta = 2 pi d sin(theta) / lambda.",
+          "The intensity follows the array factor: I = I_0 sin^2(N Delta/2) / sin^2(Delta/2).",
+          "Main maxima occur when Delta = 2 pi m, giving d sin(theta) = m lambda. The peak width scales as 1/N."
+        ],
+        result: "The diffraction grating equation d sin(theta) = m lambda gives the positions of the bright fringes. More slits mean sharper peaks and better spectral resolution."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "Shine a laser through a fine comb and see the diffraction pattern on the wall. The spacing of the bright dots tells you the tooth spacing of the comb, just as X-ray diffraction reveals atomic spacings in crystals."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why can you hear sound from around a corner but not see light around a corner? Relate it to the wavelength compared to the size of the obstacle."
+      }
+    ],
+    quickActions: {
+      intuition: "Diffraction is what happens when waves encounter edges or openings comparable to their wavelength. The pattern is computed by treating each point in the aperture as a tiny source and summing their contributions.",
+      formal: "The chapter applies Huygens' principle and the N-source array factor to derive the single-slit and multi-slit diffraction patterns, connecting them to the grating equation d sin theta = m lambda.",
+      quiz: "Checkpoint: how does the angular width of the central maximum for single-slit diffraction scale with slit width?"
+    },
+    prompts: [
+      "What determines the resolving power of a diffraction grating?",
+      "Why does the single-slit pattern have minima at sin(theta) = m lambda / a?"
+    ],
+    scene: "diffraction"
+  },
+  {
+    number: 20,
+    title: "Quantum Mechanics",
+    slug: "quantum-mechanics",
+    pdf: "./lectures/20-Quantum-Mechanics.pdf",
+    conceptTitle: "Particles are waves too",
+    conceptCaption: "Quantum mechanics extends wave-particle duality: electrons diffract, photons come in quanta, and the Schrodinger equation is a wave equation.",
+    explanation: [
+      "The course comes full circle: just as we went from oscillators to waves, quantum mechanics says particles like electrons also behave as <term key='matter-waves'>matter waves</term>. The de Broglie wavelength lambda = h/p connects momentum to wavelength.",
+      "The <term key='schrodinger-equation'>Schrodinger equation</term> is the wave equation for quantum particles. Its solutions are wavefunctions whose squared magnitude gives the probability of finding the particle at each position."
+    ],
+    goals: [
+      "Understand wave-particle duality for both light (photons) and matter (electrons).",
+      "Relate the de Broglie wavelength to momentum.",
+      "See the Schrodinger equation as a wave equation with a potential energy term."
+    ],
+    pitfalls: [
+      "Thinking the wavefunction is a physical wave in space like a water wave (it is a probability amplitude).",
+      "Confusing the uncertainty principle with measurement error (it is a fundamental limit).",
+      "Forgetting that the photoelectric effect requires quantized light, not just classical waves."
+    ],
+    terms: {
+      "matter-waves": {
+        short: "Particles have a wavelength lambda = h/p (de Broglie).",
+        long: "De Broglie proposed that all particles have wave properties with wavelength inversely proportional to momentum. This was confirmed by electron diffraction experiments. It is the foundation of quantum mechanics."
+      },
+      "schrodinger-equation": {
+        short: "The quantum wave equation: i hbar d psi/dt = H psi.",
+        long: "The Schrodinger equation governs how the quantum wavefunction evolves in time. For a particle in a potential V(x), it becomes -hbar^2/(2m) d^2 psi/dx^2 + V(x) psi = E psi for stationary states."
+      },
+      "uncertainty-principle": {
+        short: "Delta x Delta p >= hbar/2: position and momentum cannot both be precisely known.",
+        long: "The uncertainty principle is a direct consequence of wave mechanics. A wavefunction localized in a narrow region requires a broad range of momenta (wavelengths), and vice versa. It is the quantum version of the wavepacket bandwidth relation."
+      }
+    },
+    derivations: [
+      {
+        title: "Energy quantization in a box from standing waves",
+        teaser: "Apply boundary conditions to the Schrodinger equation and get discrete energy levels.",
+        steps: [
+          "For a particle in a box of width L with infinite walls, the wavefunction must vanish at x = 0 and x = L.",
+          "The solutions are psi_n = A sin(n pi x / L), just like standing waves on a string with fixed ends.",
+          "The allowed wavenumbers k_n = n pi / L give energies E_n = hbar^2 k_n^2 / (2m) = n^2 pi^2 hbar^2 / (2mL^2)."
+        ],
+        result: "Energy is quantized because only certain standing waves fit in the box, exactly like the normal modes of a string. The quantum number n labels the mode."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "An electron in an atom is like a standing wave wrapped around the nucleus. Only whole numbers of wavelengths fit, which is why energy levels are discrete and the periodic table has its structure."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "How does the particle-in-a-box problem connect to the vibrating string problem from earlier in the course?"
+      }
+    ],
+    quickActions: {
+      intuition: "Quantum mechanics is the final payoff of this course: particles are waves. The de Broglie relation and the Schrodinger equation are the quantum versions of concepts you already know from classical waves.",
+      formal: "The chapter introduces the de Broglie relation, the photoelectric effect as evidence for photon quantization, the Schrodinger equation, and solves the particle in a box to show energy quantization.",
+      quiz: "Checkpoint: what is the de Broglie wavelength of a baseball moving at 30 m/s, and why is this not observable?"
+    },
+    prompts: [
+      "How is the particle-in-a-box quantization analogous to standing waves on a string?",
+      "Why did the ultraviolet catastrophe require the introduction of quantized energy?"
+    ],
+    scene: "quantum"
+  },
+  {
+    number: 21,
+    title: "Doppler Effect",
+    slug: "doppler-effect",
+    pdf: "./lectures/21-Doppler-Effect.pdf",
+    conceptTitle: "Motion shifts frequency",
+    conceptCaption: "When a source or observer moves, the perceived frequency changes. This effect is universal for all waves and has both classical and relativistic versions.",
+    explanation: [
+      "The <term key='doppler-effect'>Doppler effect</term> shifts the frequency heard by an observer when there is relative motion between source and observer. For a source moving toward you, wavefronts bunch up and the frequency rises.",
+      "The formula differs depending on whether the source or the observer is moving (unlike the relativistic version). At speeds above the wave speed, the source outruns its own waves, creating a <term key='mach-cone'>Mach cone</term>."
+    ],
+    goals: [
+      "Derive the Doppler shift for a moving source and for a moving observer.",
+      "Understand why the two cases give different results (unlike the relativistic Doppler effect).",
+      "Describe what happens when the source exceeds the wave speed."
+    ],
+    pitfalls: [
+      "Using the relativistic Doppler formula for sound waves or vice versa.",
+      "Forgetting the sign convention: frequency increases when source and observer approach.",
+      "Thinking the sonic boom occurs only at the moment of crossing the sound barrier."
+    ],
+    terms: {
+      "doppler-effect": {
+        short: "Frequency shift due to relative motion between source and observer.",
+        long: "For a stationary observer and a source moving at speed v_s, the received frequency is nu' = nu c_s / (c_s + v_s), where v_s is positive for receding motion. For a moving observer and stationary source, nu' = nu (c_s + v_o) / c_s."
+      },
+      "mach-cone": {
+        short: "The cone-shaped shock front from a supersonic source.",
+        long: "When v_s > c_s, the source outruns its wavefronts. All the accumulated wavefronts pile up along a cone with half-angle theta = arcsin(c_s / v_s). This is heard as a sonic boom."
+      },
+      "relativistic-doppler": {
+        short: "The Doppler formula including time dilation from special relativity.",
+        long: "For light, the Doppler effect depends only on relative velocity (not on who moves) and includes a time dilation factor: f' = f sqrt((1-beta)/(1+beta)) where beta = v/c. This is used in measuring the expansion of the universe."
+      }
+    },
+    derivations: [
+      {
+        title: "Doppler shift for a moving source",
+        teaser: "Track the spacing between successive wavefronts emitted by a moving source.",
+        steps: [
+          "A source emits wavefronts separated by period T. In time T, the source moves v_s T.",
+          "Ahead of the source, consecutive wavefronts are separated by lambda' = (c_s - v_s) T = (c_s - v_s)/nu.",
+          "The observed frequency is nu' = c_s / lambda' = nu c_s / (c_s - v_s), which is higher (blue-shifted)."
+        ],
+        result: "The Doppler formula nu' = nu c_s / (c_s -/+ v_s) gives a higher frequency when the source approaches and a lower frequency when it recedes."
+      }
+    ],
+    deepDives: [
+      {
+        title: "Physical picture",
+        body: "An ambulance siren sounds higher pitched as it approaches and lower as it recedes. The wavefronts are compressed ahead of the ambulance and stretched behind it."
+      },
+      {
+        title: "AI tutor prompt",
+        body: "Why does the classical Doppler formula distinguish between source motion and observer motion, while the relativistic version does not?"
+      }
+    ],
+    quickActions: {
+      intuition: "The Doppler effect is geometry: a moving source compresses the waves it sends forward and stretches those it sends backward. At the speed of sound, all the waves pile up into a shock.",
+      formal: "The chapter derives the classical Doppler shift for moving source and moving observer separately, then combines them. It concludes with the Mach cone geometry for supersonic sources.",
+      quiz: "Checkpoint: if a source moves toward you at half the speed of sound, by what factor does the frequency increase?"
+    },
+    prompts: [
+      "Why is the frequency change not symmetric between approaching and receding in the classical Doppler formula?",
+      "How do astronomers use the Doppler effect to measure the velocities of distant galaxies?"
+    ],
+    scene: "doppler"
+  }
+];
+
+const chapterTeachingNotes = {
+  "oscillators-linearity": {
+    "lede": "Oscillation is the most basic motion in physics beyond rest. Any system near equilibrium executes simple harmonic motion because every smooth potential looks like a parabola at the bottom.",
+    "bridge": "Focus on this: Hooke's law is universal near equilibrium, linearity lets you add solutions, and complex exponentials turn differential equations into algebra.",
+    "mastery": [
+      "Derive the oscillator equation from a Taylor expansion of any potential near its minimum.",
+      "Solve the damped oscillator and classify underdamped, critically damped, and overdamped regimes.",
+      "Explain why linearity (superposition) is the single most important property for everything that follows."
+    ]
+  },
+  "driven-oscillators": {
+    "lede": "Driving a damped oscillator at its natural frequency produces the largest response. This is resonance, and it appears everywhere from bridge collapses to radio tuning.",
+    "bridge": "The key move is to replace cos(omega t) with Re(e^(-i omega t)), solve the complex equation algebraically, and then read off the amplitude and phase of the real solution.",
+    "mastery": [
+      "Solve for the steady-state amplitude and phase as functions of driving frequency.",
+      "Identify the resonance peak, its width (gamma), and the quality factor Q = omega_0 / gamma.",
+      "Explain why the transient solution dies away and only the steady state survives at long times."
+    ]
+  },
+  "coupled-oscillators": {
+    "lede": "Coupling two oscillators creates normal modes: collective motion patterns each with a single frequency. Beats arise when two close normal-mode frequencies interfere.",
+    "bridge": "The trick is to change coordinates from individual positions to sum and difference (or eigenvectors). In these new coordinates, the coupled system decouples into independent oscillators.",
+    "mastery": [
+      "Find normal modes by diagonalizing the coupled equations of motion.",
+      "Explain beats as the superposition of two normal modes with close frequencies.",
+      "Describe how energy flows back and forth between two coupled oscillators."
+    ]
+  },
+  "oscillators-to-waves": {
+    "lede": "Chain together many oscillators, take the continuum limit, and out pops the wave equation. This is the bridge from discrete physics to continuous wave phenomena.",
+    "bridge": "The chapter moves from 2 masses to 3 to N, then lets N go to infinity. Watch how the discrete dispersion relation becomes linear in that limit.",
+    "mastery": [
+      "Solve the N-mass system and recognize the sinusoidal normal mode shapes.",
+      "Derive the discrete dispersion relation omega = 2 omega_0 |sin(ka/2)| and take the continuum limit.",
+      "Explain why boundary conditions determine the set of allowed normal modes."
+    ]
+  },
+  "fourier-series": {
+    "lede": "Fourier series is the mathematical formalization of the idea that any periodic function can be built from simple harmonics.",
+    "bridge": "The orthogonality of sines and cosines is the engine that makes Fourier analysis work. Once you understand why the integral of sin(nx)cos(mx) over a period vanishes for n not equal to m, everything else follows.",
+    "mastery": [
+      "Write down the Fourier series and derive the coefficient formulas from orthogonality.",
+      "Compute the Fourier series of common waveforms like the sawtooth and square wave.",
+      "Explain the Gibbs phenomenon at discontinuities."
+    ]
+  },
+  "waves": {
+    "lede": "This chapter grounds the wave equation in physical reality: vibrating strings and sound in air both satisfy it, with wave speed determined by material properties.",
+    "bridge": "For strings, the restoring force is tension acting on curvature. For sound, it is pressure differences driving density changes. Both lead to the same mathematical equation.",
+    "mastery": [
+      "Derive the wave equation for a string from Newton's second law on a small element.",
+      "Derive the speed of sound in an ideal gas in terms of gamma, pressure, and density.",
+      "Distinguish longitudinal from transverse waves and give examples of each."
+    ]
+  },
+  "music": {
+    "lede": "Music is applied Fourier analysis. The consonance of intervals, the timbre of instruments, and the dissonance of clashing notes all follow from how harmonics combine.",
+    "bridge": "The key insight is that simple frequency ratios produce harmonic alignment, which the ear hears as consonance. Complex ratios create audible beating.",
+    "mastery": [
+      "Explain why the octave (2:1) and perfect fifth (3:2) sound consonant using harmonic overlap.",
+      "Relate the Fourier spectrum of an instrument to its perceived timbre.",
+      "Describe how beats create the perception of dissonance between nearby frequencies."
+    ]
+  },
+  "fourier-transforms": {
+    "lede": "The Fourier transform extends the Fourier series to non-periodic signals, turning the discrete sum over harmonics into a continuous integral over all frequencies.",
+    "bridge": "The derivation is clean: take the Fourier series period L to infinity, replace sums with integrals, and replace discrete coefficients with a continuous spectral density.",
+    "mastery": [
+      "Derive the Fourier transform from the L -> infinity limit of the exponential Fourier series.",
+      "Compute the Fourier transform of a damped sinusoid and identify the Lorentzian spectral shape.",
+      "Interpret the power spectrum |f-tilde(omega)|^2 and relate its width to the damping rate."
+    ]
+  },
+  "reflection-impedance": {
+    "lede": "When a wave encounters a boundary between two media, impedance mismatch determines how much reflects and how much transmits.",
+    "bridge": "The chapter is all about boundary conditions: continuity of displacement and continuity of force at the junction. These two conditions uniquely determine the reflection and transmission coefficients.",
+    "mastery": [
+      "Derive reflection and transmission coefficients from boundary conditions at a junction.",
+      "Define impedance and explain why impedance matching eliminates reflection.",
+      "Explain why the reflected wave inverts when going into a denser medium."
+    ]
+  },
+  "power": {
+    "lede": "Waves carry energy. The power transmitted depends on the impedance of the medium and the square of the oscillation velocity.",
+    "bridge": "The key result is P = Z (dA/dt)^2. From this, energy conservation at a boundary follows directly from the reflection and transmission coefficients.",
+    "mastery": [
+      "Derive kinetic and potential energy densities for a wave on a string.",
+      "Show that power equals impedance times velocity squared for a traveling wave.",
+      "Verify energy conservation at a boundary: P_reflected + P_transmitted = P_incident."
+    ]
+  },
+  "wavepackets": {
+    "lede": "A wavepacket is a localized pulse made from many frequencies. Its envelope moves at the group velocity, and dispersion causes it to spread.",
+    "bridge": "The distinction between group velocity and phase velocity is the central idea. Taylor-expanding the dispersion relation around the carrier frequency gives both the envelope speed and the spreading rate.",
+    "mastery": [
+      "Construct a Gaussian wavepacket and relate its spatial width to its spectral width.",
+      "Derive the group velocity as d omega / dk and distinguish it from phase velocity.",
+      "Explain dispersion as the spreading of a wavepacket in a medium where v depends on frequency."
+    ]
+  },
+  "wave-phenomena": {
+    "lede": "Wave phenomena show up in earthquakes, sonar, sonic booms, and countless technologies. The same principles apply across all these domains.",
+    "bridge": "This is a survey chapter. The goal is to see familiar wave concepts (reflection, refraction, Doppler, shock waves) applied in diverse real-world contexts.",
+    "mastery": [
+      "Describe how P-waves and S-waves reveal the structure of Earth's interior.",
+      "Explain the SOFAR sound channel and why sound can travel far in the ocean.",
+      "Derive the Mach cone angle and explain why a sonic boom is heard as a single bang."
+    ]
+  },
+  "light": {
+    "lede": "Light is an electromagnetic wave. Maxwell's equations predict its speed, and the electromagnetic spectrum spans from radio to gamma rays.",
+    "bridge": "The derivation of the EM wave equation from Maxwell's equations is the central calculation. Everything else follows from recognizing that 1/sqrt(mu_0 epsilon_0) = c.",
+    "mastery": [
+      "Derive the electromagnetic wave equation from Maxwell's equations in vacuum.",
+      "Identify c = 1/sqrt(mu_0 epsilon_0) and explain why this was a revolutionary prediction.",
+      "Survey the electromagnetic spectrum and relate wavelength/frequency to physical phenomena."
+    ]
+  },
+  "polarization": {
+    "lede": "Polarization is the vector nature of electromagnetic waves. The direction and phase of the oscillating E field define linear, circular, and elliptical polarization states.",
+    "bridge": "Think of the polarization vector as a complex 2-vector (Jones vector). The relative phase between its components is what distinguishes linear from circular polarization.",
+    "mastery": [
+      "Describe linear, circular, and elliptical polarization using the Jones vector formalism.",
+      "Explain how a quarter-wave plate converts linear to circular polarization.",
+      "Calculate the intensity transmitted through a linear polarizer for any input polarization."
+    ]
+  },
+  "refraction": {
+    "lede": "Snell's law governs how light bends at a boundary. It follows from the requirement that wavefronts match at the interface.",
+    "bridge": "The key physical insight is that frequency is preserved across a boundary but wavelength changes, forcing the direction to change to maintain phase coherence.",
+    "mastery": [
+      "Derive Snell's law from wavefront matching at a flat boundary.",
+      "Calculate the critical angle for total internal reflection and apply it to fiber optics.",
+      "Explain atmospheric refraction phenomena like mirages."
+    ]
+  },
+  "prisms": {
+    "lede": "Accelerating charges produce radiation, and prisms separate light by wavelength because the index of refraction depends on frequency.",
+    "bridge": "The chapter connects two ideas: the Larmor formula for how radiation is generated, and dispersion for how it is separated by wavelength in a prism.",
+    "mastery": [
+      "State the Larmor formula and explain the sin^2 theta angular pattern of radiation.",
+      "Explain why only accelerating charges radiate electromagnetic waves.",
+      "Describe how dispersion n(lambda) in glass causes a prism to separate white light into colors."
+    ]
+  },
+  "color": {
+    "lede": "Color is not a property of light alone. It is created by the three types of cone cells in the human eye, which reduce spectral information to three numbers.",
+    "bridge": "The central fact is that we have exactly three cone types, making color a 3D quantity. Metamers, color matching, and the CIE diagram all follow from this biological constraint.",
+    "mastery": [
+      "Explain why three primary colors can reproduce most perceived colors.",
+      "Define metamers and explain why different spectra can look identical.",
+      "Read a CIE chromaticity diagram and explain the concept of a display's color gamut."
+    ]
+  },
+  "antennas": {
+    "lede": "Antenna arrays use constructive and destructive interference from multiple sources to create directional radiation patterns.",
+    "bridge": "The radiation pattern of N sources is a geometric series in the phase. The result is the array factor, which gives sharp peaks whose width decreases as 1/N.",
+    "mastery": [
+      "Derive the array factor for N equally spaced sources.",
+      "Explain how the beam direction can be steered by adjusting the phase between elements.",
+      "Relate antenna directivity to the number of elements and their spacing."
+    ]
+  },
+  "diffraction": {
+    "lede": "Diffraction is what happens when waves encounter apertures or obstacles comparable to their wavelength. Huygens' principle turns every point in an aperture into a source.",
+    "bridge": "The diffraction grating result is just the antenna array result applied to slits. The only new idea is Huygens' principle, which justifies treating each slit as a source.",
+    "mastery": [
+      "Apply Huygens' principle to compute diffraction patterns.",
+      "Derive the grating equation d sin theta = m lambda and explain the sharpening with more slits.",
+      "State the Rayleigh criterion and explain its implications for the resolving power of telescopes."
+    ]
+  },
+  "quantum-mechanics": {
+    "lede": "Quantum mechanics is where everything in the course converges: particles are waves, energy is quantized, and the Schrodinger equation is a wave equation.",
+    "bridge": "The particle-in-a-box problem is exactly the vibrating-string problem with fixed ends. Quantized energy levels are just the allowed standing wave modes.",
+    "mastery": [
+      "Explain wave-particle duality and the de Broglie relation lambda = h/p.",
+      "Solve the particle-in-a-box problem and connect it to standing waves on a string.",
+      "State the uncertainty principle and derive it from the properties of wavepackets."
+    ]
+  },
+  "doppler-effect": {
+    "lede": "The Doppler effect shifts the frequency of waves when there is relative motion between source and observer. It applies to sound, light, and all waves.",
+    "bridge": "The derivation is geometric: track the spacing between successive wavefronts from a moving source and compute the received frequency.",
+    "mastery": [
+      "Derive the Doppler shift for a moving source and for a moving observer.",
+      "Explain why the classical Doppler formula is asymmetric between source and observer motion.",
+      "Describe the Mach cone and sonic boom for supersonic sources."
+    ]
+  }
+};
+
+const state = {
+  chapterIndex: 0,
+  mode: modes[0].id,
+  activeTerm: "hookes-law",
+  focusTarget: null,
+  showAllTerms: false
+};
+
+const sourceData = window.WAVES_SOURCE_DATA || {};
+
+const chapterNav = document.getElementById("chapter-nav");
+const chapterCount = document.getElementById("chapter-count");
+const modePills = document.getElementById("mode-pills");
+const searchQuery = document.getElementById("search-query");
+const searchResults = document.getElementById("search-results");
+const heroTitle = document.getElementById("hero-title");
+const heroSubtitle = document.getElementById("hero-subtitle");
+const chapterKicker = document.getElementById("chapter-kicker");
+const chapterTitle = document.getElementById("chapter-title");
+const chapterPdfLink = document.getElementById("chapter-pdf-link");
+const sourceSummaryNote = document.getElementById("source-summary-note");
+const chapterLede = document.getElementById("chapter-lede");
+const chapterBridge = document.getElementById("chapter-bridge");
+const chapterExplanation = document.getElementById("chapter-explanation");
+const chapterGoals = document.getElementById("chapter-goals");
+const chapterPitfalls = document.getElementById("chapter-pitfalls");
+const labTitle = document.getElementById("lab-title");
+const labCaption = document.getElementById("lab-caption");
+const scene = document.getElementById("scene");
+const assistantQuickActions = document.getElementById("assistant-quick-actions");
+const assistantAnswer = document.getElementById("assistant-answer");
+const termCloud = document.getElementById("term-cloud");
+const termToggle = document.getElementById("term-toggle");
+const termDetail = document.getElementById("term-detail");
+const derivations = document.getElementById("derivations");
+const quizDeck = document.getElementById("quiz-deck");
+const deepDives = document.getElementById("deep-dives");
+const chapterFrame = document.getElementById("chapter-frame");
+const sourcePanel = document.getElementById("source-panel");
+const sourceMeta = document.getElementById("source-meta");
+const sourcePdfLink = document.getElementById("source-pdf-link");
+const sourceSections = document.getElementById("source-sections");
+const sourceEquations = document.getElementById("source-equations");
+const sidebar = document.getElementById("atlas-sidebar");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+const sidebarClose = document.getElementById("sidebar-close");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const prevChapter = document.getElementById("prev-chapter");
+const nextChapter = document.getElementById("next-chapter");
+const tooltip = document.getElementById("tooltip");
+const studyQuestion = document.getElementById("study-question");
+const askButton = document.getElementById("ask-button");
+const chapterCoreIdea = document.getElementById("chapter-core-idea");
+const chapterWatchout = document.getElementById("chapter-watchout");
+const roadmapIntuition = document.getElementById("roadmap-intuition");
+const roadmapFormal = document.getElementById("roadmap-formal");
+const roadmapQuiz = document.getElementById("roadmap-quiz");
+const sectionGuide = document.getElementById("section-guide");
+const masteryChecklist = document.getElementById("mastery-checklist");
+const masteryProgress = document.getElementById("mastery-progress");
+
+chapterCount.textContent = `${chapters.length} chapters`;
+const mobileMedia = window.matchMedia("(max-width: 1120px)");
+const masteryStorageKey = "waves-mastery-v1";
+const masteryState = loadMasteryState();
+
+function loadMasteryState() {
+  try {
+    return JSON.parse(window.localStorage.getItem(masteryStorageKey) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveMasteryState() {
+  window.localStorage.setItem(masteryStorageKey, JSON.stringify(masteryState));
+}
+
+function isMobileLayout() {
+  return mobileMedia.matches;
+}
+
+function closeSidebarDrawer() {
+  document.body.classList.remove("sidebar-open");
+  sidebarOverlay.hidden = true;
+  sidebarToggle.setAttribute("aria-expanded", "false");
+}
+
+function openSidebarDrawer() {
+  if (!isMobileLayout()) return;
+  document.body.classList.add("sidebar-open");
+  sidebarOverlay.hidden = false;
+  sidebarToggle.setAttribute("aria-expanded", "true");
+}
+
+function toggleSidebarDrawer() {
+  if (document.body.classList.contains("sidebar-open")) {
+    closeSidebarDrawer();
+    return;
+  }
+  openSidebarDrawer();
+}
+
+function syncSidebarDrawer() {
+  if (!isMobileLayout()) {
+    closeSidebarDrawer();
+  }
+}
+
+function renderModes() {
+  modePills.innerHTML = modes
+    .map(
+      (mode) => `
+        <button class="mode-pill ${state.mode === mode.id ? "active" : ""}" data-mode="${mode.id}">
+          ${mode.label}
+        </button>
+      `
+    )
+    .join("");
+}
+
+function renderNav() {
+  chapterNav.innerHTML = chapters
+    .map(
+      (chapter, index) => `
+        <button class="chapter-link ${index === state.chapterIndex ? "active" : ""}" data-index="${index}">
+          <span class="chapter-link-number">Chapter ${chapter.number}</span>
+          <span class="chapter-link-title-row">
+            <span class="chapter-link-title">${chapter.title}</span>
+            <span class="chapter-link-progress">${getMasteryProgress(chapter).completedCount}/${getMasteryProgress(chapter).total}</span>
+          </span>
+        </button>
+      `
+    )
+    .join("");
+}
+
+function termButton(key, label) {
+  return `<button class="inline-term" data-term="${key}">${label}</button>`;
+}
+
+function parseExplanation(paragraphs) {
+  return paragraphs
+    .map((paragraph) => {
+      const html = paragraph.replace(/<term key='([^']+)'>(.*?)<\/term>/g, (_, key, label) => termButton(key, label));
+      return `<p>${html}</p>`;
+    })
+    .join("");
+}
+
+function renderBullets(element, values) {
+  element.innerHTML = values.map((value) => `<li>${value}</li>`).join("");
+}
+
+function sourceKeyForChapter(chapter) {
+  return chapter.pdf.split("/").pop().replace(".pdf", "");
+}
+
+function getSourceForChapter(chapter) {
+  return sourceData[sourceKeyForChapter(chapter)] || null;
+}
+
+function normalizeSearchText(value) {
+  return value.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function renderSearchResults() {
+  const query = normalizeSearchText(searchQuery.value || "");
+  if (!query) {
+    searchResults.innerHTML = "";
+    return;
+  }
+
+  const terms = query.split(" ").filter(Boolean);
+  const matches = [];
+
+  chapters.forEach((chapter, chapterIndex) => {
+    const source = getSourceForChapter(chapter);
+    if (!source?.searchIndex) return;
+
+    source.searchIndex.forEach((entry) => {
+      const haystack = normalizeSearchText(
+        `${chapter.title} ${entry.title} ${entry.snippet} ${(entry.equations || []).join(" ")}`
+      );
+      const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
+      if (score === 0) return;
+      matches.push({
+        chapterIndex,
+        chapterTitle: chapter.title,
+        chapterNumber: chapter.number,
+        kind: entry.kind,
+        title: entry.title,
+        snippet: entry.snippet,
+        target: entry.target,
+        anchor: entry.anchor || "",
+        score
+      });
+    });
+  });
+
+  matches.sort((a, b) => b.score - a.score || a.chapterNumber - b.chapterNumber);
+
+  searchResults.innerHTML = matches.slice(0, 10)
+    .map(
+      (result) => `
+        <button
+          class="search-result"
+          data-search-chapter="${result.chapterIndex}"
+          data-search-kind="${result.kind}"
+          data-search-target="${result.target}"
+          data-search-title="${result.title}"
+          data-search-anchor="${result.anchor}"
+        >
+          <small>Chapter ${result.chapterNumber} · ${result.kind}</small>
+          <strong>${result.title}</strong>
+          <span>${result.snippet}</span>
+        </button>
+      `
+    )
+    .join("");
+}
+
+function cleanSnippet(text) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function buildOpeningBridge(chapter) {
+  const notes = getTeachingNotes(chapter);
+  return notes?.bridge || `Focus on this first: ${chapter.goals[0]} Then check yourself with: ${chapter.prompts[0]}`;
+}
+
+function buildSectionGuideCards(chapter) {
+  const source = getSourceForChapter(chapter);
+  const labels = ["Start here", "Then build", "Key move", "Lock it in"];
+  const entries = (source?.searchIndex || [])
+    .filter((entry) => entry.kind === "section")
+    .filter((entry) => !/summary|appendix/i.test(entry.title))
+    .slice(0, 4);
+
+  if (!entries.length) {
+    return chapter.goals.slice(0, 3).map((goal, index) => ({
+      label: labels[index],
+      title: chapter.goals[index] || chapter.title,
+      summary: goal,
+      anchor: ""
+    }));
+  }
+
+  return entries.map((entry, index) => ({
+    label: labels[index] || `Move ${index + 1}`,
+    title: entry.title,
+    summary: cleanSnippet(entry.snippet),
+    anchor: entry.anchor || ""
+  }));
+}
+
+function getTeachingNotes(chapter) {
+  return chapterTeachingNotes[chapter.slug] || null;
+}
+
+function getMasteryItems(chapter) {
+  return getTeachingNotes(chapter)?.mastery || [
+    chapter.goals[0],
+    chapter.goals[1] || chapter.prompts[0],
+    chapter.prompts[0]
+  ];
+}
+
+function getMasteryProgress(chapter) {
+  const items = getMasteryItems(chapter);
+  const completed = masteryState[chapter.slug] || [];
+  return {
+    completedCount: items.filter((_, index) => completed[index]).length,
+    total: items.length
+  };
+}
+
+function findSourceMentions(chapter, termKey) {
+  const source = getSourceForChapter(chapter);
+  if (!source) return [];
+
+  const termLabel = termKey.replace(/[_-]/g, " ");
+  const tokens = termLabel.split(" ").filter((token) => token.length > 2);
+  const candidates = [
+    ...((source.searchIndex || []).map((entry) => ({
+      title: entry.title,
+      text: `${entry.title}. ${entry.snippet}`,
+      anchor: entry.anchor || "",
+      kind: entry.kind
+    }))),
+    ...((source.derivationHighlights || []).map((entry) => ({
+      title: entry.title,
+      text: `${entry.title}. ${entry.excerpt}`,
+      anchor: entry.anchor || "",
+      kind: "derivation"
+    }))),
+    ...((source.summaryBlocks || []).map((value) => ({
+      title: "Chapter summary",
+      text: value,
+      anchor: "",
+      kind: "summary"
+    }))),
+    ...((source.openingBlocks || []).map((value) => ({
+      title: "Opening notes",
+      text: value,
+      anchor: "",
+      kind: "summary"
+    })))
+  ];
+
+  const matches = [];
+  for (const candidate of candidates) {
+    const normalized = normalizeSearchText(`${candidate.title} ${candidate.text}`);
+    const hasPhrase = normalized.includes(termLabel);
+    const tokenHits = tokens.filter((token) => normalized.includes(token)).length;
+    if (!hasPhrase && tokenHits === 0) continue;
+    matches.push(candidate);
+  }
+
+  const seen = new Set();
+  return matches.filter((candidate) => {
+    const key = `${candidate.kind}|${candidate.anchor}|${candidate.title}|${candidate.text}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 3);
+}
+
+function renderRoadmap(chapter) {
+  chapterCoreIdea.textContent = chapter.quickActions.intuition;
+  chapterWatchout.textContent = chapter.pitfalls[0];
+  roadmapIntuition.textContent = chapter.quickActions.intuition;
+  roadmapFormal.textContent = chapter.quickActions.formal;
+  roadmapQuiz.textContent = `${chapter.quickActions.quiz} ${chapter.prompts[1]}`;
+}
+
+function renderOpening(chapter) {
+  const notes = getTeachingNotes(chapter);
+  chapterLede.textContent = notes?.lede || chapter.quickActions.intuition;
+  chapterBridge.textContent = buildOpeningBridge(chapter);
+}
+
+function renderSectionGuide(chapter) {
+  const cards = buildSectionGuideCards(chapter);
+  sectionGuide.innerHTML = cards
+    .map((card) => `
+      <article class="section-guide-card">
+        <p class="mini-label">${card.label}</p>
+        <h4>${card.title}</h4>
+        <p>${card.summary}</p>
+        ${
+          card.anchor
+            ? `
+              <button
+                class="roadmap-jump"
+                data-source-kind="section"
+                data-source-title="${card.title}"
+                data-source-anchor="${card.anchor}"
+              >
+                Highlight this section
+              </button>
+            `
+            : ""
+        }
+      </article>
+    `)
+    .join("");
+}
+
+function renderMastery(chapter) {
+  const items = getMasteryItems(chapter);
+  const completed = masteryState[chapter.slug] || [];
+  const completedCount = items.filter((_, index) => completed[index]).length;
+  masteryProgress.textContent = `${completedCount}/${items.length} complete`;
+  masteryChecklist.innerHTML = items
+    .map((item, index) => `
+      <label class="mastery-item ${completed[index] ? "checked" : ""}">
+        <input
+          type="checkbox"
+          data-mastery-index="${index}"
+          ${completed[index] ? "checked" : ""}
+        />
+        <span>${item}</span>
+      </label>
+    `)
+    .join("");
+}
+
+function renderQuickActions(chapter) {
+
+  assistantQuickActions.innerHTML = [
+    ["intuition", "Intuition"],
+    ["formal", "Formal"],
+    ["quiz", "Quiz"]
+  ]
+    .map(
+      ([key, label]) => `
+        <button class="quick-action" data-answer="${key}">
+          ${label}
+        </button>
+      `
+    )
+    .join("");
+
+  assistantAnswer.innerHTML = `
+    <h4>${chapter.title} through the ${state.mode} lens</h4>
+    <p>${chapter.quickActions[state.mode === "math" ? "formal" : state.mode === "exam" ? "quiz" : "intuition"]}</p>
+    <p><strong>Try this:</strong> ${chapter.prompts[0]}</p>
+  `;
+}
+
+function renderTerms(chapter) {
+  const entries = Object.entries(chapter.terms);
+  const visibleEntries = state.showAllTerms ? entries : entries.slice(0, 2);
+  if (!visibleEntries.find(([key]) => key === state.activeTerm)) {
+    state.activeTerm = visibleEntries[0][0];
+  }
+
+  termCloud.innerHTML = visibleEntries
+    .map(
+      ([key]) => `
+        <button class="term-chip ${key === state.activeTerm ? "active" : ""}" data-term="${key}">
+          ${key.replace(/[_-]/g, " ")}
+        </button>
+      `
+    )
+    .join("");
+
+  termToggle.hidden = entries.length <= 2;
+  termToggle.textContent = state.showAllTerms ? "Show fewer terms" : "Show all terms";
+
+  const detail = chapter.terms[state.activeTerm];
+  const sourceMentions = findSourceMentions(chapter, state.activeTerm);
+  const primaryMention = sourceMentions[0] || null;
+  const extraMentions = sourceMentions.slice(1);
+  termDetail.innerHTML = `
+    <h4>${state.activeTerm.replace(/[_-]/g, " ")}</h4>
+    ${
+      primaryMention
+        ? `
+          <div class="term-source-summary">
+            <p><strong>How the notes frame it:</strong> ${primaryMention.text}</p>
+            ${
+              primaryMention.anchor
+                ? `
+                  <button
+                    class="source-anchor-link"
+                    data-source-kind="${primaryMention.kind === "derivation" ? "derivation" : "section"}"
+                    data-source-title="${primaryMention.title}"
+                    data-source-anchor="${primaryMention.anchor}"
+                  >
+                    Highlight ${primaryMention.title}
+                  </button>
+                `
+                : ""
+            }
+          </div>
+        `
+        : ""
+    }
+    <p>${detail.long}</p>
+    <p><strong>Quick read:</strong> ${detail.short}</p>
+    ${
+      extraMentions.length
+        ? `
+          <div class="term-source">
+            <p><strong>More note matches:</strong></p>
+            ${extraMentions
+              .map(
+                (mention) => `
+                  <p>${mention.text}</p>
+                  ${
+                    mention.anchor
+                      ? `
+                        <button
+                          class="source-anchor-link"
+                          data-source-kind="${mention.kind === "derivation" ? "derivation" : "section"}"
+                          data-source-title="${mention.title}"
+                          data-source-anchor="${mention.anchor}"
+                        >
+                          Highlight ${mention.title}
+                        </button>
+                      `
+                      : ""
+                  }
+                `
+              )
+              .join("")}
+          </div>
+        `
+        : ""
+    }
+  `;
+}
+
+function renderSourceSummary(chapter) {
+  const source = sourceData[sourceKeyForChapter(chapter)];
+
+  if (!source || !source.summaryBlocks || source.summaryBlocks.length === 0) {
+    sourceSummaryNote.hidden = true;
+    sourceSummaryNote.innerHTML = "";
+    return;
+  }
+
+  sourceSummaryNote.hidden = false;
+  sourceSummaryNote.innerHTML = `
+    <h4>Closer to the notes</h4>
+    ${source.summaryBlocks.map((block) => `<p>${block}</p>`).join("")}
+  `;
+}
+
+function renderDerivations(chapter) {
+  const source = getSourceForChapter(chapter);
+  derivations.innerHTML = chapter.derivations
+    .map(
+      (derivation, index) => {
+        const sourceHighlight = source?.derivationHighlights?.[index];
+        const isFocused =
+          state.focusTarget?.kind === "derivation" &&
+          state.focusTarget?.title &&
+          sourceHighlight?.title === state.focusTarget.title;
+        return `
+        <details
+          class="derivation-card"
+          data-source-derivation="${sourceHighlight?.title || ""}"
+          ${index === 0 || isFocused ? "open" : ""}
+        >
+          <summary>
+            <div>
+              <h4>${derivation.title}</h4>
+              <p class="derivation-meta">${derivation.teaser}</p>
+            </div>
+            <span>Expand</span>
+          </summary>
+          <div class="derivation-body">
+            <ol>
+              ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
+            </ol>
+            <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
+            ${
+              sourceHighlight
+                ? `
+                  <div class="source-derivation">
+                    <h5>From "${sourceHighlight.title}"</h5>
+                    <p>${sourceHighlight.excerpt}</p>
+                    ${
+                      sourceHighlight.equations?.length
+                        ? `<ul class="source-equation-list">${sourceHighlight.equations
+                            .map((equation) => `<li>${equation}</li>`)
+                            .join("")}</ul>`
+                        : ""
+                    }
+                    ${
+                      sourceHighlight.anchor
+                        ? `
+                          <button
+                            class="source-anchor-link"
+                            data-source-kind="derivation"
+                            data-source-title="${sourceHighlight.title}"
+                            data-source-anchor="${sourceHighlight.anchor}"
+                          >
+                            Highlight this derivation source
+                          </button>
+                        `
+                        : ""
+                    }
+                  </div>
+                `
+                : ""
+            }
+          </div>
+        </details>
+      `;
+      }
+    )
+    .join("");
+}
+
+function renderQuizzes(chapter) {
+  const source = getSourceForChapter(chapter);
+  const cards = source?.quizCards?.length
+    ? source.quizCards
+    : [
+        {
+          title: "Chapter checkpoint",
+          prompt: chapter.prompts[0],
+          answer: chapter.quickActions.quiz,
+          source: chapter.title,
+          anchor: ""
+        }
+      ];
+
+  quizDeck.innerHTML = cards
+    .map(
+      (card, index) => `
+        <details class="quiz-card" ${index === 0 ? "open" : ""}>
+          <summary>
+            <h4>${card.title}</h4>
+            <p>${card.prompt}</p>
+          </summary>
+          <div class="quiz-body">
+            <div class="quiz-answer">
+              <strong>Recoverable answer:</strong>
+              <p>${card.answer}</p>
+            </div>
+            ${
+              card.anchor
+                ? `
+                  <button
+                    class="quiz-link"
+                    data-source-kind="section"
+                    data-source-title="${card.source}"
+                    data-source-anchor="${card.anchor}"
+                  >
+                    Highlight ${card.source}
+                  </button>
+                `
+                : ""
+            }
+          </div>
+        </details>
+      `
+    )
+    .join("");
+}
+
+function renderDeepDives(chapter) {
+  deepDives.innerHTML = chapter.deepDives
+    .map(
+      (dive) => `
+        <details class="dive-card">
+          <summary>
+            <h4>${dive.title}</h4>
+            <span>Open</span>
+          </summary>
+          <p>${dive.body}</p>
+        </details>
+      `
+    )
+    .join("");
+}
+
+function renderSourceMaterial(chapter) {
+  const source = getSourceForChapter(chapter);
+
+  if (!source) {
+    sourceMeta.textContent = "No extracted source material loaded for this chapter yet.";
+    sourcePdfLink.href = chapter.pdf;
+    renderBullets(sourceSections, ["Add generated source-data.js to surface section headings from the notes."]);
+    renderBullets(sourceEquations, ["Equation landmarks will appear here once the PDF extraction pass runs."]);
+    return;
+  }
+
+  sourceMeta.textContent = `Generated from ${source.pageCount} PDF pages with ${source.sectionAnchors.length} anchored sections and ${source.equations.length} equation landmarks.`;
+  sourcePdfLink.href = chapter.pdf;
+  sourceSections.className = "bullet-list source-sections-list";
+  sourceEquations.className = "bullet-list source-equations-list";
+  const sectionAnchors = source.sectionAnchors?.length
+    ? source.sectionAnchors
+    : (source.sections || []).map((title) => ({ title, anchor: "" }));
+  sourceSections.innerHTML = (sectionAnchors.length ? sectionAnchors : [{ title: "No section headings detected from the current extraction pass.", anchor: "" }])
+    .map((section) => {
+      const isActive =
+        state.focusTarget?.kind === "section" &&
+        ((state.focusTarget?.anchor && section.anchor === state.focusTarget.anchor) || section.title === state.focusTarget?.title);
+      if (!section.anchor) {
+        return `<li>${section.title}</li>`;
+      }
+      return `
+        <li>
+          <button
+            class="source-section-button ${isActive ? "active" : ""}"
+            data-source-kind="section"
+            data-source-title="${section.title}"
+            data-source-anchor="${section.anchor}"
+          >
+            ${section.title}
+          </button>
+        </li>
+      `;
+    })
+    .join("");
+  sourceEquations.innerHTML = (source.equations.length ? source.equations : ["No equation landmarks detected from the current extraction pass."])
+    .map((value) => `<li>${value}</li>`)
+    .join("");
+}
+
+function applyFocusTarget(chapter) {
+  if (!state.focusTarget) {
+    return;
+  }
+
+  if (state.focusTarget.kind === "derivation") {
+    const node = document.querySelector(`[data-source-derivation="${CSS.escape(state.focusTarget.title)}"]`);
+    if (node) {
+      node.open = true;
+      node.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  if (state.focusTarget.kind === "section") {
+    sourcePanel.open = true;
+    const node = document.querySelector(`[data-source-anchor="${CSS.escape(state.focusTarget.anchor || "")}"]`);
+    if (node) {
+      node.classList.add("active");
+    }
+    sourceSections.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function sceneMarkup(type) {
+  switch (type) {
+    case "oscillator":
+      return `
+        <div class="scene-title">Simple harmonic motion</div>
+        <div class="oscillator-scene">
+          <div class="spring-coil">
+            ${Array.from({ length: 8 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.06}s;"></div>`).join("")}
+          </div>
+          <div class="spring-mass"></div>
+          <svg class="sine-trail" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q25,10 50,50 Q75,90 100,50 Q125,10 150,50 Q175,90 200,50 Q225,10 250,50 Q275,90 300,50" fill="none" stroke="rgba(99,179,237,0.6)" stroke-width="2"/>
+          </svg>
+          ${[15, 30, 45, 60, 75].map((x, i) => `<span class="osc-dot" style="left:${x}%; animation-delay:${-i * 0.4}s;"></span>`).join("")}
+          <div class="equilibrium-line"></div>
+          <div class="potential-curve">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+              <path d="M0,80 Q50,0 100,0 Q150,0 200,80" fill="none" stroke="rgba(159,122,234,0.4)" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      `;
+    case "driven":
+      return `
+        <div class="scene-title">Resonance buildup</div>
+        <div class="driven-scene">
+          <div class="drive-piston"></div>
+          <div class="drive-spring">
+            ${Array.from({ length: 6 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.08}s;"></div>`).join("")}
+          </div>
+          <div class="driven-mass"></div>
+          <div class="resonance-glow"></div>
+          <div class="amplitude-envelope">
+            <svg viewBox="0 0 300 100" preserveAspectRatio="none">
+              <path d="M0,50 Q30,45 60,40 Q90,30 120,20 Q150,10 180,5 Q210,5 240,5 Q270,5 300,5" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="2"/>
+              <path d="M0,50 Q30,55 60,60 Q90,70 120,80 Q150,90 180,95 Q210,95 240,95 Q270,95 300,95" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="2"/>
+            </svg>
+          </div>
+          ${Array.from({ length: 10 }).map((_, i) => `<span class="drive-wave" style="left:${20 + i * 8}%; animation-delay:${-i * 0.25}s;"></span>`).join("")}
+          <div class="response-curve">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+              <path d="M0,75 Q40,74 60,70 Q80,55 90,20 Q100,5 110,20 Q120,55 140,70 Q160,74 200,75" fill="none" stroke="rgba(99,179,237,0.5)" stroke-width="2"/>
+            </svg>
+          </div>
+        </div>
+      `;
+    case "coupled":
+      return `
+        <div class="scene-title">Energy exchange between modes</div>
+        <div class="coupled-scene">
+          <div class="wall-left"></div>
+          <div class="coupled-spring spring-1">
+            ${Array.from({ length: 5 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.06}s;"></div>`).join("")}
+          </div>
+          <div class="coupled-mass mass-1"></div>
+          <div class="coupled-spring spring-2">
+            ${Array.from({ length: 5 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.06 - 0.5}s;"></div>`).join("")}
+          </div>
+          <div class="coupled-mass mass-2"></div>
+          <div class="coupled-spring spring-3">
+            ${Array.from({ length: 5 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.06 - 1}s;"></div>`).join("")}
+          </div>
+          <div class="wall-right"></div>
+          <div class="beat-envelope">
+            <svg viewBox="0 0 300 60" preserveAspectRatio="none">
+              <path d="M0,30 Q37,5 75,30 Q112,55 150,30 Q187,5 225,30 Q262,55 300,30" fill="none" stroke="rgba(72,187,120,0.5)" stroke-width="2"/>
+            </svg>
+          </div>
+          ${Array.from({ length: 6 }).map((_, i) => `<span class="energy-arrow" style="left:${25 + i * 10}%; animation-delay:${-i * 0.3}s;"></span>`).join("")}
+        </div>
+      `;
+    case "n-modes":
+      return `
+        <div class="scene-title">Normal modes of N masses</div>
+        <div class="n-modes-scene">
+          <div class="chain-wall-left"></div>
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const y = Math.sin((i + 1) * Math.PI / 9) * 35;
+            return `<div class="chain-mass" style="left:${12 + i * 10}%; top:${50 - y}%; animation-delay:${-i * 0.15}s;"></div>`;
+          }).join("")}
+          <div class="chain-wall-right"></div>
+          <svg class="mode-shape" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q37,15 75,15 Q112,15 150,50 Q187,85 225,85 Q262,85 300,50" fill="none" stroke="rgba(99,179,237,0.4)" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+          <svg class="mode-shape-2" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q50,20 100,50 Q150,80 200,50 Q250,20 300,50" fill="none" stroke="rgba(159,122,234,0.3)" stroke-width="2" stroke-dasharray="4 4"/>
+          </svg>
+          ${Array.from({ length: 7 }).map((_, i) => `<div class="chain-spring" style="left:${7 + i * 10}%; animation-delay:${-i * 0.15}s;"></div>`).join("")}
+          <div class="mode-label mode-1">n=1</div>
+          <div class="mode-label mode-2">n=2</div>
+        </div>
+      `;
+    case "fourier-series":
+      return `
+        <div class="scene-title">Building a square wave from harmonics</div>
+        <div class="fourier-scene">
+          <svg class="fourier-canvas" viewBox="0 0 300 160" preserveAspectRatio="none">
+            <path class="harmonic h1" d="M0,80 Q37,20 75,20 Q112,20 150,80 Q187,140 225,140 Q262,140 300,80" fill="none" stroke="rgba(99,179,237,0.7)" stroke-width="2"/>
+            <path class="harmonic h3" d="M0,80 Q12,50 25,50 Q37,50 50,80 Q62,110 75,110 Q87,110 100,80 Q112,50 125,50 Q137,50 150,80 Q162,110 175,110 Q187,110 200,80 Q212,50 225,50 Q237,50 250,80 Q262,110 275,110 Q287,110 300,80" fill="none" stroke="rgba(159,122,234,0.5)" stroke-width="1.5"/>
+            <path class="harmonic h5" d="M0,80 ${Array.from({ length: 10 }).map((_, i) => {
+              const x1 = i * 30 + 7.5;
+              const x2 = i * 30 + 15;
+              const x3 = i * 30 + 22.5;
+              const x4 = i * 30 + 30;
+              const y1 = i % 2 === 0 ? 60 : 100;
+              const y2 = i % 2 === 0 ? 60 : 100;
+              return `Q${x1},${y1} ${x2},80 Q${x3},${120 - y1} ${x4},80`;
+            }).join(" ")}" fill="none" stroke="rgba(72,187,120,0.4)" stroke-width="1"/>
+            <path class="square-target" d="M0,30 L75,30 L75,130 L150,130 L150,30 L225,30 L225,130 L300,130" fill="none" stroke="rgba(237,137,54,0.6)" stroke-width="2" stroke-dasharray="6 3"/>
+          </svg>
+          ${["1f", "3f", "5f", "7f"].map((label, i) => `<span class="freq-label" style="left:${15 + i * 22}%; animation-delay:${-i * 0.5}s;">${label}</span>`).join("")}
+          <div class="sum-arrow"></div>
+        </div>
+      `;
+    case "waves":
+      return `
+        <div class="scene-title">Traveling wave</div>
+        <div class="waves-scene">
+          <svg class="wave-canvas" viewBox="0 0 400 120" preserveAspectRatio="none">
+            <path class="traveling-wave" d="" fill="none" stroke="rgba(99,179,237,0.8)" stroke-width="3"/>
+            <path class="traveling-wave-2" d="" fill="none" stroke="rgba(159,122,234,0.4)" stroke-width="2"/>
+          </svg>
+          ${Array.from({ length: 12 }).map((_, i) => {
+            return `<span class="medium-dot" style="left:${5 + i * 8}%; animation-delay:${-i * 0.2}s;"></span>`;
+          }).join("")}
+          <div class="wave-direction-arrow"></div>
+          <div class="crest-label">crest</div>
+          <div class="trough-label">trough</div>
+          <div class="wavelength-bracket"></div>
+        </div>
+      `;
+    case "music":
+      return `
+        <div class="scene-title">Harmonic modes of a string</div>
+        <div class="music-scene">
+          <div class="string-bridge-left"></div>
+          <div class="string-bridge-right"></div>
+          <svg class="harmonics-canvas" viewBox="0 0 300 180" preserveAspectRatio="none">
+            <path class="string-mode m1" d="M0,30 Q75,10 150,30 Q225,50 300,30" fill="none" stroke="rgba(237,137,54,0.8)" stroke-width="2.5"/>
+            <path class="string-mode m2" d="M0,70 Q37,50 75,70 Q112,90 150,70 Q187,50 225,70 Q262,90 300,70" fill="none" stroke="rgba(99,179,237,0.7)" stroke-width="2"/>
+            <path class="string-mode m3" d="M0,110 Q25,95 50,110 Q75,125 100,110 Q125,95 150,110 Q175,125 200,110 Q225,95 250,110 Q275,125 300,110" fill="none" stroke="rgba(72,187,120,0.6)" stroke-width="1.5"/>
+            <path class="string-mode m4" d="M0,150 Q18,140 37,150 Q56,160 75,150 Q93,140 112,150 Q131,160 150,150 Q168,140 187,150 Q206,160 225,150 Q243,140 262,150 Q281,160 300,150" fill="none" stroke="rgba(159,122,234,0.5)" stroke-width="1"/>
+          </svg>
+          ${["f", "2f", "3f", "4f"].map((label, i) => `<span class="harmonic-label" style="top:${18 + i * 22}%; animation-delay:${-i * 0.4}s;">${label}</span>`).join("")}
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="note-dot" style="left:${20 + i * 20}%; top:${25 + i * 22}%; animation-delay:${-i * 0.3}s;"></span>`).join("")}
+        </div>
+      `;
+    case "fourier-transform":
+      return `
+        <div class="scene-title">Time domain to frequency domain</div>
+        <div class="ft-scene">
+          <div class="time-domain">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+              <path class="time-signal" d="M0,40 Q10,20 20,40 Q30,60 40,40 Q50,20 60,40 Q70,55 80,40 Q90,30 100,40 Q110,48 120,40 Q130,35 140,40 Q150,42 160,40 Q170,39 180,40 Q190,40 200,40" fill="none" stroke="rgba(99,179,237,0.8)" stroke-width="2"/>
+              <path class="envelope-decay" d="M0,20 Q50,25 100,35 Q150,38 200,40" fill="none" stroke="rgba(237,137,54,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+              <path class="envelope-decay-2" d="M0,60 Q50,55 100,45 Q150,42 200,40" fill="none" stroke="rgba(237,137,54,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+            </svg>
+            <span class="domain-label">t</span>
+          </div>
+          <div class="ft-arrow">
+            ${Array.from({ length: 5 }).map((_, i) => `<span class="arrow-particle" style="animation-delay:${-i * 0.3}s;"></span>`).join("")}
+          </div>
+          <div class="freq-domain">
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
+              <path class="lorentzian-peak" d="M0,75 Q30,74 50,72 Q70,65 80,40 Q88,15 100,10 Q112,15 120,40 Q130,65 150,72 Q170,74 200,75" fill="rgba(159,122,234,0.15)" stroke="rgba(159,122,234,0.8)" stroke-width="2"/>
+            </svg>
+            <span class="domain-label">omega</span>
+            <span class="peak-label">omega_0</span>
+            <span class="width-label">gamma</span>
+          </div>
+        </div>
+      `;
+    case "impedance":
+      return `
+        <div class="scene-title">Reflection and transmission at a boundary</div>
+        <div class="impedance-scene">
+          <div class="medium-1"></div>
+          <div class="medium-2"></div>
+          <div class="boundary-line"></div>
+          <svg class="incident-wave" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <path d="M0,30 Q12,10 25,30 Q37,50 50,30 Q62,10 75,30 Q87,50 100,30 Q112,10 125,30 Q137,50 150,30" fill="none" stroke="rgba(99,179,237,0.8)" stroke-width="2.5"/>
+          </svg>
+          <svg class="reflected-wave" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <path d="M200,30 Q187,40 175,30 Q162,20 150,30 Q137,40 125,30 Q112,20 100,30" fill="none" stroke="rgba(237,137,54,0.7)" stroke-width="2"/>
+          </svg>
+          <svg class="transmitted-wave" viewBox="0 0 200 60" preserveAspectRatio="none">
+            <path d="M0,30 Q18,15 37,30 Q56,45 75,30 Q93,15 112,30 Q131,45 150,30 Q168,15 187,30" fill="none" stroke="rgba(72,187,120,0.8)" stroke-width="2"/>
+          </svg>
+          <span class="z-label z1-label">Z1</span>
+          <span class="z-label z2-label">Z2</span>
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="inc-arrow" style="left:${10 + i * 10}%; animation-delay:${-i * 0.3}s;"></span>`).join("")}
+          ${Array.from({ length: 3 }).map((_, i) => `<span class="ref-arrow" style="left:${40 - i * 8}%; animation-delay:${-i * 0.3 - 0.5}s;"></span>`).join("")}
+          ${Array.from({ length: 3 }).map((_, i) => `<span class="trans-arrow" style="left:${55 + i * 10}%; animation-delay:${-i * 0.3 - 0.5}s;"></span>`).join("")}
+        </div>
+      `;
+    case "power":
+      return `
+        <div class="scene-title">Energy transport in a wave</div>
+        <div class="power-scene">
+          <svg class="power-wave" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q18,20 37,50 Q56,80 75,50 Q93,20 112,50 Q131,80 150,50 Q168,20 187,50 Q206,80 225,50 Q243,20 262,50 Q281,80 300,50" fill="none" stroke="rgba(99,179,237,0.7)" stroke-width="2.5"/>
+          </svg>
+          ${Array.from({ length: 10 }).map((_, i) => {
+            const height = 20 + Math.abs(Math.sin(i * 0.6)) * 40;
+            return `<div class="intensity-bar" style="left:${8 + i * 9}%; height:${height}px; animation-delay:${-i * 0.2}s;"></div>`;
+          }).join("")}
+          <div class="power-arrow"></div>
+          ${Array.from({ length: 6 }).map((_, i) => `<span class="energy-particle" style="left:${10 + i * 15}%; animation-delay:${-i * 0.4}s;"></span>`).join("")}
+          <span class="power-label">P = Z(dA/dt)^2</span>
+        </div>
+      `;
+    case "wavepackets":
+      return `
+        <div class="scene-title">Dispersing wavepacket</div>
+        <div class="wavepacket-scene">
+          <div class="gaussian-envelope"></div>
+          <svg class="packet-canvas" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path class="carrier-wave" d="M0,50 ${Array.from({ length: 30 }).map((_, i) => {
+              const x = i * 10;
+              const env = Math.exp(-((x - 150) ** 2) / 3000);
+              const y = 50 + env * 35 * Math.sin(i * 1.2);
+              return `L${x},${y}`;
+            }).join(" ")}" fill="none" stroke="rgba(99,179,237,0.8)" stroke-width="2"/>
+            <path class="envelope-top" d="M0,50 ${Array.from({ length: 30 }).map((_, i) => {
+              const x = i * 10;
+              const env = Math.exp(-((x - 150) ** 2) / 3000);
+              return `L${x},${50 - env * 35}`;
+            }).join(" ")}" fill="none" stroke="rgba(159,122,234,0.5)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <path class="envelope-bottom" d="M0,50 ${Array.from({ length: 30 }).map((_, i) => {
+              const x = i * 10;
+              const env = Math.exp(-((x - 150) ** 2) / 3000);
+              return `L${x},${50 + env * 35}`;
+            }).join(" ")}" fill="none" stroke="rgba(159,122,234,0.5)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          </svg>
+          <div class="group-arrow">v_g</div>
+          <div class="phase-arrow">v_p</div>
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="dispersion-dot" style="left:${35 + i * 8}%; animation-delay:${-i * 0.3}s;"></span>`).join("")}
+        </div>
+      `;
+    case "em-waves":
+      return `
+        <div class="scene-title">Electromagnetic wave propagation</div>
+        <div class="em-scene">
+          <div class="propagation-axis"></div>
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const angle = i * 45;
+            const len = Math.sin(i * 0.8) * 30 + 10;
+            return `<div class="e-field-arrow" style="left:${10 + i * 10}%; height:${len}px; animation-delay:${-i * 0.2}s;"></div>`;
+          }).join("")}
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const len = Math.sin(i * 0.8 + Math.PI / 2) * 25 + 8;
+            return `<div class="b-field-arrow" style="left:${10 + i * 10}%; width:${len}px; animation-delay:${-i * 0.2}s;"></div>`;
+          }).join("")}
+          <svg class="e-wave-path" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q18,20 37,50 Q56,80 75,50 Q93,20 112,50 Q131,80 150,50 Q168,20 187,50 Q206,80 225,50 Q243,20 262,50 Q281,80 300,50" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="1.5"/>
+          </svg>
+          <svg class="b-wave-path" viewBox="0 0 300 100" preserveAspectRatio="none">
+            <path d="M0,50 Q18,30 37,50 Q56,70 75,50 Q93,30 112,50 Q131,70 150,50 Q168,30 187,50 Q206,70 225,50 Q243,30 262,50 Q281,70 300,50" fill="none" stroke="rgba(72,187,120,0.5)" stroke-width="1.5"/>
+          </svg>
+          <span class="field-label e-label">E</span>
+          <span class="field-label b-label">B</span>
+          <span class="field-label k-label">k</span>
+        </div>
+      `;
+    case "light":
+      return `
+        <div class="scene-title">Oscillating electric field beam</div>
+        <div class="light-scene">
+          <div class="beam-core"></div>
+          ${Array.from({ length: 10 }).map((_, i) => {
+            return `<div class="e-oscillation" style="left:${8 + i * 9}%; animation-delay:${-i * 0.15}s;"></div>`;
+          }).join("")}
+          <div class="beam-glow"></div>
+          ${Array.from({ length: 6 }).map((_, i) => `<span class="photon-dot" style="left:${15 + i * 14}%; animation-delay:${-i * 0.25}s;"></span>`).join("")}
+          <div class="spectrum-bar">
+            <div class="spectrum-segment red"></div>
+            <div class="spectrum-segment orange"></div>
+            <div class="spectrum-segment yellow"></div>
+            <div class="spectrum-segment green"></div>
+            <div class="spectrum-segment blue"></div>
+            <div class="spectrum-segment violet"></div>
+          </div>
+        </div>
+      `;
+    case "polarization":
+      return `
+        <div class="scene-title">Polarization states</div>
+        <div class="polarization-scene">
+          <div class="pol-axis"></div>
+          <div class="linear-pol">
+            ${Array.from({ length: 8 }).map((_, i) => `<div class="pol-arrow linear" style="left:${i * 12}%; animation-delay:${-i * 0.2}s;"></div>`).join("")}
+          </div>
+          <div class="circular-pol">
+            ${Array.from({ length: 8 }).map((_, i) => {
+              const angle = i * 45;
+              return `<div class="pol-arrow circular" style="left:${i * 12}%; transform:rotate(${angle}deg); animation-delay:${-i * 0.2}s;"></div>`;
+            }).join("")}
+          </div>
+          <div class="pol-helix">
+            <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+              <path d="M0,40 Q18,10 37,40 Q56,70 75,40 Q93,10 112,40 Q131,70 150,40 Q168,10 187,40 Q206,70 225,40 Q243,10 262,40 Q281,70 300,40" fill="none" stroke="rgba(99,179,237,0.6)" stroke-width="2"/>
+              <path d="M0,40 Q18,30 37,40 Q56,50 75,40 Q93,30 112,40 Q131,50 150,40 Q168,30 187,40 Q206,50 225,40 Q243,30 262,40 Q281,50 300,40" fill="none" stroke="rgba(159,122,234,0.4)" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="pol-label linear-label">Linear</span>
+          <span class="pol-label circular-label">Circular</span>
+        </div>
+      `;
+    case "refraction":
+      return `
+        <div class="scene-title">Snell's law at an interface</div>
+        <div class="refraction-scene">
+          <div class="medium-air"></div>
+          <div class="medium-glass"></div>
+          <div class="refraction-boundary"></div>
+          <div class="normal-line"></div>
+          <div class="incident-ray"></div>
+          <div class="refracted-ray"></div>
+          <div class="reflected-ray-small"></div>
+          ${Array.from({ length: 5 }).map((_, i) => `<span class="wavefront-line inc" style="top:${15 + i * 8}%; animation-delay:${-i * 0.25}s;"></span>`).join("")}
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="wavefront-line ref" style="top:${55 + i * 8}%; animation-delay:${-i * 0.25 - 0.5}s;"></span>`).join("")}
+          <span class="angle-label theta1">theta_1</span>
+          <span class="angle-label theta2">theta_2</span>
+          <span class="medium-label air-label">n1 (air)</span>
+          <span class="medium-label glass-label">n2 (glass)</span>
+        </div>
+      `;
+    case "prisms":
+      return `
+        <div class="scene-title">Prismatic dispersion</div>
+        <div class="prism-scene">
+          <div class="prism-body">
+            <svg viewBox="0 0 200 180" preserveAspectRatio="none">
+              <polygon points="100,10 190,170 10,170" fill="rgba(99,179,237,0.12)" stroke="rgba(99,179,237,0.5)" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="white-beam"></div>
+          ${[
+            { color: "rgba(255,50,50,0.8)", angle: -8, label: "Red" },
+            { color: "rgba(255,165,0,0.7)", angle: -4, label: "Orange" },
+            { color: "rgba(255,255,0,0.7)", angle: 0, label: "Yellow" },
+            { color: "rgba(50,205,50,0.7)", angle: 4, label: "Green" },
+            { color: "rgba(30,144,255,0.7)", angle: 8, label: "Blue" },
+            { color: "rgba(148,0,211,0.7)", angle: 12, label: "Violet" }
+          ].map((ray, i) => `
+            <div class="spectrum-ray" style="background:${ray.color}; transform:rotate(${ray.angle}deg); animation-delay:${-i * 0.15}s;"></div>
+          `).join("")}
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="prism-photon" style="left:${10 + i * 8}%; animation-delay:${-i * 0.3}s;"></span>`).join("")}
+        </div>
+      `;
+    case "color":
+      return `
+        <div class="scene-title">Additive color mixing</div>
+        <div class="color-scene">
+          <div class="color-circle red"></div>
+          <div class="color-circle green"></div>
+          <div class="color-circle blue"></div>
+          <div class="color-overlap rg"></div>
+          <div class="color-overlap gb"></div>
+          <div class="color-overlap rb"></div>
+          <div class="color-overlap-center"></div>
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const angle = i * 45;
+            const r = 55 + Math.random() * 15;
+            const x = 50 + r * Math.cos(angle * Math.PI / 180) / 2;
+            const y = 50 + r * Math.sin(angle * Math.PI / 180) / 2;
+            return `<span class="color-particle" style="left:${x}%; top:${y}%; animation-delay:${-i * 0.3}s;"></span>`;
+          }).join("")}
+          <span class="color-label r-label">R</span>
+          <span class="color-label g-label">G</span>
+          <span class="color-label b-label">B</span>
+          <span class="mix-label yellow-label">Y</span>
+          <span class="mix-label cyan-label">C</span>
+          <span class="mix-label magenta-label">M</span>
+          <span class="mix-label white-label">W</span>
+        </div>
+      `;
+    case "antennas":
+      return `
+        <div class="scene-title">Dipole radiation pattern</div>
+        <div class="antenna-scene">
+          <div class="dipole-rod"></div>
+          <div class="dipole-feed"></div>
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const radius = 20 + i * 12;
+            return `<div class="wavefront-circle" style="width:${radius * 2}px; height:${radius * 2}px; animation-delay:${-i * 0.35}s;"></div>`;
+          }).join("")}
+          <div class="radiation-lobe lobe-top"></div>
+          <div class="radiation-lobe lobe-bottom"></div>
+          ${Array.from({ length: 6 }).map((_, i) => {
+            const angle = -60 + i * 24;
+            return `<span class="rad-arrow" style="transform:rotate(${angle}deg); animation-delay:${-i * 0.2}s;"></span>`;
+          }).join("")}
+          <span class="antenna-label">sin^2 theta</span>
+        </div>
+      `;
+    case "diffraction":
+      return `
+        <div class="scene-title">Waves through a slit</div>
+        <div class="diffraction-scene">
+          <div class="diff-barrier"></div>
+          <div class="diff-slit"></div>
+          ${Array.from({ length: 6 }).map((_, i) => `<div class="incoming-wavefront" style="left:${5 + i * 6}%; animation-delay:${-i * 0.3}s;"></div>`).join("")}
+          ${Array.from({ length: 8 }).map((_, i) => {
+            const radius = 15 + i * 12;
+            return `<div class="huygens-wavelet" style="width:${radius * 2}px; height:${radius * 2}px; animation-delay:${-i * 0.25}s;"></div>`;
+          }).join("")}
+          <div class="intensity-screen">
+            <svg viewBox="0 0 30 200" preserveAspectRatio="none">
+              <path d="M15,0 Q15,30 5,50 Q0,60 0,70 Q0,80 5,90 Q15,100 15,100 Q15,100 25,90 Q30,80 30,70 Q30,60 25,50 Q15,30 15,0" fill="rgba(99,179,237,0.3)" stroke="rgba(99,179,237,0.7)" stroke-width="1"/>
+            </svg>
+          </div>
+          ${Array.from({ length: 5 }).map((_, i) => `<span class="diffraction-dot" style="top:${30 + i * 10}%; animation-delay:${-i * 0.2}s;"></span>`).join("")}
+        </div>
+      `;
+    case "quantum":
+      return `
+        <div class="scene-title">Particle in a potential well</div>
+        <div class="quantum-scene">
+          <div class="potential-well">
+            <svg viewBox="0 0 200 120" preserveAspectRatio="none">
+              <path d="M0,10 L0,110 L200,110 L200,10" fill="none" stroke="rgba(159,122,234,0.6)" stroke-width="3"/>
+            </svg>
+          </div>
+          <svg class="wavefunction-canvas" viewBox="0 0 200 100" preserveAspectRatio="none">
+            <path class="psi-1" d="M0,80 Q50,20 100,20 Q150,20 200,80" fill="none" stroke="rgba(99,179,237,0.8)" stroke-width="2.5"/>
+            <path class="psi-2" d="M0,60 Q25,30 50,60 Q75,90 100,60 Q125,30 150,60 Q175,90 200,60" fill="none" stroke="rgba(72,187,120,0.6)" stroke-width="2"/>
+            <path class="psi-3" d="M0,50 Q16,35 33,50 Q50,65 66,50 Q83,35 100,50 Q116,65 133,50 Q150,35 166,50 Q183,65 200,50" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="1.5"/>
+          </svg>
+          ${[25, 50, 75].map((pct, i) => `<div class="energy-level-line" style="bottom:${20 + i * 25}%; animation-delay:${-i * 0.3}s;"><span>E${i + 1}</span></div>`).join("")}
+          ${Array.from({ length: 6 }).map((_, i) => `<span class="prob-dot" style="left:${15 + i * 14}%; animation-delay:${-i * 0.25}s;"></span>`).join("")}
+          <span class="quantum-label">|psi|^2</span>
+        </div>
+      `;
+    case "doppler":
+      return `
+        <div class="scene-title">Doppler frequency shift</div>
+        <div class="doppler-scene">
+          <div class="doppler-source"></div>
+          ${Array.from({ length: 6 }).map((_, i) => {
+            const radius = 18 + i * 16;
+            const offset = (5 - i) * 6;
+            return `<div class="doppler-wavefront" style="width:${radius * 2}px; height:${radius * 2}px; left:calc(45% + ${offset}px); animation-delay:${-i * 0.4}s;"></div>`;
+          }).join("")}
+          <div class="observer-ahead">
+            <span class="obs-icon"></span>
+            <span class="obs-label">Higher f</span>
+          </div>
+          <div class="observer-behind">
+            <span class="obs-icon"></span>
+            <span class="obs-label">Lower f</span>
+          </div>
+          <div class="source-velocity-arrow"></div>
+          ${Array.from({ length: 4 }).map((_, i) => `<span class="compressed-wave" style="left:${62 + i * 4}%; animation-delay:${-i * 0.15}s;"></span>`).join("")}
+          ${Array.from({ length: 3 }).map((_, i) => `<span class="stretched-wave" style="left:${20 + i * 7}%; animation-delay:${-i * 0.2}s;"></span>`).join("")}
+        </div>
+      `;
+    default:
+      return "";
+  }
+}
+
+function renderScene(chapter) {
+  scene.innerHTML = sceneMarkup(chapter.scene);
+}
+
+function answerQuestion(chapter, rawQuestion) {
+  const question = rawQuestion.trim().toLowerCase();
+
+  if (!question) {
+    return {
+      title: `Ask ${chapter.title}`,
+      body: `Try a prompt like "${chapter.prompts[0]}" or click one of the quick actions to switch explanation depth.`
+    };
+  }
+
+  const matchedTerm = Object.entries(chapter.terms).find(([key]) => {
+    const normalized = key.replace(/[_-]/g, " ");
+    return question.includes(key) || question.includes(normalized);
+  });
+
+  if (matchedTerm) {
+    const [key, value] = matchedTerm;
+    return {
+      title: key.replace(/[_-]/g, " "),
+      body: `${value.long} In this chapter, that idea matters because ${chapter.quickActions.intuition.toLowerCase()}`
+    };
+  }
+
+  if (question.includes("derive") || question.includes("proof") || question.includes("math")) {
+    return {
+      title: `Math view on ${chapter.title}`,
+      body: `${chapter.quickActions.formal} Open the derivation card below to walk the steps in sequence.`
+    };
+  }
+
+  if (question.includes("confus") || question.includes("mistake") || question.includes("trap")) {
+    return {
+      title: "Common trap",
+      body: `${chapter.pitfalls[0]} Watch how the chapter keeps the microscopic and macroscopic levels conceptually separate.`
+    };
+  }
+
+  if (question.includes("quiz") || question.includes("check")) {
+    return {
+      title: "Quick checkpoint",
+      body: `${chapter.quickActions.quiz} Follow-up: ${chapter.prompts[1]}`
+    };
+  }
+
+  return {
+    title: `Chapter guide: ${chapter.title}`,
+    body: `${chapter.quickActions.intuition} If you want a more formal route, ask about the math, derivation, or a specific glossary term.`
+  };
+}
+
+function renderChapter() {
+  const chapter = chapters[state.chapterIndex];
+  const mode = modes.find((item) => item.id === state.mode);
+
+  heroTitle.textContent = mode.hero;
+  heroSubtitle.textContent = mode.subtitle;
+  chapterKicker.textContent = `Chapter ${chapter.number}`;
+  chapterTitle.textContent = chapter.title;
+  chapterPdfLink.href = chapter.pdf;
+  renderSourceSummary(chapter);
+  renderOpening(chapter);
+  chapterExplanation.innerHTML = parseExplanation(chapter.explanation);
+  renderBullets(chapterGoals, chapter.goals);
+  renderBullets(chapterPitfalls, chapter.pitfalls);
+  labTitle.textContent = chapter.conceptTitle;
+  labCaption.textContent = chapter.conceptCaption;
+  renderScene(chapter);
+  renderRoadmap(chapter);
+  renderSectionGuide(chapter);
+  renderQuickActions(chapter);
+  renderTerms(chapter);
+  renderDerivations(chapter);
+  renderQuizzes(chapter);
+  renderMastery(chapter);
+  renderDeepDives(chapter);
+  renderSourceMaterial(chapter);
+  chapterFrame.src = `${chapter.pdf}#toolbar=0&navpanes=0&page=1`;
+  if (!state.focusTarget) {
+    sourcePanel.open = false;
+  }
+  applyFocusTarget(chapter);
+
+  prevChapter.disabled = state.chapterIndex === 0;
+  nextChapter.disabled = state.chapterIndex === chapters.length - 1;
+}
+
+function showTooltip(target, text) {
+  const bounds = target.getBoundingClientRect();
+  tooltip.textContent = text;
+  tooltip.classList.add("visible");
+  tooltip.setAttribute("aria-hidden", "false");
+  tooltip.style.transform = `translate(${bounds.left + window.scrollX}px, ${bounds.top + window.scrollY - 48}px)`;
+}
+
+function hideTooltip() {
+  tooltip.classList.remove("visible");
+  tooltip.setAttribute("aria-hidden", "true");
+  tooltip.style.transform = "translate(-9999px, -9999px)";
+}
+
+function attachEvents() {
+  modePills.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-mode]");
+    if (!button) return;
+    state.mode = button.dataset.mode;
+    renderModes();
+    renderChapter();
+    closeSidebarDrawer();
+  });
+
+  chapterNav.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-index]");
+    if (!button) return;
+    state.chapterIndex = Number(button.dataset.index);
+    state.focusTarget = null;
+    state.showAllTerms = false;
+    renderNav();
+    renderChapter();
+    closeSidebarDrawer();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  searchQuery.addEventListener("input", () => {
+    renderSearchResults();
+  });
+
+  searchResults.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-search-chapter]");
+    if (!button) return;
+    state.chapterIndex = Number(button.dataset.searchChapter);
+    state.showAllTerms = false;
+    state.focusTarget = {
+      kind: button.dataset.searchKind,
+      title: button.dataset.searchTitle || button.dataset.searchTarget,
+      anchor: button.dataset.searchAnchor || ""
+    };
+    renderNav();
+    renderChapter();
+    closeSidebarDrawer();
+  });
+
+  document.body.addEventListener("click", (event) => {
+    const jumpButton = event.target.closest("[data-jump-target]");
+    if (jumpButton) {
+      const target = document.getElementById(jumpButton.dataset.jumpTarget);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+
+    const term = event.target.closest("[data-term]");
+    if (term) {
+      state.activeTerm = term.dataset.term;
+      renderTerms(chapters[state.chapterIndex]);
+    }
+
+    const answerButton = event.target.closest("[data-answer]");
+    if (answerButton) {
+      const chapter = chapters[state.chapterIndex];
+      const answerKey = answerButton.dataset.answer;
+      assistantAnswer.innerHTML = `
+        <h4>${answerButton.textContent.trim()} view</h4>
+        <p>${chapter.quickActions[answerKey]}</p>
+        <p><strong>Prompt:</strong> ${chapter.prompts[0]}</p>
+      `;
+      document.querySelectorAll(".quick-action").forEach((node) => node.classList.remove("active"));
+      answerButton.classList.add("active");
+    }
+
+    const sourceAnchorButton = event.target.closest("[data-source-anchor]");
+    if (sourceAnchorButton) {
+      const chapter = chapters[state.chapterIndex];
+      state.focusTarget = {
+        kind: sourceAnchorButton.dataset.sourceKind || "section",
+        title: sourceAnchorButton.dataset.sourceTitle || "",
+        anchor: sourceAnchorButton.dataset.sourceAnchor || ""
+      };
+      renderDerivations(chapter);
+      renderSourceMaterial(chapter);
+      if (state.focusTarget.kind === "section") {
+        sourcePanel.open = true;
+      }
+      applyFocusTarget(chapter);
+    }
+  });
+
+  document.body.addEventListener("mouseover", (event) => {
+    const term = event.target.closest("[data-term]");
+    if (!term) return;
+    const chapter = chapters[state.chapterIndex];
+    const info = chapter.terms[term.dataset.term];
+    if (!info) return;
+    showTooltip(term, info.short);
+  });
+
+  document.body.addEventListener("mouseout", (event) => {
+    if (event.target.closest("[data-term]")) {
+      hideTooltip();
+    }
+  });
+
+  askButton.addEventListener("click", () => {
+    const chapter = chapters[state.chapterIndex];
+    const answer = answerQuestion(chapter, studyQuestion.value);
+    assistantAnswer.innerHTML = `<h4>${answer.title}</h4><p>${answer.body}</p>`;
+  });
+
+  studyQuestion.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      askButton.click();
+    }
+  });
+
+  prevChapter.addEventListener("click", () => {
+    if (state.chapterIndex === 0) return;
+    state.chapterIndex -= 1;
+    state.focusTarget = null;
+    state.showAllTerms = false;
+    renderNav();
+    renderChapter();
+    closeSidebarDrawer();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  nextChapter.addEventListener("click", () => {
+    if (state.chapterIndex === chapters.length - 1) return;
+    state.chapterIndex += 1;
+    state.focusTarget = null;
+    state.showAllTerms = false;
+    renderNav();
+    renderChapter();
+    closeSidebarDrawer();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  masteryChecklist.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-mastery-index]");
+    if (!input) return;
+    const chapter = chapters[state.chapterIndex];
+    const completed = masteryState[chapter.slug] || [];
+    completed[Number(input.dataset.masteryIndex)] = input.checked;
+    masteryState[chapter.slug] = completed;
+    saveMasteryState();
+    renderNav();
+    renderMastery(chapter);
+  });
+
+  termToggle.addEventListener("click", () => {
+    state.showAllTerms = !state.showAllTerms;
+    renderTerms(chapters[state.chapterIndex]);
+  });
+
+  sidebarToggle.addEventListener("click", () => {
+    toggleSidebarDrawer();
+  });
+
+  sidebarClose.addEventListener("click", () => {
+    closeSidebarDrawer();
+  });
+
+  sidebarOverlay.addEventListener("click", () => {
+    closeSidebarDrawer();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeSidebarDrawer();
+    }
+  });
+
+  mobileMedia.addEventListener("change", () => {
+    syncSidebarDrawer();
+  });
+}
+
+syncSidebarDrawer();
+renderModes();
+renderNav();
+renderChapter();
+attachEvents();
