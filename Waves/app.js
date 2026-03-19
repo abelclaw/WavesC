@@ -3157,7 +3157,8 @@ function sceneMarkup(type) {
           <canvas id="scene-damped-oscillator" width="550" height="280"></canvas>
           <div class="scene-controls">
             <label>&gamma;: <input type="range" id="damp-gamma" min="0.2" max="20" step="0.2" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
-            <span class="scene-val">&omega;<sub>0</sub> = 5.0 (fixed)</span>
+            <label>m: <input type="range" id="damp-mass" min="0.2" max="5" step="0.1" value="1"><span class="scene-val" id="damp-mass-val">1.0</span></label>
+            <span class="scene-val" id="damp-omega-val"></span>
           </div>
         </div>
       `;
