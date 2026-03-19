@@ -3,12 +3,18 @@
 // =========================================================================
 
 function initSceneInteractives() {
-  // Find all canvases that need initialization
+  // Lecture 1
   initSHMSpring();
   initSHMOscillator();
   initDampedOscillator();
   initDampingRegimes();
   initEulerCircle();
+  // Lecture 2
+  initDrivenOscillator();
+  initTransientDecay();
+  initPhaseLag();
+  initPowerAbsorption();
+  initResonanceCurve();
 }
 
 // Color palette matching WavesC theme
@@ -1135,4 +1141,740 @@ function initEulerCircle() {
   }
 
   tick();
+}
+
+// =========================================================================
+// LECTURE 2 INTERACTIVE SCENES
+// =========================================================================
+
+// =========================================================================
+// 1. DRIVEN OSCILLATOR — live simulation + amplitude/phase curves
+// =========================================================================
+function initDrivenOscillator() {
+  const canvas = document.getElementById('scene-driven-oscillator');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const wdSlider = document.getElementById('driven-wd');
+  const w0Slider = document.getElementById('driven-w0');
+  const gammaSlider = document.getElementById('driven-gamma');
+
+  let t = 0;
+  let trail = [];
+  const maxTrail = 300;
+
+  // Layout: left = spring-mass, center = x(t) plot, right = amplitude/phase curves
+  const springX = 50, massEqY = H / 2, maxDisp = 60;
+  const plotL = 130, plotR = W * 0.48, plotT = 25, plotB = H - 25;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const ampL = W * 0.54, ampR = W - 15, ampT = 25, ampB = H * 0.48;
+  const phL = ampL, phR = ampR, phT = H * 0.55, phB = H - 15;
+
+  // Steady-state solution: x(t) = (F0/m) * [A cos(wd t) + B sin(wd t)]
+  function getAB(w0, wd, gamma) {
+    const denom = (w0 * w0 - wd * wd) * (w0 * w0 - wd * wd) + (gamma * wd) * (gamma * wd);
+    const A = (w0 * w0 - wd * wd) / denom;
+    const B = (gamma * wd) / denom;
+    return { A, B, amp: Math.sqrt(A * A + B * B), phase: -Math.atan2(B, A) };
+  }
+
+  function tick() {
+    const wd = parseFloat(wdSlider?.value || 3);
+    const w0 = parseFloat(w0Slider?.value || 5);
+    const gamma = parseFloat(gammaSlider?.value || 0.8);
+    const dt = 0.025;
+    t += dt;
+
+    document.getElementById('driven-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(2)));
+    document.getElementById('driven-w0-val')?.replaceChildren(document.createTextNode(w0.toFixed(1)));
+    document.getElementById('driven-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+
+    const { A, B } = getAB(w0, wd, gamma);
+    const x = A * Math.cos(wd * t) + B * Math.sin(wd * t);
+    const force = Math.cos(wd * t);
+
+    trail.push({ t, x, force });
+    if (trail.length > maxTrail) trail.shift();
+
+    draw(wd, w0, gamma, x, force);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(wd, w0, gamma, x, force) {
+    wClear(ctx, W, H);
+
+    // --- Spring-mass with driving force (left) ---
+    const massY = massEqY + x * maxDisp * 8;
+    const forceY = massEqY + force * maxDisp * 0.4;
+
+    // Wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(springX - 25, 15, 55, 4);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath(); ctx.moveTo(springX - 20 + i * 11, 15); ctx.lineTo(springX - 25 + i * 11, 10); ctx.stroke();
+    }
+
+    // Spring
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    const sTop = 19;
+    const sLen = Math.max(massY - 14 - sTop, 15);
+    ctx.beginPath(); ctx.moveTo(springX, sTop);
+    const seg = sLen / 14;
+    let cy = sTop + seg;
+    ctx.lineTo(springX, cy);
+    for (let i = 0; i < 6; i++) {
+      ctx.lineTo(springX + ((i % 2 === 0) ? 10 : -10), cy + seg);
+      cy += 2 * seg;
+      ctx.lineTo(springX, cy);
+    }
+    ctx.lineTo(springX, massY - 14);
+    ctx.stroke();
+
+    // Mass
+    const bW = 36, bH = 24;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.roundRect(springX - bW / 2, massY - bH / 2, bW, bH, 4); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m', springX, massY + 4);
+
+    // Driving force arrow
+    const fLen = force * 25;
+    if (Math.abs(fLen) > 2) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(springX, massY + bH / 2 + 5);
+      ctx.lineTo(springX, massY + bH / 2 + 5 + fLen); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      const dir = Math.sign(fLen);
+      ctx.beginPath();
+      ctx.moveTo(springX, massY + bH / 2 + 5 + fLen);
+      ctx.lineTo(springX - 4, massY + bH / 2 + 5 + fLen - dir * 6);
+      ctx.lineTo(springX + 4, massY + bH / 2 + 5 + fLen - dir * 6);
+      ctx.closePath(); ctx.fill();
+      ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('F', springX + 8, massY + bH / 2 + 5 + fLen / 2 + 3);
+    }
+
+    // --- x(t) plot (center) ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    const midY = (plotT + plotB) / 2;
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x(t)', plotL - 12, plotT - 2);
+    ctx.fillText('t', plotR + 8, midY + 3);
+
+    if (trail.length > 1) {
+      const tRange = Math.max(trail[trail.length - 1].t - trail[0].t, 3);
+      // Force trace (faded)
+      ctx.strokeStyle = WCOLORS.amber + '40'; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < trail.length; i++) {
+        const px = plotL + ((trail[i].t - trail[0].t) / tRange) * plotW;
+        const py = midY - trail[i].force * plotH * 0.15;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      // Response trace
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i < trail.length; i++) {
+        const px = plotL + ((trail[i].t - trail[0].t) / tRange) * plotW;
+        const py = midY - trail[i].x * plotH * 0.4 * 8;
+        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('F(t)', plotL + 3, plotT + 10);
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('x(t)', plotL + 3, plotT + 22);
+
+    // --- Amplitude vs wd curve (upper right) ---
+    const ampW = ampR - ampL, ampH = ampB - ampT;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(ampL, ampT); ctx.lineTo(ampL, ampB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ampL, ampB); ctx.lineTo(ampR, ampB); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('|x|', ampL - 10, ampT + 3);
+    ctx.fillText('\u03C9_d', ampR, ampB + 12);
+
+    // Sweep amplitude curve
+    const wMax = 10;
+    let maxAmp = 0;
+    for (let i = 0; i <= 200; i++) {
+      const w = (i / 200) * wMax;
+      const a = getAB(w0, w, gamma).amp;
+      if (a > maxAmp) maxAmp = a;
+    }
+    if (maxAmp < 0.001) maxAmp = 1;
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const w = (i / 200) * wMax;
+      const a = getAB(w0, w, gamma).amp;
+      const px = ampL + (w / wMax) * ampW;
+      const py = ampB - (a / maxAmp) * ampH * 0.9;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current wd marker
+    const curAmp = getAB(w0, wd, gamma).amp;
+    const dotX = ampL + (wd / wMax) * ampW;
+    const dotY = ampB - (curAmp / maxAmp) * ampH * 0.9;
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(dotX, dotY, 5, 0, Math.PI * 2); ctx.fill();
+
+    // w0 line
+    const w0px = ampL + (w0 / wMax) * ampW;
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(w0px, ampT); ctx.lineTo(w0px, ampB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080', w0px, ampB + 12);
+
+    // --- Phase vs wd curve (lower right) ---
+    const phW = phR - phL, phH = phB - phT;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(phL, phT); ctx.lineTo(phL, phB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(phL, phB); ctx.lineTo(phR, phB); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Phase', phL - 14, phT + 3);
+    ctx.fillText('\u03C9_d', phR, phB + 12);
+
+    // Phase labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('0\u00B0', phL - 3, phT + 4);
+    ctx.fillText('\u221290\u00B0', phL - 3, (phT + phB) / 2 + 3);
+    ctx.fillText('\u2212180\u00B0', phL - 3, phB + 3);
+
+    // Guideline at -90
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(phL, (phT + phB) / 2); ctx.lineTo(phR, (phT + phB) / 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Phase curve
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const w = (i / 200) * wMax;
+      const ph = getAB(w0, Math.max(w, 0.01), gamma).phase;
+      const px = phL + (w / wMax) * phW;
+      const py = phT + (-ph / Math.PI) * phH;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current phase marker
+    const curPh = getAB(w0, wd, gamma).phase;
+    const phDotX = phL + (wd / wMax) * phW;
+    const phDotY = phT + (-curPh / Math.PI) * phH;
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(phDotX, phDotY, 5, 0, Math.PI * 2); ctx.fill();
+
+    // w0 line on phase plot
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(w0px, phT); ctx.lineTo(w0px, phB); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  wdSlider?.addEventListener('input', () => { trail = []; t = 0; });
+  w0Slider?.addEventListener('input', () => { trail = []; t = 0; });
+  gammaSlider?.addEventListener('input', () => { trail = []; t = 0; });
+  tick();
+}
+
+// =========================================================================
+// 2. TRANSIENT DECAY — homogeneous + inhomogeneous
+// =========================================================================
+function initTransientDecay() {
+  const canvas = document.getElementById('scene-transient-decay');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+  const w0 = 5, wd = 4, gamma = 0.8, F0 = 1;
+  const plotL = 50, plotR = W - 20, plotT = 25, plotB = H - 25;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const midY = (plotT + plotB) / 2;
+  const tMax = 12;
+
+  function getAB() {
+    const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
+    return { A: (w0 * w0 - wd * wd) / denom, B: (gamma * wd) / denom };
+  }
+
+  const { A, B } = getAB();
+  const wu = Math.sqrt(w0 * w0 - (gamma / 2) ** 2);
+
+  // Transient chosen so total x(0) = 0, x'(0) = 0
+  const xSS0 = A; // steady-state at t=0
+  const vSS0 = wd * B; // d/dt of steady-state at t=0
+  // Transient: x_h = e^{-gamma/2 t} [C1 cos(wu t) + C2 sin(wu t)]
+  const C1 = -xSS0;
+  const C2 = -(vSS0 + (gamma / 2) * C1) / wu;
+
+  function xTotal(tc) {
+    const ss = A * Math.cos(wd * tc) + B * Math.sin(wd * tc);
+    const tr = Math.exp(-gamma / 2 * tc) * (C1 * Math.cos(wu * tc) + C2 * Math.sin(wu * tc));
+    return { total: ss + tr, ss, tr };
+  }
+
+  function tick() {
+    t += 0.02;
+    if (t > tMax) t = 0;
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x(t)', plotL - 14, plotT - 4);
+    ctx.fillText('t', plotR + 10, midY + 3);
+
+    const scale = plotH * 0.35;
+    const nPts = 400;
+
+    // Envelope of transient
+    ctx.strokeStyle = WCOLORS.textDim + '30'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const env = Math.sqrt(C1 * C1 + C2 * C2) * Math.exp(-gamma / 2 * tc);
+      const px = plotL + (i / nPts) * plotW;
+      const py = midY - env * scale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const env = -Math.sqrt(C1 * C1 + C2 * C2) * Math.exp(-gamma / 2 * tc);
+      const px = plotL + (i / nPts) * plotW;
+      const py = midY - env * scale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Full curves
+    // Steady-state (faded)
+    ctx.strokeStyle = WCOLORS.amber + '60'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const { ss } = xTotal(tc);
+      const px = plotL + (i / nPts) * plotW;
+      i === 0 ? ctx.moveTo(px, midY - ss * scale) : ctx.lineTo(px, midY - ss * scale);
+    }
+    ctx.stroke();
+
+    // Transient (faded)
+    ctx.strokeStyle = WCOLORS.red + '50'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const { tr } = xTotal(tc);
+      const px = plotL + (i / nPts) * plotW;
+      i === 0 ? ctx.moveTo(px, midY - tr * scale) : ctx.lineTo(px, midY - tr * scale);
+    }
+    ctx.stroke();
+
+    // Total up to current time (bold)
+    const curIdx = Math.floor((t / tMax) * nPts);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= curIdx; i++) {
+      const tc = (i / nPts) * tMax;
+      const { total } = xTotal(tc);
+      const px = plotL + (i / nPts) * plotW;
+      i === 0 ? ctx.moveTo(px, midY - total * scale) : ctx.lineTo(px, midY - total * scale);
+    }
+    ctx.stroke();
+
+    // Current dot
+    const { total: curX } = xTotal(t);
+    const dotPx = plotL + (t / tMax) * plotW;
+    const dotPy = midY - curX * scale;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(dotPx, dotPy, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('\u2014 Total x(t)', plotL + 10, plotB + 12);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2014 Steady state', plotL + 100, plotB + 12);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u2014 Transient', plotL + 210, plotB + 12);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Transient dies away \u2192 only steady state survives', plotL + plotW / 2, plotT - 6);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// 3. PHASE LAG — force vs response comparison
+// =========================================================================
+function initPhaseLag() {
+  const canvas = document.getElementById('scene-phase-lag');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+  const plotL = 50, plotR = W - 20, plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const midY = (plotT + plotB) / 2;
+
+  // Embed a slider if the canvas has a parent scene
+  let wdSlider = document.getElementById('phase-lag-wd');
+  if (!wdSlider) {
+    // Create controls dynamically after the canvas
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>\u03C9<sub>d</sub>: <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
+      parent.appendChild(controls);
+      wdSlider = document.getElementById('phase-lag-wd');
+    }
+  }
+
+  const w0 = 5, gamma = 0.5;
+
+  function getAB(wd) {
+    const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
+    return { A: (w0 * w0 - wd * wd) / denom, B: (gamma * wd) / denom };
+  }
+
+  function tick() {
+    const wd = parseFloat(wdSlider?.value || 3);
+    document.getElementById('phase-lag-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
+
+    t += 0.025;
+    const { A, B } = getAB(wd);
+    const amp = Math.sqrt(A * A + B * B);
+    const phase = -Math.atan2(B, A);
+
+    draw(wd, A, B, amp, phase);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(wd, A, B, amp, phase) {
+    wClear(ctx, W, H);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+
+    const nCycles = 3;
+    const tRange = nCycles * 2 * Math.PI / wd;
+    const scale = plotH * 0.4;
+
+    // Force (driving)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+      const f = Math.cos(wd * tc);
+      const py = midY - f * scale * 0.5;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Response
+    const normAmp = Math.min(amp * 20, 1);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+      const x = (A * Math.cos(wd * tc) + B * Math.sin(wd * tc)) * 20;
+      const py = midY - x * scale;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Phase info
+    const phaseDeg = (phase * 180 / Math.PI);
+    const inPhase = wd < w0;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(inPhase ? 'In phase (\u03C9_d < \u03C9\u2080)' : 'Out of phase (\u03C9_d > \u03C9\u2080)', plotL + plotW / 2, plotT - 6);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Phase lag: ' + phaseDeg.toFixed(1) + '\u00B0', plotL + 10, plotB + 14);
+    ctx.fillText('\u03C9_d = ' + wd.toFixed(1) + '   \u03C9\u2080 = ' + w0.toFixed(1), plotL + plotW * 0.5, plotB + 14);
+
+    // Legend
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('F(t) (driving force)', plotR, plotT + 10);
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('x(t) (response)', plotR, plotT + 24);
+  }
+
+  wdSlider?.addEventListener('input', () => { t = 0; });
+  tick();
+}
+
+// =========================================================================
+// 4. POWER ABSORPTION — elastic vs absorptive
+// =========================================================================
+function initPowerAbsorption() {
+  const canvas = document.getElementById('scene-power-absorption');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+  const plotL = 50, plotR = W - 20, plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const midY = (plotT + plotB) / 2;
+
+  // Create controls
+  let wdSlider = document.getElementById('power-wd');
+  if (!wdSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>\u03C9<sub>d</sub>: <input type="range" id="power-wd" min="0.5" max="10" step="0.1" value="5"><span class="scene-val" id="power-wd-val">5.0</span></label>' +
+        '<label>\u03B3: <input type="range" id="power-gamma" min="0.1" max="4" step="0.1" value="1"><span class="scene-val" id="power-gamma-val">1.0</span></label>';
+      parent.appendChild(controls);
+      wdSlider = document.getElementById('power-wd');
+    }
+  }
+  const gammaSlider = document.getElementById('power-gamma');
+  const w0 = 5;
+
+  function tick() {
+    const wd = parseFloat(wdSlider?.value || 5);
+    const gamma = parseFloat(gammaSlider?.value || 1);
+    document.getElementById('power-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
+    document.getElementById('power-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+
+    t += 0.02;
+
+    const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
+    const A = (w0 * w0 - wd * wd) / denom;
+    const B = (gamma * wd) / denom;
+
+    draw(wd, gamma, A, B);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(wd, gamma, A, B) {
+    wClear(ctx, W, H);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+
+    const tRange = 3 * 2 * Math.PI / wd;
+    const pScale = plotH * 0.3;
+
+    // Power = F * dx/dt = F0 cos(wd t) * wd [-A sin(wd t) + B cos(wd t)]
+    // P_elastic = -F0^2 wd A sin(wd t) cos(wd t) = -(F0^2 wd A / 2) sin(2 wd t)
+    // P_absorptive = F0^2 wd B cos^2(wd t)
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+
+      const pElastic = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
+      const pAbsorptive = wd * B * Math.cos(wd * tc) * Math.cos(wd * tc);
+      const pTotal = pElastic + pAbsorptive;
+
+      const pxCoord = plotL + px;
+
+      // Elastic (fills alternating)
+      if (px % 2 === 0) {
+        ctx.fillStyle = pElastic > 0 ? 'rgba(37,99,235,0.15)' : 'rgba(37,99,235,0.08)';
+        const barH = pElastic * pScale * 10;
+        ctx.fillRect(pxCoord, midY - Math.max(barH, 0), 2, Math.abs(barH));
+      }
+    }
+
+    // Elastic curve
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+      const pEl = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
+      const py = midY - pEl * pScale * 10;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Absorptive curve
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tc = (px / plotW) * tRange + t;
+      const pAb = wd * B * Math.cos(wd * tc) ** 2;
+      const py = midY - pAb * pScale * 10;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Average power line
+    const avgP = wd * B * 0.5;
+    const avgPy = midY - avgP * pScale * 10;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, avgPy); ctx.lineTo(plotR, avgPy); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Power P(t) = F \u00B7 dx/dt', plotL + plotW / 2, plotT - 6);
+
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.blue; ctx.fillText('\u2014 Elastic (averages to 0)', plotL + 5, plotB + 14);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u2014 Absorptive (always \u2265 0)', plotL + plotW * 0.45, plotB + 14);
+    ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
+    ctx.fillText('\u27E8P\u27E9 = ' + (avgP * 10).toFixed(2), plotR, avgPy - 5);
+  }
+
+  wdSlider?.addEventListener('input', () => { t = 0; });
+  gammaSlider?.addEventListener('input', () => { t = 0; });
+  tick();
+}
+
+// =========================================================================
+// 5. RESONANCE CURVE — Lorentzian power absorption
+// =========================================================================
+function initResonanceCurve() {
+  const canvas = document.getElementById('scene-resonance-curve');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 30;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  // Create controls
+  let gammaSlider = document.getElementById('res-gamma');
+  if (!gammaSlider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<label>\u03B3: <input type="range" id="res-gamma" min="0.1" max="4" step="0.1" value="0.5"><span class="scene-val" id="res-gamma-val">0.5</span></label>' +
+        '<label>\u03C9<sub>0</sub>: <input type="range" id="res-w0" min="2" max="8" step="0.1" value="5"><span class="scene-val" id="res-w0-val">5.0</span></label>';
+      parent.appendChild(controls);
+      gammaSlider = document.getElementById('res-gamma');
+    }
+  }
+  const w0Slider = document.getElementById('res-w0');
+
+  function avgPower(w0, wd, gamma) {
+    const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
+    return (gamma * wd * wd) / denom;
+  }
+
+  function draw() {
+    const gamma = parseFloat(gammaSlider?.value || 0.5);
+    const w0 = parseFloat(w0Slider?.value || 5);
+    document.getElementById('res-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
+    document.getElementById('res-w0-val')?.replaceChildren(document.createTextNode(w0.toFixed(1)));
+
+    wClear(ctx, W, H);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+
+    const wMax = 10;
+    let maxP = 0;
+    for (let i = 0; i <= 300; i++) {
+      const w = (i / 300) * wMax;
+      const p = avgPower(w0, w, gamma);
+      if (p > maxP) maxP = p;
+    }
+    if (maxP < 0.001) maxP = 1;
+
+    // Main curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const w = (i / 300) * wMax;
+      const p = avgPower(w0, w, gamma);
+      const px = plotL + (w / wMax) * plotW;
+      const py = plotB - (p / maxP) * plotH * 0.9;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Half-max line
+    const halfMaxP = maxP / 2;
+    const halfY = plotB - (halfMaxP / maxP) * plotH * 0.9;
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, halfY); ctx.lineTo(plotR, halfY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('\u00BD max', plotL - 4, halfY + 3);
+
+    // FWHM bracket
+    // Half-power frequencies: approximately w0 +/- gamma/2
+    const wHalf1 = Math.max(0, w0 - gamma / 2);
+    const wHalf2 = w0 + gamma / 2;
+    const px1 = plotL + (wHalf1 / wMax) * plotW;
+    const px2 = plotL + (wHalf2 / wMax) * plotW;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(px1, halfY + 3); ctx.lineTo(px2, halfY + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px1, halfY); ctx.lineTo(px1, halfY + 8); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px2, halfY); ctx.lineTo(px2, halfY + 8); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u0394\u03C9 = \u03B3', (px1 + px2) / 2, halfY + 18);
+
+    // Peak marker
+    const peakPx = plotL + (w0 / wMax) * plotW;
+    const peakPy = plotB - plotH * 0.9;
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(peakPx, peakPy, 5, 0, Math.PI * 2); ctx.fill();
+
+    // w0 label
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(peakPx, plotT); ctx.lineTo(peakPx, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080', peakPx, plotB + 14);
+
+    // Axis labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u27E8P\u27E9', plotL - 20, plotT - 4);
+    ctx.fillText('\u03C9_d', plotR + 10, plotB + 4);
+
+    // Q value and info
+    const Q = w0 / gamma;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Lorentzian resonance: Q = \u03C9\u2080/\u03B3 = ' + Q.toFixed(1), plotL + plotW / 2, plotT - 8);
+
+    // Tick marks on x-axis
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    for (let w = 0; w <= wMax; w += 2) {
+      const tx = plotL + (w / wMax) * plotW;
+      ctx.beginPath(); ctx.moveTo(tx, plotB); ctx.lineTo(tx, plotB + 4); ctx.strokeStyle = WCOLORS.axis; ctx.stroke();
+      ctx.fillText(w.toString(), tx, plotB + 14);
+    }
+  }
+
+  gammaSlider?.addEventListener('input', draw);
+  w0Slider?.addEventListener('input', draw);
+  draw();
 }

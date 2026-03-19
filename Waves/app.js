@@ -2693,25 +2693,14 @@ function sceneMarkup(type) {
       `;
     case "driven":
       return `
-        <div class="scene-title">Resonance buildup</div>
-        <div class="driven-scene">
-          <div class="drive-piston"></div>
-          <div class="drive-spring">
-            ${Array.from({ length: 6 }).map((_, i) => `<div class="coil-segment" style="animation-delay: ${-i * 0.08}s;"></div>`).join("")}
-          </div>
-          <div class="driven-mass"></div>
-          <div class="resonance-glow"></div>
-          <div class="amplitude-envelope">
-            <svg viewBox="0 0 300 100" preserveAspectRatio="none">
-              <path d="M0,50 Q30,45 60,40 Q90,30 120,20 Q150,10 180,5 Q210,5 240,5 Q270,5 300,5" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="2"/>
-              <path d="M0,50 Q30,55 60,60 Q90,70 120,80 Q150,90 180,95 Q210,95 240,95 Q270,95 300,95" fill="none" stroke="rgba(237,137,54,0.5)" stroke-width="2"/>
-            </svg>
-          </div>
-          ${Array.from({ length: 10 }).map((_, i) => `<span class="drive-wave" style="left:${20 + i * 8}%; animation-delay:${-i * 0.25}s;"></span>`).join("")}
-          <div class="response-curve">
-            <svg viewBox="0 0 200 80" preserveAspectRatio="none">
-              <path d="M0,75 Q40,74 60,70 Q80,55 90,20 Q100,5 110,20 Q120,55 140,70 Q160,74 200,75" fill="none" stroke="rgba(99,179,237,0.5)" stroke-width="2"/>
-            </svg>
+        <div class="scene-label">Interactive 1: Driven Oscillator</div>
+        <p class="scene-caption">Sweep the driving frequency &omega;<sub>d</sub> through resonance. The left panel shows the mass responding to the sinusoidal force; the right shows the steady-state amplitude and phase vs &omega;<sub>d</sub>. At resonance (&omega;<sub>d</sub> = &omega;<sub>0</sub>), amplitude peaks and phase crosses &minus;90&deg;.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-driven-oscillator" width="600" height="300"></canvas>
+          <div class="scene-controls">
+            <label>&omega;<sub>d</sub>: <input type="range" id="driven-wd" min="0.2" max="10" step="0.05" value="3"><span class="scene-val" id="driven-wd-val">3.0</span></label>
+            <label>&omega;<sub>0</sub>: <input type="range" id="driven-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="driven-w0-val">5.0</span></label>
+            <label>&gamma;: <input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="driven-gamma-val">0.8</span></label>
           </div>
         </div>
       `;
