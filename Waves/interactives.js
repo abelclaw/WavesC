@@ -10230,9 +10230,11 @@ function initGroupVelocityDemo() {
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
 
-    // Info
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('vp = \u03C9/k = ' + vp.toFixed(2) + '    vg = d\u03C9/dk = ' + vg.toFixed(2) + (Math.abs(vp - vg) > 0.05 ? '  (vp \u2260 vg!)' : '  (vp = vg)'), W / 2, H - 10);
+    // Info and annotation
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('vp = \u03C9/k = ' + vp.toFixed(2) + '    vg = d\u03C9/dk = ' + vg.toFixed(2) + (Math.abs(vp - vg) > 0.05 ? '  (vp \u2260 vg!)' : '  (vp = vg)'), W / 2, H - 18);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('Envelope (energy) travels at vg; crests travel at vp', W / 2, H - 5);
 
     // Reset
     if (vg * t > xRange * 1.2) t = 0;
@@ -10283,7 +10285,7 @@ function initWavepacketDispersion() {
     const botMid = (botT + botB) / 2;
     const amp = 0.35;
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Non-dispersive (\u03C9 = ck)', plotL, topT - 3);
     ctx.fillText('Dispersive (\u03C9 = ck + \u03B1k\u00B2)', plotL, botT - 3);
 
@@ -10348,12 +10350,34 @@ function initWavepacketDispersion() {
     }
     ctx.stroke();
 
+    // Width measurement on dispersive packet
+    // Find half-max indices of envelope
+    const absD = dVals.map(v => Math.abs(v));
+    const dPeak = Math.max(...absD);
+    const halfMax = dPeak * 0.5;
+    let leftIdx = -1, rightIdx = -1;
+    for (let i = 0; i < absD.length; i++) {
+      if (absD[i] >= halfMax && leftIdx < 0) leftIdx = i;
+      if (absD[i] >= halfMax) rightIdx = i;
+    }
+    if (leftIdx >= 0 && rightIdx > leftIdx) {
+      const lx = plotL + plotW * leftIdx / 400;
+      const rx = plotL + plotW * rightIdx / 400;
+      const widthY = botMid + botH * amp + 8;
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(lx, widthY); ctx.lineTo(rx, widthY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(lx, widthY - 4); ctx.lineTo(lx, widthY + 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rx, widthY - 4); ctx.lineTo(rx, widthY + 4); ctx.stroke();
+      ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u0394x', (lx + rx) / 2, widthY - 4);
+    }
+
     // Divider
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL, H / 2 + 2); ctx.lineTo(plotR, H / 2 + 2); ctx.stroke();
 
     // Annotations
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('Shape preserved', plotR, topT + 14);
     ctx.fillStyle = WCOLORS.amber;
     ctx.fillText('Pulse broadens with time', plotR, botT + 14);
