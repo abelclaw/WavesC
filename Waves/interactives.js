@@ -2023,8 +2023,8 @@ function initTransientDecay() {
       ctx.beginPath(); ctx.moveTo(hx, groundY); ctx.lineTo(hx - 3, groundY + 4); ctx.stroke();
     }
 
-    // Mass block
-    ctx.fillStyle = WCOLORS.teal;
+    // Mass block (amber highlight when dragging)
+    ctx.fillStyle = dragging ? WCOLORS.amber : WCOLORS.teal;
     ctx.fillRect(massX - massW2 / 2, mechY - massH2 / 2, massW2, massH2);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(massX - massW2 / 2, mechY - massH2 / 2, massW2, massH2);

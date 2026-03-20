@@ -2739,7 +2739,7 @@ function sceneMarkup(type) {
     case "transient-decay":
       return `
         <div class="scene-label">Interactive 3: Transient Decay</div>
-        <p class="scene-caption">The transient (homogeneous) solution dies away exponentially, leaving only the steady-state driven response at long times.</p>
+        <p class="scene-caption">Drag the mass to set an initial displacement, then release. The transient dies away exponentially, leaving only the steady-state driven response.</p>
         <div class="interactive-scene">
           <canvas id="scene-transient-decay" width="600" height="340"></canvas>
           <div class="scene-controls">
