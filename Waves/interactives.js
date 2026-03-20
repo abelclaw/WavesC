@@ -3642,6 +3642,9 @@ function initPluckedString() {
     const damping = parseFloat(dampingSlider?.value || 0.5);
     const speed = parseFloat(speedSlider?.value || 1);
 
+    document.getElementById('pluck-damping-val')?.replaceChildren(document.createTextNode(damping.toFixed(2)));
+    document.getElementById('pluck-speed-val')?.replaceChildren(document.createTextNode(speed.toFixed(1)));
+
     if (plucked) {
       const dt = 0.02 * speed;
       t += dt;

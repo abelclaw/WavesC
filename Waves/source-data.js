@@ -1,4 +1,4 @@
-// source-data.js — Waves & Oscillations course chapter metadata
+// source-data.js — Waves course chapter metadata
 // Auto-generated structured data for search, navigation, and summaries.
 
 window.WAVES_SOURCE_DATA = {
