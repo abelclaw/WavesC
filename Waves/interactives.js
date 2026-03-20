@@ -3785,7 +3785,7 @@ function initPluckedString() {
   }, { passive: false });
 
   function tick() {
-    const damping = parseFloat(dampingSlider?.value || 0.5);
+    const damping = parseFloat(dampingSlider?.value || 0);
     const speed = parseFloat(speedSlider?.value || 1);
 
     document.getElementById('pluck-damping-val')?.replaceChildren(document.createTextNode(damping.toFixed(2)));
@@ -3911,59 +3911,57 @@ function initPluckedString() {
       ctx.stroke();
     }
 
-    // --- Bottom: individual mode contributions ---
-    const modesT = 145, modesB = H - 15;
-    const modesH = modesB - modesT;
-    const modeMidY = (modesT + modesB) / 2;
-    const modeHalfH = modesH / 2 * 0.8;
+    // --- Bottom: Fourier coefficient histogram ---
+    const histT = 150, histB = H - 20;
+    const histH = histB - histT;
+    const histL = strL + 20, histR = strR - 20;
+    const histW = histR - histL;
 
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(strL, modeMidY); ctx.lineTo(strR, modeMidY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(strL, modesT); ctx.lineTo(strL, modesB); ctx.stroke();
-
-    // Vertical gridlines at x/L = 0.25, 0.5, 0.75
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
-    for (const frac of [0.25, 0.5, 0.75]) {
-      const gx = strL + frac * strW;
-      ctx.beginPath(); ctx.moveTo(gx, modesT); ctx.lineTo(gx, modesB); ctx.stroke();
-    }
-    ctx.setLineDash([]);
-    // Gridline labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('0.25', strL + 0.25 * strW, modesB + 10);
-    ctx.fillText('0.5', strL + 0.5 * strW, modesB + 10);
-    ctx.fillText('0.75', strL + 0.75 * strW, modesB + 10);
-
+    // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Individual mode contributions', (strL + strR) / 2, modesT - 5);
+    ctx.fillText('Fourier coefficients |b\u2099|', (strL + strR) / 2, histT - 5);
 
-    // Show first few modes individually (translucent)
-    const showModes = Math.min(5, nModes);
+    // Find max coefficient for scaling
+    const absCoeffs = coeffs.map(c => Math.abs(c));
+    const maxCoeff = Math.max(...absCoeffs, 0.01);
+
+    // Bar dimensions
+    const barGap = 4;
+    const barW = (histW - barGap * (nModes - 1)) / nModes;
     const modeColors = [WCOLORS.teal, WCOLORS.blue, WCOLORS.amber, WCOLORS.red, WCOLORS.orange];
-    for (let n = 0; n < showModes; n++) {
-      const omega_n = (n + 1) * Math.PI;
-      ctx.strokeStyle = modeColors[n % modeColors.length];
-      ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
-      ctx.beginPath();
-      for (let px = 0; px <= strW; px += 2) {
-        const x = px / strW;
-        const amp = plucked ? envelopes[n] : (dragging ? 0 : 0);
-        const y = coeffs[n] * amp * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
-        const py = modeMidY - y * modeHalfH;
-        px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
-      }
-      ctx.stroke();
+
+    // Baseline
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(histL, histB); ctx.lineTo(histR, histB); ctx.stroke();
+
+    // Y-axis
+    ctx.beginPath(); ctx.moveTo(histL, histT); ctx.lineTo(histL, histB); ctx.stroke();
+
+    // Draw bars
+    for (let n = 0; n < nModes; n++) {
+      const effAmp = plucked ? absCoeffs[n] * envelopes[n] : absCoeffs[n];
+      const barH = (effAmp / maxCoeff) * (histH - 10);
+      const x = histL + n * (barW + barGap);
+
+      // Bar fill
+      ctx.fillStyle = modeColors[n % modeColors.length];
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(x, histB - barH, barW, barH);
       ctx.globalAlpha = 1.0;
+
+      // Bar outline
+      ctx.strokeStyle = modeColors[n % modeColors.length];
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, histB - barH, barW, barH);
+
+      // Mode label
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(String(n + 1), x + barW / 2, histB + 11);
     }
 
-    // Legend for modes with amplitude labels
-    ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
-    for (let n = 0; n < showModes; n++) {
-      ctx.fillStyle = modeColors[n % modeColors.length];
-      const displayAmp = plucked ? Math.abs(coeffs[n] * envelopes[n]) : Math.abs(coeffs[n]);
-      ctx.fillText('n=' + (n + 1) + ' A=' + displayAmp.toFixed(2), strR + 5, modesT + 10 + n * 13);
-    }
+    // Axis label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('mode n', (histL + histR) / 2, histB + 22);
 
     requestAnimationFrame(tick);
   }

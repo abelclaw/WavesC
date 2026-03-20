@@ -3414,7 +3414,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-plucked-string" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label><span>Damping: </span><input type="range" id="pluck-damping" min="0" max="2" step="0.05" value="0.5"><span class="scene-val" id="pluck-damping-val">0.5</span></label>
+            <label><span>Damping: </span><input type="range" id="pluck-damping" min="0" max="2" step="0.05" value="0"><span class="scene-val" id="pluck-damping-val">0.00</span></label>
             <label><span>Speed: </span><input type="range" id="pluck-speed" min="0.1" max="3" step="0.1" value="1"><span class="scene-val" id="pluck-speed-val">1.0</span></label>
           </div>
         </div>
