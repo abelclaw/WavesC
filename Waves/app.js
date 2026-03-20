@@ -3282,7 +3282,7 @@ function sceneMarkup(type) {
     case "eigenvalue-solver":
       return `
         <div class="scene-label">Eigenvalue Problem</div>
-        <p class="scene-caption">The eigenvalues give normal mode frequencies; eigenvectors give the mode shapes. Adjust coupling to see how modes change.</p>
+        <p class="scene-caption">Dots oscillate along eigenvector directions at the mode frequency. The symmetric mode (teal) has fixed &omega;; increasing &kappa; speeds up the antisymmetric mode (red).</p>
         <div class="interactive-scene">
           <canvas id="scene-eigenvalue-solver" width="600" height="300"></canvas>
           <div class="scene-controls">
