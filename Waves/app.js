@@ -2738,13 +2738,15 @@ function sceneMarkup(type) {
       `;
     case "transient-decay":
       return `
-        <div class="scene-label">Interactive 3: Transient from Initial Kick</div>
-        <p class="scene-caption">Pull the mass sideways and release — the oscillation decays exponentially. This is the transient: it dies away, leaving the system at rest.</p>
+        <div class="scene-label">Interactive 3: Transient Decay</div>
+        <p class="scene-caption">The transient (homogeneous) solution dies away exponentially, leaving only the steady-state driven response at long times.</p>
         <div class="interactive-scene">
-          <canvas id="scene-transient-decay" width="600" height="300"></canvas>
+          <canvas id="scene-transient-decay" width="600" height="340"></canvas>
           <div class="scene-controls">
-            <label><span>&gamma;: </span><input type="range" id="transient-gamma" min="0.05" max="4" step="0.05" value="0.5"><span class="scene-val" id="transient-gamma-val">0.50</span></label>
+            <label><span>&omega;<sub>d</sub>:</span> <input type="range" id="transient-wd" min="0.5" max="10" step="0.1" value="4"><span class="scene-val" id="transient-wd-val">4.0</span></label>
             <label><span>&omega;<sub>0</sub>:</span> <input type="range" id="transient-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="transient-w0-val">5.0</span></label>
+            <label><span>&gamma;: </span><input type="range" id="transient-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="transient-gamma-val">0.8</span></label>
+            <button id="transient-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
           </div>
         </div>
       `;

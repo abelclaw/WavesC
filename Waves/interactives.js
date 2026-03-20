@@ -1797,7 +1797,7 @@ function initDrivenOscillator() {
 }
 
 // =========================================================================
-// 2. TRANSIENT DECAY — homogeneous + inhomogeneous
+// 2. TRANSIENT DECAY — driven oscillator with transient from initial conditions
 // =========================================================================
 function initTransientDecay() {
   const canvas = document.getElementById('scene-transient-decay');
@@ -1806,145 +1806,103 @@ function initTransientDecay() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let t = 0, running = false;
-  let w0 = 5, gamma = 0.8;
-  let x0 = 1.0;  // initial displacement (normalized)
-  const tMax = 10;
+  let t = 0;
+  let w0 = 5, wd = 4, gamma = 0.8;
+  const tMax = 14;
 
-  // Layout: spring-mass on left, plot on right
-  const springRegionW = 155;
-  const plotL = springRegionW + 20, plotR = W - 12, plotT = 18, plotB = H - 16;
+  // Layout: flywheel+spring-mass across top, plot below
+  const mechH = 90;            // height of mechanical diagram
+  const mechY = mechH / 2 + 6; // vertical center of mechanism
+
+  // Flywheel cam
+  const camCx = 50, camCy = mechY, camR = 20;
+
+  // Mass + spring (to the right of cam)
+  const massEqX = 190, massW2 = 26, massH2 = 24;
+  const wallX = W * 0.48;      // right wall
+  const maxDisp = 40;
+
+  // Plot region (below mechanism, use remaining height generously)
+  const plotL = 46, plotR = W - 14, plotT = mechH + 18, plotB = H - 18;
   const plotW = plotR - plotL, plotH = plotB - plotT;
   const midY = (plotT + plotB) / 2;
 
-  // Spring-mass geometry (horizontal)
-  const wallX = 10, wallH = 100;
-  const wallCY = H / 2;
-  const eqMassX = 95; // equilibrium mass center
-  const massW = 30, massH = 40;
-  const maxDisp = 50; // max pixel displacement
-
   // Sliders
+  const wdSlider = document.getElementById('transient-wd');
   const w0Slider = document.getElementById('transient-w0');
   const gammaSlider = document.getElementById('transient-gamma');
+  const wdVal = document.getElementById('transient-wd-val');
   const w0Val = document.getElementById('transient-w0-val');
   const gammaVal = document.getElementById('transient-gamma-val');
   const restartBtn = document.getElementById('transient-restart');
 
-  let dragging = false;
+  // Driven oscillator math: x_total = x_ss + x_transient
+  // x_ss = A cos(wd t) + B sin(wd t)
+  // x_tr = e^{-gamma/2 t} (C1 cos(wu t) + C2 sin(wu t))
+  // IC: x(0) = 0, v(0) = 0 => C1 = -A, C2 = -(B wd + gamma/2 C1) / wu
+  let A, B, wu, C1, C2;
 
-  function xOfT(tc) {
+  function recompute() {
+    const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
+    A = (w0 * w0 - wd * wd) / denom;
+    B = (gamma * wd) / denom;
     const wuSq = w0 * w0 - (gamma / 2) ** 2;
-    if (wuSq <= 0) {
-      // Overdamped: use two real roots
-      const r1 = -gamma / 2 + Math.sqrt(-wuSq);
-      const r2 = -gamma / 2 - Math.sqrt(-wuSq);
-      const c2 = -x0 * r1 / (r2 - r1);
-      const c1 = x0 - c2;
-      return c1 * Math.exp(r1 * tc) + c2 * Math.exp(r2 * tc);
-    }
-    const wu = Math.sqrt(wuSq);
-    // x(0) = x0, v(0) = 0 => C1 = x0, C2 = (gamma/2)*x0 / wu
-    const C1 = x0;
-    const C2 = (gamma / 2) * x0 / wu;
+    wu = wuSq > 0 ? Math.sqrt(wuSq) : 0.01;
+    C1 = -A;
+    C2 = -(B * wd + (gamma / 2) * C1) / wu;
+  }
+
+  recompute();
+
+  function xSS(tc) {
+    return A * Math.cos(wd * tc) + B * Math.sin(wd * tc);
+  }
+
+  function xTr(tc) {
     return Math.exp(-gamma / 2 * tc) * (C1 * Math.cos(wu * tc) + C2 * Math.sin(wu * tc));
   }
 
-  function drawSpringH(ctx, x1, y, x2, coils) {
+  function xTotal(tc) {
+    return xSS(tc) + xTr(tc);
+  }
+
+  function onSliderChange() {
+    wd = parseFloat(wdSlider.value);
+    w0 = parseFloat(w0Slider.value);
+    gamma = parseFloat(gammaSlider.value);
+    wdVal.textContent = wd.toFixed(1);
+    w0Val.textContent = w0.toFixed(1);
+    gammaVal.textContent = gamma.toFixed(1);
+    recompute();
+    t = 0;
+  }
+
+  if (wdSlider) wdSlider.addEventListener('input', onSliderChange);
+  if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
+  if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
+  if (restartBtn) restartBtn.addEventListener('click', () => { t = 0; });
+
+  // Horizontal spring helper
+  function drawSpringH(x1, x2, y, coils, coilH) {
     const len = x2 - x1;
-    const coilH = 10;
     ctx.beginPath();
     ctx.moveTo(x1, y);
     const segLen = len / (coils * 2 + 2);
     let cx = x1 + segLen;
     ctx.lineTo(cx, y);
     for (let i = 0; i < coils; i++) {
-      const midX = cx + segLen;
-      ctx.lineTo(midX, y + coilH * ((i % 2 === 0) ? 1 : -1));
-      cx = midX + segLen;
+      const mx = cx + segLen;
+      ctx.lineTo(mx, y + coilH * ((i % 2 === 0) ? 1 : -1));
+      cx = mx + segLen;
       ctx.lineTo(cx, y);
     }
     ctx.lineTo(x2, y);
     ctx.stroke();
   }
 
-  function onSliderChange() {
-    w0 = parseFloat(w0Slider.value);
-    gamma = parseFloat(gammaSlider.value);
-    w0Val.textContent = w0.toFixed(1);
-    gammaVal.textContent = gamma.toFixed(1);
-    t = 0;
-    running = false;
-    x0 = 1.0;
-  }
-
-  if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
-  if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
-  if (restartBtn) restartBtn.addEventListener('click', () => {
-    x0 = 1.0;
-    t = 0;
-    running = true;
-  });
-
-  // Drag to set initial displacement
-  canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const curMassX = eqMassX + (running ? xOfT(t) : x0) * maxDisp;
-    if (Math.abs(mx - curMassX) < massW && Math.abs(my - wallCY) < massH) {
-      dragging = true;
-      running = false;
-      t = 0;
-    }
-  });
-  canvas.addEventListener('mousemove', (e) => {
-    if (!dragging) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    x0 = Math.max(-1, Math.min(1, (mx - eqMassX) / maxDisp));
-  });
-  const endDrag = () => {
-    if (dragging) {
-      dragging = false;
-      if (Math.abs(x0) > 0.05) {
-        running = true;
-        t = 0;
-      }
-    }
-  };
-  canvas.addEventListener('mouseup', endDrag);
-  canvas.addEventListener('mouseleave', endDrag);
-
-  // Touch support
-  canvas.addEventListener('touchstart', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const mx = touch.clientX - rect.left;
-    const my = touch.clientY - rect.top;
-    const curMassX = eqMassX + (running ? xOfT(t) : x0) * maxDisp;
-    if (Math.abs(mx - curMassX) < massW + 10 && Math.abs(my - wallCY) < massH + 10) {
-      dragging = true;
-      running = false;
-      t = 0;
-      e.preventDefault();
-    }
-  }, { passive: false });
-  canvas.addEventListener('touchmove', (e) => {
-    if (!dragging) return;
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const mx = touch.clientX - rect.left;
-    x0 = Math.max(-1, Math.min(1, (mx - eqMassX) / maxDisp));
-    e.preventDefault();
-  }, { passive: false });
-  canvas.addEventListener('touchend', endDrag);
-
   function tick() {
-    if (running) {
-      t += 0.025;
-      if (t > tMax) { running = false; t = tMax; }
-    }
+    t += 0.025;
+    if (t > tMax) t = 0;
     draw();
     requestAnimationFrame(tick);
   }
@@ -1952,134 +1910,170 @@ function initTransientDecay() {
   function draw() {
     wClear(ctx, W, H);
 
-    const curDisp = running ? xOfT(t) : (dragging ? x0 : (t > 0 ? xOfT(t) : x0));
-    const massX = eqMassX + curDisp * maxDisp;
+    const xNow = xTotal(t);
+    const massX = massEqX + xNow * maxDisp * 6;
+    const camAngle = wd * t;
 
-    // --- Spring-mass (left) ---
-    // Wall
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(wallX, wallCY - wallH / 2, 4, wallH);
-    // Hatching
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    for (let i = 0; i < 6; i++) {
-      const ly = wallCY - wallH / 2 + i * 18;
-      ctx.beginPath(); ctx.moveTo(wallX, ly); ctx.lineTo(wallX - 6, ly + 8); ctx.stroke();
+    // === MECHANISM (top) ===
+    const groundY = mechY + massH2 / 2 + 3;
+
+    // Motor housing
+    ctx.fillStyle = '#e8e0d4'; ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    const motorW = 18, motorH2 = camR * 2 + 10;
+    ctx.fillRect(camCx - camR - motorW, camCy - motorH2 / 2, motorW, motorH2);
+    ctx.strokeRect(camCx - camR - motorW, camCy - motorH2 / 2, motorW, motorH2);
+    ctx.save();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '6px system-ui'; ctx.textAlign = 'center';
+    ctx.translate(camCx - camR - motorW / 2, camCy);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('MOTOR', 0, 3);
+    ctx.restore();
+
+    // Flywheel disc
+    ctx.beginPath(); ctx.arc(camCx, camCy, camR, 0, 2 * Math.PI);
+    ctx.fillStyle = '#d4cfc6'; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Spokes
+    ctx.strokeStyle = 'rgba(31,42,46,0.18)'; ctx.lineWidth = 1;
+    for (let s = 0; s < 4; s++) {
+      const sa = camAngle + s * Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(camCx, camCy);
+      ctx.lineTo(camCx + camR * 0.85 * Math.cos(sa), camCy - camR * 0.85 * Math.sin(sa));
+      ctx.stroke();
     }
 
-    // Equilibrium dashed line
-    ctx.strokeStyle = WCOLORS.textDim + '50'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(eqMassX, wallCY - 35); ctx.lineTo(eqMassX, wallCY + 35); ctx.stroke();
-    ctx.setLineDash([]);
+    // Center axle
+    ctx.beginPath(); ctx.arc(camCx, camCy, 2.5, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.axis; ctx.fill();
 
-    // Spring
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    drawSpringH(ctx, wallX + 4, wallCY, massX - massW / 2, 8);
+    // Crank pin
+    const pinX = camCx + camR * 0.65 * Math.cos(camAngle);
+    const pinY = camCy - camR * 0.65 * Math.sin(camAngle);
+    ctx.beginPath(); ctx.arc(pinX, pinY, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Push rod from pin to mass
+    const rodEndX = massX - massW2 / 2 - 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(pinX, pinY); ctx.lineTo(rodEndX, mechY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(rodEndX, mechY, 2, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+
+    // Ground / track
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(camCx + camR + 4, groundY); ctx.lineTo(wallX, groundY); ctx.stroke();
+    for (let hx = camCx + camR + 10; hx < wallX; hx += 8) {
+      ctx.beginPath(); ctx.moveTo(hx, groundY); ctx.lineTo(hx - 3, groundY + 4); ctx.stroke();
+    }
 
     // Mass block
     ctx.fillStyle = WCOLORS.teal;
-    ctx.fillRect(massX - massW / 2, wallCY - massH / 2, massW, massH);
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('m', massX, wallCY + 5);
-
-    // Ground line
+    ctx.fillRect(massX - massW2 / 2, mechY - massH2 / 2, massW2, massH2);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(wallX - 8, wallCY + massH / 2 + 5); ctx.lineTo(springRegionW, wallCY + massH / 2 + 5); ctx.stroke();
+    ctx.strokeRect(massX - massW2 / 2, mechY - massH2 / 2, massW2, massH2);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m', massX, mechY + 4);
 
-    // Displacement arrow + initial kick indicator
-    if (Math.abs(curDisp) > 0.05) {
-      const arrowY = wallCY - massH / 2 - 10;
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(eqMassX, arrowY); ctx.lineTo(massX, arrowY); ctx.stroke();
-      const dir = curDisp > 0 ? 1 : -1;
-      ctx.fillStyle = WCOLORS.amber;
-      ctx.beginPath();
-      ctx.moveTo(massX, arrowY);
-      ctx.lineTo(massX - dir * 6, arrowY - 3);
-      ctx.lineTo(massX - dir * 6, arrowY + 3);
-      ctx.closePath(); ctx.fill();
-      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillStyle = WCOLORS.amber;
-      ctx.fillText('x₀', (eqMassX + massX) / 2, arrowY - 5);
+    // Spring (mass to right wall)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    drawSpringH(massX + massW2 / 2, wallX - 3, mechY, 7, 7);
+
+    // Right wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallX - 3, mechY - 20, 4, 40);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const hy = mechY - 16 + i * 9;
+      ctx.beginPath(); ctx.moveTo(wallX + 1, hy); ctx.lineTo(wallX + 6, hy + 5); ctx.stroke();
     }
 
-    // Drag hint or "release to kick" prompt
-    if (!running && t === 0) {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      if (dragging) {
-        ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui';
-        ctx.fillText('release to kick!', eqMassX + 15, wallCY + massH / 2 + 22);
-      } else {
-        ctx.fillText('drag mass \u2192', eqMassX + 15, wallCY + massH / 2 + 22);
-      }
-    }
+    // ωd label under flywheel
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03c9', camCx - 2, camCy + camR + 13);
+    ctx.font = '7px system-ui';
+    ctx.fillText('d', camCx + 5, camCy + camR + 15);
 
-    // --- Plot (right side) ---
+    // === PLOT (below) ===
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'x(t)', plotL - 16, plotT + 2);
+    ctx.fillText('x(t)', plotL - 16, plotT - 2);
     ctx.fillText('t', plotR + 10, midY + 3);
 
-    const scale = plotH * 0.47;
-    const nPts = 400;
+    // Compute scale from max possible amplitude
+    const ssAmp = Math.sqrt(A * A + B * B);
+    const trAmp = Math.sqrt(C1 * C1 + C2 * C2);
+    const peakEst = ssAmp + trAmp;
+    const scale = (plotH / 2 - 4) / Math.max(peakEst, 0.01);
+    const nPts = 500;
 
-    // Envelope
-    const wuSq = w0 * w0 - (gamma / 2) ** 2;
-    const envAmp = Math.abs(x0) * (wuSq > 0 ? Math.sqrt(1 + ((gamma / 2) / Math.sqrt(wuSq)) ** 2) : 1);
-    ctx.strokeStyle = WCOLORS.textDim + '30'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    for (let i = 0; i <= nPts; i++) {
-      const tc = (i / nPts) * tMax;
-      const env = envAmp * Math.exp(-gamma / 2 * tc);
-      const px = plotL + (i / nPts) * plotW;
-      i === 0 ? ctx.moveTo(px, midY - env * scale) : ctx.lineTo(px, midY - env * scale);
-    }
-    ctx.stroke();
-    ctx.beginPath();
-    for (let i = 0; i <= nPts; i++) {
-      const tc = (i / nPts) * tMax;
-      const env = -envAmp * Math.exp(-gamma / 2 * tc);
-      const px = plotL + (i / nPts) * plotW;
-      i === 0 ? ctx.moveTo(px, midY - env * scale) : ctx.lineTo(px, midY - env * scale);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // x(t) curve up to current time
-    const curIdx = running ? Math.floor((t / tMax) * nPts) : (t > 0 ? nPts : 0);
-    if (curIdx > 0) {
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    // Envelope of transient
+    ctx.strokeStyle = WCOLORS.textDim + '25'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    for (let sign = -1; sign <= 1; sign += 2) {
       ctx.beginPath();
-      for (let i = 0; i <= curIdx; i++) {
+      for (let i = 0; i <= nPts; i++) {
         const tc = (i / nPts) * tMax;
-        const val = xOfT(tc);
+        const env = sign * trAmp * Math.exp(-gamma / 2 * tc);
+        // Shift envelope around steady state amplitude
         const px = plotL + (i / nPts) * plotW;
-        i === 0 ? ctx.moveTo(px, midY - val * scale) : ctx.lineTo(px, midY - val * scale);
+        i === 0 ? ctx.moveTo(px, midY - env * scale) : ctx.lineTo(px, midY - env * scale);
       }
       ctx.stroke();
-
-      // Tracking dot
-      const tNow = running ? t : (t > 0 ? t : 0);
-      const dotVal = xOfT(tNow);
-      const dotPx = plotL + (tNow / tMax) * plotW;
-      const dotPy = midY - dotVal * scale;
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.beginPath(); ctx.arc(dotPx, dotPy, 5, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.setLineDash([]);
 
-    // e^{-γt/2} envelope label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    const eLabelT = tMax * 0.08;
-    const eLabelY = midY - envAmp * Math.exp(-gamma / 2 * eLabelT) * scale - 6;
-    ctx.fillText('\u00b1 e', plotL + plotW * 0.06, eLabelY);
-    ctx.font = '8px system-ui';
-    ctx.fillText('-\u03B3t/2', plotL + plotW * 0.06 + 16, eLabelY - 5);
+    // Steady-state (faded amber)
+    ctx.strokeStyle = WCOLORS.amber + '55'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const px = plotL + (i / nPts) * plotW;
+      const py = midY - xSS(tc) * scale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Transient only (faded red)
+    ctx.strokeStyle = WCOLORS.red + '40'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const tc = (i / nPts) * tMax;
+      const px = plotL + (i / nPts) * plotW;
+      const py = midY - xTr(tc) * scale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Total x(t) up to current time (bold teal)
+    const curIdx = Math.floor((t / tMax) * nPts);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= curIdx; i++) {
+      const tc = (i / nPts) * tMax;
+      const px = plotL + (i / nPts) * plotW;
+      const py = midY - xTotal(tc) * scale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Tracking dot
+    const dotPx = plotL + (t / tMax) * plotW;
+    const dotPy = midY - xNow * scale;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(dotPx, dotPy, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    const legY = plotB + 10;
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText('\u2014 Total x(t)', plotL + 4, legY);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2014 Steady state', plotL + 100, legY);
+    ctx.fillStyle = WCOLORS.red; ctx.fillText('\u2014 Transient', plotL + 220, legY);
   }
 
-  // Start with initial displacement shown but not running
-  x0 = 1.0;
   tick();
 }
 
