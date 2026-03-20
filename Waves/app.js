@@ -1975,13 +1975,30 @@ const chapterTeachingNotes = {
   }
 };
 
+function chapterIndexFromHash() {
+  const hash = location.hash.replace(/^#/, "");
+  if (!hash) return 0;
+  const idx = chapters.findIndex((ch) => ch.slug === hash);
+  return idx >= 0 ? idx : 0;
+}
+
 const state = {
-  chapterIndex: 0,
+  chapterIndex: chapterIndexFromHash(),
   mode: modes[0].id,
   activeTerm: "hookes-law",
   focusTarget: null,
   showAllTerms: false
 };
+
+function navigateToChapter(index) {
+  state.chapterIndex = index;
+  state.focusTarget = null;
+  state.showAllTerms = false;
+  location.hash = chapters[index].slug;
+  renderNav();
+  renderChapter();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 const sourceData = window.WAVES_SOURCE_DATA || {};
 
@@ -4586,13 +4603,8 @@ function attachEvents() {
   chapterNav.addEventListener("click", (event) => {
     const button = event.target.closest("[data-index]");
     if (!button) return;
-    state.chapterIndex = Number(button.dataset.index);
-    state.focusTarget = null;
-    state.showAllTerms = false;
-    renderNav();
-    renderChapter();
+    navigateToChapter(Number(button.dataset.index));
     closeSidebarDrawer();
-    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   searchQuery.addEventListener("input", () => {
@@ -4602,13 +4614,15 @@ function attachEvents() {
   searchResults.addEventListener("click", (event) => {
     const button = event.target.closest("[data-search-chapter]");
     if (!button) return;
-    state.chapterIndex = Number(button.dataset.searchChapter);
+    const idx = Number(button.dataset.searchChapter);
+    state.chapterIndex = idx;
     state.showAllTerms = false;
     state.focusTarget = {
       kind: button.dataset.searchKind,
       title: button.dataset.searchTitle || button.dataset.searchTarget,
       anchor: button.dataset.searchAnchor || ""
     };
+    location.hash = chapters[idx].slug;
     renderNav();
     renderChapter();
     closeSidebarDrawer();
@@ -4688,24 +4702,14 @@ function attachEvents() {
 
   prevChapter.addEventListener("click", () => {
     if (state.chapterIndex === 0) return;
-    state.chapterIndex -= 1;
-    state.focusTarget = null;
-    state.showAllTerms = false;
-    renderNav();
-    renderChapter();
+    navigateToChapter(state.chapterIndex - 1);
     closeSidebarDrawer();
-    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   nextChapter.addEventListener("click", () => {
     if (state.chapterIndex === chapters.length - 1) return;
-    state.chapterIndex += 1;
-    state.focusTarget = null;
-    state.showAllTerms = false;
-    renderNav();
-    renderChapter();
+    navigateToChapter(state.chapterIndex + 1);
     closeSidebarDrawer();
-    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
   masteryChecklist.addEventListener("change", (event) => {
@@ -4769,6 +4773,18 @@ function attachEvents() {
   mobileMedia.addEventListener("change", () => {
     syncSidebarDrawer();
   });
+
+  window.addEventListener("hashchange", () => {
+    const idx = chapterIndexFromHash();
+    if (idx !== state.chapterIndex) {
+      state.chapterIndex = idx;
+      state.focusTarget = null;
+      state.showAllTerms = false;
+      renderNav();
+      renderChapter();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
 }
 
 // Load lecture content from external files into chapter objects
@@ -4810,3 +4826,6 @@ renderNav();
 renderChapter();
 renderMath();
 attachEvents();
+if (!location.hash) {
+  history.replaceState(null, "", "#" + chapters[state.chapterIndex].slug);
+}
