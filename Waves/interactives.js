@@ -5807,23 +5807,29 @@ function initHarmonicAlignment() {
 
   let selected = 1;
 
+  function selectInterval(i) {
+    selected = i;
+    draw();
+    // Play the interval
+    const f1 = 262;
+    const harmonics = [];
+    for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
+    wPlayTones('ha-play', [
+      { freq: f1, gain: 0.4, harmonics },
+      { freq: f1 * intervals[i].ratio, gain: 0.4, harmonics }
+    ], 3);
+    const btn = document.getElementById('ha-play');
+    if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+  }
+
   intervals.forEach((iv, i) => {
-    document.getElementById('ha-btn-' + i)?.addEventListener('click', () => {
-      selected = i;
-      draw();
-      // Re-trigger audio if playing
-      if (wIsPlaying('ha-play')) {
-        const f1 = 262;
-        const harmonics = [];
-        for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
-        wPlayTones('ha-play', [
-          { freq: f1, gain: 0.4, harmonics },
-          { freq: f1 * intervals[i].ratio, gain: 0.4, harmonics }
-        ], 3);
-        const btn = document.getElementById('ha-play');
-        if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
-      }
-    });
+    const oldBtn = document.getElementById('ha-btn-' + i);
+    if (oldBtn) {
+      // Clone to remove any stale listeners from prior init calls
+      const newBtn = oldBtn.cloneNode(true);
+      oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+      newBtn.addEventListener('click', () => selectInterval(i));
+    }
   });
 
   function draw() {
@@ -6003,20 +6009,91 @@ function initCircleOfFifths() {
     }
   }
 
-  document.getElementById('cof-et')?.addEventListener('click', () => { tuning = 0; updateBtns(); draw(); });
-  document.getElementById('cof-py')?.addEventListener('click', () => { tuning = 1; updateBtns(); draw(); });
-  const noteSlider = document.getElementById('cof-note');
+  let cycleTimer = null;
+  function stopCycle() {
+    if (cycleTimer) { clearInterval(cycleTimer); cycleTimer = null; }
+  }
+  function startCycle() {
+    stopCycle();
+    highlighted = 0;
+    const noteSldr = document.getElementById('cof-note');
+    if (noteSldr) noteSldr.value = '0';
+    draw();
+    playCurrentNote();
+    cycleTimer = setInterval(() => {
+      highlighted++;
+      if (highlighted > 11) { highlighted = 11; stopCycle(); return; }
+      const noteSldr = document.getElementById('cof-note');
+      if (noteSldr) noteSldr.value = String(highlighted);
+      draw();
+      playCurrentNote();
+    }, 600);
+  }
+  function playCurrentNote() {
+    const freq = cofGetFreq(highlighted, tuning);
+    const harmonics = [];
+    for (let n = 1; n <= 5; n++) harmonics.push({ n, gain: 1 / n });
+    wPlayTones('cof-play', [{ freq, gain: 0.6, harmonics }], 0.5);
+    const btn = document.getElementById('cof-play');
+    if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+  }
+
+  // Clone buttons to remove stale listeners from prior init calls
+  function freshBtn(id) {
+    const old = document.getElementById(id);
+    if (!old) return null;
+    const btn = old.cloneNode(true);
+    old.parentNode.replaceChild(btn, old);
+    return btn;
+  }
+  const etBtn = freshBtn('cof-et');
+  const pyBtn = freshBtn('cof-py');
+  etBtn?.addEventListener('click', () => { tuning = 0; updateBtns(); startCycle(); });
+  pyBtn?.addEventListener('click', () => { tuning = 1; updateBtns(); startCycle(); });
+  const noteSlider = freshBtn('cof-note') || document.getElementById('cof-note');
   noteSlider?.addEventListener('input', () => {
+    stopCycle();
     highlighted = parseInt(noteSlider.value);
     draw();
-    // Play the note briefly when slider changes
-    if (wIsPlaying('cof-play')) {
-      const freq = cofGetFreq(highlighted, tuning);
-      const harmonics = [];
-      for (let n = 1; n <= 5; n++) harmonics.push({ n, gain: 1 / n });
-      wPlayTones('cof-play', [{ freq, gain: 0.6, harmonics }], 2);
-      const btn = document.getElementById('cof-play');
-      if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+    playCurrentNote();
+  });
+
+  // Click on note circles in the canvas
+  canvas.style.cursor = 'pointer';
+  canvas.addEventListener('click', (e) => {
+    stopCycle();
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left);
+    const my = (e.clientY - rect.top);
+    const cx = W / 2;
+    const cy = H / 2 + 5;
+    const R = Math.min(W, H) * 0.35;
+
+    // Compute current note positions
+    const angles = [];
+    if (tuning === 0) {
+      for (let i = 0; i < 12; i++) angles.push(-Math.PI / 2 + i * (2 * Math.PI / 12));
+    } else {
+      const pyCents = 1200 * Math.log2(3 / 2);
+      for (let i = 0; i < 12; i++) {
+        const totalCents = i * pyCents;
+        angles.push(-Math.PI / 2 + (totalCents % 1200) / 1200 * (2 * Math.PI));
+      }
+    }
+
+    let closest = -1, closestDist = Infinity;
+    for (let i = 0; i < 12; i++) {
+      const nx = cx + R * Math.cos(angles[i]);
+      const ny = cy + R * Math.sin(angles[i]);
+      const d = Math.hypot(mx - nx, my - ny);
+      if (d < 25 && d < closestDist) { closest = i; closestDist = d; }
+    }
+    if (closest >= 0) {
+      highlighted = closest;
+      const noteSldr = document.getElementById('cof-note');
+      if (noteSldr) noteSldr.value = String(highlighted);
+      draw();
+      playCurrentNote();
     }
   });
 
