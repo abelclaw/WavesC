@@ -2698,9 +2698,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-driven-oscillator" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label style="position:relative">&omega;<sub>d</sub>: <input type="range" id="driven-wd" min="0.2" max="10" step="0.05" value="3"><span class="scene-val" id="driven-wd-val">3.0</span><span id="driven-res-marker" style="position:absolute;bottom:-2px;pointer-events:none;font-size:8px;color:var(--w-amber,#f59e0b);transform:translateX(-50%)" title="resonance">&blacktriangle;</span></label>
-            <label>&omega;<sub>0</sub>: <input type="range" id="driven-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="driven-w0-val">5.0</span></label>
-            <label>&gamma;: <input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.2"><span class="scene-val" id="driven-gamma-val">0.2</span></label>
+            <label style="position:relative"><span>&omega;<sub>d</sub>:</span> <input type="range" id="driven-wd" min="0.2" max="10" step="0.05" value="3"><span class="scene-val" id="driven-wd-val">3.0</span><span id="driven-res-marker" style="position:absolute;bottom:-2px;pointer-events:none;font-size:8px;color:var(--w-amber,#f59e0b);transform:translateX(-50%)" title="resonance">&blacktriangle;</span></label>
+            <label><span>&omega;<sub>0</sub>:</span> <input type="range" id="driven-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="driven-w0-val">5.0</span></label>
+            <label><span>&gamma;: </span><input type="range" id="driven-gamma" min="0.1" max="5" step="0.1" value="0.2"><span class="scene-val" id="driven-gamma-val">0.2</span></label>
           </div>
         </div>
       `;
@@ -2711,9 +2711,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-transient-decay" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&omega;<sub>d</sub>: <input type="range" id="transient-wd" min="0.5" max="10" step="0.1" value="4"><span class="scene-val" id="transient-wd-val">4.0</span></label>
-            <label>&omega;<sub>0</sub>: <input type="range" id="transient-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="transient-w0-val">5.0</span></label>
-            <label>&gamma;: <input type="range" id="transient-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="transient-gamma-val">0.8</span></label>
+            <label><span>&omega;<sub>d</sub>:</span> <input type="range" id="transient-wd" min="0.5" max="10" step="0.1" value="4"><span class="scene-val" id="transient-wd-val">4.0</span></label>
+            <label><span>&omega;<sub>0</sub>:</span> <input type="range" id="transient-w0" min="1" max="10" step="0.1" value="5"><span class="scene-val" id="transient-w0-val">5.0</span></label>
+            <label><span>&gamma;: </span><input type="range" id="transient-gamma" min="0.1" max="5" step="0.1" value="0.8"><span class="scene-val" id="transient-gamma-val">0.8</span></label>
             <button id="transient-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
           </div>
         </div>
@@ -3160,8 +3160,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-shm-spring" width="550" height="280"></canvas>
           <div class="scene-controls">
-            <label>k: <input type="range" id="shm-k" min="1" max="20" step="0.5" value="4"><span class="scene-val" id="shm-k-val">4.0</span></label>
-            <label>m: <input type="range" id="shm-m" min="0.2" max="5" step="0.1" value="1"><span class="scene-val" id="shm-m-val">1.0</span></label>
+            <label><span>k: </span><input type="range" id="shm-k" min="1" max="20" step="0.5" value="4"><span class="scene-val" id="shm-k-val">4.0</span></label>
+            <label><span>m: </span><input type="range" id="shm-m" min="0.2" max="5" step="0.1" value="1"><span class="scene-val" id="shm-m-val">1.0</span></label>
             <span class="scene-val" id="shm-omega-val"></span>
           </div>
         </div>
@@ -3173,9 +3173,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-shm-oscillator" width="550" height="260"></canvas>
           <div class="scene-controls">
-            <label>A: <input type="range" id="osc-amp" min="0.1" max="1" step="0.05" value="0.8"><span class="scene-val" id="osc-amp-val">0.80</span></label>
-            <label>&omega;: <input type="range" id="osc-omega" min="0.5" max="8" step="0.1" value="2"><span class="scene-val" id="osc-omega-val">2.0</span></label>
-            <label>&phi;: <input type="range" id="osc-phi" min="-3.14" max="3.14" step="0.05" value="0"><span class="scene-val" id="osc-phi-val">0.00</span></label>
+            <label><span>A: </span><input type="range" id="osc-amp" min="0.1" max="1" step="0.05" value="0.8"><span class="scene-val" id="osc-amp-val">0.80</span></label>
+            <label><span>&omega;: </span><input type="range" id="osc-omega" min="0.5" max="8" step="0.1" value="2"><span class="scene-val" id="osc-omega-val">2.0</span></label>
+            <label><span>&phi;: </span><input type="range" id="osc-phi" min="-3.14" max="3.14" step="0.05" value="0"><span class="scene-val" id="osc-phi-val">0.00</span></label>
           </div>
         </div>
       `;
@@ -3186,8 +3186,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-damped-oscillator" width="550" height="280"></canvas>
           <div class="scene-controls">
-            <label>&gamma;: <input type="range" id="damp-gamma" min="0" max="10" step="0.1" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
-            <label>m: <input type="range" id="damp-mass" min="0.1" max="2" step="0.05" value="1"><span class="scene-val" id="damp-mass-val">1.0</span></label>
+            <label><span>&gamma;: </span><input type="range" id="damp-gamma" min="0" max="10" step="0.1" value="2"><span class="scene-val" id="damp-gamma-val">2.0</span></label>
+            <label><span>m: </span><input type="range" id="damp-mass" min="0.1" max="2" step="0.05" value="1"><span class="scene-val" id="damp-mass-val">1.0</span></label>
             <span class="scene-val" id="damp-omega-val"></span>
           </div>
         </div>
@@ -3199,7 +3199,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-damping-regimes" width="580" height="380"></canvas>
           <div class="scene-controls">
-            <label>&omega;<sub>0</sub>: <input type="range" id="regime-omega0" min="1" max="10" step="0.5" value="5"><span class="scene-val" id="regime-omega0-val">5.0</span></label>
+            <label><span>&omega;<sub>0</sub>:</span> <input type="range" id="regime-omega0" min="1" max="10" step="0.5" value="5"><span class="scene-val" id="regime-omega0-val">5.0</span></label>
             <button id="regime-go" class="scene-btn">&#9654; Go</button>
           </div>
         </div>
@@ -3223,7 +3223,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-coupled-oscillators" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>&kappa;/k: <input type="range" id="coupled-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="coupled-kappa-val">0.30</span></label>
+            <label><span>&kappa;/k: </span><input type="range" id="coupled-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="coupled-kappa-val">0.30</span></label>
           </div>
         </div>
       `;
@@ -3234,7 +3234,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-normal-modes" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>&kappa;/k: <input type="range" id="normal-modes-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="normal-modes-kappa-val">0.30</span></label>
+            <label><span>&kappa;/k: </span><input type="range" id="normal-modes-kappa" min="0.05" max="2" step="0.05" value="0.3"><span class="scene-val" id="normal-modes-kappa-val">0.30</span></label>
           </div>
         </div>
       `;
@@ -3245,7 +3245,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-beats" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>&kappa;/k: <input type="range" id="beats-kappa" min="0.05" max="1" step="0.05" value="0.2"><span class="scene-val" id="beats-kappa-val">0.20</span></label>
+            <label><span>&kappa;/k: </span><input type="range" id="beats-kappa" min="0.05" max="1" step="0.05" value="0.2"><span class="scene-val" id="beats-kappa-val">0.20</span></label>
           </div>
         </div>
       `;
@@ -3256,7 +3256,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-eigenvalue-solver" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&kappa;/k: <input type="range" id="eigen-kappa" min="0.05" max="2" step="0.05" value="0.5"><span class="scene-val" id="eigen-kappa-val">0.50</span></label>
+            <label><span>&kappa;/k: </span><input type="range" id="eigen-kappa" min="0.05" max="2" step="0.05" value="0.5"><span class="scene-val" id="eigen-kappa-val">0.50</span></label>
           </div>
         </div>
       `;
@@ -3292,8 +3292,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-n-mass-chain" width="600" height="340"></canvas>
           <div class="scene-controls">
-            <label>N: <input type="range" id="nchain-n" min="3" max="20" step="1" value="8"><span class="scene-val" id="nchain-n-val">8</span></label>
-            <label>Mode: <input type="range" id="nchain-mode" min="1" max="20" step="1" value="1"><span class="scene-val" id="nchain-mode-val">1</span></label>
+            <label><span>N: </span><input type="range" id="nchain-n" min="3" max="20" step="1" value="8"><span class="scene-val" id="nchain-n-val">8</span></label>
+            <label><span>Mode: </span><input type="range" id="nchain-mode" min="1" max="20" step="1" value="1"><span class="scene-val" id="nchain-mode-val">1</span></label>
           </div>
         </div>
       `;
@@ -3304,8 +3304,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-n-mass-modes-numerical" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>N: <input type="range" id="nmm-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="nmm-n-val">8</span></label>
-            <label>Mode j: <input type="range" id="nmm-j" min="1" max="20" step="1" value="1"><span class="scene-val" id="nmm-j-val">1</span></label>
+            <label><span>N: </span><input type="range" id="nmm-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="nmm-n-val">8</span></label>
+            <label><span>Mode j: </span><input type="range" id="nmm-j" min="1" max="20" step="1" value="1"><span class="scene-val" id="nmm-j-val">1</span></label>
           </div>
         </div>
       `;
@@ -3316,8 +3316,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-dispersion-relation-discrete" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>N: <input type="range" id="drd-n" min="3" max="30" step="1" value="10"><span class="scene-val" id="drd-n-val">10</span></label>
-            <label>Mode: <input type="range" id="drd-mode" min="1" max="30" step="1" value="1"><span class="scene-val" id="drd-mode-val">1</span></label>
+            <label><span>N: </span><input type="range" id="drd-n" min="3" max="30" step="1" value="10"><span class="scene-val" id="drd-n-val">10</span></label>
+            <label><span>Mode: </span><input type="range" id="drd-mode" min="1" max="30" step="1" value="1"><span class="scene-val" id="drd-mode-val">1</span></label>
           </div>
         </div>
       `;
@@ -3328,8 +3328,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-continuum-limit" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>N: <input type="range" id="cl-n" min="3" max="100" step="1" value="6"><span class="scene-val" id="cl-n-val">6</span></label>
-            <label>Mode: <input type="range" id="cl-mode" min="1" max="10" step="1" value="1"><span class="scene-val" id="cl-mode-val">1</span></label>
+            <label><span>N: </span><input type="range" id="cl-n" min="3" max="100" step="1" value="6"><span class="scene-val" id="cl-n-val">6</span></label>
+            <label><span>Mode: </span><input type="range" id="cl-mode" min="1" max="10" step="1" value="1"><span class="scene-val" id="cl-mode-val">1</span></label>
           </div>
         </div>
       `;
@@ -3340,7 +3340,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-traveling-vs-standing" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>k: <input type="range" id="tvs-k" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="tvs-k-val">3.0</span></label>
+            <label><span>k: </span><input type="range" id="tvs-k" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="tvs-k-val">3.0</span></label>
             <button id="tvs-mode-btn" class="scene-btn">Toggle View</button>
           </div>
         </div>
@@ -3359,7 +3359,7 @@ function sceneMarkup(type) {
             <button id="fourier-square" class="scene-btn">Square</button>
             <button id="fourier-triangle" class="scene-btn">Triangle</button>
             <button id="fourier-sawtooth" class="scene-btn">Sawtooth</button>
-            <label>Terms: <input type="range" id="fourier-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="fourier-terms-val">5</span></label>
+            <label><span>Terms: </span><input type="range" id="fourier-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="fourier-terms-val">5</span></label>
           </div>
         </div>
       `;
@@ -3370,19 +3370,19 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-fourier-sawtooth" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Terms: <input type="range" id="sawtooth-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="sawtooth-terms-val">5</span></label>
+            <label><span>Terms: </span><input type="range" id="sawtooth-terms" min="1" max="50" step="1" value="5"><span class="scene-val" id="sawtooth-terms-val">5</span></label>
           </div>
         </div>
       `;
     case "plucked-string":
       return `
         <div class="scene-label">Plucked String</div>
-        <p class="scene-caption">A string plucked at a chosen position decomposes into harmonics. Each mode oscillates at its own frequency, producing the evolving shape.</p>
+        <p class="scene-caption">Click on the string to pluck it! The pluck point determines which harmonics are excited. Each mode oscillates at its own frequency, producing the evolving shape.</p>
         <div class="interactive-scene">
           <canvas id="scene-plucked-string" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Pluck position: <input type="range" id="pluck-position" min="0.1" max="0.9" step="0.05" value="0.25"><span class="scene-val" id="pluck-position-val">0.25</span></label>
-            <label>Speed: <input type="range" id="pluck-speed" min="0.1" max="3" step="0.1" value="1"><span class="scene-val" id="pluck-speed-val">1.0</span></label>
+            <label><span>Damping: </span><input type="range" id="pluck-damping" min="0" max="2" step="0.05" value="0.5"><span class="scene-val" id="pluck-damping-val">0.5</span></label>
+            <label><span>Speed: </span><input type="range" id="pluck-speed" min="0.1" max="3" step="0.1" value="1"><span class="scene-val" id="pluck-speed-val">1.0</span></label>
           </div>
         </div>
       `;
@@ -3397,8 +3397,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-string-transverse-wave" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Segment: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>
-            <label>Amplitude: <input type="range" id="stw-amp" min="0.5" max="3" step="0.1" value="1.5"><span class="scene-val" id="stw-amp-val">1.5</span></label>
+            <label><span>Segment: </span><input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>
+            <label><span>Amplitude: </span><input type="range" id="stw-amp" min="0.5" max="3" step="0.1" value="1.5"><span class="scene-val" id="stw-amp-val">1.5</span></label>
           </div>
         </div>
       `;
@@ -3409,7 +3409,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Wavelength: <input type="range" id="swl-wl" min="40" max="200" step="10" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
+            <label><span>Wavelength: </span><input type="range" id="swl-wl" min="40" max="200" step="10" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
           </div>
         </div>
       `;
@@ -3423,7 +3423,7 @@ function sceneMarkup(type) {
             <button id="bcd-ff" class="scene-btn">Fixed-Fixed</button>
             <button id="bcd-fo" class="scene-btn">Fixed-Free</button>
             <button id="bcd-oo" class="scene-btn">Free-Free</button>
-            <label>Mode: <input type="range" id="bcd-mode" min="1" max="8" step="1" value="1"><span class="scene-val" id="bcd-mode-val">1</span></label>
+            <label><span>Mode: </span><input type="range" id="bcd-mode" min="1" max="8" step="1" value="1"><span class="scene-val" id="bcd-mode-val">1</span></label>
           </div>
         </div>
       `;
@@ -3442,9 +3442,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-helmholtz-resonator" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>A (cm&sup2;): <input type="range" id="hr-a" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-a-val">3.0</span></label>
-            <label>V (mL): <input type="range" id="hr-v" min="100" max="2000" step="50" value="500"><span class="scene-val" id="hr-v-val">500</span></label>
-            <label>L (cm): <input type="range" id="hr-l" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-l-val">3.0</span></label>
+            <label><span>A (cm&sup2;): </span><input type="range" id="hr-a" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-a-val">3.0</span></label>
+            <label><span>V (mL): </span><input type="range" id="hr-v" min="100" max="2000" step="50" value="500"><span class="scene-val" id="hr-v-val">500</span></label>
+            <label><span>L (cm): </span><input type="range" id="hr-l" min="0.5" max="10" step="0.5" value="3"><span class="scene-val" id="hr-l-val">3.0</span></label>
           </div>
         </div>
       `;
@@ -3459,7 +3459,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-beats-demo" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&Delta;f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="5"><span class="scene-val" id="bd-df-val">5.0</span></label>
+            <label><span>&Delta;f (Hz): </span><input type="range" id="bd-df" min="0" max="30" step="0.5" value="5"><span class="scene-val" id="bd-df-val">5.0</span></label>
           </div>
         </div>
       `;
@@ -3470,7 +3470,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-consonance-dissonance" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>Ratio: <input type="range" id="cd-ratio" min="1" max="2" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>
+            <label><span>Ratio: </span><input type="range" id="cd-ratio" min="1" max="2" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>
           </div>
         </div>
       `;
@@ -3498,7 +3498,7 @@ function sceneMarkup(type) {
           <div class="scene-controls">
             <button id="cof-et" class="scene-btn">Equal Tempered</button>
             <button id="cof-py" class="scene-btn">Pythagorean</button>
-            <label>Note: <input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>
+            <label><span>Note: </span><input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>
           </div>
         </div>
       `;
@@ -3521,8 +3521,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-violin-spectrum" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>f<sub>0</sub>: <input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>
-            <label>Q: <input type="range" id="violin-q" min="5" max="100" step="5" value="30"><span class="scene-val" id="violin-q-val">30</span></label>
+            <label><span>f<sub>0</sub>: </span><input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>
+            <label><span>Q: </span><input type="range" id="violin-q" min="5" max="100" step="5" value="30"><span class="scene-val" id="violin-q-val">30</span></label>
           </div>
         </div>
       `;
@@ -3533,7 +3533,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-fourier-transform-derivation" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>L: <input type="range" id="ftd-L" min="1" max="20" step="0.5" value="3"><span class="scene-val" id="ftd-L-val">3.0</span></label>
+            <label><span>L: </span><input type="range" id="ftd-L" min="1" max="20" step="0.5" value="3"><span class="scene-val" id="ftd-L-val">3.0</span></label>
           </div>
         </div>
       `;
@@ -3544,8 +3544,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-underdamped-fourier-transform" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&gamma;: <input type="range" id="uft-gamma" min="0.2" max="5" step="0.2" value="2"><span class="scene-val" id="uft-gamma-val">2.0</span></label>
-            <label>&omega;<sub>0</sub>: <input type="range" id="uft-omega0" min="2" max="15" step="0.5" value="10"><span class="scene-val" id="uft-omega0-val">10.0</span></label>
+            <label><span>&gamma;: </span><input type="range" id="uft-gamma" min="0.2" max="5" step="0.2" value="2"><span class="scene-val" id="uft-gamma-val">2.0</span></label>
+            <label><span>&omega;<sub>0</sub>:</span> <input type="range" id="uft-omega0" min="2" max="15" step="0.5" value="10"><span class="scene-val" id="uft-omega0-val">10.0</span></label>
           </div>
         </div>
       `;
@@ -3568,7 +3568,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-fourier-filtering" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Cutoff: <input type="range" id="ff-cutoff" min="1" max="20" step="1" value="5"><span class="scene-val" id="ff-cutoff-val">5</span></label>
+            <label><span>Cutoff: </span><input type="range" id="ff-cutoff" min="1" max="20" step="1" value="5"><span class="scene-val" id="ff-cutoff-val">5</span></label>
           </div>
         </div>
       `;
@@ -3579,7 +3579,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-dirac-delta-visualization" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&sigma;: <input type="range" id="dd-sigma" min="0.02" max="1" step="0.02" value="0.3"><span class="scene-val" id="dd-sigma-val">0.30</span></label>
+            <label><span>&sigma;: </span><input type="range" id="dd-sigma" min="0.02" max="1" step="0.02" value="0.3"><span class="scene-val" id="dd-sigma-val">0.30</span></label>
           </div>
         </div>
       `;
@@ -3594,7 +3594,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-string-junction" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
+            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
           </div>
         </div>
       `;
@@ -3605,7 +3605,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-reflection-transmission-pulse" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="rtp-z-val">2.0</span></label>
+            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="rtp-z-val">2.0</span></label>
           </div>
         </div>
       `;
@@ -3616,7 +3616,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-phase-flip-demo" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="pfd-zratio" min="0.1" max="5" step="0.1" value="3"><span class="scene-val" id="pfd-zratio-val">3.0</span></label>
+            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="pfd-zratio" min="0.1" max="5" step="0.1" value="3"><span class="scene-val" id="pfd-zratio-val">3.0</span></label>
             <button id="pfd-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
           </div>
         </div>
@@ -3628,7 +3628,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-mass-collision-impedance" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>m<sub>2</sub>/m<sub>1</sub>: <input type="range" id="mci-ratio" min="0.1" max="10" step="0.1" value="1"><span class="scene-val" id="mci-ratio-val">1.0</span></label>
+            <label><span>m<sub>2</sub>/m<sub>1</sub>: </span><input type="range" id="mci-ratio" min="0.1" max="10" step="0.1" value="1"><span class="scene-val" id="mci-ratio-val">1.0</span></label>
           </div>
         </div>
       `;
@@ -3639,9 +3639,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-complex-impedance" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>m: <input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>
-            <label>b: <input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>
-            <label>k: <input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>
+            <label><span>m: </span><input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>
+            <label><span>b: </span><input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>
+            <label><span>k: </span><input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>
           </div>
         </div>
       `;
@@ -3664,8 +3664,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-wave-energy-string" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&omega;: <input type="range" id="wes-omega" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-omega-val">4.0</span></label>
-            <label>k: <input type="range" id="wes-k" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-k-val">4.0</span></label>
+            <label><span>&omega;: </span><input type="range" id="wes-omega" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-omega-val">4.0</span></label>
+            <label><span>k: </span><input type="range" id="wes-k" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="wes-k-val">4.0</span></label>
           </div>
         </div>
       `;
@@ -3676,7 +3676,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-power-reflection-transmission" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Z<sub>2</sub>/Z<sub>1</sub>: <input type="range" id="prt-z" min="0.1" max="5" step="0.05" value="1"><span class="scene-val" id="prt-z-val">1.00</span></label>
+            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="prt-z" min="0.1" max="5" step="0.05" value="1"><span class="scene-val" id="prt-z-val">1.00</span></label>
           </div>
         </div>
       `;
@@ -3687,7 +3687,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-decibel-scale" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>Distance (m): <input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>
+            <label><span>Distance (m): </span><input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>
           </div>
         </div>
       `;
@@ -3698,7 +3698,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-plane-wave-3d" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Angle: <input type="range" id="pw3d-angle" min="0" max="90" step="5" value="30"><span class="scene-val" id="pw3d-angle-val">30&deg;</span></label>
+            <label><span>Angle: </span><input type="range" id="pw3d-angle" min="0" max="90" step="5" value="30"><span class="scene-val" id="pw3d-angle-val">30&deg;</span></label>
           </div>
         </div>
       `;
@@ -3713,7 +3713,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-interference-demo" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>d/&lambda;: <input type="range" id="intdemo-sep" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="intdemo-sep-val">2.00</span></label>
+            <label><span>d/&lambda;: </span><input type="range" id="intdemo-sep" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="intdemo-sep-val">2.00</span></label>
           </div>
         </div>
       `;
@@ -3724,7 +3724,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-gaussian-wavepacket" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&sigma;<sub>x</sub>: <input type="range" id="gwp-sigma" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="gwp-sigma-val">2.0</span></label>
+            <label><span>&sigma;<sub>x</sub>: </span><input type="range" id="gwp-sigma" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="gwp-sigma-val">2.0</span></label>
           </div>
         </div>
       `;
@@ -3735,8 +3735,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-amplitude-modulation" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>f<sub>c</sub>: <input type="range" id="am-fc" min="20" max="100" step="5" value="50"><span class="scene-val" id="am-fc-val">50</span></label>
-            <label>f<sub>m</sub>: <input type="range" id="am-fm" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="am-fm-val">5.0</span></label>
+            <label><span>f<sub>c</sub>: </span><input type="range" id="am-fc" min="20" max="100" step="5" value="50"><span class="scene-val" id="am-fc-val">50</span></label>
+            <label><span>f<sub>m</sub>: </span><input type="range" id="am-fm" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="am-fm-val">5.0</span></label>
           </div>
         </div>
       `;
@@ -3747,7 +3747,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-dispersion-relations" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>k<sub>0</sub>: <input type="range" id="disp-k0" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>
+            <label><span>k<sub>0</sub>: </span><input type="range" id="disp-k0" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>
           </div>
         </div>
       `;
@@ -3758,8 +3758,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-phase-velocity-demo" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>k<sub>0</sub>: <input type="range" id="pvd-k0" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="pvd-k0-val">3.0</span></label>
-            <label>&Delta;k: <input type="range" id="pvd-dk" min="0.1" max="1.5" step="0.1" value="0.4"><span class="scene-val" id="pvd-dk-val">0.4</span></label>
+            <label><span>k<sub>0</sub>: </span><input type="range" id="pvd-k0" min="1" max="8" step="0.5" value="3"><span class="scene-val" id="pvd-k0-val">3.0</span></label>
+            <label><span>&Delta;k: </span><input type="range" id="pvd-dk" min="0.1" max="1.5" step="0.1" value="0.4"><span class="scene-val" id="pvd-dk-val">0.4</span></label>
           </div>
         </div>
       `;
@@ -3770,7 +3770,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-group-velocity-demo" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Dispersion: <input type="range" id="gvd-disp" min="0" max="5" step="0.1" value="1"><span class="scene-val" id="gvd-disp-val">1.0</span></label>
+            <label><span>Dispersion: </span><input type="range" id="gvd-disp" min="0" max="5" step="0.1" value="1"><span class="scene-val" id="gvd-disp-val">1.0</span></label>
           </div>
         </div>
       `;
@@ -3781,7 +3781,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-wavepacket-dispersion" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Dispersion: <input type="range" id="wpdisp-d" min="0" max="0.5" step="0.01" value="0.1"><span class="scene-val" id="wpdisp-d-val">0.10</span></label>
+            <label><span>Dispersion: </span><input type="range" id="wpdisp-d" min="0" max="0.5" step="0.01" value="0.1"><span class="scene-val" id="wpdisp-d-val">0.10</span></label>
           </div>
         </div>
       `;
@@ -3796,8 +3796,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-wave-transport-energy" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Pulse speed: <input type="range" id="wte-speed" min="0.2" max="2" step="0.1" value="0.8"><span class="scene-val" id="wte-speed-val">0.8</span></label>
-            <label>Pulse width: <input type="range" id="wte-width" min="20" max="120" step="5" value="60"><span class="scene-val" id="wte-width-val">60</span></label>
+            <label><span>Pulse speed: </span><input type="range" id="wte-speed" min="0.2" max="2" step="0.1" value="0.8"><span class="scene-val" id="wte-speed-val">0.8</span></label>
+            <label><span>Pulse width: </span><input type="range" id="wte-width" min="20" max="120" step="5" value="60"><span class="scene-val" id="wte-width-val">60</span></label>
           </div>
         </div>
       `;
@@ -3808,8 +3808,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-transverse-longitudinal-demo" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&omega;: <input type="range" id="tld-omega" min="0.5" max="6" step="0.1" value="2"><span class="scene-val" id="tld-omega-val">2.0</span></label>
-            <label>k: <input type="range" id="tld-k" min="0.1" max="1" step="0.05" value="0.3"><span class="scene-val" id="tld-k-val">0.30</span></label>
+            <label><span>&omega;: </span><input type="range" id="tld-omega" min="0.5" max="6" step="0.1" value="2"><span class="scene-val" id="tld-omega-val">2.0</span></label>
+            <label><span>k: </span><input type="range" id="tld-k" min="0.1" max="1" step="0.05" value="0.3"><span class="scene-val" id="tld-k-val">0.30</span></label>
           </div>
         </div>
       `;
@@ -3832,8 +3832,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-em-plane-wave" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Frequency: <input type="range" id="empw-freq" min="0.5" max="4" step="0.1" value="1.5"><span class="scene-val" id="empw-freq-val">1.5</span></label>
-            <label>Amplitude: <input type="range" id="empw-amp" min="0.2" max="1" step="0.05" value="0.7"><span class="scene-val" id="empw-amp-val">0.70</span></label>
+            <label><span>Frequency: </span><input type="range" id="empw-freq" min="0.5" max="4" step="0.1" value="1.5"><span class="scene-val" id="empw-freq-val">1.5</span></label>
+            <label><span>Amplitude: </span><input type="range" id="empw-amp" min="0.2" max="1" step="0.05" value="0.7"><span class="scene-val" id="empw-amp-val">0.70</span></label>
           </div>
         </div>
       `;
@@ -3848,7 +3848,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-linear-polarization" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label>Angle: <input type="range" id="linear-pol-angle" min="0" max="3.14" step="0.05" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
+            <label><span>Angle: </span><input type="range" id="linear-pol-angle" min="0" max="3.14" step="0.05" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
           </div>
         </div>
       `;
@@ -3870,7 +3870,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-malus-law" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&theta;: <input type="range" id="malus-theta" min="0" max="180" step="1" value="0"><span class="scene-val" id="malus-theta-val">0&deg;</span></label>
+            <label><span>&theta;: </span><input type="range" id="malus-theta" min="0" max="180" step="1" value="0"><span class="scene-val" id="malus-theta-val">0&deg;</span></label>
           </div>
         </div>
       `;
@@ -3885,8 +3885,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-snells-law-demo" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&theta;<sub>1</sub>: <input type="range" id="snell-theta1" min="0" max="89" step="1" value="30"><span class="scene-val" id="snell-theta1-val">30&deg;</span></label>
-            <label>n<sub>2</sub>/n<sub>1</sub>: <input type="range" id="snell-nratio" min="0.5" max="3" step="0.05" value="1.5"><span class="scene-val" id="snell-nratio-val">1.50</span></label>
+            <label><span>&theta;<sub>1</sub>: </span><input type="range" id="snell-theta1" min="0" max="89" step="1" value="30"><span class="scene-val" id="snell-theta1-val">30&deg;</span></label>
+            <label><span>n<sub>2</sub>/n<sub>1</sub>: </span><input type="range" id="snell-nratio" min="0.5" max="3" step="0.05" value="1.5"><span class="scene-val" id="snell-nratio-val">1.50</span></label>
           </div>
         </div>
       `;
@@ -3897,7 +3897,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-total-internal-reflection" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>&theta;: <input type="range" id="tir-angle" min="0" max="89" step="1" value="30"><span class="scene-val" id="tir-angle-val">30&deg;</span></label>
+            <label><span>&theta;: </span><input type="range" id="tir-angle" min="0" max="89" step="1" value="30"><span class="scene-val" id="tir-angle-val">30&deg;</span></label>
           </div>
         </div>
       `;
@@ -3908,7 +3908,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-thin-film-interference" width="600" height="320"></canvas>
           <div class="scene-controls">
-            <label>Thickness (nm): <input type="range" id="thinfilm-thickness" min="50" max="800" step="10" value="300"><span class="scene-val" id="thinfilm-thickness-val">300</span></label>
+            <label><span>Thickness (nm): </span><input type="range" id="thinfilm-thickness" min="50" max="800" step="10" value="300"><span class="scene-val" id="thinfilm-thickness-val">300</span></label>
           </div>
         </div>
       `;
@@ -3919,7 +3919,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-brewster-angle" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>n<sub>2</sub>/n<sub>1</sub>: <input type="range" id="brewster-n" min="1.1" max="3" step="0.05" value="1.5"><span class="scene-val" id="brewster-n-val">1.50</span></label>
+            <label><span>n<sub>2</sub>/n<sub>1</sub>: </span><input type="range" id="brewster-n" min="1.1" max="3" step="0.05" value="1.5"><span class="scene-val" id="brewster-n-val">1.50</span></label>
           </div>
         </div>
       `;
@@ -3942,7 +3942,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-prism-dispersion" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Apex angle: <input type="range" id="prism-apex" min="20" max="80" step="1" value="60"><span class="scene-val" id="prism-apex-val">60&deg;</span></label>
+            <label><span>Apex angle: </span><input type="range" id="prism-apex" min="20" max="80" step="1" value="60"><span class="scene-val" id="prism-apex-val">60&deg;</span></label>
           </div>
         </div>
       `;
@@ -4017,7 +4017,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-monopole-radiation-pattern" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>Exponent n: <input type="range" id="mrp-exp" min="1" max="6" step="1" value="2"><span class="scene-val" id="mrp-exp-val">2</span></label>
+            <label><span>Exponent n: </span><input type="range" id="mrp-exp" min="1" max="6" step="1" value="2"><span class="scene-val" id="mrp-exp-val">2</span></label>
           </div>
         </div>
       `;
@@ -4139,7 +4139,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-doppler-angle" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label>v/v<sub>sound</sub>: <input type="range" id="da-speed" min="0.1" max="0.9" step="0.05" value="0.5"><span class="scene-val" id="da-speed-val">0.50</span></label>
+            <label><span>v/v<sub>sound</sub>: </span><input type="range" id="da-speed" min="0.1" max="0.9" step="0.05" value="0.5"><span class="scene-val" id="da-speed-val">0.50</span></label>
           </div>
         </div>
       `;
