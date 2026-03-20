@@ -6170,7 +6170,7 @@ function initScaleComparison() {
     const baseFreq = 262;
     let i = 0;
     function playNext() {
-      if (i >= ratios.length || !wIsPlaying(btnId)) {
+      if (i >= ratios.length || (i > 0 && !wIsPlaying(btnId))) {
         wStopTones(btnId);
         const btn = document.getElementById(btnId);
         if (btn) { btn.textContent = btn.textContent.replace('\u25A0 Stop', '\u25B6 ' + btn.dataset.label); btn.style.background = ''; }
