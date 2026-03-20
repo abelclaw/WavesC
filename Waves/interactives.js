@@ -2014,7 +2014,7 @@ function initTransientDecay() {
 }
 
 // =========================================================================
-// 3. PHASE LAG — force vs response comparison
+// 3. PHASE LAG — spinning cam drives a spring-mass system
 // =========================================================================
 function initPhaseLag() {
   const canvas = document.getElementById('scene-phase-lag');
@@ -2024,19 +2024,15 @@ function initPhaseLag() {
   const { ctx, W, H } = setup;
 
   let t = 0;
-  const plotL = 50, plotR = W - 20, plotT = 30, plotB = H - 30;
-  const plotW = plotR - plotL, plotH = plotB - plotT;
-  const midY = (plotT + plotB) / 2;
 
   // Embed a slider if the canvas has a parent scene
   let wdSlider = document.getElementById('phase-lag-wd');
   if (!wdSlider) {
-    // Create controls dynamically after the canvas
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label><span>ω<sub>d</sub>:</span> <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
+      controls.innerHTML = '<label><span>\u03c9<sub>d</sub>:</span> <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
       parent.appendChild(controls);
       wdSlider = document.getElementById('phase-lag-wd');
     }
@@ -2047,6 +2043,38 @@ function initPhaseLag() {
   function getAB(wd) {
     const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
     return { A: (w0 * w0 - wd * wd) / denom, B: (gamma * wd) / denom };
+  }
+
+  // Layout
+  const trackY = H * 0.38;
+  const camCx = 70, camCy = trackY;
+  const camR = 30;
+  const wallX = W - 28;
+  const massW = 36, massH = 28;
+  const massEqX = W * 0.50;
+  const maxDisp = 55;
+
+  // Waveform plot at the bottom
+  const plotL = 50, plotR = W - 20, plotT = H * 0.68, plotB = H - 14;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+  const plotMidY = (plotT + plotB) / 2;
+
+  function drawHorizSpring(x1, x2, y, coils, coilAmp) {
+    const len = x2 - x1;
+    if (len <= 0) return;
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    const segLen = len / (coils * 2 + 2);
+    let cx = x1 + segLen;
+    ctx.lineTo(cx, y);
+    for (let i = 0; i < coils; i++) {
+      const midX = cx + segLen;
+      ctx.lineTo(midX, y + coilAmp * ((i % 2 === 0) ? 1 : -1));
+      cx = midX + segLen;
+      ctx.lineTo(cx, y);
+    }
+    ctx.lineTo(x2, y);
+    ctx.stroke();
   }
 
   function tick() {
@@ -2065,53 +2093,158 @@ function initPhaseLag() {
   function draw(wd, A, B, amp, phase) {
     wClear(ctx, W, H);
 
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
+    const camAngle = wd * t;
+    const pinX = camCx + camR * 0.7 * Math.cos(camAngle);
+    const pinY = camCy - camR * 0.7 * Math.sin(camAngle);
+    const forceNow = Math.cos(camAngle);
+    const respNow = (A * Math.cos(wd * t) + B * Math.sin(wd * t)) * 20;
+    const massX = massEqX + respNow * maxDisp;
+
+    // === CAM MECHANISM ===
+
+    // Motor housing
+    ctx.fillStyle = '#e8e0d4'; ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    const motorW = 28, motorH = camR * 2 + 14;
+    ctx.fillRect(camCx - camR - motorW, camCy - motorH / 2, motorW, motorH);
+    ctx.strokeRect(camCx - camR - motorW, camCy - motorH / 2, motorW, motorH);
+
+    ctx.save();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.translate(camCx - camR - motorW / 2, camCy);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('MOTOR', 0, 3);
+    ctx.restore();
+
+    // Flywheel
+    ctx.beginPath(); ctx.arc(camCx, camCy, camR, 0, 2 * Math.PI);
+    ctx.fillStyle = '#d4cfc6'; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2; ctx.stroke();
+
+    // Spokes
+    ctx.strokeStyle = 'rgba(31,42,46,0.18)'; ctx.lineWidth = 1;
+    for (let s = 0; s < 4; s++) {
+      const sa = camAngle + s * Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(camCx, camCy);
+      ctx.lineTo(camCx + camR * 0.88 * Math.cos(sa), camCy - camR * 0.88 * Math.sin(sa));
+      ctx.stroke();
+    }
+
+    // Center axle
+    ctx.beginPath(); ctx.arc(camCx, camCy, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.axis; ctx.fill();
+
+    // Crank pin
+    ctx.beginPath(); ctx.arc(pinX, pinY, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Push rod from pin to mass
+    const rodEndX = massX - massW / 2 - 3;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(pinX, pinY); ctx.lineTo(rodEndX, trackY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(rodEndX, trackY, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+
+    // === TRACK ===
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    const groundY = trackY + massH / 2 + 2;
+    ctx.beginPath(); ctx.moveTo(camCx + camR + 8, groundY); ctx.lineTo(wallX, groundY); ctx.stroke();
+    for (let hx = camCx + camR + 14; hx < wallX; hx += 12) {
+      ctx.beginPath(); ctx.moveTo(hx, groundY); ctx.lineTo(hx - 4, groundY + 6); ctx.stroke();
+    }
+
+    // === MASS BLOCK ===
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillRect(massX - massW / 2, trackY - massH / 2, massW, massH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.strokeRect(massX - massW / 2, trackY - massH / 2, massW, massH);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m', massX, trackY + 5);
+
+    // === SPRING (mass to wall) ===
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    drawHorizSpring(massX + massW / 2, wallX - 4, trackY, 10, 10);
+
+    // Right wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallX - 4, trackY - 28, 6, 56);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const hy = trackY - 24 + i * 11;
+      ctx.beginPath(); ctx.moveTo(wallX + 2, hy); ctx.lineTo(wallX + 8, hy - 5); ctx.stroke();
+    }
+
+    // Equilibrium marker
+    ctx.strokeStyle = WCOLORS.textDim + '50'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(massEqX, trackY - massH / 2 - 6); ctx.lineTo(massEqX, trackY + massH / 2 + 10); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('eq', massEqX, groundY + 14);
+
+    // Force arrow above mass
+    const arrowLen = forceNow * 28;
+    if (Math.abs(arrowLen) > 2) {
+      const arrowY = trackY - massH / 2 - 10;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(massX, arrowY); ctx.lineTo(massX + arrowLen, arrowY); ctx.stroke();
+      const dir = arrowLen > 0 ? 1 : -1;
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath();
+      ctx.moveTo(massX + arrowLen, arrowY);
+      ctx.lineTo(massX + arrowLen - dir * 6, arrowY - 3);
+      ctx.lineTo(massX + arrowLen - dir * 6, arrowY + 3);
+      ctx.closePath(); ctx.fill();
+      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('F(t)', massX + arrowLen / 2, arrowY - 5);
+    }
+
+    // === BOTTOM WAVEFORM TRACES ===
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT - 6); ctx.lineTo(plotR, plotT - 6); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
 
     const nCycles = 3;
     const tRange = nCycles * 2 * Math.PI / wd;
-    const scale = plotH * 0.4;
+    const scale = plotH * 0.38;
 
-    // Force (driving)
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    // Force trace
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let px = 0; px <= plotW; px++) {
       const tc = (px / plotW) * tRange + t;
       const f = Math.cos(wd * tc);
-      const py = midY - f * scale * 0.5;
+      const py = plotMidY - f * scale * 0.5;
       px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
     }
     ctx.stroke();
 
-    // Response
-    const normAmp = Math.min(amp * 20, 1);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    // Response trace
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let px = 0; px <= plotW; px++) {
       const tc = (px / plotW) * tRange + t;
       const x = (A * Math.cos(wd * tc) + B * Math.sin(wd * tc)) * 20;
-      const py = midY - x * scale;
+      const py = plotMidY - x * scale;
       px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
     }
     ctx.stroke();
 
-    // Phase info
+    // Phase info text
     const phaseDeg = (phase * 180 / Math.PI);
     const inPhase = wd < w0;
-    ctx.fillStyle = WCOLORS.text; ctx.font = '13px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, inPhase ? 'In phase (ω_d < ω₀)' : 'Out of phase (ω_d > ω₀)', plotL + plotW / 2, plotT - 6);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Phase lag: ' + phaseDeg.toFixed(1) + '\u00B0', plotL + 10, plotB + 14);
-    fillTextSub(ctx, 'ω_d = ' + wd.toFixed(1) + '   ω₀ = ' + w0.toFixed(1), plotL + plotW * 0.5, plotB + 14);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'left';
+    fillTextSub(ctx, inPhase ? 'In phase (\u03c9_d < \u03c9\u2080)' : 'Out of phase (\u03c9_d > \u03c9\u2080)', plotL, plotT - 10);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Phase: ' + phaseDeg.toFixed(0) + '\u00b0', plotR, plotT - 10);
 
     // Legend
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('F(t) (driving force)', plotR, plotT + 10);
+    ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('F(t)', plotR, plotMidY - scale * 0.5 - 2);
     ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('x(t) (response)', plotR, plotT + 24);
+    ctx.fillText('x(t)', plotR, plotMidY + scale * 0.5 + 8);
   }
 
   wdSlider?.addEventListener('input', () => { t = 0; });
@@ -2911,6 +3044,7 @@ function initEigenvalueSolver() {
   const { ctx, W, H } = setup;
 
   const kappaSlider = document.getElementById('eigen-kappa');
+  let t = 0;
 
   function draw() {
     const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
@@ -2921,9 +3055,10 @@ function initEigenvalueSolver() {
     // Matrix entries
     const a11 = (k + kappa) / m;
     const a12 = -kappa / m;
-    // Eigenvalues: (a11 + a11)/2 ± sqrt((a11-a11)^2/4 + a12^2) => a11 ± |a12|
     const lambdaS = a11 + a12; // = k/m (symmetric)
     const lambdaA = a11 - a12; // = (k + 2κ)/m (antisymmetric)
+    const omegaS = Math.sqrt(lambdaS);
+    const omegaA = Math.sqrt(lambdaA);
 
     // Left side: matrix display
     const matX = 30, matY = 40;
@@ -2934,11 +3069,9 @@ function initEigenvalueSolver() {
     // Draw matrix brackets
     const mxL = matX + 10, mxR = matX + 200, myT = matY + 15, myB = matY + 75;
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    // Left bracket
     ctx.beginPath();
     ctx.moveTo(mxL + 10, myT); ctx.lineTo(mxL, myT); ctx.lineTo(mxL, myB); ctx.lineTo(mxL + 10, myB);
     ctx.stroke();
-    // Right bracket
     ctx.beginPath();
     ctx.moveTo(mxR - 10, myT); ctx.lineTo(mxR, myT); ctx.lineTo(mxR, myB); ctx.lineTo(mxR - 10, myB);
     ctx.stroke();
@@ -2962,7 +3095,7 @@ function initEigenvalueSolver() {
     ctx.fillText('= ' + a12.toFixed(1), cx1, ry2 + 16);
     ctx.fillText('= ' + a11.toFixed(1), cx2, ry2 + 16);
 
-    // Right side: eigenvector plot
+    // Right side: animated eigenvector phase space
     const plotCx = W - 130, plotCy = H / 2 + 10;
     const plotR = 80;
 
@@ -2983,22 +3116,54 @@ function initEigenvalueSolver() {
     ctx.fillText('x₁', plotCx + plotR + 18, plotCy + 4);
     ctx.fillText('x₂', plotCx, plotCy - plotR - 16);
 
-    // Eigenvector 1 (symmetric): (1, 1) / sqrt(2)
-    const ev1x = plotR * 0.7, ev1y = -plotR * 0.7;
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev1x, plotCy + ev1y); ctx.stroke();
-    // Arrowhead
-    drawArrowHead(ctx, plotCx + ev1x, plotCy + ev1y, Math.atan2(ev1y, ev1x), WCOLORS.teal);
-    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui, sans-serif';
-    fillTextSub(ctx, 'ξ_s = (1,1)', plotCx + ev1x + 5, plotCy + ev1y - 8);
+    // Draw faint eigenvector direction lines
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.moveTo(plotCx - plotR * 0.85, plotCy + plotR * 0.85); ctx.lineTo(plotCx + plotR * 0.85, plotCy - plotR * 0.85); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.moveTo(plotCx - plotR * 0.85, plotCy - plotR * 0.85); ctx.lineTo(plotCx + plotR * 0.85, plotCy + plotR * 0.85); ctx.stroke();
+    ctx.globalAlpha = 1.0;
+    ctx.setLineDash([]);
 
-    // Eigenvector 2 (antisymmetric): (1, -1) / sqrt(2)
-    const ev2x = plotR * 0.7, ev2y = plotR * 0.7;
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 3.5;
-    ctx.beginPath(); ctx.moveTo(plotCx, plotCy); ctx.lineTo(plotCx + ev2x, plotCy + ev2y); ctx.stroke();
-    drawArrowHead(ctx, plotCx + ev2x, plotCy + ev2y, Math.atan2(ev2y, ev2x), WCOLORS.red);
-    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif';
-    fillTextSub(ctx, 'ξ_a = (1,−1)', plotCx + ev2x + 5, plotCy + ev2y + 16);
+    // Animate dots oscillating along eigenvector directions
+    const amp = plotR * 0.7;
+    const inv = 1 / Math.sqrt(2);
+
+    // Symmetric mode: dot oscillates along (1,1) direction
+    const phaseS = Math.sin(omegaS * t * 0.5);
+    const sx = amp * inv * phaseS;
+    const sy = -amp * inv * phaseS;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.globalAlpha = 0.12;
+    for (let i = 6; i >= 1; i--) {
+      const tp = Math.sin(omegaS * (t - i * 0.03) * 0.5);
+      const tx = amp * inv * tp, ty = -amp * inv * tp;
+      ctx.beginPath(); ctx.arc(plotCx + tx, plotCy + ty, 5 - i * 0.5, 0, 2 * Math.PI); ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+    ctx.beginPath(); ctx.arc(plotCx + sx, plotCy + sy, 7, 0, 2 * Math.PI); ctx.fill();
+
+    // Antisymmetric mode: dot oscillates along (1,-1) direction
+    const phaseA = Math.sin(omegaA * t * 0.5);
+    const ax = amp * inv * phaseA;
+    const ay = amp * inv * phaseA;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.globalAlpha = 0.12;
+    for (let i = 6; i >= 1; i--) {
+      const tp = Math.sin(omegaA * (t - i * 0.03) * 0.5);
+      const tx = amp * inv * tp, ty = amp * inv * tp;
+      ctx.beginPath(); ctx.arc(plotCx + tx, plotCy + ty, 5 - i * 0.5, 0, 2 * Math.PI); ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+    ctx.beginPath(); ctx.arc(plotCx + ax, plotCy + ay, 7, 0, 2 * Math.PI); ctx.fill();
+
+    // Labels for eigenvectors
+    ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal;
+    fillTextSub(ctx, 'ξ_s (1,1)', plotCx + plotR * 0.5, plotCy - plotR * 0.78);
+    ctx.fillStyle = WCOLORS.red;
+    fillTextSub(ctx, 'ξ_a (1,−1)', plotCx + plotR * 0.5, plotCy + plotR * 0.88);
 
     // Eigenvalue display
     const evY = H - 50;
@@ -3006,28 +3171,23 @@ function initEigenvalueSolver() {
     ctx.fillText('Eigenvalues (ω²):', matX, evY);
 
     ctx.fillStyle = WCOLORS.teal; ctx.font = '13px system-ui, sans-serif';
-    fillTextSub(ctx, 'ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + Math.sqrt(lambdaS).toFixed(2), matX, evY + 22);
+    fillTextSub(ctx, 'ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + omegaS.toFixed(2), matX, evY + 22);
     ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, 'ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + Math.sqrt(lambdaA).toFixed(2), matX, evY + 44);
+    fillTextSub(ctx, 'ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + omegaA.toFixed(2), matX, evY + 44);
 
     // κ/k label
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'right';
     ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), W - 10, 20);
   }
 
-  function drawArrowHead(ctx, x, y, angle, color) {
-    const size = 8;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x - size * Math.cos(angle - 0.4), y - size * Math.sin(angle - 0.4));
-    ctx.lineTo(x - size * Math.cos(angle + 0.4), y - size * Math.sin(angle + 0.4));
-    ctx.closePath();
-    ctx.fill();
+  function animate() {
+    t += 0.04;
+    draw();
+    requestAnimationFrame(animate);
   }
 
-  kappaSlider?.addEventListener('input', draw);
-  draw();
+  kappaSlider?.addEventListener('input', () => {});
+  animate();
 }
 
 // =========================================================================
