@@ -1470,7 +1470,7 @@ function initEulerCircle() {
 // =========================================================================
 
 // =========================================================================
-// 1. DRIVEN OSCILLATOR — live simulation + amplitude/phase curves
+// 1. DRIVEN OSCILLATOR — flywheel cam drives spring-mass + amplitude/phase curves
 // =========================================================================
 function initDrivenOscillator() {
   const canvas = document.getElementById('scene-driven-oscillator');
@@ -1487,19 +1487,42 @@ function initDrivenOscillator() {
   let trail = [];
   const maxTrail = 300;
 
-  // Layout: left = spring-mass, center = x(t) plot, right = amplitude/phase curves
-  const springX = 50, massEqY = H / 2, maxDisp = 60;
-  const plotL = 130, plotR = W * 0.48, plotT = 25, plotB = H - 25;
-  const plotW = plotR - plotL, plotH = plotB - plotT;
-  const ampL = W * 0.54, ampR = W - 15, ampT = 25, ampB = H * 0.48;
-  const phL = ampL, phR = ampR, phT = H * 0.55, phB = H - 15;
-
-  // Steady-state solution: x(t) = (F0/m) * [A cos(wd t) + B sin(wd t)]
+  // Steady-state solution
   function getAB(w0, wd, gamma) {
     const denom = (w0 * w0 - wd * wd) * (w0 * w0 - wd * wd) + (gamma * wd) * (gamma * wd);
     const A = (w0 * w0 - wd * wd) / denom;
     const B = (gamma * wd) / denom;
     return { A, B, amp: Math.sqrt(A * A + B * B), phase: -Math.atan2(B, A) };
+  }
+
+  // Layout: top = flywheel + spring-mass, bottom-left = x(t), bottom-right = amp & phase
+  const trackY = H * 0.24;
+  const camCx = 60, camCy = trackY, camR = 24;
+  const wallX = W * 0.46;
+  const massW = 32, massH = 24;
+  const massEqX = W * 0.30;
+  const maxDisp = 40;
+
+  const plotL = 20, plotR = W * 0.46, plotT = H * 0.52, plotB = H - 14;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  const ampL = W * 0.54, ampR = W - 15, ampT = H * 0.08, ampB = H * 0.48;
+  const phL = ampL, phR = ampR, phT = H * 0.55, phB = H - 15;
+
+  function drawHorizSpring(x1, x2, y, coils, coilAmp) {
+    const len = x2 - x1;
+    if (len <= 0) return;
+    ctx.beginPath(); ctx.moveTo(x1, y);
+    const segLen = len / (coils * 2 + 2);
+    let cx = x1 + segLen;
+    ctx.lineTo(cx, y);
+    for (let i = 0; i < coils; i++) {
+      const midX = cx + segLen;
+      ctx.lineTo(midX, y + coilAmp * ((i % 2 === 0) ? 1 : -1));
+      cx = midX + segLen;
+      ctx.lineTo(cx, y);
+    }
+    ctx.lineTo(x2, y); ctx.stroke();
   }
 
   function tick() {
@@ -1539,59 +1562,107 @@ function initDrivenOscillator() {
   function draw(wd, w0, gamma, x, force) {
     wClear(ctx, W, H);
 
-    // --- Spring-mass with driving force (left) ---
-    const massY = massEqY + x * maxDisp * 8;
-    const forceY = massEqY + force * maxDisp * 0.4;
+    // === FLYWHEEL CAM MECHANISM (top) ===
+    const camAngle = wd * t;
+    const pinX = camCx + camR * 0.7 * Math.cos(camAngle);
+    const pinY = camCy - camR * 0.7 * Math.sin(camAngle);
+    const massX = massEqX + x * maxDisp * 8;
 
-    // Wall
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(springX - 25, 15, 55, 4);
+    // Motor housing
+    ctx.fillStyle = '#e8e0d4'; ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    const motorW = 22, motorH = camR * 2 + 12;
+    ctx.fillRect(camCx - camR - motorW, camCy - motorH / 2, motorW, motorH);
+    ctx.strokeRect(camCx - camR - motorW, camCy - motorH / 2, motorW, motorH);
+
+    ctx.save();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '7px system-ui'; ctx.textAlign = 'center';
+    ctx.translate(camCx - camR - motorW / 2, camCy);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('MOTOR', 0, 3);
+    ctx.restore();
+
+    // Flywheel
+    ctx.beginPath(); ctx.arc(camCx, camCy, camR, 0, 2 * Math.PI);
+    ctx.fillStyle = '#d4cfc6'; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2; ctx.stroke();
+
+    // Spokes
+    ctx.strokeStyle = 'rgba(31,42,46,0.18)'; ctx.lineWidth = 1;
+    for (let s = 0; s < 4; s++) {
+      const sa = camAngle + s * Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(camCx, camCy);
+      ctx.lineTo(camCx + camR * 0.88 * Math.cos(sa), camCy - camR * 0.88 * Math.sin(sa));
+      ctx.stroke();
+    }
+
+    // Center axle
+    ctx.beginPath(); ctx.arc(camCx, camCy, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.axis; ctx.fill();
+
+    // Crank pin
+    ctx.beginPath(); ctx.arc(pinX, pinY, 3.5, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Push rod
+    const rodEndX = massX - massW / 2 - 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(pinX, pinY); ctx.lineTo(rodEndX, trackY); ctx.stroke();
+    ctx.beginPath(); ctx.arc(rodEndX, trackY, 2.5, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.amber; ctx.fill();
+
+    // Track
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath(); ctx.moveTo(springX - 20 + i * 11, 15); ctx.lineTo(springX - 25 + i * 11, 10); ctx.stroke();
+    const groundY = trackY + massH / 2 + 2;
+    ctx.beginPath(); ctx.moveTo(camCx + camR + 6, groundY); ctx.lineTo(wallX, groundY); ctx.stroke();
+    for (let hx = camCx + camR + 12; hx < wallX; hx += 10) {
+      ctx.beginPath(); ctx.moveTo(hx, groundY); ctx.lineTo(hx - 3, groundY + 5); ctx.stroke();
     }
 
-    // Spring
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    const sTop = 19;
-    const sLen = Math.max(massY - 14 - sTop, 15);
-    ctx.beginPath(); ctx.moveTo(springX, sTop);
-    const seg = sLen / 14;
-    let cy = sTop + seg;
-    ctx.lineTo(springX, cy);
-    for (let i = 0; i < 6; i++) {
-      ctx.lineTo(springX + ((i % 2 === 0) ? 10 : -10), cy + seg);
-      cy += 2 * seg;
-      ctx.lineTo(springX, cy);
-    }
-    ctx.lineTo(springX, massY - 14);
-    ctx.stroke();
-
-    // Mass
-    const bW = 36, bH = 24;
+    // Mass block
     ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.roundRect(springX - bW / 2, massY - bH / 2, bW, bH, 4); ctx.fill();
+    ctx.fillRect(massX - massW / 2, trackY - massH / 2, massW, massH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.strokeRect(massX - massW / 2, trackY - massH / 2, massW, massH);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('m', springX, massY + 4);
+    ctx.fillText('m', massX, trackY + 4);
 
-    // Driving force arrow
-    const fLen = force * 25;
-    if (Math.abs(fLen) > 2) {
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(springX, massY + bH / 2 + 5);
-      ctx.lineTo(springX, massY + bH / 2 + 5 + fLen); ctx.stroke();
-      ctx.fillStyle = WCOLORS.amber;
-      const dir = Math.sign(fLen);
-      ctx.beginPath();
-      ctx.moveTo(springX, massY + bH / 2 + 5 + fLen);
-      ctx.lineTo(springX - 4, massY + bH / 2 + 5 + fLen - dir * 6);
-      ctx.lineTo(springX + 4, massY + bH / 2 + 5 + fLen - dir * 6);
-      ctx.closePath(); ctx.fill();
-      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText('F', springX + 8, massY + bH / 2 + 5 + fLen / 2 + 3);
+    // Spring (mass to wall)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    drawHorizSpring(massX + massW / 2, wallX - 4, trackY, 8, 8);
+
+    // Right wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallX - 4, trackY - 22, 5, 44);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const hy = trackY - 18 + i * 10;
+      ctx.beginPath(); ctx.moveTo(wallX + 1, hy); ctx.lineTo(wallX + 6, hy - 4); ctx.stroke();
     }
 
-    // --- x(t) plot (center) ---
+    // Equilibrium marker
+    ctx.strokeStyle = WCOLORS.textDim + '50'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(massEqX, trackY - massH / 2 - 5); ctx.lineTo(massEqX, trackY + massH / 2 + 8); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Force arrow above mass
+    const arrowLen = force * 22;
+    if (Math.abs(arrowLen) > 2) {
+      const arrowY = trackY - massH / 2 - 8;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(massX, arrowY); ctx.lineTo(massX + arrowLen, arrowY); ctx.stroke();
+      const dir = arrowLen > 0 ? 1 : -1;
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath();
+      ctx.moveTo(massX + arrowLen, arrowY);
+      ctx.lineTo(massX + arrowLen - dir * 5, arrowY - 3);
+      ctx.lineTo(massX + arrowLen - dir * 5, arrowY + 3);
+      ctx.closePath(); ctx.fill();
+      ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('F', massX + arrowLen / 2, arrowY - 4);
+    }
+
+    // === x(t) TRAIL PLOT (bottom left) ===
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     const midY = (plotT + plotB) / 2;
@@ -1628,17 +1699,16 @@ function initDrivenOscillator() {
     ctx.fillStyle = WCOLORS.teal;
     ctx.fillText('x(t)', plotL + 3, plotT + 22);
 
-    // --- Amplitude vs wd curve (upper right) ---
+    // === AMPLITUDE vs wd CURVE (right upper) ===
     const ampW = ampR - ampL, ampH = ampB - ampT;
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(ampL, ampT); ctx.lineTo(ampL, ampB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(ampL, ampB); ctx.lineTo(ampR, ampB); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('|x|', ampL - 10, ampT + 3);
-    ctx.fillText('\u03C9', ampR - 4, ampB + 12);
+    ctx.fillText('\u03c9', ampR - 4, ampB + 12);
     ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', ampR + 4, ampB + 14); ctx.restore();
 
-    // Sweep amplitude curve
     const wMax = 10;
     let maxAmp = 0;
     for (let i = 0; i <= 200; i++) {
@@ -1672,23 +1742,23 @@ function initDrivenOscillator() {
     ctx.beginPath(); ctx.moveTo(w0px, ampT); ctx.lineTo(w0px, ampB); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u2080', w0px, ampB + 12);
+    ctx.fillText('\u03c9\u2080', w0px, ampB + 12);
 
-    // --- Phase vs wd curve (lower right) ---
+    // === PHASE vs wd CURVE (right lower) ===
     const phW = phR - phL, phH = phB - phT;
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(phL, phT); ctx.lineTo(phL, phB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(phL, phB); ctx.lineTo(phR, phB); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Phase', phL - 14, phT + 3);
-    ctx.fillText('\u03C9', phR - 4, phB + 12);
+    ctx.fillText('\u03c9', phR - 4, phB + 12);
     ctx.save(); ctx.font = '7px system-ui'; ctx.fillText('d', phR + 4, phB + 14); ctx.restore();
 
     // Phase labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('0\u00B0', phL - 3, phT + 4);
-    ctx.fillText('\u221290\u00B0', phL - 3, (phT + phB) / 2 + 3);
-    ctx.fillText('\u2212180\u00B0', phL - 3, phB + 3);
+    ctx.fillText('0\u00b0', phL - 3, phT + 4);
+    ctx.fillText('\u221290\u00b0', phL - 3, (phT + phB) / 2 + 3);
+    ctx.fillText('\u2212180\u00b0', phL - 3, phB + 3);
 
     // Guideline at -90
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
