@@ -1742,17 +1742,17 @@ function initTransientDecay() {
   const tMax = 10;
 
   // Layout: spring-mass on left, plot on right
-  const springRegionW = 170;
-  const plotL = springRegionW + 40, plotR = W - 15, plotT = 30, plotB = H - 20;
+  const springRegionW = 155;
+  const plotL = springRegionW + 20, plotR = W - 12, plotT = 18, plotB = H - 16;
   const plotW = plotR - plotL, plotH = plotB - plotT;
   const midY = (plotT + plotB) / 2;
 
   // Spring-mass geometry (horizontal)
-  const wallX = 15, wallH = 100;
+  const wallX = 10, wallH = 100;
   const wallCY = H / 2;
-  const eqMassX = 120; // equilibrium mass center
+  const eqMassX = 95; // equilibrium mass center
   const massW = 30, massH = 40;
-  const maxDisp = 45; // max pixel displacement
+  const maxDisp = 50; // max pixel displacement
 
   // Sliders
   const w0Slider = document.getElementById('transient-w0');
@@ -1915,12 +1915,11 @@ function initTransientDecay() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(wallX - 8, wallCY + massH / 2 + 5); ctx.lineTo(springRegionW, wallCY + massH / 2 + 5); ctx.stroke();
 
-    // Displacement arrow
+    // Displacement arrow + initial kick indicator
     if (Math.abs(curDisp) > 0.05) {
-      const arrowY = wallCY - massH / 2 - 12;
+      const arrowY = wallCY - massH / 2 - 10;
       ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(eqMassX, arrowY); ctx.lineTo(massX, arrowY); ctx.stroke();
-      // Arrowhead
       const dir = curDisp > 0 ? 1 : -1;
       ctx.fillStyle = WCOLORS.amber;
       ctx.beginPath();
@@ -1930,13 +1929,18 @@ function initTransientDecay() {
       ctx.closePath(); ctx.fill();
       ctx.font = '10px system-ui'; ctx.textAlign = 'center';
       ctx.fillStyle = WCOLORS.amber;
-      ctx.fillText('x', (eqMassX + massX) / 2, arrowY - 5);
+      ctx.fillText('x₀', (eqMassX + massX) / 2, arrowY - 5);
     }
 
-    // Instruction text
+    // Drag hint or "release to kick" prompt
     if (!running && t === 0) {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('drag mass \u2192', eqMassX + 10, wallCY + massH / 2 + 22);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      if (dragging) {
+        ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui';
+        ctx.fillText('release to kick!', eqMassX + 15, wallCY + massH / 2 + 22);
+      } else {
+        ctx.fillText('drag mass \u2192', eqMassX + 15, wallCY + massH / 2 + 22);
+      }
     }
 
     // --- Plot (right side) ---
@@ -1948,7 +1952,7 @@ function initTransientDecay() {
     fillTextSub(ctx, 'x(t)', plotL - 16, plotT + 2);
     ctx.fillText('t', plotR + 10, midY + 3);
 
-    const scale = plotH * 0.45;
+    const scale = plotH * 0.47;
     const nPts = 400;
 
     // Envelope
@@ -4718,7 +4722,7 @@ function initStringTransverseWave() {
       controls.innerHTML =
         '<label>Segment position: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>' +
         '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>' +
-        '<label>Speed: <input type="range" id="stw-speed" min="0.005" max="0.08" step="0.005" value="0.015"><span class="scene-val" id="stw-speed-val">0.50x</span></label>';
+        '<label>Speed: <input type="range" id="stw-speed" min="0.002" max="0.03" step="0.002" value="0.006"><span class="scene-val" id="stw-speed-val">0.20x</span></label>';
       parent.appendChild(controls);
       posSlider = document.getElementById('stw-pos');
     }
@@ -4729,7 +4733,7 @@ function initStringTransverseWave() {
   function tick() {
     const segPos = parseFloat(posSlider?.value || 0.5);
     const A = parseFloat(ampSlider?.value || 0.8);
-    const speed = parseFloat(stwSpeedSlider?.value || 0.015);
+    const speed = parseFloat(stwSpeedSlider?.value || 0.006);
     document.getElementById('stw-pos-val')?.replaceChildren(document.createTextNode(segPos.toFixed(2)));
     document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
     document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
