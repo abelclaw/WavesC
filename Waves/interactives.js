@@ -1999,13 +1999,13 @@ function initTransientDecay() {
       ctx.beginPath(); ctx.arc(dotPx, dotPy, 5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // e^{-γt/2} label near envelope
+    // e^{-γt/2} envelope label
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    fillTextSub(ctx, 'e^{-\u03B3t/2}', plotL + plotW * 0.12, midY - envAmp * Math.exp(-gamma / 2 * tMax * 0.12) * scale - 8);
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Transient decays \u2192 system returns to rest', plotL + plotW / 2, plotT - 10);
+    const eLabelT = tMax * 0.08;
+    const eLabelY = midY - envAmp * Math.exp(-gamma / 2 * eLabelT) * scale - 6;
+    ctx.fillText('\u00b1 e', plotL + plotW * 0.06, eLabelY);
+    ctx.font = '8px system-ui';
+    ctx.fillText('-\u03B3t/2', plotL + plotW * 0.06 + 16, eLabelY - 5);
   }
 
   // Start with initial displacement shown but not running
