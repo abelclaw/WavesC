@@ -247,6 +247,36 @@ const mathLessons = [
       { question: "The de Broglie wavelength $\\lambda = h/p$. Check the dimensions.", answer: "$[h] = [ML^2T^{-1}]$ (energy times time). $[p] = [MLT^{-1}]$. $[h/p] = [L]$. So $\\lambda$ has units of length, as required." },
       { question: "A pendulum of length $L$ swings under gravity $g$. Use dimensional analysis to find the period.", answer: "$[T] = [T^1]$. $L/g$ has units $[T^2]$, so $T$ must be proportional to $\\sqrt{L/g}$. Dimensional analysis gives $T = C\\sqrt{L/g}$ where $C$ is a dimensionless constant (which turns out to be $2\\pi$)." }
     ]
+  },
+  {
+    id: "small-angle-approximations",
+    title: "Small Angle Approximations",
+    sections: [
+      { heading: "Why small angles matter", body: "Many physical systems involve angles that remain small during their motion. Pendulums swing through small arcs, waves on a string have gentle slopes, and elastic beams deflect only slightly. In all these cases, the exact trigonometric functions can be replaced by much simpler polynomial approximations, turning nonlinear problems into linear ones that we can solve.", interactive: null },
+      { heading: "The key approximations", body: "For $\\theta$ measured in radians with $|\\theta| \\ll 1$: $$\\sin\\theta \\approx \\theta, \\qquad \\cos\\theta \\approx 1 - \\tfrac{1}{2}\\theta^2, \\qquad \\tan\\theta \\approx \\theta$$ These follow from the Taylor series of each function expanded about $\\theta = 0$. The error is of order $\\theta^3$ for sine and tangent, and $\\theta^4$ for cosine.", interactive: null },
+      { heading: "Application to the wave equation", body: "When deriving the wave equation for a string, the exact transverse component of tension is $T\\sin\\theta$ where $\\theta$ is the angle the string makes with the horizontal. The slope of the string is $\\partial A/\\partial x = \\tan\\theta$. For small displacements, $\\sin\\theta \\approx \\tan\\theta \\approx \\partial A/\\partial x$, and this linearization is what gives us the linear wave equation. Without this approximation, the equation of motion would be nonlinear and much harder to solve.", interactive: null },
+      { heading: "How small is small enough?", body: "At $\\theta = 0.1$ rad ($5.7°$), $\\sin\\theta$ differs from $\\theta$ by only 0.17%. At $\\theta = 0.3$ rad ($17°$), the error is 1.5%. At $\\theta = 0.5$ rad ($29°$), it is 4.7%. For most wave problems the slopes are far smaller than 0.1 rad, so the approximation is excellent. When amplitudes become large enough that the approximation breaks down, nonlinear wave phenomena like solitons and shock waves appear.", interactive: null }
+    ],
+    exercises: [
+      { question: "Compute $\\sin(0.1)$ exactly and compare with the small-angle approximation. What is the relative error?", answer: "$\\sin(0.1) = 0.09983...$. The approximation gives $0.1$. Relative error: $(0.1 - 0.09983)/0.09983 \\approx 0.17\\%$." },
+      { question: "In the derivation of the string wave equation, why do we approximate $\\sin\\theta \\approx \\tan\\theta$ rather than keeping the exact expression?", answer: "The exact transverse force involves $T\\sin\\theta = T\\tan\\theta/\\sqrt{1+\\tan^2\\theta}$. For small $\\theta$, $\\tan^2\\theta \\ll 1$, so $\\sqrt{1 + \\tan^2\\theta} \\approx 1$ and $\\sin\\theta \\approx \\tan\\theta = \\partial A/\\partial x$. This makes the equation linear in $A$." },
+      { question: "For a pendulum with amplitude $\\theta_0 = 15°$, estimate the fractional error in the period from using the small-angle approximation.", answer: "The exact period correction is $T/T_0 \\approx 1 + \\theta_0^2/16 + ...$. With $\\theta_0 = 15° = 0.262$ rad, $\\theta_0^2/16 \\approx 0.0043$, so the error in the period is about 0.4%." }
+    ]
+  },
+  {
+    id: "partial-derivatives",
+    title: "Partial Derivatives",
+    sections: [
+      { heading: "Functions of several variables", body: "A wave on a string is described by $A(x, t)$, a function of both position and time. To understand how the wave changes, we need to differentiate with respect to one variable while holding the other fixed. This is a partial derivative.", interactive: null },
+      { heading: "Definition and notation", body: "The partial derivative of $f(x, t)$ with respect to $x$ is $$\\frac{\\partial f}{\\partial x} = \\lim_{\\Delta x \\to 0} \\frac{f(x + \\Delta x,\\, t) - f(x,\\, t)}{\\Delta x}$$ The $\\partial$ symbol (as opposed to $d$) reminds us that other variables are held constant. For $f(x,t) = \\sin(kx - \\omega t)$, $\\partial f/\\partial x = k\\cos(kx - \\omega t)$ and $\\partial f/\\partial t = -\\omega\\cos(kx - \\omega t)$.", interactive: null },
+      { heading: "Second partial derivatives", body: "The wave equation involves second derivatives: $\\partial^2 A/\\partial x^2$ is the curvature of the string at a fixed instant, and $\\partial^2 A/\\partial t^2$ is the acceleration of a point on the string. The wave equation $\\partial^2 A/\\partial t^2 = v^2\\,\\partial^2 A/\\partial x^2$ says that the acceleration of each point is proportional to the local curvature.", interactive: null },
+      { heading: "The chain rule for partial derivatives", body: "For a traveling wave $f(kx - \\omega t)$, define $u = kx - \\omega t$. Then $\\partial f/\\partial x = f'(u) \\cdot k$ and $\\partial f/\\partial t = f'(u) \\cdot (-\\omega)$. This gives $\\partial f/\\partial t = -(\\omega/k)\\,\\partial f/\\partial x = -v\\,\\partial f/\\partial x$, confirming that time evolution is equivalent to spatial translation at speed $v$.", interactive: null }
+    ],
+    exercises: [
+      { question: "For $f(x, t) = e^{-(x - vt)^2}$, compute $\\partial f/\\partial x$ and $\\partial f/\\partial t$ and verify that $\\partial f/\\partial t = -v\\,\\partial f/\\partial x$.", answer: "$\\partial f/\\partial x = -2(x - vt)\\,e^{-(x-vt)^2}$. $\\partial f/\\partial t = 2v(x - vt)\\,e^{-(x-vt)^2}$. Indeed $\\partial f/\\partial t = -v \\cdot [-2(x-vt)\\,e^{-(x-vt)^2}] = -v\\,\\partial f/\\partial x$." },
+      { question: "Compute $\\partial^2/\\partial x^2$ of $\\sin(kx - \\omega t)$ and verify it satisfies the wave equation with $v = \\omega/k$.", answer: "$\\partial^2 f/\\partial x^2 = -k^2\\sin(kx - \\omega t)$. $\\partial^2 f/\\partial t^2 = -\\omega^2\\sin(kx - \\omega t)$. The wave equation requires $-\\omega^2 = v^2(-k^2)$, i.e. $v = \\omega/k$." },
+      { question: "Why does the wave equation involve $\\partial^2 A/\\partial x^2$ (curvature) rather than $\\partial A/\\partial x$ (slope)?", answer: "A straight segment of string, no matter how tilted, has equal and opposite tension forces at its two ends. Only when the string is curved do the forces fail to cancel, producing a net transverse force. The net force is proportional to the difference of slopes, which is the second spatial derivative." }
+    ]
   }
 ];
 
