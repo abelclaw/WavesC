@@ -8246,20 +8246,29 @@ function initViolinSpectrum() {
 
   const nHarmonics = 8;
 
-  // Instrument presets: amplitude for each harmonic (n=1..8)
+  // Instrument presets: amplitude and Q per harmonic (n=1..8)
   const presets = {
-    violin:   { label: 'Violin',   amps: [1, 0.72, 0.5, 0.38, 0.28, 0.2, 0.14, 0.1] },
-    flute:    { label: 'Flute',    amps: [1, 0.12, 0.04, 0.01, 0, 0, 0, 0] },
-    clarinet: { label: 'Clarinet', amps: [1, 0.05, 0.72, 0.04, 0.38, 0.02, 0.18, 0.01] },
-    trumpet:  { label: 'Trumpet',  amps: [0.8, 1, 0.9, 0.65, 0.45, 0.3, 0.18, 0.1] },
-    oboe:     { label: 'Oboe',     amps: [1, 0.55, 0.8, 0.48, 0.55, 0.35, 0.25, 0.18] },
-    sawtooth: { label: 'Sawtooth', amps: [1, 0.5, 0.33, 0.25, 0.2, 0.17, 0.14, 0.13] },
-    square:   { label: 'Square',   amps: [1, 0, 0.33, 0, 0.2, 0, 0.14, 0] },
-    bell:     { label: 'Bell',     amps: [0.6, 1, 0.4, 0.8, 0.15, 0.5, 0.1, 0.3] },
+    violin:   { label: 'Violin',   amps: [1, 0.72, 0.5, 0.38, 0.28, 0.2, 0.14, 0.1],
+                                    Qs:   [30, 30, 30, 30, 30, 30, 30, 30] },
+    flute:    { label: 'Flute',    amps: [1, 0.12, 0.04, 0.01, 0, 0, 0, 0],
+                                    Qs:   [50, 50, 50, 50, 50, 50, 50, 50] },
+    clarinet: { label: 'Clarinet', amps: [1, 0.05, 0.72, 0.04, 0.38, 0.02, 0.18, 0.01],
+                                    Qs:   [35, 35, 35, 35, 35, 35, 35, 35] },
+    trumpet:  { label: 'Trumpet',  amps: [0.8, 1, 0.9, 0.65, 0.45, 0.3, 0.18, 0.1],
+                                    Qs:   [25, 25, 25, 25, 25, 25, 25, 25] },
+    oboe:     { label: 'Oboe',     amps: [1, 0.55, 0.8, 0.48, 0.55, 0.35, 0.25, 0.18],
+                                    Qs:   [40, 40, 40, 40, 40, 40, 40, 40] },
+    sawtooth: { label: 'Sawtooth', amps: [1, 0.5, 0.33, 0.25, 0.2, 0.17, 0.14, 0.13],
+                                    Qs:   [60, 60, 60, 60, 60, 60, 60, 60] },
+    square:   { label: 'Square',   amps: [1, 0, 0.33, 0, 0.2, 0, 0.14, 0],
+                                    Qs:   [60, 60, 60, 60, 60, 60, 60, 60] },
+    bell:     { label: 'Bell',     amps: [0.6, 1, 0.4, 0.8, 0.15, 0.5, 0.1, 0.3],
+                                    Qs:   [15, 12, 15, 12, 15, 12, 15, 12] },
   };
 
-  // State: per-harmonic amplitudes (0..1), draggable
+  // State: per-harmonic amplitude (0..1) and Q (5..100)
   let amps = presets.violin.amps.slice();
+  let Qs = presets.violin.Qs.slice();
   let activePreset = 'violin';
 
   // Setup controls
@@ -8299,10 +8308,11 @@ function initViolinSpectrum() {
         btn.style.padding = '2px 10px';
         btn.addEventListener('click', () => {
           amps = presets[key].amps.slice();
+          Qs = presets[key].Qs.slice();
           activePreset = key;
           updatePresetBtns();
           draw();
-          syncAudio();
+          updateAudio();
         });
         presetRow.appendChild(btn);
       }
@@ -8321,26 +8331,36 @@ function initViolinSpectrum() {
     }
   }
 
-  // Play button
+  // Play button — onPlay starts audio directly
   {
     const controls = f0Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('violin-play')) {
       wMakePlayBtn(controls, 'violin-play', '\u25B6 Listen', () => {
-        syncAudio();
+        startAudio();
       });
     }
   }
 
-  function syncAudio() {
-    if (!wIsPlaying('violin-play')) return;
-    const f0 = parseFloat(f0Slider?.value || 440);
-    const harmonics = [];
+  function buildHarmonics() {
+    const h = [];
     for (let n = 1; n <= nHarmonics; n++) {
-      if (amps[n - 1] > 0.001) harmonics.push({ n, gain: amps[n - 1] });
+      if (amps[n - 1] > 0.001) h.push({ n, gain: amps[n - 1] });
     }
-    if (harmonics.length === 0) harmonics.push({ n: 1, gain: 0.001 });
-    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }], 0);
-    // Keep button in stop state
+    if (h.length === 0) h.push({ n: 1, gain: 0.001 });
+    return h;
+  }
+
+  function startAudio() {
+    const f0 = parseFloat(f0Slider?.value || 440);
+    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
+  }
+
+  function updateAudio() {
+    if (!wIsPlaying('violin-play')) return;
+    // Restart to pick up changed harmonic count/gains
+    const f0 = parseFloat(f0Slider?.value || 440);
+    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
+    // Keep button styled as stop
     const btn = document.getElementById('violin-play');
     if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
   }
@@ -8349,108 +8369,151 @@ function initViolinSpectrum() {
   const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 40;
   const plotW = plotR - plotL, plotH = plotB - plotT;
 
-  // Dragging state
-  let dragHarmonic = -1;
-  let hoveredHarmonic = -1;
+  function lorentzian(f, fc, gamma) {
+    const df = f - fc;
+    return (gamma * gamma / 4) / (df * df + gamma * gamma / 4);
+  }
 
-  function getBarGeom(n) {
+  // Get pixel positions of the three drag handles for harmonic n
+  function getHandles(n) {
     const f0 = parseFloat(f0Slider?.value || 440);
     const fMax = f0 * (nHarmonics + 0.5);
-    const cx = plotL + (n * f0 / fMax) * plotW;
-    const barW = Math.max(14, plotW / (nHarmonics + 1) * 0.5);
-    const barH = amps[n - 1] * plotH * 0.88;
-    return { cx, barW, top: plotB - barH, bot: plotB, barH };
+    const fc = n * f0;
+    const Q = Qs[n - 1];
+    const gamma = fc / Q;
+    const amp = amps[n - 1];
+
+    // Center x of this harmonic
+    const cx = plotL + (fc / fMax) * plotW;
+    // Top of peak (amplitude handle)
+    const cy = plotB - amp * plotH * 0.88;
+
+    // Half-max width in pixels: at half-max of Lorentzian, df = gamma/2
+    const halfWidthHz = gamma / 2;
+    const halfWidthPx = (halfWidthHz / fMax) * plotW;
+    // Clamp minimum visual width so handles are always grabbable
+    const hw = Math.max(halfWidthPx, 8);
+
+    // Width handles sit at half-height of the peak
+    const midY = plotB - amp * plotH * 0.88 * 0.5;
+
+    return {
+      top: { x: cx, y: cy },                         // amplitude handle
+      left: { x: cx - hw, y: midY },                 // width handle (left)
+      right: { x: cx + hw, y: midY },                // width handle (right)
+      cx, halfWidthPx: hw
+    };
   }
+
+  // Drag state: { type: 'amp'|'width', n: harmonic number }
+  let drag = null;
+  let hovered = null; // same shape
 
   function hitTest(mx, my) {
-    for (let n = 1; n <= nHarmonics; n++) {
-      const g = getBarGeom(n);
-      // Generous hit area: full column, top to baseline
-      if (mx >= g.cx - g.barW / 2 - 4 && mx <= g.cx + g.barW / 2 + 4 &&
-          my >= plotT - 10 && my <= plotB + 5) {
-        return n;
-      }
+    const R = 10; // hit radius
+    // Check width handles first (they're smaller targets)
+    for (let n = nHarmonics; n >= 1; n--) {
+      if (amps[n - 1] < 0.01) continue;
+      const h = getHandles(n);
+      // Left width handle
+      if ((mx - h.left.x) ** 2 + (my - h.left.y) ** 2 < R * R)
+        return { type: 'width', n };
+      // Right width handle
+      if ((mx - h.right.x) ** 2 + (my - h.right.y) ** 2 < R * R)
+        return { type: 'width', n };
     }
-    return -1;
+    // Then amplitude handles (top circles)
+    for (let n = nHarmonics; n >= 1; n--) {
+      const h = getHandles(n);
+      if ((mx - h.top.x) ** 2 + (my - h.top.y) ** 2 < R * R)
+        return { type: 'amp', n };
+      // Also allow clicking anywhere along the vertical center line of a harmonic
+      if (Math.abs(mx - h.cx) < 8 && my >= plotT - 5 && my <= plotB + 5)
+        return { type: 'amp', n };
+    }
+    return null;
   }
 
-  function yToAmp(my) {
-    return Math.max(0, Math.min(1, (plotB - my) / (plotH * 0.88)));
+  function canvasCoords(e, touch) {
+    const rect = canvas.getBoundingClientRect();
+    const src = touch || e;
+    const dpr = window.devicePixelRatio || 1;
+    return {
+      x: (src.clientX - rect.left) * (canvas.width / rect.width) / dpr,
+      y: (src.clientY - rect.top) * (canvas.height / rect.height) / dpr
+    };
+  }
+
+  function applyDrag(mx, my) {
+    if (!drag) return;
+    if (drag.type === 'amp') {
+      amps[drag.n - 1] = Math.max(0, Math.min(1, (plotB - my) / (plotH * 0.88)));
+    } else {
+      // Width drag: map horizontal distance from center to Q
+      const f0 = parseFloat(f0Slider?.value || 440);
+      const fMax = f0 * (nHarmonics + 0.5);
+      const fc = drag.n * f0;
+      const cx = plotL + (fc / fMax) * plotW;
+      const dx = Math.abs(mx - cx);
+      // dx in pixels → halfWidthHz → gamma → Q
+      const halfWidthHz = Math.max(5, dx / plotW * fMax);
+      const gamma = halfWidthHz * 2;
+      const Q = Math.max(5, Math.min(100, fc / gamma));
+      Qs[drag.n - 1] = Q;
+    }
+    activePreset = '';
+    updatePresetBtns();
+    draw();
+    updateAudio();
   }
 
   canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
-    const n = hitTest(mx, my);
-    if (n > 0) {
-      dragHarmonic = n;
-      amps[n - 1] = yToAmp(my);
-      activePreset = '';
-      updatePresetBtns();
-      draw();
-      syncAudio();
+    const { x, y } = canvasCoords(e);
+    const hit = hitTest(x, y);
+    if (hit) {
+      drag = hit;
+      applyDrag(x, y);
       e.preventDefault();
     }
   });
 
   canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
-    if (dragHarmonic > 0) {
-      amps[dragHarmonic - 1] = yToAmp(my);
-      draw();
-      syncAudio();
+    const { x, y } = canvasCoords(e);
+    if (drag) {
+      applyDrag(x, y);
     } else {
-      const n = hitTest(mx, my);
-      if (n !== hoveredHarmonic) {
-        hoveredHarmonic = n;
-        canvas.style.cursor = n > 0 ? 'ns-resize' : 'default';
+      const hit = hitTest(x, y);
+      if (hit?.type !== hovered?.type || hit?.n !== hovered?.n) {
+        hovered = hit;
+        canvas.style.cursor = hit ? (hit.type === 'amp' ? 'ns-resize' : 'ew-resize') : 'default';
         draw();
       }
     }
   });
 
-  canvas.addEventListener('mouseup', () => { dragHarmonic = -1; });
+  canvas.addEventListener('mouseup', () => { drag = null; });
   canvas.addEventListener('mouseleave', () => {
-    dragHarmonic = -1;
-    hoveredHarmonic = -1;
+    drag = null; hovered = null;
     canvas.style.cursor = 'default';
     draw();
   });
 
   // Touch support
   canvas.addEventListener('touchstart', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const t = e.touches[0];
-    const mx = (t.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
-    const my = (t.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
-    const n = hitTest(mx, my);
-    if (n > 0) {
-      dragHarmonic = n;
-      amps[n - 1] = yToAmp(my);
-      activePreset = '';
-      updatePresetBtns();
-      draw();
-      syncAudio();
-      e.preventDefault();
-    }
+    const { x, y } = canvasCoords(e, e.touches[0]);
+    const hit = hitTest(x, y);
+    if (hit) { drag = hit; applyDrag(x, y); e.preventDefault(); }
   }, { passive: false });
 
   canvas.addEventListener('touchmove', (e) => {
-    if (dragHarmonic > 0) {
-      const rect = canvas.getBoundingClientRect();
-      const t = e.touches[0];
-      const my = (t.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
-      amps[dragHarmonic - 1] = yToAmp(my);
-      draw();
-      syncAudio();
+    if (drag) {
+      const { x, y } = canvasCoords(e, e.touches[0]);
+      applyDrag(x, y);
       e.preventDefault();
     }
   }, { passive: false });
 
-  canvas.addEventListener('touchend', () => { dragHarmonic = -1; });
+  canvas.addEventListener('touchend', () => { drag = null; });
 
   function draw() {
     const f0 = parseFloat(f0Slider?.value || 440);
@@ -8471,74 +8534,101 @@ function initViolinSpectrum() {
     ctx.save(); ctx.translate(plotL - 40, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('Amplitude', 0, 0); ctx.restore();
 
-    // Lorentzian envelope per harmonic (Q fixed at 30 for visual)
-    const Q = 30;
-    const nPts = 500;
+    // Frequency grid lines
+    for (let n = 1; n <= nHarmonics; n++) {
+      const fx = plotL + (n * f0 / fMax) * plotW;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText((n * f0).toFixed(0), fx, plotB + 12);
+    }
+
+    // Compute full spectrum from Lorentzian peaks with per-harmonic Q
+    const nPts = 600;
     let maxVal = 0;
     const vals = [];
     for (let i = 0; i < nPts; i++) {
-      const f = (fMax) * i / nPts;
+      const f = fMax * i / nPts;
       let val = 0;
       for (let n = 1; n <= nHarmonics; n++) {
         const fc = n * f0;
-        const gamma = fc / Q;
-        const df = f - fc;
-        const lor = (gamma * gamma / 4) / (df * df + gamma * gamma / 4);
-        val += amps[n - 1] * lor;
+        const gamma = fc / Qs[n - 1];
+        val += amps[n - 1] * lorentzian(f, fc, gamma);
       }
       vals.push(val);
       if (val > maxVal) maxVal = val;
     }
     if (maxVal < 0.001) maxVal = 1;
 
-    // Fill under curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    // Draw filled spectrum curve
     ctx.beginPath();
     for (let i = 0; i < nPts; i++) {
       const fx = plotL + plotW * i / nPts;
       const fy = plotB - (vals[i] / maxVal) * plotH * 0.88;
       i === 0 ? ctx.moveTo(fx, fy) : ctx.lineTo(fx, fy);
     }
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.lineTo(plotR, plotB);
+    ctx.lineTo(plotL + plotW, plotB);
     ctx.lineTo(plotL, plotB);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(15,118,110,0.06)';
+    ctx.fillStyle = 'rgba(15,118,110,0.08)';
     ctx.fill();
 
-    // Draggable harmonic bars
-    const barW = Math.max(14, plotW / (nHarmonics + 1) * 0.5);
+    // Draw drag handles for each harmonic
     for (let n = 1; n <= nHarmonics; n++) {
-      const g = getBarGeom(n);
-      const isActive = (n === dragHarmonic || n === hoveredHarmonic);
+      const h = getHandles(n);
+      const isAmpHover = hovered?.n === n && hovered?.type === 'amp';
+      const isWidthHover = hovered?.n === n && hovered?.type === 'width';
+      const isAmpDrag = drag?.n === n && drag?.type === 'amp';
+      const isWidthDrag = drag?.n === n && drag?.type === 'width';
+      const isTopActive = isAmpHover || isAmpDrag;
+      const isSideActive = isWidthHover || isWidthDrag;
 
-      // Bar
-      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.teal;
-      ctx.globalAlpha = isActive ? 1 : 0.75;
-      ctx.fillRect(g.cx - barW / 2, g.top, barW, g.barH);
-      ctx.globalAlpha = 1;
-
-      // Drag handle (circle at top of bar)
+      // Amplitude handle (circle at peak top)
+      const topR = isTopActive ? 7 : 5;
       ctx.beginPath();
-      ctx.arc(g.cx, g.top, isActive ? 6 : 4, 0, Math.PI * 2);
-      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.teal;
+      ctx.arc(h.top.x, h.top.y, topR, 0, Math.PI * 2);
+      ctx.fillStyle = isTopActive ? WCOLORS.amber : WCOLORS.teal;
       ctx.fill();
-      if (isActive) {
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isTopActive ? '#fff' : 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = isTopActive ? 2 : 1;
+      ctx.stroke();
+
+      // Label above
+      ctx.fillStyle = isTopActive ? WCOLORS.amber : WCOLORS.text;
+      ctx.font = (isTopActive ? 'bold ' : '') + '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('n=' + n, h.top.x, h.top.y - topR - 3);
+
+      // Width handles (only visible if amplitude > 0)
+      if (amps[n - 1] > 0.02) {
+        const sideR = isSideActive ? 5.5 : 3.5;
+        const sideColor = isSideActive ? WCOLORS.amber : 'rgba(245,158,11,0.6)';
+
+        // Dashed line connecting left-right handles through center
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = isSideActive ? WCOLORS.amber : 'rgba(245,158,11,0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(h.left.x, h.left.y);
+        ctx.lineTo(h.right.x, h.right.y);
         ctx.stroke();
-      }
+        ctx.setLineDash([]);
 
-      // Frequency tick label
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText((n * f0).toFixed(0), g.cx, plotB + 12);
+        // Left handle
+        ctx.beginPath();
+        ctx.arc(h.left.x, h.left.y, sideR, 0, Math.PI * 2);
+        ctx.fillStyle = sideColor;
+        ctx.fill();
+        if (isSideActive) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
 
-      // Harmonic number + amplitude
-      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.text;
-      ctx.font = (isActive ? 'bold ' : '') + '10px system-ui';
-      ctx.fillText('n=' + n, g.cx, Math.min(g.top - 10, plotB - 14));
-      if (isActive || amps[n - 1] > 0.01) {
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-        ctx.fillText((amps[n - 1] * 100).toFixed(0) + '%', g.cx, Math.min(g.top - 1, plotB - 4));
+        // Right handle
+        ctx.beginPath();
+        ctx.arc(h.right.x, h.right.y, sideR, 0, Math.PI * 2);
+        ctx.fillStyle = sideColor;
+        ctx.fill();
+        if (isSideActive) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); }
       }
     }
 
@@ -8549,19 +8639,16 @@ function initViolinSpectrum() {
 
     // Hint
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('Drag bars to reshape timbre', plotR, 18);
+    ctx.fillText('Drag peaks \u2195 or widths \u2194', plotR, 18);
   }
 
   f0Slider?.addEventListener('input', () => {
     draw();
     if (wIsPlaying('violin-play')) {
       const f0 = parseFloat(f0Slider?.value || 440);
-      const harmonics = [];
-      for (let n = 1; n <= nHarmonics; n++) {
-        if (amps[n - 1] > 0.001) harmonics.push({ n, gain: amps[n - 1] });
-      }
-      if (harmonics.length === 0) harmonics.push({ n: 1, gain: 0.001 });
-      wUpdateTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }]);
+      wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
+      const btn = document.getElementById('violin-play');
+      if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
     }
   });
   draw();
