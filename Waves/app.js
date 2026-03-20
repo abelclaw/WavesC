@@ -3532,13 +3532,12 @@ function sceneMarkup(type) {
     // =====================================================================
     case "violin-spectrum":
       return `
-        <div class="scene-label">Violin Spectrum</div>
-        <p class="scene-caption">Spectrum of a violin showing harmonics as Lorentzian peaks. Higher harmonics are weaker. Adjust fundamental frequency and Q factor.</p>
+        <div class="scene-label">Instrument Spectrum</div>
+        <p class="scene-caption">Drag harmonic bars up and down to reshape the timbre, or choose an instrument preset. Hit Listen to hear how the spectrum sounds.</p>
         <div class="interactive-scene">
           <canvas id="scene-violin-spectrum" width="600" height="300"></canvas>
           <div class="scene-controls">
             <label><span>f<sub>0</sub>: </span><input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>
-            <label><span>Q: </span><input type="range" id="violin-q" min="5" max="100" step="5" value="30"><span class="scene-val" id="violin-q-val">30</span></label>
           </div>
         </div>
       `;

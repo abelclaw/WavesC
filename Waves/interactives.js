@@ -8244,6 +8244,25 @@ function initViolinSpectrum() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
+  const nHarmonics = 8;
+
+  // Instrument presets: amplitude for each harmonic (n=1..8)
+  const presets = {
+    violin:   { label: 'Violin',   amps: [1, 0.72, 0.5, 0.38, 0.28, 0.2, 0.14, 0.1] },
+    flute:    { label: 'Flute',    amps: [1, 0.12, 0.04, 0.01, 0, 0, 0, 0] },
+    clarinet: { label: 'Clarinet', amps: [1, 0.05, 0.72, 0.04, 0.38, 0.02, 0.18, 0.01] },
+    trumpet:  { label: 'Trumpet',  amps: [0.8, 1, 0.9, 0.65, 0.45, 0.3, 0.18, 0.1] },
+    oboe:     { label: 'Oboe',     amps: [1, 0.55, 0.8, 0.48, 0.55, 0.35, 0.25, 0.18] },
+    sawtooth: { label: 'Sawtooth', amps: [1, 0.5, 0.33, 0.25, 0.2, 0.17, 0.14, 0.13] },
+    square:   { label: 'Square',   amps: [1, 0, 0.33, 0, 0.2, 0, 0.14, 0] },
+    bell:     { label: 'Bell',     amps: [0.6, 1, 0.4, 0.8, 0.15, 0.5, 0.1, 0.3] },
+  };
+
+  // State: per-harmonic amplitudes (0..1), draggable
+  let amps = presets.violin.amps.slice();
+  let activePreset = 'violin';
+
+  // Setup controls
   let f0Slider = document.getElementById('violin-f0');
   if (!f0Slider) {
     const parent = canvas.parentElement;
@@ -8251,44 +8270,195 @@ function initViolinSpectrum() {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>f\u2080: <input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>' +
-        '<label>Q: <input type="range" id="violin-q" min="5" max="200" step="5" value="40"><span class="scene-val" id="violin-q-val">40</span></label>';
+        '<label>f\u2080: <input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>';
       parent.appendChild(controls);
       f0Slider = document.getElementById('violin-f0');
     }
   }
-  // Play button (append to existing controls)
+
+  // Remove old Q slider if present
+  const oldQSlider = document.getElementById('violin-q');
+  if (oldQSlider) {
+    const label = oldQSlider.closest('label');
+    if (label) label.remove();
+  }
+
+  // Preset buttons
+  {
+    const parent = canvas.parentElement;
+    if (parent && !document.getElementById('vs-preset-violin')) {
+      const presetRow = document.createElement('div');
+      presetRow.className = 'scene-controls';
+      presetRow.innerHTML = '<span style="font-size:11px;color:var(--muted);">Presets:</span>';
+      for (const key in presets) {
+        const btn = document.createElement('button');
+        btn.className = 'scene-btn';
+        btn.id = 'vs-preset-' + key;
+        btn.textContent = presets[key].label;
+        btn.style.fontSize = '11px';
+        btn.style.padding = '2px 10px';
+        btn.addEventListener('click', () => {
+          amps = presets[key].amps.slice();
+          activePreset = key;
+          updatePresetBtns();
+          draw();
+          syncAudio();
+        });
+        presetRow.appendChild(btn);
+      }
+      parent.appendChild(presetRow);
+      updatePresetBtns();
+    }
+  }
+
+  function updatePresetBtns() {
+    for (const key in presets) {
+      const btn = document.getElementById('vs-preset-' + key);
+      if (btn) {
+        btn.style.fontWeight = (key === activePreset) ? 'bold' : 'normal';
+        btn.style.opacity = (key === activePreset) ? '1' : '0.65';
+      }
+    }
+  }
+
+  // Play button
   {
     const controls = f0Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('violin-play')) {
       wMakePlayBtn(controls, 'violin-play', '\u25B6 Listen', () => {
-        const f0 = parseFloat(f0Slider?.value || 440);
-        const harmonics = [];
-        for (let n = 1; n <= 8; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
-        wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }], 0);
+        syncAudio();
       });
     }
   }
-  const qSlider = document.getElementById('violin-q');
 
-  function lorentzian(f, fc, gamma) {
-    const df = f - fc;
-    return (gamma * gamma / 4) / (df * df + gamma * gamma / 4);
+  function syncAudio() {
+    if (!wIsPlaying('violin-play')) return;
+    const f0 = parseFloat(f0Slider?.value || 440);
+    const harmonics = [];
+    for (let n = 1; n <= nHarmonics; n++) {
+      if (amps[n - 1] > 0.001) harmonics.push({ n, gain: amps[n - 1] });
+    }
+    if (harmonics.length === 0) harmonics.push({ n: 1, gain: 0.001 });
+    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }], 0);
+    // Keep button in stop state
+    const btn = document.getElementById('violin-play');
+    if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
   }
+
+  // Plot geometry
+  const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 40;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  // Dragging state
+  let dragHarmonic = -1;
+  let hoveredHarmonic = -1;
+
+  function getBarGeom(n) {
+    const f0 = parseFloat(f0Slider?.value || 440);
+    const fMax = f0 * (nHarmonics + 0.5);
+    const cx = plotL + (n * f0 / fMax) * plotW;
+    const barW = Math.max(14, plotW / (nHarmonics + 1) * 0.5);
+    const barH = amps[n - 1] * plotH * 0.88;
+    return { cx, barW, top: plotB - barH, bot: plotB, barH };
+  }
+
+  function hitTest(mx, my) {
+    for (let n = 1; n <= nHarmonics; n++) {
+      const g = getBarGeom(n);
+      // Generous hit area: full column, top to baseline
+      if (mx >= g.cx - g.barW / 2 - 4 && mx <= g.cx + g.barW / 2 + 4 &&
+          my >= plotT - 10 && my <= plotB + 5) {
+        return n;
+      }
+    }
+    return -1;
+  }
+
+  function yToAmp(my) {
+    return Math.max(0, Math.min(1, (plotB - my) / (plotH * 0.88)));
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
+    const my = (e.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
+    const n = hitTest(mx, my);
+    if (n > 0) {
+      dragHarmonic = n;
+      amps[n - 1] = yToAmp(my);
+      activePreset = '';
+      updatePresetBtns();
+      draw();
+      syncAudio();
+      e.preventDefault();
+    }
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
+    const my = (e.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
+    if (dragHarmonic > 0) {
+      amps[dragHarmonic - 1] = yToAmp(my);
+      draw();
+      syncAudio();
+    } else {
+      const n = hitTest(mx, my);
+      if (n !== hoveredHarmonic) {
+        hoveredHarmonic = n;
+        canvas.style.cursor = n > 0 ? 'ns-resize' : 'default';
+        draw();
+      }
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => { dragHarmonic = -1; });
+  canvas.addEventListener('mouseleave', () => {
+    dragHarmonic = -1;
+    hoveredHarmonic = -1;
+    canvas.style.cursor = 'default';
+    draw();
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0];
+    const mx = (t.clientX - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1);
+    const my = (t.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
+    const n = hitTest(mx, my);
+    if (n > 0) {
+      dragHarmonic = n;
+      amps[n - 1] = yToAmp(my);
+      activePreset = '';
+      updatePresetBtns();
+      draw();
+      syncAudio();
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (dragHarmonic > 0) {
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      const my = (t.clientY - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1);
+      amps[dragHarmonic - 1] = yToAmp(my);
+      draw();
+      syncAudio();
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', () => { dragHarmonic = -1; });
 
   function draw() {
     const f0 = parseFloat(f0Slider?.value || 440);
-    const Q = parseFloat(qSlider?.value || 40);
     document.getElementById('violin-f0-val')?.replaceChildren(document.createTextNode(f0.toFixed(0) + ' Hz'));
-    document.getElementById('violin-q-val')?.replaceChildren(document.createTextNode(Q.toFixed(0)));
 
     wClear(ctx, W, H);
 
-    const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 45;
-    const plotW = plotR - plotL, plotH = plotB - plotT;
-    const nHarmonics = 8;
     const fMax = f0 * (nHarmonics + 0.5);
-    const fMin = 0;
 
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
@@ -8297,66 +8467,89 @@ function initViolinSpectrum() {
 
     // Axis labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Frequency (Hz)', plotL + plotW / 2, plotB + 35);
+    ctx.fillText('Frequency (Hz)', plotL + plotW / 2, H - 4);
     ctx.save(); ctx.translate(plotL - 40, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('Amplitude', 0, 0); ctx.restore();
 
-    // Frequency ticks
-    for (let n = 1; n <= nHarmonics; n++) {
-      const fx = plotL + (n * f0 - fMin) / (fMax - fMin) * plotW;
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText((n * f0).toFixed(0), fx, plotB + 14);
-    }
-
-    // Draw spectrum: sum of Lorentzian peaks
+    // Lorentzian envelope per harmonic (Q fixed at 30 for visual)
+    const Q = 30;
     const nPts = 500;
-    ctx.beginPath();
     let maxVal = 0;
     const vals = [];
     for (let i = 0; i < nPts; i++) {
-      const f = fMin + (fMax - fMin) * i / nPts;
+      const f = (fMax) * i / nPts;
       let val = 0;
       for (let n = 1; n <= nHarmonics; n++) {
         const fc = n * f0;
         const gamma = fc / Q;
-        // Amplitude envelope: decreases with harmonic number
-        const amp = 1.0 / (n * 0.7);
-        val += amp * lorentzian(f, fc, gamma);
+        const df = f - fc;
+        const lor = (gamma * gamma / 4) / (df * df + gamma * gamma / 4);
+        val += amps[n - 1] * lor;
       }
       vals.push(val);
       if (val > maxVal) maxVal = val;
     }
+    if (maxVal < 0.001) maxVal = 1;
 
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    // Fill under curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let i = 0; i < nPts; i++) {
       const fx = plotL + plotW * i / nPts;
-      const fy = plotB - (vals[i] / maxVal) * plotH * 0.9;
+      const fy = plotB - (vals[i] / maxVal) * plotH * 0.88;
       i === 0 ? ctx.moveTo(fx, fy) : ctx.lineTo(fx, fy);
     }
     ctx.stroke();
-
-    // Fill under curve
     ctx.lineTo(plotR, plotB);
     ctx.lineTo(plotL, plotB);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(15,118,110,0.1)';
+    ctx.fillStyle = 'rgba(15,118,110,0.06)';
     ctx.fill();
 
-    // Label harmonics
+    // Draggable harmonic bars
+    const barW = Math.max(14, plotW / (nHarmonics + 1) * 0.5);
     for (let n = 1; n <= nHarmonics; n++) {
-      const fx = plotL + (n * f0 - fMin) / (fMax - fMin) * plotW;
-      const amp = 1.0 / (n * 0.7);
-      const fy = plotB - (amp / maxVal) * plotH * 0.9;
-      ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('n=' + n, fx, fy - 8);
+      const g = getBarGeom(n);
+      const isActive = (n === dragHarmonic || n === hoveredHarmonic);
+
+      // Bar
+      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.teal;
+      ctx.globalAlpha = isActive ? 1 : 0.75;
+      ctx.fillRect(g.cx - barW / 2, g.top, barW, g.barH);
+      ctx.globalAlpha = 1;
+
+      // Drag handle (circle at top of bar)
+      ctx.beginPath();
+      ctx.arc(g.cx, g.top, isActive ? 6 : 4, 0, Math.PI * 2);
+      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.teal;
+      ctx.fill();
+      if (isActive) {
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Frequency tick label
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText((n * f0).toFixed(0), g.cx, plotB + 12);
+
+      // Harmonic number + amplitude
+      ctx.fillStyle = isActive ? WCOLORS.amber : WCOLORS.text;
+      ctx.font = (isActive ? 'bold ' : '') + '10px system-ui';
+      ctx.fillText('n=' + n, g.cx, Math.min(g.top - 10, plotB - 14));
+      if (isActive || amps[n - 1] > 0.01) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+        ctx.fillText((amps[n - 1] * 100).toFixed(0) + '%', g.cx, Math.min(g.top - 1, plotB - 4));
+      }
     }
 
     // Title
+    const titleText = activePreset ? presets[activePreset].label + ' Spectrum' : 'Custom Spectrum';
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Violin Spectrum', plotL + plotW / 2, 18);
+    ctx.fillText(titleText, plotL + plotW / 2, 18);
+
+    // Hint
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Drag bars to reshape timbre', plotR, 18);
   }
 
   f0Slider?.addEventListener('input', () => {
@@ -8364,12 +8557,15 @@ function initViolinSpectrum() {
     if (wIsPlaying('violin-play')) {
       const f0 = parseFloat(f0Slider?.value || 440);
       const harmonics = [];
-      for (let n = 1; n <= 8; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
+      for (let n = 1; n <= nHarmonics; n++) {
+        if (amps[n - 1] > 0.001) harmonics.push({ n, gain: amps[n - 1] });
+      }
+      if (harmonics.length === 0) harmonics.push({ n: 1, gain: 0.001 });
       wUpdateTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }]);
     }
   });
-  qSlider?.addEventListener('input', draw);
   draw();
+  updatePresetBtns();
 }
 
 // =========================================================================
