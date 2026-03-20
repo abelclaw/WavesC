@@ -295,7 +295,7 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>We saw before that the homogeneous solutions all have $e^{-(\\gamma/2)t}$ factors, plus possibly some oscillatory component. Thus they die off at late time. For this reason, they are called <strong>transient</strong>. Transients are determined by boundary conditions. If you have a driving force for long enough time, then the transient is irrelevant -- only the steady-state driven solution survives.</p>`,
       interactive: "transient-decay",
-      interactiveCaption: "The transient (homogeneous) solution dies away exponentially, leaving only the steady-state driven response at long times.",
+      interactiveCaption: "Drag the mass to give it an initial displacement, then release. The transient oscillation decays exponentially, returning the system to rest.",
       mathLinks: ["differential-equations"]
     },
     {
