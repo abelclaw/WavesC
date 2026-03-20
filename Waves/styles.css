@@ -4620,3 +4620,7 @@ a {
 .scene-btn:hover {
   opacity: 0.85;
 }
+
+.w-play-btn {
+  transition: background 0.15s;
+}

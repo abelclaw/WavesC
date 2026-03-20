@@ -56,6 +56,153 @@ function fillTextSub(ctx, text, x, y) {
   ctx.textAlign = savedAlign;
 }
 
+// =========================================================================
+// Shared Web Audio utilities for interactive sound playback
+// =========================================================================
+let _wavesAudioCtx = null;
+function wGetAudioCtx() {
+  if (!_wavesAudioCtx) _wavesAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_wavesAudioCtx.state === 'suspended') _wavesAudioCtx.resume();
+  return _wavesAudioCtx;
+}
+
+// Active audio state per interactive (keyed by id string)
+const _wavesAudioActive = {};
+
+// Play a set of sine-wave tones with optional harmonics.
+// tones: array of { freq, gain?, harmonics? }
+//   harmonics: array of { n, gain } — adds partials at n*freq
+// id: string key to track/stop this sound
+// duration: seconds (0 = sustained until stopped)
+function wPlayTones(id, tones, duration) {
+  wStopTones(id);
+  const actx = wGetAudioCtx();
+  const master = actx.createGain();
+  master.gain.value = 0;
+  master.connect(actx.destination);
+  // Fade in
+  master.gain.setTargetAtTime(0.25, actx.currentTime, 0.04);
+
+  const nodes = [];
+  for (const tone of tones) {
+    const g = actx.createGain();
+    g.gain.value = tone.gain ?? 1;
+    g.connect(master);
+
+    const partials = tone.harmonics || [{ n: 1, gain: 1 }];
+    for (const p of partials) {
+      const osc = actx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = tone.freq * p.n;
+      const pg = actx.createGain();
+      pg.gain.value = p.gain;
+      osc.connect(pg);
+      pg.connect(g);
+      osc.start();
+      nodes.push(osc);
+    }
+  }
+
+  _wavesAudioActive[id] = { master, nodes, actx };
+
+  if (duration > 0) {
+    setTimeout(() => wStopTones(id), duration * 1000);
+  }
+}
+
+// Update the frequency of active tones (for real-time slider control)
+function wUpdateTones(id, tones) {
+  const state = _wavesAudioActive[id];
+  if (!state) return;
+  let ni = 0;
+  for (const tone of tones) {
+    const partials = tone.harmonics || [{ n: 1, gain: 1 }];
+    for (const p of partials) {
+      if (ni < state.nodes.length) {
+        state.nodes[ni].frequency.setTargetAtTime(tone.freq * p.n, state.actx.currentTime, 0.02);
+      }
+      ni++;
+    }
+  }
+}
+
+function wStopTones(id) {
+  const state = _wavesAudioActive[id];
+  if (!state) return;
+  state.master.gain.setTargetAtTime(0, state.actx.currentTime, 0.05);
+  setTimeout(() => {
+    for (const osc of state.nodes) { try { osc.stop(); } catch(e){} }
+    try { state.master.disconnect(); } catch(e){}
+  }, 200);
+  delete _wavesAudioActive[id];
+}
+
+function wIsPlaying(id) {
+  return !!_wavesAudioActive[id];
+}
+
+// Play an arbitrary periodic waveform buffer (for Fourier chapter)
+// samples: Float32Array or array of sample values (-1..1), played at given freq
+function wPlayBuffer(id, samples, freq, duration) {
+  wStopTones(id);
+  const actx = wGetAudioCtx();
+  const master = actx.createGain();
+  master.gain.value = 0;
+  master.connect(actx.destination);
+  master.gain.setTargetAtTime(0.25, actx.currentTime, 0.04);
+
+  // Create a periodic wave from samples via real/imag coefficients
+  const N = samples.length;
+  const nCoeffs = Math.min(N / 2, 64);
+  const real = new Float32Array(nCoeffs + 1);
+  const imag = new Float32Array(nCoeffs + 1);
+  real[0] = 0; imag[0] = 0;
+  for (let k = 1; k <= nCoeffs; k++) {
+    let re = 0, im = 0;
+    for (let j = 0; j < N; j++) {
+      const angle = -2 * Math.PI * k * j / N;
+      re += samples[j] * Math.cos(angle);
+      im += samples[j] * Math.sin(angle);
+    }
+    real[k] = re / N;
+    imag[k] = im / N;
+  }
+
+  const wave = actx.createPeriodicWave(real, imag, { disableNormalization: false });
+  const osc = actx.createOscillator();
+  osc.setPeriodicWave(wave);
+  osc.frequency.value = freq || 220;
+  osc.connect(master);
+  osc.start();
+
+  _wavesAudioActive[id] = { master, nodes: [osc], actx };
+  if (duration > 0) {
+    setTimeout(() => wStopTones(id), duration * 1000);
+  }
+}
+
+// Create a play/stop toggle button and append to a controls container
+function wMakePlayBtn(parentEl, id, label, onPlay, onStop) {
+  const btn = document.createElement('button');
+  btn.className = 'scene-btn w-play-btn';
+  btn.id = id;
+  btn.textContent = label || '\u25B6 Play';
+  btn.addEventListener('click', () => {
+    if (wIsPlaying(id)) {
+      wStopTones(id);
+      btn.textContent = label || '\u25B6 Play';
+      btn.style.background = '';
+      if (onStop) onStop();
+    } else {
+      if (onPlay) onPlay();
+      btn.textContent = '\u25A0 Stop';
+      btn.style.background = '#dc2626';
+    }
+  });
+  parentEl.appendChild(btn);
+  return btn;
+}
+
 // Polyfill for CanvasRenderingContext2D.roundRect (Safari < 16, older browsers)
 if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
@@ -5292,6 +5439,14 @@ function initBeatsDemo() {
         '<label>\u0394f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="3"><span class="scene-val" id="bd-df-val">3.0</span></label>';
       parent.appendChild(controls);
       dfSlider = document.getElementById('bd-df');
+      // Play button
+      wMakePlayBtn(controls, 'bd-play', '\u25B6 Listen', () => {
+        const df = parseFloat(dfSlider?.value || 3);
+        wPlayTones('bd-play', [
+          { freq: 440, gain: 0.5 },
+          { freq: 440 + df, gain: 0.5 }
+        ], 0);
+      });
     }
   }
 
@@ -5300,6 +5455,13 @@ function initBeatsDemo() {
   function tick() {
     const df = parseFloat(dfSlider?.value || 3);
     document.getElementById('bd-df-val')?.replaceChildren(document.createTextNode(df.toFixed(1)));
+    // Update live audio if playing
+    if (wIsPlaying('bd-play')) {
+      wUpdateTones('bd-play', [
+        { freq: 440, gain: 0.5 },
+        { freq: 440 + df, gain: 0.5 }
+      ]);
+    }
 
     t += 0.015;
     wClear(ctx, W, H);
@@ -5424,6 +5586,17 @@ function initConsonanceDissonance() {
         '<label>Frequency ratio: <input type="range" id="cd-ratio" min="1.0" max="2.0" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>';
       parent.appendChild(controls);
       ratioSlider = document.getElementById('cd-ratio');
+      // Play button - plays two tones with harmonics to hear consonance/dissonance
+      wMakePlayBtn(controls, 'cd-play', '\u25B6 Listen', () => {
+        const ratio = parseFloat(ratioSlider?.value || 1.5);
+        const f1 = 262; // Middle C
+        const harmonics = [];
+        for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
+        wPlayTones('cd-play', [
+          { freq: f1, gain: 0.4, harmonics },
+          { freq: f1 * ratio, gain: 0.4, harmonics }
+        ], 0);
+      });
     }
   }
 
@@ -5432,6 +5605,16 @@ function initConsonanceDissonance() {
   function tick() {
     const ratio = parseFloat(ratioSlider?.value || 1.5);
     document.getElementById('cd-ratio-val')?.replaceChildren(document.createTextNode(ratio.toFixed(2)));
+    // Update live audio if playing
+    if (wIsPlaying('cd-play')) {
+      const f1 = 262;
+      const harmonics = [];
+      for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
+      wUpdateTones('cd-play', [
+        { freq: f1, gain: 0.4, harmonics },
+        { freq: f1 * ratio, gain: 0.4, harmonics }
+      ]);
+    }
 
     t += 0.02;
     wClear(ctx, W, H);
@@ -5596,6 +5779,17 @@ function initHarmonicAlignment() {
       controls.innerHTML = html;
       parent.appendChild(controls);
       btnContainer = controls;
+      // Play button for the selected interval
+      wMakePlayBtn(controls, 'ha-play', '\u25B6 Listen', () => {
+        const iv = intervals[selected];
+        const f1 = 262;
+        const harmonics = [];
+        for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
+        wPlayTones('ha-play', [
+          { freq: f1, gain: 0.4, harmonics },
+          { freq: f1 * iv.ratio, gain: 0.4, harmonics }
+        ], 3);
+      });
     }
   }
 
@@ -5605,6 +5799,18 @@ function initHarmonicAlignment() {
     document.getElementById('ha-btn-' + i)?.addEventListener('click', () => {
       selected = i;
       draw();
+      // Re-trigger audio if playing
+      if (wIsPlaying('ha-play')) {
+        const f1 = 262;
+        const harmonics = [];
+        for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
+        wPlayTones('ha-play', [
+          { freq: f1, gain: 0.4, harmonics },
+          { freq: f1 * intervals[i].ratio, gain: 0.4, harmonics }
+        ], 3);
+        const btn = document.getElementById('ha-play');
+        if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+      }
     });
   });
 
@@ -5755,13 +5961,46 @@ function initCircleOfFifths() {
         '<label style="margin-left:10px;">Note: <input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>';
       parent.appendChild(controls);
       btnET = document.getElementById('cof-et');
+      // Play button for the selected note
+      wMakePlayBtn(controls, 'cof-play', '\u25B6 Play Note', () => {
+        const freq = cofGetFreq(highlighted, tuning);
+        const harmonics = [];
+        for (let n = 1; n <= 5; n++) harmonics.push({ n, gain: 1 / n });
+        wPlayTones('cof-play', [{ freq, gain: 0.6, harmonics }], 2);
+      });
+    }
+  }
+
+  // fifths-based note order: C, G, D, A, E, B, F#, Db, Ab, Eb, Bb, F
+  // Each step is a fifth (7 semitones ET, or ratio 3/2 Pythagorean)
+  function cofGetFreq(noteIdx, tuningMode) {
+    const baseFreq = 262; // C4
+    if (tuningMode === 0) {
+      // Equal tempered: each fifth = 7 semitones
+      const semitones = (noteIdx * 7) % 12;
+      return baseFreq * Math.pow(2, semitones / 12);
+    } else {
+      // Pythagorean: each fifth = 3/2
+      return baseFreq * Math.pow(3 / 2, noteIdx) / Math.pow(2, Math.floor(noteIdx * Math.log2(3 / 2)));
     }
   }
 
   document.getElementById('cof-et')?.addEventListener('click', () => { tuning = 0; updateBtns(); draw(); });
   document.getElementById('cof-py')?.addEventListener('click', () => { tuning = 1; updateBtns(); draw(); });
   const noteSlider = document.getElementById('cof-note');
-  noteSlider?.addEventListener('input', () => { highlighted = parseInt(noteSlider.value); draw(); });
+  noteSlider?.addEventListener('input', () => {
+    highlighted = parseInt(noteSlider.value);
+    draw();
+    // Play the note briefly when slider changes
+    if (wIsPlaying('cof-play')) {
+      const freq = cofGetFreq(highlighted, tuning);
+      const harmonics = [];
+      for (let n = 1; n <= 5; n++) harmonics.push({ n, gain: 1 / n });
+      wPlayTones('cof-play', [{ freq, gain: 0.6, harmonics }], 2);
+      const btn = document.getElementById('cof-play');
+      if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+    }
+  });
 
   function updateBtns() {
     const et = document.getElementById('cof-et');
@@ -5893,6 +6132,39 @@ function initScaleComparison() {
 
   let hoveredNote = -1;
 
+  // Add play controls
+  {
+    const parent = canvas.parentElement;
+    if (parent && !document.getElementById('sc-play-just')) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML = '<span style="font-size:11px;color:var(--muted);">Click a note to hear it \u2014 Play scale:</span>';
+      wMakePlayBtn(controls, 'sc-play-just', '\u25B6 Just', () => scPlayScale(justRatios, 'sc-play-just'));
+      wMakePlayBtn(controls, 'sc-play-pyth', '\u25B6 Pythagorean', () => scPlayScale(pythRatios, 'sc-play-pyth'));
+      wMakePlayBtn(controls, 'sc-play-et', '\u25B6 Equal Tempered', () => scPlayScale(eqRatios, 'sc-play-et'));
+      parent.appendChild(controls);
+    }
+  }
+
+  function scPlayScale(ratios, btnId) {
+    const baseFreq = 262;
+    let i = 0;
+    function playNext() {
+      if (i >= ratios.length || !wIsPlaying(btnId)) {
+        wStopTones(btnId);
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.textContent = btn.textContent.replace('\u25A0 Stop', '\u25B6 ' + btn.dataset.label); btn.style.background = ''; }
+        return;
+      }
+      wPlayTones(btnId, [{ freq: baseFreq * ratios[i], gain: 0.6, harmonics: [{n:1,gain:1},{n:2,gain:0.4},{n:3,gain:0.2}] }], 0);
+      i++;
+      setTimeout(playNext, 400);
+    }
+    const btn = document.getElementById(btnId);
+    if (btn) btn.dataset.label = btn.textContent.replace('\u25A0 Stop', '').trim();
+    playNext();
+  }
+
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
@@ -5911,6 +6183,22 @@ function initScaleComparison() {
     draw();
   });
   canvas.addEventListener('mouseleave', () => { hoveredNote = -1; draw(); });
+
+  // Click to play individual note
+  canvas.addEventListener('click', (e) => {
+    if (hoveredNote < 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const my = e.clientY - rect.top;
+    const rowH = (H - 80) / 3;
+    // Determine which scale row was clicked
+    let ratios = justRatios;
+    const scaleY = [55, 55 + rowH, 55 + 2 * rowH];
+    if (my > scaleY[2] - 20) ratios = eqRatios;
+    else if (my > scaleY[1] - 20) ratios = pythRatios;
+    const baseFreq = 262;
+    wPlayTones('sc-note', [{ freq: baseFreq * ratios[hoveredNote], gain: 0.6, harmonics: [{n:1,gain:1},{n:2,gain:0.4},{n:3,gain:0.2}] }], 1);
+  });
+  canvas.style.cursor = 'pointer';
 
   function draw() {
     wClear(ctx, W, H);
@@ -7946,6 +8234,13 @@ function initViolinSpectrum() {
         '<label>Q: <input type="range" id="violin-q" min="5" max="200" step="5" value="40"><span class="scene-val" id="violin-q-val">40</span></label>';
       parent.appendChild(controls);
       f0Slider = document.getElementById('violin-f0');
+      // Play button that synthesizes the spectrum as sound
+      wMakePlayBtn(controls, 'violin-play', '\u25B6 Listen', () => {
+        const f0 = parseFloat(f0Slider?.value || 440);
+        const harmonics = [];
+        for (let n = 1; n <= 8; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
+        wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }], 0);
+      });
     }
   }
   const qSlider = document.getElementById('violin-q');
@@ -8038,7 +8333,15 @@ function initViolinSpectrum() {
     ctx.fillText('Violin Spectrum', plotL + plotW / 2, 18);
   }
 
-  f0Slider?.addEventListener('input', draw);
+  f0Slider?.addEventListener('input', () => {
+    draw();
+    if (wIsPlaying('violin-play')) {
+      const f0 = parseFloat(f0Slider?.value || 440);
+      const harmonics = [];
+      for (let n = 1; n <= 8; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
+      wUpdateTones('violin-play', [{ freq: f0, gain: 0.5, harmonics }]);
+    }
+  });
   qSlider?.addEventListener('input', draw);
   draw();
 }
@@ -8445,6 +8748,28 @@ function initFourierMagnitudePhase() {
     ctx.fillText('Result resembles B \u2192 phase carries structural information!', W / 2, H - 10);
   }
 
+  // Add play buttons if controls exist
+  {
+    const parent = canvas.parentElement;
+    if (parent && !document.getElementById('fmp-play-a')) {
+      const controls = parent.querySelector('.scene-controls') || (() => {
+        const c = document.createElement('div'); c.className = 'scene-controls'; parent.appendChild(c); return c;
+      })();
+      wMakePlayBtn(controls, 'fmp-play-a', '\u25B6 Signal A', () => {
+        const d = compute();
+        wPlayBuffer('fmp-play-a', d.sigA, 220, 2);
+      });
+      wMakePlayBtn(controls, 'fmp-play-b', '\u25B6 Signal B', () => {
+        const d = compute();
+        wPlayBuffer('fmp-play-b', d.sigB, 220, 2);
+      });
+      wMakePlayBtn(controls, 'fmp-play-swap', '\u25B6 Swapped', () => {
+        const d = compute();
+        wPlayBuffer('fmp-play-swap', d.swapped, 220, 2);
+      });
+    }
+  }
+
   if (sigASelect) sigASelect.addEventListener('change', draw);
   if (sigBSelect) sigBSelect.addEventListener('change', draw);
   draw();
@@ -8470,7 +8795,53 @@ function initFourierFiltering() {
         '<label>Cutoff frequency: <input type="range" id="ff-cutoff" min="1" max="30" step="1" value="8"><span class="scene-val" id="ff-cutoff-val">8</span></label>';
       parent.appendChild(controls);
       cutoffSlider = document.getElementById('ff-cutoff');
+      // Play buttons for original, low-pass, and high-pass
+      wMakePlayBtn(controls, 'ff-play-orig', '\u25B6 Original', () => {
+        ffPlaySignal('ff-play-orig', null);
+      });
+      wMakePlayBtn(controls, 'ff-play-lp', '\u25B6 Low-pass', () => {
+        ffPlaySignal('ff-play-lp', 'lp');
+      });
+      wMakePlayBtn(controls, 'ff-play-hp', '\u25B6 High-pass', () => {
+        ffPlaySignal('ff-play-hp', 'hp');
+      });
     }
+  }
+
+  function ffPlaySignal(id, filterType) {
+    const cutoff = parseInt(cutoffSlider?.value || 8);
+    const N2 = 256;
+    const sig = new Array(N2);
+    for (let i = 0; i < N2; i++) {
+      const t = i / N2;
+      sig[i] = Math.sin(2 * Math.PI * 3 * t) + 0.5 * Math.sin(2 * Math.PI * 7 * t) +
+               0.8 * Math.sin(2 * Math.PI * 20 * t) + 0.4 * Math.sin(2 * Math.PI * 25 * t);
+    }
+    if (filterType) {
+      // Simple DFT filter
+      const re = new Array(N2).fill(0), im = new Array(N2).fill(0);
+      for (let k = 0; k < N2; k++) {
+        for (let j = 0; j < N2; j++) {
+          const angle = -2 * Math.PI * k * j / N2;
+          re[k] += sig[j] * Math.cos(angle);
+          im[k] += sig[j] * Math.sin(angle);
+        }
+      }
+      for (let k = 0; k < N2; k++) {
+        const freq = Math.min(k, N2 - k);
+        if (filterType === 'lp' && freq > cutoff) { re[k] = 0; im[k] = 0; }
+        if (filterType === 'hp' && freq <= cutoff) { re[k] = 0; im[k] = 0; }
+      }
+      for (let j = 0; j < N2; j++) {
+        sig[j] = 0;
+        for (let k = 0; k < N2; k++) {
+          const angle = 2 * Math.PI * k * j / N2;
+          sig[j] += re[k] * Math.cos(angle) - im[k] * Math.sin(angle);
+        }
+        sig[j] /= N2;
+      }
+    }
+    wPlayBuffer(id, sig, 220, 3);
   }
 
   const N = 256;
