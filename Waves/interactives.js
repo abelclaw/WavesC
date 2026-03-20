@@ -3539,24 +3539,119 @@ function initPluckedString() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  const pluckSlider = document.getElementById('pluck-position');
+  const dampingSlider = document.getElementById('pluck-damping');
   const speedSlider = document.getElementById('pluck-speed');
 
   let t = 0;
-  const nModes = 12; // number of modes to include
+  let pluckPos = 0.25;
+  let plucked = false;
+  let dragging = false;
+  let dragY = 0;
+  const nModes = 12;
+
+  // String geometry constants
+  const strL = 50, strR = W - 50;
+  const strY = 80;
+  const strW = strR - strL;
+  const strHalfH = 50;
+
+  function getStringPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const cx = (e.clientX - rect.left) * scaleX;
+    const cy = (e.clientY - rect.top) * scaleY;
+    const frac = (cx - strL) / strW;
+    return { cx, cy, frac: Math.max(0.05, Math.min(0.95, frac)) };
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const { cx, cy, frac } = getStringPos(e);
+    if (cx >= strL && cx <= strR && cy >= strY - 60 && cy <= strY + 60) {
+      dragging = true;
+      pluckPos = frac;
+      dragY = cy;
+      plucked = false;
+      canvas.style.cursor = 'grabbing';
+    }
+  });
+
+  canvas.addEventListener('mousemove', function(e) {
+    const { cx, cy, frac } = getStringPos(e);
+    if (dragging) {
+      pluckPos = frac;
+      dragY = cy;
+    } else if (cx >= strL && cx <= strR && cy >= strY - 60 && cy <= strY + 60) {
+      canvas.style.cursor = 'pointer';
+    } else {
+      canvas.style.cursor = 'default';
+    }
+  });
+
+  canvas.addEventListener('mouseup', function() {
+    if (dragging) {
+      dragging = false;
+      plucked = true;
+      t = 0;
+      canvas.style.cursor = 'pointer';
+    }
+  });
+
+  canvas.addEventListener('mouseleave', function() {
+    if (dragging) {
+      dragging = false;
+      plucked = true;
+      t = 0;
+      canvas.style.cursor = 'default';
+    }
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { cx, cy, frac } = getStringPos(touch);
+    if (cx >= strL && cx <= strR) {
+      dragging = true;
+      pluckPos = frac;
+      dragY = cy;
+      plucked = false;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (dragging) {
+      const touch = e.touches[0];
+      const { frac, cy } = getStringPos(touch);
+      pluckPos = frac;
+      dragY = cy;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    if (dragging) {
+      dragging = false;
+      plucked = true;
+      t = 0;
+    }
+  }, { passive: false });
 
   function tick() {
-    const pluckPos = parseFloat(pluckSlider?.value || 0.33); // fractional position along string
+    const damping = parseFloat(dampingSlider?.value || 0.5);
     const speed = parseFloat(speedSlider?.value || 1);
-    const dt = 0.02 * speed;
-    t += dt;
+
+    if (plucked) {
+      const dt = 0.02 * speed;
+      t += dt;
+    }
 
     wClear(ctx, W, H);
 
-    const L = 1; // string length (normalized)
+    const L = 1;
 
-    // Plucked string coefficients: A_n = (2h L^2)/(n^2 π^2 d(L-d)) * sin(nπd/L)
-    // where d = pluck position, h = amplitude
+    // Plucked string coefficients
     const d = pluckPos * L;
     const h = 1;
     const coeffs = [];
@@ -3565,12 +3660,21 @@ function initPluckedString() {
       coeffs.push(An);
     }
 
-    // --- Top: animated string ---
-    const strL = 50, strR = W - 50;
-    const strY = 80;
-    const strW = strR - strL;
-    const strHalfH = 50;
+    // Envelope decay: each mode decays as exp(-damping * n * t)
+    const envelopes = [];
+    for (let n = 0; n < nModes; n++) {
+      envelopes.push(Math.exp(-damping * (n + 1) * t));
+    }
 
+    // Check if string has essentially stopped
+    const maxEnv = Math.max(...envelopes);
+    const isAtRest = plucked && maxEnv < 0.005;
+    if (isAtRest) {
+      plucked = false;
+      t = 0;
+    }
+
+    // --- Top: animated string ---
     // Fixed ends (walls)
     ctx.fillStyle = WCOLORS.axis;
     ctx.fillRect(strL - 5, strY - 20, 5, 40);
@@ -3580,37 +3684,83 @@ function initPluckedString() {
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(strL, strY); ctx.lineTo(strR, strY); ctx.stroke();
 
-    // Pluck position marker
-    const pluckX = strL + pluckPos * strW;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(pluckX, strY - 35); ctx.lineTo(pluckX, strY + 35); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('pluck', pluckX, strY - 38);
+    if (dragging) {
+      // Show the string being pulled by the user
+      const pluckX = strL + pluckPos * strW;
+      const pullAmount = Math.max(-strHalfH, Math.min(strHalfH, strY - dragY));
 
-    // Initial shape (dashed)
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-    ctx.beginPath();
-    ctx.moveTo(strL, strY);
-    ctx.lineTo(pluckX, strY - strHalfH * h);
-    ctx.lineTo(strR, strY);
-    ctx.stroke();
-    ctx.setLineDash([]);
+      // Draw pulled string shape
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(strL, strY);
+      ctx.lineTo(pluckX, strY - pullAmount);
+      ctx.lineTo(strR, strY);
+      ctx.stroke();
 
-    // Animated string
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    for (let px = 0; px <= strW; px += 1) {
-      const x = px / strW; // 0 to 1
-      let y = 0;
-      for (let n = 0; n < nModes; n++) {
-        const omega_n = (n + 1) * Math.PI; // ω_n = nπc/L, c=1, L=1
-        y += coeffs[n] * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
+      // Pluck point indicator
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath();
+      ctx.arc(pluckX, strY - pullAmount, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Pulling at x/L = ' + pluckPos.toFixed(2) + ' \u2014 release to pluck!', 10, 18);
+
+    } else if (plucked && !isAtRest) {
+      // Pluck position marker
+      const pluckX = strL + pluckPos * strW;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(pluckX, strY - 35); ctx.lineTo(pluckX, strY + 35); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('pluck', pluckX, strY - 38);
+
+      // Initial shape (dashed)
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(strL, strY);
+      ctx.lineTo(pluckX, strY - strHalfH * h);
+      ctx.lineTo(strR, strY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Animated string with decay
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let px = 0; px <= strW; px += 1) {
+        const x = px / strW;
+        let y = 0;
+        for (let n = 0; n < nModes; n++) {
+          const omega_n = (n + 1) * Math.PI;
+          y += coeffs[n] * envelopes[n] * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
+        }
+        const py = strY - y * strHalfH;
+        px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
       }
-      const py = strY - y * strHalfH;
-      px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
+      ctx.stroke();
+
+      // Title
+      ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Pluck at x/L = ' + pluckPos.toFixed(2), 10, 18);
+
+    } else {
+      // At rest — draw flat string and prompt
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(strL, strY); ctx.lineTo(strR, strY); ctx.stroke();
+
+      // Prompt text
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Click and drag the string to pluck it', (strL + strR) / 2, strY - 35);
+
+      // Small down arrow hint
+      ctx.beginPath();
+      ctx.moveTo((strL + strR) / 2 - 6, strY - 18);
+      ctx.lineTo((strL + strR) / 2, strY - 10);
+      ctx.lineTo((strL + strR) / 2 + 6, strY - 18);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
-    ctx.stroke();
 
     // --- Bottom: individual mode contributions ---
     const modesT = 145, modesB = H - 15;
@@ -3649,7 +3799,8 @@ function initPluckedString() {
       ctx.beginPath();
       for (let px = 0; px <= strW; px += 2) {
         const x = px / strW;
-        const y = coeffs[n] * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
+        const amp = plucked ? envelopes[n] : (dragging ? 0 : 0);
+        const y = coeffs[n] * amp * Math.sin((n + 1) * Math.PI * x) * Math.cos(omega_n * t);
         const py = modeMidY - y * modeHalfH;
         px === 0 ? ctx.moveTo(strL + px, py) : ctx.lineTo(strL + px, py);
       }
@@ -3661,12 +3812,9 @@ function initPluckedString() {
     ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'left';
     for (let n = 0; n < showModes; n++) {
       ctx.fillStyle = modeColors[n % modeColors.length];
-      ctx.fillText('n=' + (n + 1) + ' A=' + Math.abs(coeffs[n]).toFixed(2), strR + 5, modesT + 10 + n * 13);
+      const displayAmp = plucked ? Math.abs(coeffs[n] * envelopes[n]) : Math.abs(coeffs[n]);
+      ctx.fillText('n=' + (n + 1) + ' A=' + displayAmp.toFixed(2), strR + 5, modesT + 10 + n * 13);
     }
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Pluck at x/L = ' + pluckPos.toFixed(2), 10, 18);
 
     requestAnimationFrame(tick);
   }
