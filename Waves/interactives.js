@@ -5223,7 +5223,7 @@ function initStringTransverseWave() {
       controls.innerHTML =
         '<label>Segment position: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>' +
         '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>' +
-        '<label>Speed: <input type="range" id="stw-speed" min="0.002" max="0.03" step="0.002" value="0.006"><span class="scene-val" id="stw-speed-val">0.20x</span></label>';
+        '<label>Speed: <input type="range" id="stw-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="stw-speed-val">0.67x</span></label>';
       parent.appendChild(controls);
       posSlider = document.getElementById('stw-pos');
     }
@@ -5234,7 +5234,7 @@ function initStringTransverseWave() {
   function tick() {
     const segPos = parseFloat(posSlider?.value || 0.5);
     const A = parseFloat(ampSlider?.value || 0.8);
-    const speed = parseFloat(stwSpeedSlider?.value || 0.006);
+    const speed = parseFloat(stwSpeedSlider?.value || 0.02);
     document.getElementById('stw-pos-val')?.replaceChildren(document.createTextNode(segPos.toFixed(2)));
     document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
     document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
@@ -5248,12 +5248,12 @@ function initStringTransverseWave() {
     const maxAmp = 60 * A;
 
     // Wave: Gaussian-modulated sinusoid traveling right
-    const v = 2.0;
+    const v = 0.5;
     const sigma = 0.12;
     function waveY(xFrac, time) {
       const center = ((v * time) % 2.0) - 0.3;
       const dx = xFrac - center;
-      return maxAmp * Math.exp(-dx * dx / (2 * sigma * sigma)) * Math.sin(15 * xFrac - 8 * time);
+      return maxAmp * Math.exp(-dx * dx / (2 * sigma * sigma)) * Math.sin(15 * xFrac - 2 * time);
     }
 
     function waveDY(xFrac, time) {
