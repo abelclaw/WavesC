@@ -3420,7 +3420,7 @@ function initFourierDecomposition() {
       if (xn < Math.PI) return -1 + 2 * xn / Math.PI;
       return 3 - 2 * xn / Math.PI;
     } else { // sawtooth
-      return 1 - xn / Math.PI; // goes from 1 to -1
+      return (((xn + Math.PI) % (2 * Math.PI)) / Math.PI) - 1; // rising sawtooth, discontinuity at π
     }
   }
 
