@@ -4451,20 +4451,24 @@ function initStringTransverseWave() {
       controls.className = 'scene-controls';
       controls.innerHTML =
         '<label>Segment position: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>' +
-        '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>';
+        '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>' +
+        '<label>Speed: <input type="range" id="stw-speed" min="0.005" max="0.08" step="0.005" value="0.015"><span class="scene-val" id="stw-speed-val">0.50x</span></label>';
       parent.appendChild(controls);
       posSlider = document.getElementById('stw-pos');
     }
   }
   const ampSlider = document.getElementById('stw-amp');
+  const stwSpeedSlider = document.getElementById('stw-speed');
 
   function tick() {
     const segPos = parseFloat(posSlider?.value || 0.5);
     const A = parseFloat(ampSlider?.value || 0.8);
+    const speed = parseFloat(stwSpeedSlider?.value || 0.015);
     document.getElementById('stw-pos-val')?.replaceChildren(document.createTextNode(segPos.toFixed(2)));
     document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
+    document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
 
-    t += 0.03;
+    t += speed;
     wClear(ctx, W, H);
 
     const stringL = 50, stringR = W - 50;
@@ -4604,6 +4608,7 @@ function initStringTransverseWave() {
 
   posSlider?.addEventListener('input', () => {});
   ampSlider?.addEventListener('input', () => {});
+  stwSpeedSlider?.addEventListener('input', () => {});
   tick();
 }
 
@@ -4617,103 +4622,161 @@ function initSoundWaveLongitudinal() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let wlSlider = document.getElementById('swl-wl');
-  if (!wlSlider) {
+  let freqSlider = document.getElementById('swl-freq');
+  if (!freqSlider) {
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>Wavelength: <input type="range" id="swl-wl" min="40" max="200" step="5" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>';
+        '<label>Frequency: <input type="range" id="swl-freq" min="0.5" max="3" step="0.1" value="1.2"><span class="scene-val" id="swl-freq-val">1.2</span></label>' +
+        '<label>Speed: <input type="range" id="swl-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="swl-speed-val">0.67x</span></label>';
       parent.appendChild(controls);
-      wlSlider = document.getElementById('swl-wl');
+      freqSlider = document.getElementById('swl-freq');
     }
   }
+  const swlSpeedSlider = document.getElementById('swl-speed');
 
   let t = 0;
-  const gridCols = 50;
-  const gridRows = 10;
+
+  // Air molecule grid
+  const cols = 80;
+  const rows = 14;
+  const ampDisp = 6; // max displacement in px
+
+  // Source: vibrating plate/speaker on the left
+  const srcX = 55;
+  const srcW = 10;
 
   function tick() {
-    const wavelength = parseFloat(wlSlider?.value || 100);
-    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wavelength.toFixed(0)));
+    const freq = parseFloat(freqSlider?.value || 1.2);
+    const speed = parseFloat(swlSpeedSlider?.value || 0.02);
+    document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
+    document.getElementById('swl-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
 
-    t += 0.05;
+    t += speed;
     wClear(ctx, W, H);
 
-    const gridL = 30;
-    const gridR = W - 30;
-    const gridT = 40;
-    const gridB = H - 50;
-    const gridW = gridR - gridL;
-    const gridH = gridB - gridT;
+    const airL = srcX + srcW + 2;
+    const airR = W - 20;
+    const airT = 35;
+    const airB = H - 30;
+    const airW = airR - airL;
+    const airH = airB - airT;
 
-    const k = 2 * Math.PI / wavelength;
-    const omega = k * 80;
-    const ampDisp = 8;
+    const k = freq * 0.08; // wave number
+    const omega = freq * 3.0; // angular frequency
+    const waveSpeed = omega / k; // phase velocity in px/frame-unit
 
+    // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Longitudinal Sound Wave: Compression & Rarefaction', W / 2, 16);
+    ctx.fillText('Longitudinal Sound Wave Propagation', W / 2, 16);
 
-    // Molecules
-    for (let row = 0; row < gridRows; row++) {
-      const baseY = gridT + (row + 0.5) * gridH / gridRows;
-      for (let col = 0; col < gridCols; col++) {
-        const baseX = gridL + (col + 0.5) * gridW / gridCols;
-        const disp = ampDisp * Math.sin(k * baseX - omega * t);
-        const density = -k * ampDisp * Math.cos(k * baseX - omega * t);
-        const normDens = density / (k * ampDisp);
+    // Vibrating source (speaker/plate)
+    const srcDisp = ampDisp * Math.sin(omega * t);
+    const srcCenterX = srcX + srcDisp;
 
-        const r = Math.round(15 + 20 * normDens);
-        const g = Math.round(42 + 30 * normDens);
-        const b = Math.round(46 + 30 * normDens);
-        const alpha = 0.4 + 0.5 * (1 + normDens) / 2;
-        const radius = 2.2 + 0.8 * (1 + normDens) / 2;
+    // Speaker body
+    ctx.fillStyle = '#4a6670';
+    ctx.fillRect(10, airT + 5, srcX - 15, airH - 10);
 
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    // Vibrating plate
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillRect(srcCenterX - 2, airT + 2, srcW, airH - 4);
+
+    // Speaker label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Source', srcX - 10, airB + 14);
+
+    // Wavefront propagation boundary — wave hasn't reached beyond this
+    const wavefront = airL + waveSpeed * t;
+
+    // Draw air molecules
+    for (let row = 0; row < rows; row++) {
+      const baseY = airT + (row + 0.5) * airH / rows;
+      for (let col = 0; col < cols; col++) {
+        const baseX = airL + (col + 0.5) * airW / cols;
+
+        // Only displace molecules the wave has reached
+        let disp = 0;
+        let normDens = 0;
+        if (baseX < wavefront) {
+          // Smooth envelope: wave builds up over ~1 wavelength behind the front
+          const distBehindFront = wavefront - baseX;
+          const wl = 2 * Math.PI / k;
+          const envelope = Math.min(1, distBehindFront / (wl * 0.8));
+          disp = ampDisp * envelope * Math.sin(k * baseX - omega * t);
+          // Density proportional to -d(displacement)/dx
+          normDens = envelope * Math.cos(k * baseX - omega * t);
+        }
+
+        // Color: brighter in compression, dimmer in rarefaction
+        const brightness = 0.4 + 0.45 * (1 + normDens) / 2;
+        const radius = 2.0 + 1.2 * (1 + normDens) / 2;
+
+        // Teal-ish color for air molecules
+        const r = Math.round(100 * brightness);
+        const g = Math.round(190 * brightness);
+        const b = Math.round(210 * brightness);
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${brightness})`;
         ctx.beginPath();
         ctx.arc(baseX + disp, baseY, radius, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // Density color bar
-    const barL = gridL + 20, barR = gridR - 20, barY = gridB + 14, barH = 10;
-    for (let px = barL; px <= barR; px++) {
-      const frac = (px - barL) / (barR - barL);
-      const val = Math.sin(k * (gridL + frac * gridW) - omega * t);
-      const dens = -val;
-      const normD = (dens + 1) / 2;
-      const cR = Math.round(15 + 40 * normD);
-      const cG = Math.round(42 + 60 * normD);
-      const cB = Math.round(46 + 60 * normD);
-      ctx.fillStyle = `rgb(${cR}, ${cG}, ${cB})`;
-      ctx.fillRect(px, barY, 1, barH);
+    // Wavefront indicator line
+    if (wavefront > airL && wavefront < airR) {
+      ctx.strokeStyle = 'rgba(255, 180, 50, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(wavefront, airT);
+      ctx.lineTo(wavefront, airB);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('wavefront', wavefront, airT - 4);
     }
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Compression', barL + 30, barY + barH + 12);
-    ctx.fillText('Rarefaction', barR - 30, barY + barH + 12);
+    // Labels for compression/rarefaction in the wave region
+    if (wavefront > airL + 100) {
+      const wl = 2 * Math.PI / k;
+      // Find a compression peak (where sin(kx - wt) has negative slope, cos is positive)
+      const refPhase = omega * t;
+      // compression at kx - wt = 0 (mod 2pi) => x = wt/k
+      let compX = (refPhase / k);
+      // Bring into visible range
+      while (compX > airW) compX -= wl;
+      while (compX < 0) compX += wl;
+      compX += airL;
 
-    // Wavelength bracket
-    if (wavelength < gridW - 20) {
-      const bY = gridT - 5;
-      const bL2 = gridL + gridW * 0.3;
-      const bR2 = bL2 + wavelength;
-      if (bR2 < gridR) {
-        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(bL2, bY); ctx.lineTo(bR2, bY); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bL2, bY - 4); ctx.lineTo(bL2, bY + 4); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(bR2, bY - 4); ctx.lineTo(bR2, bY + 4); ctx.stroke();
-        ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('\u03BB = ' + wavelength.toFixed(0) + ' px', (bL2 + bR2) / 2, bY - 6);
+      if (compX > airL + 30 && compX < Math.min(wavefront - 20, airR - 30)) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('C', compX, airB + 14);
+      }
+      const rarX = compX + wl / 2;
+      if (rarX > airL + 30 && rarX < Math.min(wavefront - 20, airR - 30)) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('R', rarX, airB + 14);
       }
     }
+
+    // Legend
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('C = compression   R = rarefaction', airL, H - 6);
+
+    // Direction arrow
+    ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right'; ctx.font = '10px system-ui';
+    ctx.fillText('propagation \u2192', airR, H - 6);
 
     requestAnimationFrame(tick);
   }
 
-  wlSlider?.addEventListener('input', () => {});
+  freqSlider?.addEventListener('input', () => {});
+  swlSpeedSlider?.addEventListener('input', () => {});
   tick();
 }
 
