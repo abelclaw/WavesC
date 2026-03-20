@@ -159,6 +159,22 @@ const mathLessons = [
     ]
   },
   {
+    id: "dirac-delta-math",
+    title: "The Dirac Delta Function",
+    sections: [
+      { heading: "Definition via the Fourier transform", body: "The Dirac delta function arises naturally from the Fourier transform of a constant. Starting from $f(t) = 1$, its Fourier transform is $$\\delta(\\omega) \\equiv \\frac{1}{2\\pi} \\int_{-\\infty}^{\\infty} e^{-i\\omega t}\\,dt$$ and its inverse gives $$1 = \\int_{-\\infty}^{\\infty} \\delta(\\omega)\\,e^{i\\omega t}\\,d\\omega$$ The delta function is zero everywhere except at the origin, where it is infinite, yet its integral is exactly 1.", interactive: null },
+      { heading: "The sifting property", body: "The defining property of $\\delta(x)$ is the sifting property: for any smooth function $f(x)$, $$\\int_{-\\infty}^{\\infty} \\delta(x)\\,f(x)\\,dx = f(0)$$ More generally, $\\int \\delta(x - a)\\,f(x)\\,dx = f(a)$. The delta function picks out the value of $f$ at a single point. This follows from the Fourier inversion theorem: writing $f(x) = \\int dk\\,e^{ikx}\\,\\tilde{f}(k) = \\int dy\\,\\delta(y - x)\\,f(y)$.", interactive: null },
+      { heading: "Distributions vs. functions", body: "The delta function is not an ordinary function — it belongs to a class of objects called distributions. While functions map numbers to numbers (like $f(x) = x^2$), distributions only produce numbers after being integrated against a test function. The expression $\\delta(x) = 0$ for $x \\neq 0$ with $\\int \\delta(x)\\,dx = 1$ makes no sense for an ordinary function, but is perfectly well-defined for a distribution.", interactive: null },
+      { heading: "Representations as limits", body: "A practical way to work with $\\delta(x)$ is as the limit of a sequence of ordinary functions that become increasingly narrow and tall while keeping unit area: $$\\delta(x) = \\lim_{\\epsilon \\to 0} \\frac{1}{\\pi}\\frac{\\epsilon}{x^2 + \\epsilon^2} \\quad\\text{(Lorentzian)}$$ $$\\delta(x) = \\lim_{\\epsilon \\to 0} \\frac{1}{\\sqrt{4\\pi\\epsilon}}\\,e^{-x^2/(4\\epsilon)} \\quad\\text{(Gaussian)}$$ To verify these, integrate against a smooth test function $g(x)$ and check the sifting property in the limit.", interactive: null },
+      { heading: "Physical interpretation", body: "The Fourier transform of $\\delta(t)$ is a constant: an infinitely sharp pulse contains all frequencies equally (white noise). Conversely, the Fourier transform of a constant $f(t) = 1$ is $\\delta(\\omega)$: a signal that never varies has only zero frequency. A single frequency $e^{ik_0 x}$ transforms to $\\delta(k - k_0)$, confirming that a pure plane wave has a perfectly defined wavenumber. These Fourier pairs are fundamental to understanding spectral analysis.", interactive: null }
+    ],
+    exercises: [
+      { question: "Using the Lorentzian representation $\\delta(x) = \\lim_{\\epsilon \\to 0} (1/\\pi)\\,\\epsilon/(x^2 + \\epsilon^2)$, show that $\\int_{-\\infty}^{\\infty} \\delta(x)\\,dx = 1$ for all $\\epsilon > 0$.", answer: "$\\int (1/\\pi)\\,\\epsilon/(x^2 + \\epsilon^2)\\,dx = (1/\\pi)[\\arctan(x/\\epsilon)]_{-\\infty}^{\\infty} = (1/\\pi)(\\pi/2 - (-\\pi/2)) = 1$." },
+      { question: "Evaluate $\\int_{-\\infty}^{\\infty} \\delta(x - 3)\\,(x^2 + 1)\\,dx$.", answer: "By the sifting property, $\\int \\delta(x - 3)\\,f(x)\\,dx = f(3) = 3^2 + 1 = 10$." },
+      { question: "What is the Fourier transform of $\\delta(t - t_0)$?", answer: "$\\tilde{f}(\\omega) = (1/2\\pi)\\int \\delta(t - t_0)\\,e^{-i\\omega t}\\,dt = (1/2\\pi)\\,e^{-i\\omega t_0}$. A shifted delta picks up a phase factor proportional to the shift." }
+    ]
+  },
+  {
     id: "pde-basics",
     title: "Partial Differential Equations",
     sections: [
@@ -823,7 +839,7 @@ const chapters = [
       "How does the width of a Fourier transform peak relate to the duration of the signal?",
       "What physical information does the power spectrum contain that the Fourier transform alone does not?"
     ],
-    mathPrereqs: ["fourier-math", "fourier-transform-math"],
+    mathPrereqs: ["fourier-math", "fourier-transform-math", "dirac-delta-math"],
     lectureContent: [
       { heading: "Introduction", body: "<p>Lecture content will be loaded here.</p>", interactive: null, mathLinks: [] }
     ],

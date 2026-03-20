@@ -92,28 +92,11 @@ window.LECTURE_CONTENT_8_11 = {
     },
     {
       heading: "Dirac $\\delta$ Function",
-      body: `<p>Another extremely important example is the Fourier transform of a constant:</p>
-<p style="text-align:center;">$$\\delta(\\omega) \\equiv (1/2\\pi) \\int_{-\\infty}^{\\infty} e^{-i\\omega t} dt$$</p>
-<p>Its Fourier inverse is then:</p>
-<p style="text-align:center;">$$1 = \\int_{-\\infty}^{\\infty} \\delta(\\omega) e^{i\\omega t} d\\omega$$</p>
-<p>This object $\\delta(\\omega$) is called the <strong>Dirac $\\delta$ function</strong>. It is enormously useful in a great variety of physics problems, especially in quantum mechanics, but also in waves.</p>
-<p>To figure out what $\\delta(\\omega$) looks like, we use the fact that the Fourier transform of the inverse Fourier transform gives a function back. For any smooth function <em>f(x)</em>:</p>
-<p style="text-align:center;">$$f(x) = \\int dk e^{ikx} \\tilde{f}(k) = \\int dy \\delta(y - x) f(y)$$</p>
-<p>Setting x = 0, we see that the $\\delta$-function satisfies the <strong>sifting property</strong>:</p>
-<p style="text-align:center;">$$\\int_{-\\infty}^{\\infty} \\delta(x) f(x) dx = f(0)$$</p>
-<p>for any smooth function <em>f(x)</em>. The $\\delta$-function also has the property that $\\delta$(x) = 0 for x $\\neq$ 0, so the integral $\\int_{-x<sub>0}$</sub>$^{x_{0}} \\delta$(x) f(x) dx = f(0) for any $x_{0}$ &gt; 0.</p>
-<p>These properties uniquely define the $\\delta$-function. Indeed, the $\\delta$-function is no ordinary function. It is instead a member of a class of mathematical objects called <strong>distributions</strong>. While functions take numbers and give numbers (like f(x) = $x^{2}$), distributions only give numbers after being integrated.</p>
-<p>You should think of $\\delta$(x) as <strong>zero everywhere except at x = 0 where it is infinite</strong>. However, the infinity is integrable: $\\int_{-x<sub>0}$</sub>$^{x_{0}} \\delta$(x) dx = 1 for any $x_{0}$ &gt; 0.</p>
-<p>From the physics point of view, we showed that if we have an amplitude which is constant in time f(t) = 1, then the only frequency mode supported has 0 frequency. This makes sense — a constant has an infinite wavelength and never repeats. Conversely, if $\\tilde{f}(\\omega$) = 1 it says that all frequencies are excited. This corresponds to <strong>white noise</strong>. The Fourier transform of $\\tilde{f}(\\omega$) = 1 gives a function f(t) = $\\delta$(t) which corresponds to an infinitely sharp pulse. A pulse has no characteristic time associated with it, so no frequency can be picked out. That's why white noise has all frequencies equally.</p>
-<details><summary><strong>Some mathematics of $\\delta(\\omega$) (optional)</strong></summary>
-<p>For $\\omega \\neq$ 0, one can evaluate $\\delta(\\omega$) using contour integration in the complex $\\omega$ plane. The integral along a semicircular contour in the lower half-plane vanishes for the curved part (since t has a negative imaginary part there, making e<sup>-i$\\omega$t</sup> $\\rightarrow$ 0). Since e<sup>-i$\\omega$t</sup> has no poles, the residue theorem gives $\\delta(\\omega$) = 0 for $\\omega \\neq$ 0. On the other hand, for $\\omega$ = 0, $\\delta$(0) = (1/2$\\pi) \\int_{-\\infty}^{\\infty}$ dt = $\\infty$.</p>
-<p>A practical way to define $\\delta$(x) is as a limit. There are many ways:</p>
-<ul>
-<li>$\\delta$(x) = lim<sub>$\\epsilon \\rightarrow$0</sub> (1/$\\pi) \\cdot \\epsilon$/($x^{2} + \\epsilon^{2}$) &nbsp;(Lorentzian)</li>
-<li>$\\delta$(x) = lim<sub>$\\epsilon \\rightarrow$0</sub> (1/$\\sqrt{4\\pi\\epsilon}$) e<sup>-$x^{2}$/(4$\\epsilon$)</sup> &nbsp;(Gaussian)</li>
-</ul>
-<p>To check these, integrate any of them against a test function g(x) and verify the sifting property.</p>
-</details>
+      body: `<p>What is the Fourier transform of a constant? If f(t) = 1, its transform is:</p>
+<p style="text-align:center;">$$\\delta(\\omega) \\equiv \\frac{1}{2\\pi} \\int_{-\\infty}^{\\infty} e^{-i\\omega t}\\, dt$$</p>
+<p>This object $\\delta(\\omega$) is the <strong>Dirac $\\delta$ function</strong>. It is zero everywhere except at the origin, where it is infinite, yet integrates to 1. Its key property is the <strong>sifting property</strong>: $\\int \\delta(x)\\,f(x)\\,dx = f(0)$ for any smooth function f.</p>
+<p>Physically, a constant signal f(t) = 1 has only zero frequency — hence a delta function at $\\omega$ = 0. Conversely, an infinitely sharp pulse $\\delta$(t) contains all frequencies equally, corresponding to white noise. A pure frequency $e^{ik_{0}x}$ transforms to $\\delta(k - k_{0})$: a single spike in the spectrum.</p>
+<p>The delta function is not an ordinary function but a <strong>distribution</strong> — an object that only makes sense under an integral sign. The full mathematical treatment, including limit representations and proofs, is in the math topic below.</p>
 <span class='inline-math-link' data-math='dirac-delta-math'>Dirac Delta Function $\\rightarrow$</span>`,
       interactive: "dirac-delta-visualization",
       interactiveCaption: "The Dirac delta function as a limit of increasingly narrow, tall Gaussians or Lorentzians, always with unit area",
