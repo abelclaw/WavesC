@@ -2121,7 +2121,6 @@ function renderNav() {
           <span class="chapter-link-number">Chapter ${chapter.number}</span>
           <span class="chapter-link-title-row">
             <span class="chapter-link-title">${chapter.title}</span>
-            <span class="chapter-link-progress">${getMasteryProgress(chapter).completedCount}/${getMasteryProgress(chapter).total}</span>
           </span>
         </button>
       `

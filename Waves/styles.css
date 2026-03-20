@@ -1773,11 +1773,6 @@ a {
   gap: 10px;
 }
 
-.chapter-link-progress {
-  font-family: var(--display);
-  font-size: 0.74rem;
-  color: rgba(248, 240, 228, 0.72);
-}
 
 .mastery-progress {
   margin: 8px 0 0;
