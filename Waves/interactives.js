@@ -2252,7 +2252,7 @@ function initPhaseLag() {
 }
 
 // =========================================================================
-// 4. POWER ABSORPTION — elastic vs absorptive
+// 4. POWER ABSORPTION — energy flow visualization
 // =========================================================================
 function initPowerAbsorption() {
   const canvas = document.getElementById('scene-power-absorption');
@@ -2262,9 +2262,17 @@ function initPowerAbsorption() {
   const { ctx, W, H } = setup;
 
   let t = 0;
-  const plotL = 50, plotR = W - 20, plotT = 30, plotB = H - 30;
-  const plotW = plotR - plotL, plotH = plotB - plotT;
-  const midY = (plotT + plotB) / 2;
+  const w0 = 5;
+
+  // Layout: left panel (oscillator) | right panel (cumulative energy plot)
+  const divX = Math.round(W * 0.38);
+  const panR_L = divX + 16, panR_R = W - 16, panR_T = 32, panR_B = H - 28;
+  const panR_W = panR_R - panR_L, panR_H = panR_B - panR_T;
+
+  // Oscillator panel geometry
+  const oscCx = divX / 2, oscCy = H * 0.46;
+  const wallX = 20, massR = 14;
+  const springRestLen = oscCx - wallX - massR - 10;
 
   // Create controls
   let wdSlider = document.getElementById('power-wd');
@@ -2273,14 +2281,75 @@ function initPowerAbsorption() {
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label><span>ω<sub>d</sub>:</span> <input type="range" id="power-wd" min="0.5" max="10" step="0.1" value="5"><span class="scene-val" id="power-wd-val">5.0</span></label>' +
-        '<label><span>γ:</span> <input type="range" id="power-gamma" min="0.1" max="4" step="0.1" value="1"><span class="scene-val" id="power-gamma-val">1.0</span></label>';
+      controls.innerHTML = '<label><span>\u03c9<sub>d</sub>:</span> <input type="range" id="power-wd" min="0.5" max="10" step="0.1" value="5"><span class="scene-val" id="power-wd-val">5.0</span></label>' +
+        '<label><span>\u03b3:</span> <input type="range" id="power-gamma" min="0.1" max="4" step="0.1" value="1"><span class="scene-val" id="power-gamma-val">1.0</span></label>';
       parent.appendChild(controls);
       wdSlider = document.getElementById('power-wd');
     }
   }
   const gammaSlider = document.getElementById('power-gamma');
-  const w0 = 5;
+
+  // Cumulative energy history (ring buffer)
+  const histLen = 300;
+  let cumAbs = new Float64Array(histLen);
+  let cumEl = new Float64Array(histLen);
+  let histIdx = 0;
+  let totalAbs = 0, totalEl = 0;
+  let prevWd = -1, prevGamma = -1;
+
+  function resetHistory() {
+    cumAbs = new Float64Array(histLen);
+    cumEl = new Float64Array(histLen);
+    histIdx = 0;
+    totalAbs = 0;
+    totalEl = 0;
+    t = 0;
+  }
+
+  // Draw a zigzag spring from (x1,y) to (x2,y)
+  function drawSpring(x1, x2, y, coils) {
+    const len = x2 - x1;
+    const coilW = len / coils;
+    const amp = 6;
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    for (let i = 0; i < coils; i++) {
+      const cx = x1 + (i + 0.25) * coilW;
+      const cx2 = x1 + (i + 0.75) * coilW;
+      ctx.lineTo(cx, y - amp);
+      ctx.lineTo(cx2, y + amp);
+    }
+    ctx.lineTo(x2, y);
+    ctx.strokeStyle = WCOLORS.textDim;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Draw an arrow from (x1,y) to (x2,y)
+  function drawArrow(x1, y, x2, color, label) {
+    const len = x2 - x1;
+    if (Math.abs(len) < 2) return;
+    const headLen = Math.min(6, Math.abs(len) * 0.4);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+    const dir = Math.sign(len);
+    ctx.beginPath();
+    ctx.moveTo(x2, y);
+    ctx.lineTo(x2 - dir * headLen, y - 4);
+    ctx.lineTo(x2 - dir * headLen, y + 4);
+    ctx.closePath();
+    ctx.fill();
+    if (label) {
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, (x1 + x2) / 2, y - 8);
+    }
+  }
 
   function tick() {
     const wd = parseFloat(wdSlider?.value || 5);
@@ -2288,128 +2357,258 @@ function initPowerAbsorption() {
     document.getElementById('power-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
     document.getElementById('power-gamma-val')?.replaceChildren(document.createTextNode(gamma.toFixed(1)));
 
-    t += 0.02;
+    if (wd !== prevWd || gamma !== prevGamma) {
+      resetHistory();
+      prevWd = wd;
+      prevGamma = gamma;
+    }
+
+    const dt = 0.03;
+    t += dt;
 
     const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
     const A = (w0 * w0 - wd * wd) / denom;
     const B = (gamma * wd) / denom;
 
-    draw(wd, gamma, A, B);
+    // Instantaneous power components
+    const pAb = wd * B * Math.cos(wd * t) ** 2;
+    const pEl = -wd * A * Math.sin(wd * t) * Math.cos(wd * t);
+
+    // Accumulate
+    totalAbs += pAb * dt;
+    totalEl += pEl * dt;
+    cumAbs[histIdx % histLen] = totalAbs;
+    cumEl[histIdx % histLen] = totalEl;
+    histIdx++;
+
+    draw(wd, gamma, A, B, pAb, pEl);
     requestAnimationFrame(tick);
   }
 
-  function draw(wd, gamma, A, B) {
+  function draw(wd, gamma, A, B, pAb, pEl) {
     wClear(ctx, W, H);
 
-    // Normalize scale: at resonance (wd=w0), peak absorptive power = w0/(gamma*w0) = 1/gamma.
-    // Use that as reference so the plot fills nicely at resonance.
+    // --- LEFT PANEL: Animated oscillator ---
+    const xDisp = A * Math.cos(wd * t) + B * Math.sin(wd * t);
+    const vel = -A * wd * Math.sin(wd * t) + B * wd * Math.cos(wd * t);
+    const force = Math.cos(wd * t);
+
+    const maxDisp = Math.sqrt(A * A + B * B);
+    const dispScale = maxDisp > 0 ? (springRestLen * 0.35) / maxDisp : 1;
+    const massX = oscCx + xDisp * dispScale;
+
+    // Wall
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillRect(wallX - 4, oscCy - 30, 4, 60);
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.moveTo(wallX - 4, oscCy - 28 + i * 10);
+      ctx.lineTo(wallX - 10, oscCy - 22 + i * 10);
+      ctx.strokeStyle = WCOLORS.textDim;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Spring
+    drawSpring(wallX, massX - massR, oscCy, 8);
+
+    // Mass
+    ctx.beginPath();
+    ctx.arc(massX, oscCy, massR, 0, 2 * Math.PI);
+    ctx.fillStyle = WCOLORS.bg;
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('m', massX, oscCy + 4);
+
+    // Force arrow (red)
+    const fScale = 30;
+    drawArrow(massX, oscCy - 22, massX + force * fScale, WCOLORS.red, 'F');
+
+    // Velocity arrow (blue)
+    const vScale = maxDisp > 0 ? 25 / (maxDisp * wd) : 1;
+    drawArrow(massX, oscCy + 22, massX + vel * vScale, WCOLORS.blue, 'v');
+
+    // Power meter bar
+    const meterY = H * 0.78;
+    const meterH = 10;
+    const meterW = divX - 40;
+    const meterX = 20;
+    const pTotal = pAb + pEl;
     const refP = 1 / gamma;
-    const pScale = (plotH * 0.38) / refP;
+    const maxP = refP * 2.2;
+
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.font = '9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('P(t) = F \u00b7 v', meterX + meterW / 2, meterY - 14);
+
+    ctx.fillStyle = 'rgba(31,42,46,0.06)';
+    ctx.fillRect(meterX, meterY, meterW, meterH);
+
+    const barFrac = Math.min(Math.abs(pTotal) / maxP, 1);
+    const barW = barFrac * meterW;
+    if (pTotal >= 0) {
+      ctx.fillStyle = 'rgba(34,197,94,0.6)';
+      ctx.fillRect(meterX, meterY, barW, meterH);
+    } else {
+      ctx.fillStyle = 'rgba(239,68,68,0.4)';
+      ctx.fillRect(meterX + meterW - barW, meterY, barW, meterH);
+    }
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(meterX, meterY, meterW, meterH);
+
+    ctx.font = '8px system-ui';
+    ctx.fillStyle = 'rgba(34,197,94,0.9)';
+    ctx.textAlign = 'left';
+    ctx.fillText('energy in \u2192', meterX, meterY + meterH + 10);
+    ctx.fillStyle = 'rgba(239,68,68,0.7)';
+    ctx.textAlign = 'right';
+    ctx.fillText('\u2190 energy out', meterX + meterW, meterY + meterH + 10);
+
+    // Panel title
+    ctx.fillStyle = WCOLORS.text;
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    fillTextSub(ctx, 'Driven oscillator (\u03c9_0 = ' + w0.toFixed(0) + ')', divX / 2, 16);
+
+    // Divider
+    ctx.strokeStyle = WCOLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(divX, 8);
+    ctx.lineTo(divX, H - 8);
+    ctx.stroke();
+
+    // --- RIGHT PANEL: Cumulative energy plot ---
+    const n = Math.min(histIdx, histLen);
+    if (n < 2) return;
+
+    // Auto-scale
+    let minE = 0, maxE = 0;
+    for (let i = 0; i < n; i++) {
+      const idx = (histIdx - n + i) % histLen;
+      const a = cumAbs[idx];
+      const e = cumEl[idx];
+      if (a > maxE) maxE = a;
+      if (a + e > maxE) maxE = a + e;
+      if (e < minE) minE = e;
+      if (e > maxE) maxE = e;
+    }
+    const eRange = Math.max(maxE - minE, 0.01);
+    maxE += eRange * 0.15;
+    minE -= eRange * 0.15;
+    const eScale = panR_H / (maxE - minE);
 
     // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, midY); ctx.lineTo(plotR, midY); ctx.stroke();
-
-    // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('t \u2192', plotR + 10, midY + 4);
-    ctx.save(); ctx.translate(plotL - 8, midY); ctx.rotate(-Math.PI / 2);
-    ctx.fillText('P(t)', 0, 0); ctx.restore();
-    ctx.textAlign = 'right'; ctx.font = '9px system-ui';
-    ctx.fillText('0', plotL - 4, midY + 3);
-
-    const tRange = 3 * 2 * Math.PI / wd;
-
-    // Shaded fill under absorptive curve (visually shows it's always >= 0)
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(plotL, midY);
-    for (let px = 0; px <= plotW; px++) {
-      const tc = (px / plotW) * tRange + t;
-      const pAb = wd * B * Math.cos(wd * tc) ** 2;
-      ctx.lineTo(plotL + px, midY - pAb * pScale);
+    ctx.moveTo(panR_L, panR_T);
+    ctx.lineTo(panR_L, panR_B);
+    ctx.lineTo(panR_R, panR_B);
+    ctx.stroke();
+
+    // Zero line
+    const zeroY = panR_B - (0 - minE) * eScale;
+    if (zeroY > panR_T && zeroY < panR_B) {
+      ctx.strokeStyle = WCOLORS.grid;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(panR_L, zeroY);
+      ctx.lineTo(panR_R, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.font = '8px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText('0', panR_L - 3, zeroY + 3);
     }
-    ctx.lineTo(plotL + plotW, midY);
+
+    // Absorptive cumulative fill
+    ctx.beginPath();
+    ctx.moveTo(panR_L, panR_B - (0 - minE) * eScale);
+    for (let i = 0; i < n; i++) {
+      const idx = (histIdx - n + i) % histLen;
+      const px = panR_L + (i / (n - 1)) * panR_W;
+      const py = panR_B - (cumAbs[idx] - minE) * eScale;
+      ctx.lineTo(px, py);
+    }
+    ctx.lineTo(panR_L + panR_W, panR_B - (0 - minE) * eScale);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(239,68,68,0.12)';
+    ctx.fillStyle = 'rgba(239,68,68,0.15)';
     ctx.fill();
 
-    // Total power curve (elastic + absorptive) — dashed gray
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
-    ctx.setLineDash([3, 3]);
+    // Absorptive line
+    ctx.strokeStyle = WCOLORS.red;
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    for (let px = 0; px <= plotW; px++) {
-      const tc = (px / plotW) * tRange + t;
-      const pEl = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
-      const pAb = wd * B * Math.cos(wd * tc) ** 2;
-      const py = midY - (pEl + pAb) * pScale;
-      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Elastic curve (blue)
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let px = 0; px <= plotW; px++) {
-      const tc = (px / plotW) * tRange + t;
-      const pEl = -wd * A * Math.sin(wd * tc) * Math.cos(wd * tc);
-      px === 0 ? ctx.moveTo(plotL + px, midY - pEl * pScale) : ctx.lineTo(plotL + px, midY - pEl * pScale);
+    for (let i = 0; i < n; i++) {
+      const idx = (histIdx - n + i) % histLen;
+      const px = panR_L + (i / (n - 1)) * panR_W;
+      const py = panR_B - (cumAbs[idx] - minE) * eScale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke();
 
-    // Absorptive curve (red, thicker)
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    // Elastic cumulative line
+    ctx.strokeStyle = WCOLORS.blue;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let px = 0; px <= plotW; px++) {
-      const tc = (px / plotW) * tRange + t;
-      const pAb = wd * B * Math.cos(wd * tc) ** 2;
-      px === 0 ? ctx.moveTo(plotL + px, midY - pAb * pScale) : ctx.lineTo(plotL + px, midY - pAb * pScale);
+    for (let i = 0; i < n; i++) {
+      const idx = (histIdx - n + i) % histLen;
+      const px = panR_L + (i / (n - 1)) * panR_W;
+      const py = panR_B - (cumEl[idx] - minE) * eScale;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke();
 
-    // Average power dashed line (amber)
-    const avgP = wd * B * 0.5;
-    const avgPy = midY - avgP * pScale;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(plotL, avgPy); ctx.lineTo(plotR, avgPy); ctx.stroke();
-    ctx.setLineDash([]);
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('time \u2192', panR_L + panR_W / 2, panR_B + 16);
+    ctx.save();
+    ctx.translate(panR_L - 12, panR_T + panR_H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('cumulative energy', 0, 0);
+    ctx.restore();
 
-    // Average power label with physically meaningful value
-    const avgPNorm = avgP / refP;
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('\u27E8P\u27E9 = ' + avgPNorm.toFixed(2) + ' \u00D7 F\u2080\u00B2/(\u03B3m)', plotR, avgPy - 6);
-
-    // Title — context-sensitive
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    const nearRes = Math.abs(wd - w0) < 0.3;
-    const regime = nearRes ? '  ← near resonance: max absorption'
-      : (wd < w0 ? '  (ω_d < ω₀)' : '  (ω_d > ω₀)');
-    fillTextSub(ctx, 'Instantaneous power into oscillator' + regime, plotL + plotW / 2, plotT - 6);
+    // Panel title
+    ctx.fillStyle = WCOLORS.text;
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    fillTextSub(ctx, 'Energy absorbed over time', panR_L + panR_W / 2, 16);
 
     // Legend
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    const legY = plotB + 14;
+    const legY = panR_T + 14;
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.red;
-    ctx.fillText('\u2014 Absorptive (always \u2265 0)', plotL + 5, legY);
+    ctx.fillText('\u2014 Absorptive (grows steadily)', panR_L + 6, legY);
     ctx.fillStyle = WCOLORS.blue;
-    ctx.fillText('\u2014 Elastic (\u27E8P\u27E9 = 0)', plotL + plotW * 0.38, legY);
-    ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
-    ctx.fillText('--- Total', plotR, legY);
+    ctx.fillText('\u2014 Elastic (oscillates around zero)', panR_L + 6, legY + 14);
 
-    // Resonance callout
+    // Near-resonance callout
+    const nearRes = Math.abs(parseFloat(wdSlider?.value || 5) - w0) < 0.3;
     if (nearRes) {
-      ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      fillTextSub(ctx, '★ ω_d ≈ ω₀ = ' + w0.toFixed(1) + ' — maximum power transfer', plotL + plotW / 2, plotT + 14);
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.font = '9px system-ui';
+      ctx.textAlign = 'right';
+      fillTextSub(ctx, '\u2605 \u03c9_d \u2248 \u03c9_0 : fastest energy absorption', panR_R, legY + 28);
     }
   }
 
-  wdSlider?.addEventListener('input', () => { t = 0; });
-  gammaSlider?.addEventListener('input', () => { t = 0; });
+  wdSlider?.addEventListener('input', resetHistory);
+  gammaSlider?.addEventListener('input', resetHistory);
   tick();
 }
-
 // =========================================================================
 // 5. RESONANCE CURVE — Lorentzian power absorption
 // =========================================================================
