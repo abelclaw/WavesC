@@ -1766,7 +1766,7 @@ function initPhaseLag() {
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label>\u03C9<sub>d</sub>: <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
+      controls.innerHTML = '<label><span>ω<sub>d</sub>:</span> <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
       parent.appendChild(controls);
       wdSlider = document.getElementById('phase-lag-wd');
     }
@@ -1870,8 +1870,8 @@ function initPowerAbsorption() {
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label>\u03C9<sub>d</sub>: <input type="range" id="power-wd" min="0.5" max="10" step="0.1" value="5"><span class="scene-val" id="power-wd-val">5.0</span></label>' +
-        '<label>\u03B3: <input type="range" id="power-gamma" min="0.1" max="4" step="0.1" value="1"><span class="scene-val" id="power-gamma-val">1.0</span></label>';
+      controls.innerHTML = '<label><span>ω<sub>d</sub>:</span> <input type="range" id="power-wd" min="0.5" max="10" step="0.1" value="5"><span class="scene-val" id="power-wd-val">5.0</span></label>' +
+        '<label><span>γ:</span> <input type="range" id="power-gamma" min="0.1" max="4" step="0.1" value="1"><span class="scene-val" id="power-gamma-val">1.0</span></label>';
       parent.appendChild(controls);
       wdSlider = document.getElementById('power-wd');
     }
@@ -1981,9 +1981,9 @@ function initPowerAbsorption() {
     // Title — context-sensitive
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     const nearRes = Math.abs(wd - w0) < 0.3;
-    const regime = nearRes ? '  \u2190 near resonance: max absorption'
-      : (wd < w0 ? '  (\u03C9_d < \u03C9\u2080)' : '  (\u03C9_d > \u03C9\u2080)');
-    ctx.fillText('Instantaneous power into oscillator' + regime, plotL + plotW / 2, plotT - 6);
+    const regime = nearRes ? '  ← near resonance: max absorption'
+      : (wd < w0 ? '  (ω_d < ω₀)' : '  (ω_d > ω₀)');
+    fillTextSub(ctx, 'Instantaneous power into oscillator' + regime, plotL + plotW / 2, plotT - 6);
 
     // Legend
     ctx.font = '10px system-ui'; ctx.textAlign = 'left';
@@ -3437,7 +3437,7 @@ function initFourierSawtooth() {
     for (let px = 0; px <= waveW; px += 1) {
       const xVal = xMin + (px / waveW) * xRange;
       const xn = ((xVal % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      const yVal = 1 - xn / Math.PI;
+      const yVal = xn / Math.PI - 1;
       const py = plotMidY - yVal * plotHalfH;
       px === 0 ? ctx.moveTo(waveL + px, py) : ctx.lineTo(waveL + px, py);
     }
