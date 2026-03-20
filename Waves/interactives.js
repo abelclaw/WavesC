@@ -3584,7 +3584,7 @@ function initFourierSawtooth() {
     for (let px = 0; px <= waveW; px += 1) {
       const xVal = xMin + (px / waveW) * xRange;
       const xn = ((xVal % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      const yVal = xn / Math.PI - 1;
+      const yVal = (((xn + Math.PI) % (2 * Math.PI)) / Math.PI) - 1;
       const py = plotMidY - yVal * plotHalfH;
       px === 0 ? ctx.moveTo(waveL + px, py) : ctx.lineTo(waveL + px, py);
     }
