@@ -389,7 +389,7 @@ window.LECTURE_CONTENT_8_11 = {
 <p>How much power is in a plane wave? At position y and time t, the power oscillates:</p>
 <p style="text-align:center;">$$P(t, y) = Z A_0^2\\omega^2 \\sin^2(ky - \\omega t + \\phi)$$</p>
 <p>A more useful quantity is the <strong>average power</strong>, obtained by averaging over one wavelength:</p>
-<p style="text-align:center;">$$\\langleP\\rangle = \\frac{1}{2} Z \\omega^2 A_0^2$$</p>
+<p style="text-align:center;">$$\\langle P \\rangle = \\frac{1}{2} Z \\omega^2 A_0^2$$</p>
 <p>where Z = $\\rho$v is the impedance for air. For a plane wave, the average power is time-independent.</p>`,
       interactive: "plane-wave-3d",
       interactiveCaption: "A 3D plane wave propagating in the direction of the wavevector, showing constant-phase surfaces",
@@ -401,7 +401,7 @@ window.LECTURE_CONTENT_8_11 = {
 <p>Suppose we have a speaker emitting sound at frequency $\\omega$. At large enough distances, it appears as a plane wave $A_{1} = A_{0}$cos($\\omega$t - ky + $\\phi_{1}$). Now say we have another speaker directly behind the first, producing the same sound at the same volume: $A_{2} = A_{0}$cos($\\omega$t - ky + $\\phi_{2}$). The total wave is:</p>
 <p style="text-align:center;">$$A_{tot} = 2A_0 \\cos(\\omega t - ky + (\\phi_1+\\phi_2)/2) \\cos(\\Delta\\phi/2)$$</p>
 <p>where $\\Delta \\phi = \\phi_{1} - \\phi_{2}$ is the phase difference. The average power is:</p>
-<p style="text-align:center;">$$\\langleP_2\\rangle = 4\\langleP_1\\rangle \\cos^2(\\Delta\\phi/2)$$</p>
+<p style="text-align:center;">$$\\langle P_2 \\rangle = 4\\langle P_1 \\rangle \\cos^2(\\Delta\\phi/2)$$</p>
 <p>In a generic situation with uncorrelated speakers, the phases have nothing to do with each other. Averaging $\\cos^{2}(\\Delta \\phi$/2) $\\rightarrow \\frac{1}{2}$ gives $\\langle$$P_{2}$$\\rangle$ = 2$\\langle$$P_{1}$$\\rangle$. Two speakers produce twice the power of one — perfectly sensible.</p>
 <p>But if the two speakers are <strong>exactly out of phase</strong> ($\\Delta \\phi = \\pi$), then $\\langle$$P_{2}$$\\rangle$ = 0. This is <strong>destructive interference</strong>. Conversely, if $\\Delta \\phi$ = 0, then $\\langle$$P_{2}$$\\rangle$ = 4$\\langle$$P_{1}$$\\rangle$. This is <strong>constructive interference</strong>. Two coherent speakers can produce <strong>four times</strong> the power of a single speaker!</p>
 <p>Where is the extra power coming from? One speaker is pushing down on the other, forcing it to work harder. This is called <strong>source loading</strong>. In principle, more power is being used by the speakers. However, since speakers are very inefficient (only 0.01% of the power goes to sound), the source loading actually makes the speaker more efficient — more sound comes out with the same electrical power.</p>
