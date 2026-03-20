@@ -5441,103 +5441,118 @@ function initSoundWaveLongitudinal() {
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Longitudinal Sound Wave Propagation', W / 2, 16);
+    ctx.fillText('Longitudinal Sound Wave — 2D Circular Wavefronts', W / 2, 16);
 
-    // Vibrating source (speaker/plate)
+    // Source position (speaker cone tip) — left-center of canvas
+    const srcCX = srcX + srcW / 2;
+    const srcCY = (airT + airB) / 2;
+
+    // Vibrating source displacement
     const srcDisp = ampDisp * Math.sin(omega * t);
-    const srcCenterX = srcX + srcDisp;
 
     // Speaker body
     ctx.fillStyle = '#4a6670';
-    ctx.fillRect(10, airT + 5, srcX - 15, airH - 10);
+    ctx.fillRect(10, srcCY - 40, srcX - 15, 80);
 
-    // Vibrating plate
+    // Speaker cone (vibrating)
     ctx.fillStyle = WCOLORS.amber;
-    ctx.fillRect(srcCenterX - 2, airT + 2, srcW, airH - 4);
+    ctx.beginPath();
+    ctx.moveTo(srcX - 5, srcCY - 35);
+    ctx.lineTo(srcCX + srcDisp, srcCY - 8);
+    ctx.lineTo(srcCX + srcDisp, srcCY + 8);
+    ctx.lineTo(srcX - 5, srcCY + 35);
+    ctx.closePath();
+    ctx.fill();
 
     // Speaker label
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Source', srcX - 10, airB + 14);
+    ctx.fillText('Speaker', srcX - 10, srcCY + 52);
 
-    // Wavefront propagation boundary — wave hasn't reached beyond this
-    const wavefront = airL + waveSpeed * t;
+    // Wavefront propagation radius — wave hasn't reached beyond this
+    const wavefrontR = waveSpeed * t;
 
-    // Draw air molecules
+    // Clip to air region
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(airL, airT, airW, airH);
+    ctx.clip();
+
+    // Draw air molecules displaced radially from source
     for (let row = 0; row < rows; row++) {
       const baseY = airT + (row + 0.5) * airH / rows;
       for (let col = 0; col < cols; col++) {
         const baseX = airL + (col + 0.5) * airW / cols;
 
+        // Radial distance from source
+        const dx = baseX - srcCX;
+        const dy = baseY - srcCY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 1) continue; // skip molecule at source
+
+        // Unit radial vector
+        const ux = dx / dist;
+        const uy = dy / dist;
+
         // Only displace molecules the wave has reached
-        let disp = 0;
+        let radialDisp = 0;
         let normDens = 0;
-        if (baseX < wavefront) {
-          // Smooth envelope: wave builds up over ~1 wavelength behind the front
-          const distBehindFront = wavefront - baseX;
+        if (dist < wavefrontR) {
+          // Smooth envelope behind the wavefront
           const wl = 2 * Math.PI / k;
+          const distBehindFront = wavefrontR - dist;
           const envelope = Math.min(1, distBehindFront / (wl * 0.8));
-          disp = ampDisp * envelope * Math.sin(k * baseX - omega * t);
-          // Density proportional to -d(displacement)/dx
-          normDens = envelope * Math.cos(k * baseX - omega * t);
+          // 1/sqrt(r) decay for 2D circular wave
+          const decay = 1 / Math.sqrt(Math.max(dist, 10));
+          const normDecay = decay / (1 / Math.sqrt(10)); // normalize so close=1
+          radialDisp = ampDisp * envelope * normDecay * Math.sin(k * dist - omega * t);
+          normDens = envelope * normDecay * Math.cos(k * dist - omega * t);
         }
 
         // Color: brighter in compression, dimmer in rarefaction
         const brightness = 0.4 + 0.45 * (1 + normDens) / 2;
-        const radius = 2.0 + 1.2 * (1 + normDens) / 2;
+        const dotR = 2.0 + 1.2 * (1 + normDens) / 2;
 
-        // Teal-ish color for air molecules
-        const r = Math.round(100 * brightness);
-        const g = Math.round(190 * brightness);
-        const b = Math.round(210 * brightness);
+        const cr = Math.round(100 * brightness);
+        const cg = Math.round(190 * brightness);
+        const cb = Math.round(210 * brightness);
 
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${brightness})`;
+        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${brightness})`;
         ctx.beginPath();
-        ctx.arc(baseX + disp, baseY, radius, 0, Math.PI * 2);
+        ctx.arc(baseX + radialDisp * ux, baseY + radialDisp * uy, dotR, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
-    // Wavefront indicator line
-    if (wavefront > airL && wavefront < airR) {
+    ctx.restore();
+
+    // Wavefront arc indicator
+    if (wavefrontR > 5 && wavefrontR < airW + airH) {
       ctx.strokeStyle = 'rgba(255, 180, 50, 0.3)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
+      ctx.save();
       ctx.beginPath();
-      ctx.moveTo(wavefront, airT);
-      ctx.lineTo(wavefront, airB);
+      ctx.rect(airL, airT, airW, airH);
+      ctx.clip();
+      ctx.beginPath();
+      ctx.arc(srcCX, srcCY, wavefrontR, -Math.PI / 2, Math.PI / 2);
       ctx.stroke();
+      ctx.restore();
       ctx.setLineDash([]);
-      ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('wavefront', wavefront, airT - 4);
-    }
-
-    // Labels for compression/rarefaction in the wave region
-    if (wavefront > airL + 100) {
-      const wl = 2 * Math.PI / k;
-      // Find a compression peak (where sin(kx - wt) has negative slope, cos is positive)
-      const refPhase = omega * t;
-      // compression at kx - wt = 0 (mod 2pi) => x = wt/k
-      let compX = (refPhase / k);
-      // Bring into visible range
-      while (compX > airW) compX -= wl;
-      while (compX < 0) compX += wl;
-      compX += airL;
-
-      if (compX > airL + 30 && compX < Math.min(wavefront - 20, airR - 30)) {
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('C', compX, airB + 14);
-      }
-      const rarX = compX + wl / 2;
-      if (rarX > airL + 30 && rarX < Math.min(wavefront - 20, airR - 30)) {
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('R', rarX, airB + 14);
+      // Label the wavefront
+      const labelAngle = 0; // rightward
+      const lx = srcCX + wavefrontR;
+      const ly = srcCY;
+      if (lx > airL && lx < airR) {
+        ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('wavefront', Math.min(lx, airR - 30), airT - 4);
       }
     }
 
     // Legend
     ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('C = compression   R = rarefaction', airL, H - 6);
+    ctx.fillText('Bright = compression   Dim = rarefaction', airL, H - 6);
 
     // Direction arrow
     ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right'; ctx.font = '10px system-ui';
