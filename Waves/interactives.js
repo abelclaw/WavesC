@@ -3704,10 +3704,9 @@ function initPluckedString() {
 
   function getStringPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const cx = (e.clientX - rect.left) * scaleX;
-    const cy = (e.clientY - rect.top) * scaleY;
+    // Use CSS-pixel coordinates to match drawing coords (ctx is already scaled by dpr)
+    const cx = (e.clientX - rect.left) * (W / rect.width);
+    const cy = (e.clientY - rect.top) * (H / rect.height);
     const frac = (cx - strL) / strW;
     return { cx, cy, frac: Math.max(0.05, Math.min(0.95, frac)) };
   }
