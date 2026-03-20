@@ -57,7 +57,7 @@ window.WAVES_SOURCE_DATA = {
       "Driving Forces and Steady State",
       "Resonance",
       "Amplitude and Phase Response",
-      "Power Absorption",
+      "Where Does the Energy Go?",
       "Transient and Steady-State Solutions",
       "Impedance of a Mechanical Oscillator",
       "Electrical Analogs: RLC Circuits"
@@ -66,7 +66,7 @@ window.WAVES_SOURCE_DATA = {
       { title: "Driving Forces and Steady State", anchor: "driving-forces-steady-state" },
       { title: "Resonance", anchor: "resonance" },
       { title: "Amplitude and Phase Response", anchor: "amplitude-phase-response" },
-      { title: "Power Absorption", anchor: "power-absorption" },
+      { title: "Where Does the Energy Go?", anchor: "power-absorption" },
       { title: "Transient and Steady-State Solutions", anchor: "transient-steady-state" },
       { title: "Impedance of a Mechanical Oscillator", anchor: "impedance-mechanical" },
       { title: "Electrical Analogs: RLC Circuits", anchor: "rlc-circuits" }

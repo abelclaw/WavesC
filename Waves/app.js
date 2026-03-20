@@ -2758,8 +2758,8 @@ function sceneMarkup(type) {
       `;
     case "power-absorption":
       return `
-        <div class="scene-label">Interactive 5: Power Absorption</div>
-        <p class="scene-caption">Absorptive and elastic power contributions. The absorptive part always takes power; the elastic part averages to zero.</p>
+        <div class="scene-label">Interactive 5: Where Does the Energy Go?</div>
+        <p class="scene-caption">Watch the force (red) and velocity (blue) arrows on the driven oscillator. The right panel tracks cumulative energy: the absorptive part steadily extracts energy from the driver, while the elastic part just borrows and returns it — its integral stays near zero.</p>
         <div class="interactive-scene">
           <canvas id="scene-power-absorption" width="600" height="300"></canvas>
         </div>

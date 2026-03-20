@@ -325,7 +325,7 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>Since $\\gamma = 0$ implies the absorptive amplitude vanishes (the entire solution is elastic), we draw the logical conclusion that with no damping, <em>no net power is needed to drive the system</em>. A little power is needed to get it started, but once it's moving, the driver no longer does work.</p>`,
       interactive: "power-absorption",
-      interactiveCaption: "Absorptive and elastic power contributions. The absorptive part always takes power; the elastic part averages to zero.",
+      interactiveCaption: "Watch the force and velocity arrows on the driven oscillator. The cumulative energy plot shows the absorptive part steadily extracting energy, while the elastic part just borrows and returns it.",
       mathLinks: []
     },
     {
