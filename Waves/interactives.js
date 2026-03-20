@@ -1839,8 +1839,11 @@ function initTransientDecay() {
   // Driven oscillator math: x_total = x_ss + x_transient
   // x_ss = A cos(wd t) + B sin(wd t)
   // x_tr = e^{-gamma/2 t} (C1 cos(wu t) + C2 sin(wu t))
-  // IC: x(0) = 0, v(0) = 0 => C1 = -A, C2 = -(B wd + gamma/2 C1) / wu
+  // General IC: x(0) = x0, v(0) = 0
+  //   => C1 = x0 - A,  C2 = -(B wd + gamma/2 C1) / wu
   let A, B, wu, C1, C2;
+  let x0 = 0;       // initial displacement set by drag (in same units as A,B)
+  let dragging = false;
 
   function recompute() {
     const denom = (w0 * w0 - wd * wd) ** 2 + (gamma * wd) ** 2;
@@ -1848,7 +1851,7 @@ function initTransientDecay() {
     B = (gamma * wd) / denom;
     const wuSq = w0 * w0 - (gamma / 2) ** 2;
     wu = wuSq > 0 ? Math.sqrt(wuSq) : 0.01;
-    C1 = -A;
+    C1 = x0 - A;
     C2 = -(B * wd + (gamma / 2) * C1) / wu;
   }
 
@@ -1873,6 +1876,7 @@ function initTransientDecay() {
     wdVal.textContent = wd.toFixed(1);
     w0Val.textContent = w0.toFixed(1);
     gammaVal.textContent = gamma.toFixed(1);
+    x0 = 0;
     recompute();
     t = 0;
   }
@@ -1880,7 +1884,56 @@ function initTransientDecay() {
   if (wdSlider) wdSlider.addEventListener('input', onSliderChange);
   if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
   if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
-  if (restartBtn) restartBtn.addEventListener('click', () => { t = 0; });
+  if (restartBtn) restartBtn.addEventListener('click', () => { x0 = 0; recompute(); t = 0; });
+
+  // --- Drag the mass to set initial displacement ---
+  // The pixel-to-physics scale factor used in draw
+  const pixPerUnit = maxDisp * 6;
+
+  function canvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      mx: (e.touches ? e.touches[0].clientX : e.clientX) - rect.left,
+      my: (e.touches ? e.touches[0].clientY : e.clientY) - rect.top
+    };
+  }
+
+  function onDown(e) {
+    // Compute current mass pixel position
+    const xNow = dragging ? x0 : xTotal(t);
+    const massPx = massEqX + xNow * pixPerUnit;
+    const { mx, my } = canvasCoords(e);
+    if (Math.abs(mx - massPx) < massW2 + 10 && Math.abs(my - mechY) < massH2 + 10) {
+      dragging = true;
+      e.preventDefault();
+    }
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    const { mx } = canvasCoords(e);
+    x0 = (mx - massEqX) / pixPerUnit;
+    // Clamp so mass stays between cam and wall
+    const minX = (camCx + camR + 20 - massEqX) / pixPerUnit;
+    const maxX = (wallX - 20 - massEqX) / pixPerUnit;
+    x0 = Math.max(minX, Math.min(maxX, x0));
+    e.preventDefault();
+  }
+
+  function onUp() {
+    if (!dragging) return;
+    dragging = false;
+    recompute();   // set C1, C2 from new x0
+    t = 0;         // restart with these initial conditions
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseup', onUp);
+  canvas.addEventListener('mouseleave', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onUp);
 
   // Horizontal spring helper
   function drawSpringH(x1, x2, y, coils, coilH) {
@@ -1901,8 +1954,10 @@ function initTransientDecay() {
   }
 
   function tick() {
-    t += 0.025;
-    if (t > tMax) t = 0;
+    if (!dragging) {
+      t += 0.025;
+      if (t > tMax) t = 0;
+    }
     draw();
     requestAnimationFrame(tick);
   }
@@ -1910,8 +1965,8 @@ function initTransientDecay() {
   function draw() {
     wClear(ctx, W, H);
 
-    const xNow = xTotal(t);
-    const massX = massEqX + xNow * maxDisp * 6;
+    const xNow = dragging ? x0 : xTotal(t);
+    const massX = massEqX + xNow * pixPerUnit;
     const camAngle = wd * t;
 
     // === MECHANISM (top) ===
@@ -1994,6 +2049,17 @@ function initTransientDecay() {
     ctx.fillText('\u03c9', camCx - 2, camCy + camR + 13);
     ctx.font = '7px system-ui';
     ctx.fillText('d', camCx + 5, camCy + camR + 15);
+
+    // Drag instruction (right of mechanism)
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    if (dragging) {
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('release to set initial condition', wallX + 12, mechY - 4);
+      ctx.fillText('x(0) = ' + x0.toFixed(2), wallX + 12, mechY + 10);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText('drag mass \u2194 to set x(0)', wallX + 12, mechY + 3);
+    }
 
     // === PLOT (below) ===
     // Axes
@@ -2096,7 +2162,7 @@ function initPhaseLag() {
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label><span>\u03c9<sub>d</sub>:</span> <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span></label>';
+      controls.innerHTML = '<label style="position:relative"><span>\u03c9<sub>d</sub>:</span> <input type="range" id="phase-lag-wd" min="0.5" max="10" step="0.1" value="3"><span class="scene-val" id="phase-lag-wd-val">3.0</span><span id="phase-lag-res-marker" style="position:absolute;bottom:-2px;pointer-events:none;font-size:8px;color:var(--w-amber,#f59e0b);transform:translateX(-50%)" title="\u03c9\u2080">\u25b2</span></label>';
       parent.appendChild(controls);
       wdSlider = document.getElementById('phase-lag-wd');
     }
@@ -2144,6 +2210,18 @@ function initPhaseLag() {
   function tick() {
     const wd = parseFloat(wdSlider?.value || 3);
     document.getElementById('phase-lag-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
+
+    // Position resonance marker on wd slider
+    const resMarker = document.getElementById('phase-lag-res-marker');
+    if (resMarker && wdSlider) {
+      const min = parseFloat(wdSlider.min), max = parseFloat(wdSlider.max);
+      const pct = ((w0 - min) / (max - min)) * 100;
+      const sliderRect = wdSlider.getBoundingClientRect();
+      const labelRect = wdSlider.parentElement.getBoundingClientRect();
+      const offset = sliderRect.left - labelRect.left + (pct / 100) * sliderRect.width;
+      resMarker.style.left = offset + 'px';
+      resMarker.style.display = (w0 >= min && w0 <= max) ? '' : 'none';
+    }
 
     t += 0.025;
     const { A, B } = getAB(wd);
