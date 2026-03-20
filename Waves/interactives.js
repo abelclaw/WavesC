@@ -5439,7 +5439,13 @@ function initBeatsDemo() {
         '<label>\u0394f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="3"><span class="scene-val" id="bd-df-val">3.0</span></label>';
       parent.appendChild(controls);
       dfSlider = document.getElementById('bd-df');
-      // Play button
+    }
+  }
+
+  // Play button (append to existing controls)
+  {
+    const controls = dfSlider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('bd-play')) {
       wMakePlayBtn(controls, 'bd-play', '\u25B6 Listen', () => {
         const df = parseFloat(dfSlider?.value || 3);
         wPlayTones('bd-play', [
@@ -5586,10 +5592,16 @@ function initConsonanceDissonance() {
         '<label>Frequency ratio: <input type="range" id="cd-ratio" min="1.0" max="2.0" step="0.01" value="1.5"><span class="scene-val" id="cd-ratio-val">1.50</span></label>';
       parent.appendChild(controls);
       ratioSlider = document.getElementById('cd-ratio');
-      // Play button - plays two tones with harmonics to hear consonance/dissonance
+    }
+  }
+
+  // Play button (append to existing controls)
+  {
+    const controls = ratioSlider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('cd-play')) {
       wMakePlayBtn(controls, 'cd-play', '\u25B6 Listen', () => {
         const ratio = parseFloat(ratioSlider?.value || 1.5);
-        const f1 = 262; // Middle C
+        const f1 = 262;
         const harmonics = [];
         for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / (n * 0.7) });
         wPlayTones('cd-play', [
@@ -5779,18 +5791,21 @@ function initHarmonicAlignment() {
       controls.innerHTML = html;
       parent.appendChild(controls);
       btnContainer = controls;
-      // Play button for the selected interval
-      wMakePlayBtn(controls, 'ha-play', '\u25B6 Listen', () => {
-        const iv = intervals[selected];
-        const f1 = 262;
-        const harmonics = [];
-        for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
-        wPlayTones('ha-play', [
-          { freq: f1, gain: 0.4, harmonics },
-          { freq: f1 * iv.ratio, gain: 0.4, harmonics }
-        ], 3);
-      });
     }
+  }
+
+  // Play button (append to existing controls)
+  if (btnContainer && !document.getElementById('ha-play')) {
+    wMakePlayBtn(btnContainer, 'ha-play', '\u25B6 Listen', () => {
+      const iv = intervals[selected];
+      const f1 = 262;
+      const harmonics = [];
+      for (let n = 1; n <= 6; n++) harmonics.push({ n, gain: 1 / n });
+      wPlayTones('ha-play', [
+        { freq: f1, gain: 0.4, harmonics },
+        { freq: f1 * iv.ratio, gain: 0.4, harmonics }
+      ], 3);
+    });
   }
 
   let selected = 1;
@@ -5961,7 +5976,13 @@ function initCircleOfFifths() {
         '<label style="margin-left:10px;">Note: <input type="range" id="cof-note" min="0" max="11" step="1" value="0"><span class="scene-val" id="cof-note-val">C</span></label>';
       parent.appendChild(controls);
       btnET = document.getElementById('cof-et');
-      // Play button for the selected note
+    }
+  }
+
+  // Play button (append to existing controls)
+  {
+    const controls = btnET?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('cof-play')) {
       wMakePlayBtn(controls, 'cof-play', '\u25B6 Play Note', () => {
         const freq = cofGetFreq(highlighted, tuning);
         const harmonics = [];
@@ -8234,7 +8255,12 @@ function initViolinSpectrum() {
         '<label>Q: <input type="range" id="violin-q" min="5" max="200" step="5" value="40"><span class="scene-val" id="violin-q-val">40</span></label>';
       parent.appendChild(controls);
       f0Slider = document.getElementById('violin-f0');
-      // Play button that synthesizes the spectrum as sound
+    }
+  }
+  // Play button (append to existing controls)
+  {
+    const controls = f0Slider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('violin-play')) {
       wMakePlayBtn(controls, 'violin-play', '\u25B6 Listen', () => {
         const f0 = parseFloat(f0Slider?.value || 440);
         const harmonics = [];
@@ -8795,7 +8821,13 @@ function initFourierFiltering() {
         '<label>Cutoff frequency: <input type="range" id="ff-cutoff" min="1" max="30" step="1" value="8"><span class="scene-val" id="ff-cutoff-val">8</span></label>';
       parent.appendChild(controls);
       cutoffSlider = document.getElementById('ff-cutoff');
-      // Play buttons for original, low-pass, and high-pass
+    }
+  }
+
+  // Play buttons (append to existing controls)
+  {
+    const controls = cutoffSlider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('ff-play-orig')) {
       wMakePlayBtn(controls, 'ff-play-orig', '\u25B6 Original', () => {
         ffPlaySignal('ff-play-orig', null);
       });
