@@ -3454,14 +3454,14 @@ function sceneMarkup(type) {
     // =====================================================================
     case "string-transverse-wave":
       return `
-        <div class="scene-label">Transverse Wave on a String</div>
-        <p class="scene-caption">A wave pulse on a string. The highlighted segment shows how the net transverse force arises from the difference in slope (curvature).</p>
+        <div class="scene-label">Spherical Wave from a Point Source</div>
+        <p class="scene-caption">Circular wavefronts emanate from a small speaker. Compression (dense, bright) and rarefaction (sparse, dim) regions spread outward, with amplitude falling off as 1/&radic;r.</p>
         <div class="interactive-scene">
           <canvas id="scene-string-transverse-wave" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label><span>Segment: </span><input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>
-            <label><span>Amplitude: </span><input type="range" id="stw-amp" min="0.5" max="3" step="0.1" value="1.5"><span class="scene-val" id="stw-amp-val">1.5</span></label>
-            <label><span>Speed: </span><input type="range" id="stw-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="stw-speed-val">0.67x</span></label>
+            <label><span>Frequency: </span><input type="range" id="stw-freq" min="0.5" max="3" step="0.1" value="1.2"><span class="scene-val" id="stw-freq-val">1.2</span></label>
+            <label><span>Amplitude: </span><input type="range" id="stw-amp" min="0.3" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>
+            <label><span>Speed: </span><input type="range" id="stw-speed" min="0.005" max="0.04" step="0.005" value="0.015"><span class="scene-val" id="stw-speed-val">0.50x</span></label>
           </div>
         </div>
       `;

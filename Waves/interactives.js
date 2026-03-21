@@ -5214,172 +5214,123 @@ function initStringTransverseWave() {
 
   let t = 0;
 
-  let posSlider = document.getElementById('stw-pos');
-  if (!posSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>Segment position: <input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>' +
-        '<label>Amplitude: <input type="range" id="stw-amp" min="0.2" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="stw-amp-val">0.8</span></label>' +
-        '<label>Speed: <input type="range" id="stw-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="stw-speed-val">0.67x</span></label>';
-      parent.appendChild(controls);
-      posSlider = document.getElementById('stw-pos');
+  const freqSlider = document.getElementById('stw-freq');
+  const ampSlider = document.getElementById('stw-amp');
+  const speedSlider = document.getElementById('stw-speed');
+
+  // Speaker position (left-center)
+  const srcX = 45;
+  const srcY = H / 2;
+
+  // Build a grid of air molecule equilibrium positions
+  const spacingX = 8;
+  const spacingY = 8;
+  const particles = [];
+  for (let y = 20; y < H - 15; y += spacingY) {
+    for (let x = 70; x < W - 10; x += spacingX) {
+      particles.push({ eqX: x, eqY: y });
     }
   }
-  const ampSlider = document.getElementById('stw-amp');
-  const stwSpeedSlider = document.getElementById('stw-speed');
 
   function tick() {
-    const segPos = parseFloat(posSlider?.value || 0.5);
+    const freq = parseFloat(freqSlider?.value || 1.2);
     const A = parseFloat(ampSlider?.value || 0.8);
-    const speed = parseFloat(stwSpeedSlider?.value || 0.02);
-    document.getElementById('stw-pos-val')?.replaceChildren(document.createTextNode(segPos.toFixed(2)));
+    const speed = parseFloat(speedSlider?.value || 0.015);
+    document.getElementById('stw-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
     document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
     document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
 
     t += speed;
     wClear(ctx, W, H);
 
-    const stringL = 50, stringR = W - 50;
-    const stringW = stringR - stringL;
-    const midY = H / 2;
-    const maxAmp = 60 * A;
+    const k = freq * 0.06;
+    const omega = freq * 2.0;
+    const maxDisp = 5 * A;
+    const waveSpeed = omega / k;
+    const wavefront = waveSpeed * t;
 
-    // Wave: Gaussian-modulated sinusoid traveling right
-    const v = 0.5;
-    const sigma = 0.12;
-    function waveY(xFrac, time) {
-      const center = ((v * time) % 2.0) - 0.3;
-      const dx = xFrac - center;
-      return maxAmp * Math.exp(-dx * dx / (2 * sigma * sigma)) * Math.sin(15 * xFrac - 2 * time);
-    }
+    // Draw speaker body
+    ctx.fillStyle = '#4a6670';
+    ctx.fillRect(10, srcY - 30, 28, 60);
 
-    function waveDY(xFrac, time) {
-      const eps = 0.002;
-      return (waveY(xFrac + eps, time) - waveY(xFrac - eps, time)) / (2 * eps * stringW);
-    }
-
-    function waveD2Y(xFrac, time) {
-      const eps = 0.002;
-      return (waveY(xFrac + eps, time) - 2 * waveY(xFrac, time) + waveY(xFrac - eps, time)) / ((eps * stringW) * (eps * stringW));
-    }
-
-    // Draw string
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    // Speaker cone
+    ctx.fillStyle = WCOLORS.amber;
+    const coneDisp = 3 * A * Math.sin(omega * t);
     ctx.beginPath();
-    for (let i = 0; i <= 300; i++) {
-      const frac = i / 300;
-      const y = waveY(frac, t);
-      const px = stringL + frac * stringW;
-      i === 0 ? ctx.moveTo(px, midY - y) : ctx.lineTo(px, midY - y);
-    }
-    ctx.stroke();
+    ctx.moveTo(38, srcY - 25);
+    ctx.lineTo(srcX + coneDisp, srcY - 15);
+    ctx.lineTo(srcX + coneDisp, srcY + 15);
+    ctx.lineTo(38, srcY + 25);
+    ctx.closePath();
+    ctx.fill();
 
-    // Equilibrium line
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
-    ctx.setLineDash([]);
+    // Draw particles
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      const dx = p.eqX - srcX;
+      const dy = p.eqY - srcY;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      if (r < 5) continue;
 
-    // Highlighted segment
-    const segFrac = segPos;
-    const segPixel = stringL + segFrac * stringW;
-    const segY = waveY(segFrac, t);
-    const d2y = waveD2Y(segFrac, t);
+      // Unit vector from source
+      const ux = dx / r;
+      const uy = dy / r;
 
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 4;
-    ctx.beginPath();
-    for (let i = -15; i <= 15; i++) {
-      const localFrac = segFrac + (i / 300);
-      if (localFrac < 0 || localFrac > 1) continue;
-      const y = waveY(localFrac, t);
-      const px = stringL + localFrac * stringW;
-      if (i === -15) ctx.moveTo(px, midY - y); else ctx.lineTo(px, midY - y);
-    }
-    ctx.stroke();
+      let disp = 0;
+      let normDens = 0;
 
-    // Tension force arrows at ends
-    const arrowLen = 40;
-    const leftFrac = segFrac - 15 / 300;
-    const rightFrac = segFrac + 15 / 300;
-    const leftY = waveY(leftFrac, t);
-    const rightY = waveY(rightFrac, t);
-    const leftSlope = waveDY(leftFrac, t);
-    const rightSlope = waveDY(rightFrac, t);
+      if (r < wavefront) {
+        // Amplitude falls off as 1/sqrt(r) in 2D
+        const envelope = Math.min(1, (wavefront - r) / (2 * Math.PI / k * 0.8));
+        const falloff = 1 / Math.sqrt(1 + r * 0.01);
+        disp = maxDisp * A * falloff * envelope * Math.sin(k * r - omega * t);
+        normDens = falloff * envelope * Math.cos(k * r - omega * t);
+      }
 
-    // Left end
-    const leftPx = stringL + leftFrac * stringW;
-    const leftPy = midY - leftY;
-    const lAngle = Math.atan(-leftSlope * stringW);
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-    const lDx = -Math.cos(lAngle) * arrowLen;
-    const lDy = Math.sin(lAngle) * arrowLen;
-    ctx.beginPath(); ctx.moveTo(leftPx, leftPy); ctx.lineTo(leftPx + lDx, leftPy + lDy); ctx.stroke();
-    ctx.fillStyle = WCOLORS.blue;
-    const lAx = leftPx + lDx, lAy = leftPy + lDy;
-    ctx.beginPath();
-    ctx.moveTo(lAx, lAy);
-    ctx.lineTo(lAx + 8 * Math.cos(lAngle + 0.4), lAy - 8 * Math.sin(lAngle + 0.4));
-    ctx.lineTo(lAx + 8 * Math.cos(lAngle - 0.4), lAy - 8 * Math.sin(lAngle - 0.4));
-    ctx.closePath(); ctx.fill();
+      // Displace radially
+      const px = p.eqX + ux * disp;
+      const py = p.eqY + uy * disp;
 
-    // Right end
-    const rightPx = stringL + rightFrac * stringW;
-    const rightPy = midY - rightY;
-    const rAngle = Math.atan(-rightSlope * stringW);
-    const rDx = Math.cos(rAngle) * arrowLen;
-    const rDy = -Math.sin(rAngle) * arrowLen;
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(rightPx, rightPy); ctx.lineTo(rightPx + rDx, rightPy + rDy); ctx.stroke();
-    ctx.fillStyle = WCOLORS.blue;
-    const rAx = rightPx + rDx, rAy = rightPy + rDy;
-    ctx.beginPath();
-    ctx.moveTo(rAx, rAy);
-    ctx.lineTo(rAx - 8 * Math.cos(rAngle + 0.4), rAy + 8 * Math.sin(rAngle + 0.4));
-    ctx.lineTo(rAx - 8 * Math.cos(rAngle - 0.4), rAy + 8 * Math.sin(rAngle - 0.4));
-    ctx.closePath(); ctx.fill();
+      // Color: brighter in compression, dimmer in rarefaction
+      const brightness = 0.35 + 0.5 * (1 + normDens) / 2;
+      const radius = 1.8 + 1.0 * (1 + normDens) / 2;
 
-    // Net transverse force (proportional to curvature)
-    const netForce = d2y * 8000;
-    const clampedForce = Math.max(-40, Math.min(40, netForce));
-    if (Math.abs(clampedForce) > 2) {
-      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+      const cr = Math.round(100 * brightness);
+      const cg = Math.round(190 * brightness);
+      const cb = Math.round(210 * brightness);
+
+      ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${brightness})`;
       ctx.beginPath();
-      ctx.moveTo(segPixel, midY - segY);
-      ctx.lineTo(segPixel, midY - segY - clampedForce);
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw faint circular wavefront indicators
+    const wl = 2 * Math.PI / k;
+    ctx.strokeStyle = 'rgba(255, 180, 50, 0.15)';
+    ctx.lineWidth = 1;
+    for (let n = 0; n < 30; n++) {
+      const rr = (omega * t / k - n * wl);
+      if (rr < 10 || rr > W) continue;
+      ctx.beginPath();
+      ctx.arc(srcX, srcY, rr, -Math.PI * 0.45, Math.PI * 0.45);
       ctx.stroke();
-      ctx.fillStyle = WCOLORS.red;
-      const tipY = midY - segY - clampedForce;
-      const dir = clampedForce > 0 ? -1 : 1;
-      ctx.beginPath();
-      ctx.moveTo(segPixel, tipY);
-      ctx.lineTo(segPixel - 5, tipY + dir * 8);
-      ctx.lineTo(segPixel + 5, tipY + dir * 8);
-      ctx.closePath(); ctx.fill();
     }
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Spherical Wave from a Point Source', W / 2, 14);
 
     // Labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Transverse Wave on a String', W / 2, 16);
-
-    ctx.font = '10px system-ui';
-    ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'left';
-    ctx.fillText('T (tension)', 10, H - 25);
-    ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, 'F_{net} ∝ curvature ∂²y/∂x²', 10, H - 10);
-
-    const curvature = d2y * 1000;
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    const curvLabel = Math.abs(curvature) < 0.5 ? 'Flat (no net force)' : ('Curved: F_{net} ' + (curvature > 0 ? '↑' : '↓'));
-    fillTextSub(ctx, curvLabel, W - 10, H - 10);
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('Amplitude ~ 1/\u221Ar', 10, H - 10);
+    ctx.textAlign = 'right';
+    ctx.fillText('Compression (bright)  \u2022  Rarefaction (dim)', W - 10, H - 10);
 
     requestAnimationFrame(tick);
   }
 
-  posSlider?.addEventListener('input', () => {});
-  ampSlider?.addEventListener('input', () => {});
-  stwSpeedSlider?.addEventListener('input', () => {});
   tick();
 }
 
