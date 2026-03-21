@@ -3461,6 +3461,7 @@ function sceneMarkup(type) {
           <div class="scene-controls">
             <label><span>Segment: </span><input type="range" id="stw-pos" min="0.1" max="0.9" step="0.01" value="0.5"><span class="scene-val" id="stw-pos-val">0.50</span></label>
             <label><span>Amplitude: </span><input type="range" id="stw-amp" min="0.5" max="3" step="0.1" value="1.5"><span class="scene-val" id="stw-amp-val">1.5</span></label>
+            <label><span>Speed: </span><input type="range" id="stw-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="stw-speed-val">0.67x</span></label>
           </div>
         </div>
       `;
