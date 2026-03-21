@@ -5441,9 +5441,9 @@ function initSoundWaveLongitudinal() {
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Longitudinal Sound Wave — 2D Circular Wavefronts', W / 2, 16);
+    ctx.fillText('Radial Longitudinal Sound Wave from Point Source', W / 2, 16);
 
-    // Source position (speaker cone tip) — left-center of canvas
+    // Source position — point source at left-center
     const srcCX = srcX + srcW / 2;
     const srcCY = (airT + airB) / 2;
 
@@ -5466,70 +5466,51 @@ function initSoundWaveLongitudinal() {
 
     // Speaker label
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Speaker', srcX - 10, srcCY + 52);
+    ctx.fillText('Source', srcX - 10, srcCY + 52);
 
-    // Wavefront propagation radius — wave hasn't reached beyond this
+    // Wavefront propagation radius
     const wavefrontR = waveSpeed * t;
+    const wl = 2 * Math.PI / k;
 
-    // Clip to air region
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(airL, airT, airW, airH);
-    ctx.clip();
+    // Render pressure field as pixel data for clean concentric rings
+    const imgData = ctx.createImageData(airW, airH);
+    const data = imgData.data;
 
-    // Draw air molecules displaced radially from source
-    for (let row = 0; row < rows; row++) {
-      const baseY = airT + (row + 0.5) * airH / rows;
-      for (let col = 0; col < cols; col++) {
-        const baseX = airL + (col + 0.5) * airW / cols;
-
-        // Radial distance from source
-        const dx = baseX - srcCX;
-        const dy = baseY - srcCY;
+    for (let py = 0; py < airH; py++) {
+      const worldY = airT + py;
+      const dy = worldY - srcCY;
+      for (let px = 0; px < airW; px++) {
+        const worldX = airL + px;
+        const dx = worldX - srcCX;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 1) continue; // skip molecule at source
 
-        // Unit radial vector
-        const ux = dx / dist;
-        const uy = dy / dist;
-
-        // Only displace molecules the wave has reached
-        let radialDisp = 0;
-        let normDens = 0;
-        if (dist < wavefrontR) {
-          // Smooth envelope behind the wavefront
-          const wl = 2 * Math.PI / k;
+        let pressure = 0; // normalized pressure perturbation [-1, 1]
+        if (dist > 5 && dist < wavefrontR) {
+          // Envelope ramps up over one wavelength behind the front
           const distBehindFront = wavefrontR - dist;
           const envelope = Math.min(1, distBehindFront / (wl * 0.8));
-          // 1/sqrt(r) decay for 2D circular wave
-          const decay = 1 / Math.sqrt(Math.max(dist, 10));
-          const normDecay = decay / (1 / Math.sqrt(10)); // normalize so close=1
-          radialDisp = ampDisp * envelope * normDecay * Math.sin(k * dist - omega * t);
-          normDens = envelope * normDecay * Math.cos(k * dist - omega * t);
+          // 1/sqrt(r) amplitude decay for 2D
+          const decay = Math.sqrt(30 / Math.max(dist, 30));
+          pressure = envelope * decay * Math.cos(k * dist - omega * t);
         }
 
-        // Color: brighter in compression, dimmer in rarefaction
-        const brightness = 0.4 + 0.45 * (1 + normDens) / 2;
-        const dotR = 2.0 + 1.2 * (1 + normDens) / 2;
-
-        const cr = Math.round(100 * brightness);
-        const cg = Math.round(190 * brightness);
-        const cb = Math.round(210 * brightness);
-
-        ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${brightness})`;
-        ctx.beginPath();
-        ctx.arc(baseX + radialDisp * ux, baseY + radialDisp * uy, dotR, 0, Math.PI * 2);
-        ctx.fill();
+        // Map pressure to teal color: compression = bright, rarefaction = dim
+        const brightness = 0.18 + 0.72 * (1 + pressure) / 2;
+        const idx = (py * airW + px) * 4;
+        data[idx]     = Math.round(60 * brightness);   // R
+        data[idx + 1] = Math.round(170 * brightness);  // G
+        data[idx + 2] = Math.round(195 * brightness);  // B
+        data[idx + 3] = 255;                            // A
       }
     }
 
-    ctx.restore();
+    ctx.putImageData(imgData, airL, airT);
 
     // Wavefront arc indicator
-    if (wavefrontR > 5 && wavefrontR < airW + airH) {
-      ctx.strokeStyle = 'rgba(255, 180, 50, 0.3)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
+    if (wavefrontR > 10 && wavefrontR < airW + airH) {
+      ctx.strokeStyle = 'rgba(255, 180, 50, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
       ctx.save();
       ctx.beginPath();
       ctx.rect(airL, airT, airW, airH);
@@ -5539,14 +5520,6 @@ function initSoundWaveLongitudinal() {
       ctx.stroke();
       ctx.restore();
       ctx.setLineDash([]);
-      // Label the wavefront
-      const labelAngle = 0; // rightward
-      const lx = srcCX + wavefrontR;
-      const ly = srcCY;
-      if (lx > airL && lx < airR) {
-        ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('wavefront', Math.min(lx, airR - 30), airT - 4);
-      }
     }
 
     // Legend
@@ -5554,9 +5527,9 @@ function initSoundWaveLongitudinal() {
     ctx.fillStyle = WCOLORS.textDim;
     ctx.fillText('Bright = compression   Dim = rarefaction', airL, H - 6);
 
-    // Direction arrow
+    // Direction arrows showing radial propagation
     ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right'; ctx.font = '10px system-ui';
-    ctx.fillText('propagation \u2192', airR, H - 6);
+    ctx.fillText('radial propagation \u2192', airR, H - 6);
 
     requestAnimationFrame(tick);
   }
