@@ -319,7 +319,6 @@ function initSceneInteractives() {
   initDiracDeltaVisualization();
   // Chapter 9 - Reflection & Transmission
   initStringJunction();
-  initPhaseFlipDemo();
   initMassCollisionImpedance();
   initComplexImpedance();
   // Chapter 10 - Power
@@ -10207,9 +10206,12 @@ function initStringJunction() {
 
   const zSlider = document.getElementById('sj-z');
   const zValSpan = document.getElementById('sj-z-val');
-  const btnPhysical = document.getElementById('sj-physical');
-  const btnDecomposed = document.getElementById('sj-decomposed');
-  const btnBoth = document.getElementById('sj-both');
+  const btns = {
+    physical: document.getElementById('sj-physical'),
+    decomposed: document.getElementById('sj-decomposed'),
+    both: document.getElementById('sj-both'),
+    'phase-flip': document.getElementById('sj-phase-flip'),
+  };
   const btnRestart = document.getElementById('sj-restart');
 
   let mode = 'physical';
@@ -10218,15 +10220,11 @@ function initStringJunction() {
   function setMode(m) {
     mode = m;
     t = 0;
-    [btnPhysical, btnDecomposed, btnBoth].forEach(b => b && b.classList.remove('active'));
-    if (m === 'physical' && btnPhysical) btnPhysical.classList.add('active');
-    if (m === 'decomposed' && btnDecomposed) btnDecomposed.classList.add('active');
-    if (m === 'both' && btnBoth) btnBoth.classList.add('active');
+    Object.values(btns).forEach(b => b && b.classList.remove('active'));
+    if (btns[m]) btns[m].classList.add('active');
   }
 
-  if (btnPhysical) btnPhysical.addEventListener('click', () => setMode('physical'));
-  if (btnDecomposed) btnDecomposed.addEventListener('click', () => setMode('decomposed'));
-  if (btnBoth) btnBoth.addEventListener('click', () => setMode('both'));
+  Object.entries(btns).forEach(([m, b]) => b && b.addEventListener('click', () => setMode(m)));
   if (btnRestart) btnRestart.addEventListener('click', () => { t = 0; });
   setMode('physical');
 
@@ -10274,7 +10272,11 @@ function initStringJunction() {
     const junctionY = leftY(jx);
 
     // --- Physical string view ---
-    if (mode === 'physical' || mode === 'both') {
+    const showString = mode === 'physical' || mode === 'both' || mode === 'phase-flip';
+    const showDecomposed = mode === 'decomposed' || mode === 'both';
+
+    // --- Physical string (used by physical, both, phase-flip) ---
+    if (showString) {
       const alpha = mode === 'both' ? 0.3 : 1;
       ctx.globalAlpha = alpha;
       ctx.lineCap = 'round';
@@ -10299,27 +10301,47 @@ function initStringJunction() {
       for (let x = stringL + 1; x <= jx; x++) ctx.lineTo(x, yVals[x - stringL]);
       ctx.stroke();
 
-      // Junction marker on top of everything
+      // Junction marker
       ctx.fillStyle = WCOLORS.red;
       ctx.beginPath(); ctx.arc(jx, junctionY, 4, 0, Math.PI * 2); ctx.fill();
 
       ctx.lineCap = 'butt';
       ctx.globalAlpha = 1;
+    }
 
-      if (mode === 'physical') {
-        ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui';
-        ctx.textAlign = 'left'; ctx.fillText('String 1', stringL, 25);
-        ctx.textAlign = 'right'; ctx.fillText('String 2', stringR, 25);
-        ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('Junction (x = 0)', jx, midY + 55);
-        ctx.font = 'bold 14px system-ui'; ctx.fillStyle = WCOLORS.teal;
-        ctx.fillText('Z\u2081', jx - 40, midY + 40);
-        ctx.fillText('Z\u2082', jx + 40, midY + 40);
+    // --- Labels for physical mode ---
+    if (mode === 'physical') {
+      ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'left'; ctx.fillText('String 1', stringL, 25);
+      ctx.textAlign = 'right'; ctx.fillText('String 2', stringR, 25);
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Junction (x = 0)', jx, midY + 55);
+      ctx.font = 'bold 14px system-ui'; ctx.fillStyle = WCOLORS.teal;
+      ctx.fillText('Z\u2081', jx - 40, midY + 40);
+      ctx.fillText('Z\u2082', jx + 40, midY + 40);
+    }
+
+    // --- Phase flip labels ---
+    if (mode === 'phase-flip') {
+      const flipLabel = zRatio > 1.01
+        ? 'Z\u2082/Z\u2081 > 1 \u2192 reflected pulse inverts'
+        : zRatio < 0.99
+          ? 'Z\u2082/Z\u2081 < 1 \u2192 no inversion'
+          : 'Matched impedance \u2192 no reflection';
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(flipLabel, stringL, 22);
+
+      // Annotation near reflected pulse
+      const refCenter = 2 * jx - pulseCenter;
+      if (refCenter > stringL && refCenter < jx && Math.abs(r) > 0.01) {
+        ctx.fillStyle = r < 0 ? WCOLORS.red : WCOLORS.teal;
+        ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText(r < 0 ? 'Phase flip!' : 'No flip', refCenter, midY - amp * Math.abs(r) - 12);
       }
     }
 
     // --- Decomposed view ---
-    if (mode === 'decomposed' || mode === 'both') {
+    if (showDecomposed) {
       // Baseline
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
@@ -10373,117 +10395,6 @@ function initStringJunction() {
     }
 
     if (pulseCenter > stringR + sigma * 3) t = 0;
-    requestAnimationFrame(tick);
-  }
-
-  tick();
-}
-
-// =========================================================================
-// 9. Phase Flip Demo
-// =========================================================================
-function initPhaseFlipDemo() {
-  const canvas = document.getElementById('scene-phase-flip-demo');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
-
-  let t = 0;
-  let zRatio = 3;
-
-  const zSlider = document.getElementById('pfd-zratio');
-  const zVal = document.getElementById('pfd-zratio-val');
-  const restartBtn = document.getElementById('pfd-restart');
-  function onPfdInput() {
-    zRatio = parseFloat(zSlider.value);
-    zVal.textContent = zRatio.toFixed(1);
-    t = 0;
-  }
-  if (zSlider) zSlider.addEventListener('input', onPfdInput);
-  if (restartBtn) restartBtn.addEventListener('click', () => { t = 0; });
-
-  function tick() {
-    t += 0.025;
-    wClear(ctx, W, H);
-
-    const stringL = 40, stringR = W - 40;
-    const jx = W * 0.45;
-    const sigma = 20;
-    const speed = 60;
-    const amp = 35;
-    const midY = H / 2;
-
-    function gaussPulse(x, center, s) {
-      return Math.exp(-(x - center) * (x - center) / (2 * s * s));
-    }
-
-    // R = (Z₁−Z₂)/(Z₁+Z₂), T = 2Z₁/(Z₁+Z₂), satisfying 1+R = T
-    const r = (1 - zRatio) / (1 + zRatio);
-    const tr = 2 / (1 + zRatio);
-
-    // Label — r < 0 when Z₂ > Z₁ (phase flip)
-    const flipLabel = zRatio > 1 ? 'Z\u2082/Z\u2081 > 1: reflected pulse inverts' : zRatio < 1 ? 'Z\u2082/Z\u2081 < 1: no inversion' : 'Matched impedance: no reflection';
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText(flipLabel, stringL, 18);
-
-    // Junction line
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(jx, 22); ctx.lineTo(jx, H - 20); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('junction', jx, H - 8);
-
-    const pulseCenter = stringL - sigma * 2 + speed * t;
-    const hitTime = (jx - stringL + sigma * 2) / speed;
-    const hasHit = t > hitTime;
-
-    // String thicknesses
-    const thick1 = zRatio > 1 ? 2 : Math.min(4, 2 + 2 / zRatio);
-    const thick2 = zRatio > 1 ? Math.min(6, 2 + zRatio) : 2;
-
-    // String 1 (left)
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
-    ctx.beginPath();
-    for (let x = stringL; x <= jx; x++) {
-      let y = midY;
-      if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
-      if (hasHit) {
-        const refCenter = 2 * jx - pulseCenter;
-        y -= amp * r * gaussPulse(x, refCenter, sigma);
-      }
-      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    // String 2 (right)
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = thick2;
-    ctx.beginPath();
-    for (let x = jx; x <= stringR; x++) {
-      let y = midY;
-      if (hasHit) {
-        const transSpeed = speed / Math.sqrt(Math.max(zRatio, 0.01));
-        const transCenter = jx + transSpeed * (t - hitTime);
-        y -= amp * tr * gaussPulse(x, transCenter, sigma);
-      }
-      x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    // Phase flip annotation
-    if (hasHit && Math.abs(r) > 0.01) {
-      ctx.fillStyle = r < 0 ? WCOLORS.red : WCOLORS.teal;
-      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText(r < 0 ? 'Phase flip!' : 'No flip', jx - 10, midY - amp - 8);
-    }
-
-    // R, T coefficients
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('R = ' + r.toFixed(3) + '   T = ' + tr.toFixed(3), W - 15, 18);
-
-    // Reset
-    if (t > 8) t = 0;
-
     requestAnimationFrame(tick);
   }
 

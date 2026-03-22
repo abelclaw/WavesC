@@ -3699,29 +3699,19 @@ function sceneMarkup(type) {
     // =====================================================================
     case "string-junction":
     case "reflection-transmission-pulse":
+    case "phase-flip-demo":
       return `
         <div class="scene-label">String Junction</div>
-        <p class="scene-caption">A pulse hits a junction between two strings of different impedance. Toggle views to see the decomposed incident, reflected, and transmitted components.</p>
+        <p class="scene-caption">A pulse hits a junction between two strings of different impedance.</p>
         <div class="interactive-scene">
           <canvas id="scene-string-junction" width="600" height="280"></canvas>
           <div class="scene-controls">
             <button id="sj-physical" class="scene-btn active">Physical</button>
             <button id="sj-decomposed" class="scene-btn">Decomposed</button>
             <button id="sj-both" class="scene-btn">Both</button>
-            <button id="sj-restart" class="scene-btn">&#8635; Restart</button>
+            <button id="sj-phase-flip" class="scene-btn">Phase Flip</button>
+            <button id="sj-restart" class="scene-btn">&#8635;</button>
             <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
-          </div>
-        </div>
-      `;
-    case "phase-flip-demo":
-      return `
-        <div class="scene-label">Phase Flip on Reflection</div>
-        <p class="scene-caption">Adjust impedance ratio to see how reflection and transmission change. Z<sub>2</sub>/Z<sub>1</sub> &gt; 1 &rarr; phase flip; &lt; 1 &rarr; no flip.</p>
-        <div class="interactive-scene">
-          <canvas id="scene-phase-flip-demo" width="600" height="300"></canvas>
-          <div class="scene-controls">
-            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="pfd-zratio" min="0.1" max="5" step="0.1" value="3"><span class="scene-val" id="pfd-zratio-val">3.0</span></label>
-            <button id="pfd-restart" style="padding:2px 10px;cursor:pointer">Restart</button>
           </div>
         </div>
       `;

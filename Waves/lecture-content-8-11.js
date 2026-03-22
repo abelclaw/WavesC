@@ -177,8 +177,8 @@ window.LECTURE_CONTENT_8_11 = {
       body: `<p>What happens when a wave hits a medium of <strong>higher impedance</strong>, such as when the tension or mass density of the second string is very large? Then $Z_{2}$ &gt; $Z_{1}$ and so R = ($Z_{1} - Z_{2}$)/($Z_{1} + Z_{2}$) &lt; 0. Thus, if $\\psi_{i}$ &gt; 0 then $\\psi_{r}$ &lt; 0. The wave <strong>flips its sign</strong>. This happens in particular if the wave hits a wall, which is like $\\mu = \\infty$.</p>
 <p>On the other hand, if a wave passes to a <strong>less dense string</strong> then $Z_{2}$ &lt; $Z_{1}$ and there is <strong>no sign flip</strong>. This can happen if $Z_{2}$ = 0, for example if the second string is massless or tensionless — as in an open boundary condition.</p>
 <p>This phase flipping has important consequences due to <strong>interference</strong> between the reflected pulse and other incoming pulses. There will be constructive interference if the phases are the same, but destructive interference if they are opposite. We will return to interference after discussing light.</p>`,
-      interactive: "phase-flip-demo",
-      interactiveCaption: "Top: pulse going from lower to higher impedance (phase flip on reflection). Bottom: pulse going from higher to lower impedance (no phase flip).",
+      interactive: "string-junction",
+      interactiveCaption: "Use the Phase Flip view and adjust Z\u2082/Z\u2081 above and below 1 to see when the reflected pulse inverts.",
       mathLinks: []
     },
     {
