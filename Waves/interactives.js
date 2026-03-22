@@ -10250,28 +10250,25 @@ function initStringJunction() {
     const thick1 = 2;
     const thick2 = 2 + 5 * Math.sqrt(zRatio);
     const pulseCenter = stringL + speed * t;
-    const hasHit = pulseCenter > jx - sigma;
+    const transSpeed = speed / Math.sqrt(zRatio);
+    const delay = (jx - stringL) / speed;
+    const transCenter = jx + transSpeed * (t - delay);
 
     function gaussPulse(x, center, s) {
       return Math.exp(-(x - center) * (x - center) / (2 * s * s));
     }
 
+    // No hasHit gating — all three waves always present.
+    // Boundary condition 1+R=T guarantees leftY(jx)=rightY(jx) at all times.
+    // Gaussian tails are negligible before the pulse visually reaches the junction.
     function leftY(x) {
-      let y = midY;
-      // Incident pulse (always present — Gaussian naturally decays to zero)
-      y -= amp * gaussPulse(x, pulseCenter, sigma);
-      // Reflected pulse (appears after incident reaches junction)
-      if (hasHit) y -= amp * r * gaussPulse(x, 2 * jx - pulseCenter, sigma);
-      return y;
+      return midY
+        - amp * gaussPulse(x, pulseCenter, sigma)
+        - amp * r * gaussPulse(x, 2 * jx - pulseCenter, sigma);
     }
     function rightY(x) {
-      let y = midY;
-      if (hasHit) {
-        const transSpeed = speed / Math.sqrt(zRatio);
-        const delay = (jx - stringL) / speed;
-        y -= amp * tr * gaussPulse(x, jx + transSpeed * (t - delay), sigma / Math.sqrt(zRatio));
-      }
-      return y;
+      return midY
+        - amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
     }
 
     const junctionY = leftY(jx);
@@ -10342,30 +10339,22 @@ function initStringJunction() {
       ctx.stroke();
 
       // Reflected (amber)
-      if (hasHit) {
-        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        const refCenter = 2 * jx - pulseCenter;
-        for (let x = stringL; x <= jx; x++) {
-          const y = midY - amp * r * gaussPulse(x, refCenter, sigma);
-          x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let x = stringL; x <= jx; x++) {
+        const y = midY - amp * r * gaussPulse(x, 2 * jx - pulseCenter, sigma);
+        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
+      ctx.stroke();
 
       // Transmitted (blue)
-      if (hasHit) {
-        ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        const transSpeed = speed / Math.sqrt(zRatio);
-        const delay = (jx - stringL) / speed;
-        const transCenter = jx + transSpeed * (t - delay);
-        for (let x = jx; x <= stringR; x++) {
-          const y = midY - amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
-          x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.stroke();
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let x = jx; x <= stringR; x++) {
+        const y = midY - amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
+        x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
+      ctx.stroke();
 
       // Legend
       ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
