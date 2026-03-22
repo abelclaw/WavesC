@@ -10234,8 +10234,9 @@ function initStringJunction() {
     const sigma = 30;
     const speed = 60;
 
-    const r = (zRatio - 1) / (zRatio + 1);
-    const tr = 2 / (zRatio + 1);
+    // R = (Z₁−Z₂)/(Z₁+Z₂), T = 2Z₁/(Z₁+Z₂), satisfying 1+R = T
+    const r = (1 - zRatio) / (1 + zRatio);
+    const tr = 2 / (1 + zRatio);
     const thick1 = 2;
     const thick2 = 2 + 5 * Math.sqrt(zRatio);
     const pulseCenter = stringL + speed * t;
@@ -10269,19 +10270,12 @@ function initStringJunction() {
       ctx.globalAlpha = alpha;
       ctx.lineCap = 'round';
 
-      // Draw as one continuous path with varying thickness:
-      // We draw the thick right side first, then the thin left side on top.
-      // Both meet exactly at junctionY.
-
       // Right side (thicker, drawn first so left overlaps at junction)
+      // With correct R,T satisfying 1+R=T, leftY(jx) = rightY(jx) by physics
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
       ctx.beginPath();
-      ctx.moveTo(jx, junctionY);
-      for (let x = jx + 1; x <= stringR; x++) {
-        // Blend from junctionY to rightY over a short transition zone
-        const blend = Math.min(1, (x - jx) / 8);
-        const y = junctionY * (1 - blend) + rightY(x) * blend;
-        ctx.lineTo(x, y);
+      for (let x = jx; x <= stringR; x++) {
+        x === jx ? ctx.moveTo(x, rightY(x)) : ctx.lineTo(x, rightY(x));
       }
       ctx.stroke();
 
@@ -10368,7 +10362,7 @@ function initStringJunction() {
 
     // Coefficients (always shown)
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('r = (Z\u2082\u2013Z\u2081)/(Z\u2082+Z\u2081) = ' + r.toFixed(3) + '     t = 2Z\u2081/(Z\u2082+Z\u2081) = ' + tr.toFixed(3), W / 2, H - 12);
+    ctx.fillText('R = (Z\u2081\u2013Z\u2082)/(Z\u2081+Z\u2082) = ' + r.toFixed(3) + '     T = 2Z\u2081/(Z\u2081+Z\u2082) = ' + tr.toFixed(3), W / 2, H - 12);
     if (r < 0) {
       ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui';
       ctx.fillText('(phase flip on reflection)', W / 2, H - 26);
@@ -10420,10 +10414,11 @@ function initPhaseFlipDemo() {
       return Math.exp(-(x - center) * (x - center) / (2 * s * s));
     }
 
-    const r = (zRatio - 1) / (zRatio + 1);
-    const tr = 2 / (zRatio + 1);
+    // R = (Z₁−Z₂)/(Z₁+Z₂), T = 2Z₁/(Z₁+Z₂), satisfying 1+R = T
+    const r = (1 - zRatio) / (1 + zRatio);
+    const tr = 2 / (1 + zRatio);
 
-    // Label
+    // Label — r < 0 when Z₂ > Z₁ (phase flip)
     const flipLabel = zRatio > 1 ? 'Z\u2082/Z\u2081 > 1: reflected pulse inverts' : zRatio < 1 ? 'Z\u2082/Z\u2081 < 1: no inversion' : 'Matched impedance: no reflection';
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText(flipLabel, stringL, 18);
