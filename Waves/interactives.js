@@ -9651,158 +9651,244 @@ function initUnderdampedFourierTransform() {
 }
 
 // =========================================================================
-// 4. Fourier Magnitude & Phase
+// 4. Fourier Magnitude & Phase (2D Image Swap)
 // =========================================================================
 function initFourierMagnitudePhase() {
-  const canvas = document.getElementById('scene-fourier-magnitude-phase');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
+  const container = document.getElementById('fmp-container');
+  if (!container) return;
 
-  const N = 128;
+  const N = 128; // image size (must be power of 2 for FFT)
 
-  function makeSignal(type) {
-    const arr = new Array(N);
-    const periods = (type === 'pulse') ? 1 : 4;
-    for (let i = 0; i < N; i++) {
-      const t = (i * periods / N) % 1;          // phase within current period [0,1)
-      if (type === 'square') arr[i] = (t < 0.5) ? 1 : -1;
-      else if (type === 'triangle') arr[i] = 1 - 4 * Math.abs(t - 0.5);
-      else if (type === 'sawtooth') arr[i] = 2 * t - 1;
-      else if (type === 'pulse') arr[i] = (i > N * 0.4 && i < N * 0.6) ? 1 : 0;
+  // --- Procedural image generators (draw white on black, N×N) ---
+  function drawImage(type) {
+    const oc = document.createElement('canvas');
+    oc.width = N; oc.height = N;
+    const g = oc.getContext('2d');
+    g.fillStyle = '#000'; g.fillRect(0, 0, N, N);
+    g.fillStyle = '#fff'; g.strokeStyle = '#fff';
+    const cx = N / 2, cy = N / 2;
+
+    if (type === 'star') {
+      g.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const r = (i % 2 === 0) ? N * 0.42 : N * 0.18;
+        const a = Math.PI / 2 + i * Math.PI / 5;
+        const x = cx + r * Math.cos(a), y = cy - r * Math.sin(a);
+        i === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
+      }
+      g.closePath(); g.fill();
+    } else if (type === 'heart') {
+      g.beginPath();
+      const s = N * 0.028;
+      g.moveTo(cx, cy + s * 12);
+      g.bezierCurveTo(cx + s * 16, cy - s * 2, cx + s * 10, cy - s * 14, cx, cy - s * 6);
+      g.bezierCurveTo(cx - s * 10, cy - s * 14, cx - s * 16, cy - s * 2, cx, cy + s * 12);
+      g.fill();
+    } else if (type === 'circle') {
+      g.beginPath(); g.arc(cx, cy, N * 0.35, 0, 2 * Math.PI); g.fill();
+    } else if (type === 'arrow') {
+      g.lineWidth = N * 0.08; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.beginPath();
+      g.moveTo(N * 0.15, cy); g.lineTo(N * 0.85, cy);
+      g.moveTo(N * 0.6, N * 0.25); g.lineTo(N * 0.85, cy); g.lineTo(N * 0.6, N * 0.75);
+      g.stroke();
+    } else if (type === 'letterF') {
+      g.font = `bold ${N * 0.75}px serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('F', cx, cy + N * 0.04);
+    } else if (type === 'checkerboard') {
+      const sq = N / 8;
+      for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+          if ((r + c) % 2 === 0) g.fillRect(c * sq, r * sq, sq, sq);
+    } else if (type === 'stripes') {
+      for (let i = 0; i < 8; i++)
+        g.fillRect(0, i * N / 8, N, N / 16);
+    } else if (type === 'diamond') {
+      g.beginPath();
+      g.moveTo(cx, N * 0.08); g.lineTo(N * 0.92, cy);
+      g.lineTo(cx, N * 0.92); g.lineTo(N * 0.08, cy);
+      g.closePath(); g.fill();
     }
-    return arr;
+
+    // Extract grayscale pixel data
+    const imgData = g.getImageData(0, 0, N, N);
+    const pixels = new Float64Array(N * N);
+    for (let i = 0; i < N * N; i++) pixels[i] = imgData.data[i * 4] / 255;
+    return pixels;
   }
 
-  function dft(signal) {
-    const n = signal.length;
-    const re = new Array(n).fill(0), im = new Array(n).fill(0);
-    for (let k = 0; k < n; k++) {
-      for (let j = 0; j < n; j++) {
-        const angle = -2 * Math.PI * k * j / n;
-        re[k] += signal[j] * Math.cos(angle);
-        im[k] += signal[j] * Math.sin(angle);
+  // --- Cooley-Tukey radix-2 FFT (1D, in-place) ---
+  function fft1d(re, im, invert) {
+    const n = re.length;
+    // bit-reversal permutation
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        [re[i], re[j]] = [re[j], re[i]];
+        [im[i], im[j]] = [im[j], im[i]];
       }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const halfLen = len >> 1;
+      const angle = (invert ? -1 : 1) * 2 * Math.PI / len;
+      const wRe = Math.cos(angle), wIm = Math.sin(angle);
+      for (let i = 0; i < n; i += len) {
+        let curRe = 1, curIm = 0;
+        for (let j = 0; j < halfLen; j++) {
+          const uRe = re[i + j], uIm = im[i + j];
+          const vRe = re[i + j + halfLen] * curRe - im[i + j + halfLen] * curIm;
+          const vIm = re[i + j + halfLen] * curIm + im[i + j + halfLen] * curRe;
+          re[i + j] = uRe + vRe; im[i + j] = uIm + vIm;
+          re[i + j + halfLen] = uRe - vRe; im[i + j + halfLen] = uIm - vIm;
+          const tmpRe = curRe * wRe - curIm * wIm;
+          curIm = curRe * wIm + curIm * wRe;
+          curRe = tmpRe;
+        }
+      }
+    }
+    if (invert) {
+      for (let i = 0; i < n; i++) { re[i] /= n; im[i] /= n; }
+    }
+  }
+
+  // --- 2D FFT (separable: rows then columns) ---
+  function fft2d(pixels, invert) {
+    const re = new Float64Array(N * N);
+    const im = new Float64Array(N * N);
+    if (!invert) for (let i = 0; i < N * N; i++) re[i] = pixels[i];
+    else { re.set(pixels.re); im.set(pixels.im); }
+
+    // rows
+    const rowRe = new Float64Array(N), rowIm = new Float64Array(N);
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) { rowRe[x] = re[y * N + x]; rowIm[x] = im[y * N + x]; }
+      fft1d(rowRe, rowIm, invert);
+      for (let x = 0; x < N; x++) { re[y * N + x] = rowRe[x]; im[y * N + x] = rowIm[x]; }
+    }
+    // columns
+    const colRe = new Float64Array(N), colIm = new Float64Array(N);
+    for (let x = 0; x < N; x++) {
+      for (let y = 0; y < N; y++) { colRe[y] = re[y * N + x]; colIm[y] = im[y * N + x]; }
+      fft1d(colRe, colIm, invert);
+      for (let y = 0; y < N; y++) { re[y * N + x] = colRe[y]; im[y * N + x] = colIm[y]; }
     }
     return { re, im };
   }
 
-  function idft(re, im) {
-    const n = re.length;
-    const signal = new Array(n).fill(0);
-    for (let j = 0; j < n; j++) {
-      for (let k = 0; k < n; k++) {
-        const angle = 2 * Math.PI * k * j / n;
-        signal[j] += re[k] * Math.cos(angle) - im[k] * Math.sin(angle);
-      }
-      signal[j] /= n;
-    }
-    return signal;
-  }
-
-  function magPhase(ft) {
-    const mag = [], phase = [];
-    for (let k = 0; k < ft.re.length; k++) {
-      mag.push(Math.sqrt(ft.re[k] * ft.re[k] + ft.im[k] * ft.im[k]));
-      phase.push(Math.atan2(ft.im[k], ft.re[k]));
+  // --- Magnitude and phase decomposition ---
+  function decompose(ft) {
+    const mag = new Float64Array(N * N);
+    const phase = new Float64Array(N * N);
+    for (let i = 0; i < N * N; i++) {
+      mag[i] = Math.sqrt(ft.re[i] * ft.re[i] + ft.im[i] * ft.im[i]);
+      phase[i] = Math.atan2(ft.im[i], ft.re[i]);
     }
     return { mag, phase };
   }
 
-  const sigASelect = document.getElementById('fmp-sigA');
-  const sigBSelect = document.getElementById('fmp-sigB');
-
-  function compute() {
-    const typeA = sigASelect ? sigASelect.value : 'square';
-    const typeB = sigBSelect ? sigBSelect.value : 'triangle';
-    const sigA = makeSignal(typeA);
-    const sigB = makeSignal(typeB);
-    const ftA = dft(sigA);
-    const ftB = dft(sigB);
-    const mpA = magPhase(ftA);
-    const mpB = magPhase(ftB);
-    const swapRe = [], swapIm = [];
-    for (let k = 0; k < N; k++) {
-      swapRe.push(mpA.mag[k] * Math.cos(mpB.phase[k]));
-      swapIm.push(mpA.mag[k] * Math.sin(mpB.phase[k]));
+  // --- Recombine magnitude + phase into complex spectrum ---
+  function recombine(mag, phase) {
+    const re = new Float64Array(N * N);
+    const im = new Float64Array(N * N);
+    for (let i = 0; i < N * N; i++) {
+      re[i] = mag[i] * Math.cos(phase[i]);
+      im[i] = mag[i] * Math.sin(phase[i]);
     }
-    const swapped = idft(swapRe, swapIm);
-    return { sigA, sigB, mpA, mpB, swapped, typeA, typeB };
+    return { re, im };
   }
 
-  function drawSignal(arr, x0, y0, w, h, color, label) {
-    const maxV = Math.max(...arr.map(Math.abs), 0.001);
-    const mid = y0 + h / 2;
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(x0, mid); ctx.lineTo(x0 + w, mid); ctx.stroke();
-    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    for (let i = 0; i < arr.length; i++) {
-      const px = x0 + w * i / arr.length;
-      const py = mid - (arr[i] / maxV) * h * 0.4;
-      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  // --- Render grayscale array to canvas ---
+  function renderToCanvas(canvasId, pixels, logMag) {
+    const cvs = document.getElementById(canvasId);
+    if (!cvs) return;
+    cvs.width = N; cvs.height = N;
+    const g = cvs.getContext('2d');
+    const imgData = g.createImageData(N, N);
+
+    if (logMag) {
+      // log-scale magnitude with DC shift to center
+      const shifted = new Float64Array(N * N);
+      for (let y = 0; y < N; y++)
+        for (let x = 0; x < N; x++) {
+          const sy = (y + N / 2) % N, sx = (x + N / 2) % N;
+          shifted[y * N + x] = pixels[sy * N + sx];
+        }
+      let maxVal = 0;
+      const logArr = new Float64Array(N * N);
+      for (let i = 0; i < N * N; i++) {
+        logArr[i] = Math.log(1 + shifted[i]);
+        if (logArr[i] > maxVal) maxVal = logArr[i];
+      }
+      if (maxVal === 0) maxVal = 1;
+      for (let i = 0; i < N * N; i++) {
+        const v = Math.round(255 * logArr[i] / maxVal);
+        imgData.data[i * 4] = v;
+        imgData.data[i * 4 + 1] = v;
+        imgData.data[i * 4 + 2] = v;
+        imgData.data[i * 4 + 3] = 255;
+      }
+    } else {
+      // normalize to [0, 255]
+      let mn = Infinity, mx = -Infinity;
+      for (let i = 0; i < N * N; i++) {
+        if (pixels[i] < mn) mn = pixels[i];
+        if (pixels[i] > mx) mx = pixels[i];
+      }
+      const range = mx - mn || 1;
+      for (let i = 0; i < N * N; i++) {
+        const v = Math.round(255 * (pixels[i] - mn) / range);
+        imgData.data[i * 4] = v;
+        imgData.data[i * 4 + 1] = v;
+        imgData.data[i * 4 + 2] = v;
+        imgData.data[i * 4 + 3] = 255;
+      }
     }
-    ctx.stroke();
-    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
-    const labelX = x0 + w - 3;
-    const labelY = y0 + 12;
-    const lw = ctx.measureText(label).width;
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(labelX - lw - 3, labelY - 10, lw + 6, 13);
-    ctx.fillStyle = color;
-    ctx.fillText(label, labelX, labelY);
+    g.putImageData(imgData, 0, 0);
   }
 
-  function draw() {
-    const d = compute();
-    wClear(ctx, W, H);
+  // --- Main update ---
+  function update() {
+    const selA = document.getElementById('fmp-selA');
+    const selB = document.getElementById('fmp-selB');
+    const typeA = selA ? selA.value : 'star';
+    const typeB = selB ? selB.value : 'heart';
 
-    const col1 = 20, col2 = W / 3 + 10, col3 = 2 * W / 3;
-    const colW = W / 3 - 25;
-    const rowH = H / 3 - 10;
+    const pixA = drawImage(typeA);
+    const pixB = drawImage(typeB);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Original Signals', col1 + colW / 2, 14);
-    ctx.fillText('Magnitudes', col2 + colW / 2, 14);
-    ctx.fillText('Mag(A) + Phase(B)', col3 + colW / 2, 14);
+    // Show original images
+    renderToCanvas('fmp-imgA', pixA, false);
+    renderToCanvas('fmp-imgB', pixB, false);
 
-    drawSignal(d.sigA, col1, 20, colW, rowH, WCOLORS.teal, 'A: ' + d.typeA);
-    drawSignal(d.mpA.mag.slice(0, N / 2), col2, 20, colW, rowH, WCOLORS.teal, '|F| A');
-    drawSignal(d.sigB, col1, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'B: ' + d.typeB);
-    drawSignal(d.mpB.mag.slice(0, N / 2), col2, 20 + rowH + 5, colW, rowH, WCOLORS.amber, '|F| B');
-    drawSignal(d.swapped, col3, 20, colW, rowH, WCOLORS.blue, 'A mag + B phase');
-    drawSignal(d.sigB, col3, 20 + rowH + 5, colW, rowH, WCOLORS.amber, 'Original B');
+    // 2D FFT
+    const ftA = fft2d(pixA, false);
+    const ftB = fft2d(pixB, false);
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Result resembles B \u2192 phase carries structural information!', W / 2, H - 10);
+    // Decompose
+    const dA = decompose(ftA);
+    const dB = decompose(ftB);
+
+    // Show magnitudes (log scale)
+    renderToCanvas('fmp-magA', dA.mag, true);
+    renderToCanvas('fmp-magB', dB.mag, true);
+
+    // Swap: mag(A) + phase(B)
+    const swapAB = recombine(dA.mag, dB.phase);
+    const resultAB = fft2d(swapAB, true);
+    renderToCanvas('fmp-swapAB', resultAB.re, false);
+
+    // Swap: mag(B) + phase(A)
+    const swapBA = recombine(dB.mag, dA.phase);
+    const resultBA = fft2d(swapBA, true);
+    renderToCanvas('fmp-swapBA', resultBA.re, false);
   }
 
-  // Add play buttons if controls exist
-  {
-    const parent = canvas.parentElement;
-    if (parent && !document.getElementById('fmp-play-a')) {
-      const controls = parent.querySelector('.scene-controls') || (() => {
-        const c = document.createElement('div'); c.className = 'scene-controls'; parent.appendChild(c); return c;
-      })();
-      wMakePlayBtn(controls, 'fmp-play-a', '\u25B6 Signal A', () => {
-        const d = compute();
-        wPlayBuffer('fmp-play-a', d.sigA, 220, 2);
-      });
-      wMakePlayBtn(controls, 'fmp-play-b', '\u25B6 Signal B', () => {
-        const d = compute();
-        wPlayBuffer('fmp-play-b', d.sigB, 220, 2);
-      });
-      wMakePlayBtn(controls, 'fmp-play-swap', '\u25B6 Swapped', () => {
-        const d = compute();
-        wPlayBuffer('fmp-play-swap', d.swapped, 220, 2);
-      });
-    }
-  }
-
-  if (sigASelect) sigASelect.addEventListener('change', draw);
-  if (sigBSelect) sigBSelect.addEventListener('change', draw);
-  draw();
+  document.getElementById('fmp-selA')?.addEventListener('change', update);
+  document.getElementById('fmp-selB')?.addEventListener('change', update);
+  update();
 }
 
 // =========================================================================

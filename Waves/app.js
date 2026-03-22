@@ -3616,12 +3616,58 @@ function sceneMarkup(type) {
     case "fourier-magnitude-phase":
       return `
         <div class="scene-label">Magnitude vs Phase</div>
-        <p class="scene-caption">Phase carries most of the structural information. Pick two signals and swap their magnitudes to see.</p>
+        <p class="scene-caption">Pick two images below. Their Fourier transforms are decomposed into magnitude and phase. Swap them to see which carries the structural information.</p>
         <div class="interactive-scene">
-          <canvas id="scene-fourier-magnitude-phase" width="600" height="300"></canvas>
-          <div class="scene-controls">
-            <label>Signal A: <select id="fmp-sigA"><option value="square">Square</option><option value="triangle">Triangle</option><option value="sawtooth">Sawtooth</option><option value="pulse">Pulse</option></select></label>
-            <label>Signal B: <select id="fmp-sigB"><option value="square">Square</option><option value="triangle" selected>Triangle</option><option value="sawtooth">Sawtooth</option><option value="pulse">Pulse</option></select></label>
+          <div id="fmp-container">
+            <div class="fmp-row">
+              <div class="fmp-cell">
+                <div class="fmp-cell-label">Image A</div>
+                <canvas id="fmp-imgA" width="128" height="128"></canvas>
+                <select id="fmp-selA">
+                  <option value="star">Star</option>
+                  <option value="heart">Heart</option>
+                  <option value="circle">Circle</option>
+                  <option value="arrow">Arrow</option>
+                  <option value="letterF">Letter F</option>
+                  <option value="checkerboard">Checkerboard</option>
+                  <option value="stripes">Stripes</option>
+                  <option value="diamond">Diamond</option>
+                </select>
+              </div>
+              <div class="fmp-cell">
+                <div class="fmp-cell-label">Image B</div>
+                <canvas id="fmp-imgB" width="128" height="128"></canvas>
+                <select id="fmp-selB">
+                  <option value="heart" selected>Heart</option>
+                  <option value="star">Star</option>
+                  <option value="circle">Circle</option>
+                  <option value="arrow">Arrow</option>
+                  <option value="letterF">Letter F</option>
+                  <option value="checkerboard">Checkerboard</option>
+                  <option value="stripes">Stripes</option>
+                  <option value="diamond">Diamond</option>
+                </select>
+              </div>
+              <div class="fmp-cell">
+                <div class="fmp-cell-label">|FT(A)|</div>
+                <canvas id="fmp-magA" width="128" height="128"></canvas>
+              </div>
+              <div class="fmp-cell">
+                <div class="fmp-cell-label">|FT(B)|</div>
+                <canvas id="fmp-magB" width="128" height="128"></canvas>
+              </div>
+            </div>
+            <div class="fmp-row">
+              <div class="fmp-cell fmp-result">
+                <div class="fmp-cell-label fmp-label-a">Mag(A) + Phase(B)</div>
+                <canvas id="fmp-swapAB" width="128" height="128"></canvas>
+              </div>
+              <div class="fmp-cell fmp-result">
+                <div class="fmp-cell-label fmp-label-b">Mag(B) + Phase(A)</div>
+                <canvas id="fmp-swapBA" width="128" height="128"></canvas>
+              </div>
+            </div>
+            <div class="fmp-verdict">Both results resemble the image whose <strong>phase</strong> was used &mdash; phase carries the structure!</div>
           </div>
         </div>
       `;
