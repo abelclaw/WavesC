@@ -9066,8 +9066,15 @@ function initViolinSpectrum() {
   }
 
   // Smoothly update gains and frequencies on existing oscillators (no click/pop)
+  // If audio isn't playing yet, start it so the user hears changes immediately
   function syncLiveAudio() {
-    if (!liveGainNodes || !liveActx) return;
+    if (!liveGainNodes || !liveActx) {
+      startAudio();
+      // Style the play button as active
+      const btn = document.getElementById('violin-play');
+      if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+      return;
+    }
     const now = liveActx.currentTime;
     const f0 = parseFloat(f0Slider?.value || 440);
     for (let n = 1; n <= nHarmonics; n++) {
