@@ -5346,7 +5346,6 @@ function initSoundWaveLongitudinal() {
 
   const wlSlider = document.getElementById('swl-wl');
   const freqSlider = document.getElementById('swl-freq');
-  const speedSlider = document.getElementById('swl-speed');
 
   let t = 0;
 
@@ -5372,15 +5371,11 @@ function initSoundWaveLongitudinal() {
   }
 
   function tick() {
+    const wl = parseFloat(wlSlider?.value || 100);  // wavelength in px
     const freq = parseFloat(freqSlider?.value || 1.0);
-    const phaseSpeed = parseFloat(speedSlider?.value || 120);
-    // v = fλ enforced: wavelength is derived
-    const wl = phaseSpeed / Math.max(freq, 0.01);
-    // Update all readouts including the wavelength slider position
-    if (wlSlider) wlSlider.value = Math.min(200, Math.max(30, wl));
-    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(Math.round(wl)));
+    const phaseSpeed = wl * freq;  // v = λf, derived
+    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
     document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
-    document.getElementById('swl-speed-val')?.replaceChildren(document.createTextNode(phaseSpeed));
 
     t += 0.02;
     wClear(ctx, W, H);
@@ -5503,15 +5498,8 @@ function initSoundWaveLongitudinal() {
     requestAnimationFrame(tick);
   }
 
-  // When user drags wavelength slider, adjust frequency to match (v = fλ)
-  wlSlider?.addEventListener('input', () => {
-    const wlVal = parseFloat(wlSlider.value);
-    const spd = parseFloat(speedSlider?.value || 120);
-    const newFreq = spd / Math.max(wlVal, 1);
-    if (freqSlider) freqSlider.value = Math.min(3, Math.max(0.3, newFreq));
-  });
+  wlSlider?.addEventListener('input', () => {});
   freqSlider?.addEventListener('input', () => {});
-  speedSlider?.addEventListener('input', () => {});
   tick();
 }
 
