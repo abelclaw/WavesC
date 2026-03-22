@@ -354,7 +354,7 @@ window.LECTURE_CONTENT_8_11 = {
 <p>Doubling the distance costs 6 dB. To drop by 10 dB, you need to go 3.16 times farther away.</p>
 </details>`,
       interactive: "decibel-scale",
-      interactiveCaption: "The decibel scale showing common sounds, and how loudness drops with distance from a source",
+      interactiveCaption: "Select a sound source and drag the listener to explore how intensity drops with distance — each doubling costs 6 dB",
       mathLinks: ["decibel-math"]
     },
     {

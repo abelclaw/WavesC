@@ -448,6 +448,7 @@ function initSHMSpring() {
   canvas.addEventListener('touchend', () => { dragging = false; });
 
   function tick() {
+    if (!canvas.isConnected) return;
     const k = parseFloat(kSlider?.value || 4);
     const m = parseFloat(mSlider?.value || 1);
     const omega0 = Math.sqrt(k / m);
@@ -654,6 +655,7 @@ function initSHMOscillator() {
   const waveW = waveR - waveL, waveH = waveB - waveT;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const A = parseFloat(ampSlider?.value || 1);
     const omega = parseFloat(omegaSlider?.value || 2);
     const phi = parseFloat(phiSlider?.value || 0);
@@ -826,6 +828,7 @@ function initDampedOscillator() {
   canvas.addEventListener('touchend', endDrag);
 
   function tick() {
+    if (!canvas.isConnected) return;
     const gamma = parseFloat(gammaSlider?.value || 2);
     const m = parseFloat(massSlider?.value || 1);
     const omega0 = Math.sqrt(k / m);
@@ -1098,6 +1101,7 @@ function initDampingRegimes() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     if (running) {
       t += 0.012;
       if (t >= tMax) {
@@ -1453,6 +1457,7 @@ function initEulerCircle() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     if (!dragging) {
       t += 0.02;
     }
@@ -1524,6 +1529,7 @@ function initDrivenOscillator() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const wd = parseFloat(wdSlider?.value || 3);
     const w0 = parseFloat(w0Slider?.value || 5);
     const gamma = parseFloat(gammaSlider?.value || 0.2);
@@ -1952,6 +1958,7 @@ function initTransientDecay() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     if (!dragging) {
       t += 0.025;
       if (t > tMax) t = 0;
@@ -2206,6 +2213,7 @@ function initPhaseLag() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const wd = parseFloat(wdSlider?.value || 3);
     document.getElementById('phase-lag-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
 
@@ -2492,6 +2500,7 @@ function initPowerAbsorption() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const wd = parseFloat(wdSlider?.value || 5);
     const gamma = parseFloat(gammaSlider?.value || 1);
     document.getElementById('power-wd-val')?.replaceChildren(document.createTextNode(wd.toFixed(1)));
@@ -2976,6 +2985,7 @@ function initCoupledOscillators() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
     const k = 4, m = 1;
     const kappa = kappaRatio * k;
@@ -3228,6 +3238,7 @@ function initNormalModes() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
     const k = 4, m = 1;
     const omegaS = Math.sqrt(k / m);
@@ -3274,6 +3285,7 @@ function initBeats() {
   const A0 = 0.8;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const kappaRatio = parseFloat(kappaSlider?.value || 0.15);
     const k = 4, m = 1;
     const omegaS = Math.sqrt(k / m);
@@ -3586,6 +3598,7 @@ function initTwoMassNormalModes() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.025;
     wClear(ctx, W, H);
 
@@ -3751,6 +3764,7 @@ function initThreeMassNormalModes() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.022;
     wClear(ctx, W, H);
 
@@ -3848,6 +3862,7 @@ function initNMassChain() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.025;
     const N = parseInt(nSlider?.value || 5);
     let modeNum = parseInt(modeSlider?.value || 1);
@@ -4407,6 +4422,7 @@ function initPluckedString() {
   }, { passive: false });
 
   function tick() {
+    if (!canvas.isConnected) return;
     const damping = parseFloat(dampingSlider?.value || 0);
     const speed = parseFloat(speedSlider?.value || 1);
 
@@ -4620,6 +4636,7 @@ function initNMassModesNumerical() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const N = parseInt(nSlider?.value || 8);
     const j = Math.min(parseInt(jSlider?.value || 1), N);
     if (jSlider) jSlider.max = N;
@@ -4884,6 +4901,7 @@ function initContinuumLimit() {
   const botB = H - 15;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const N = parseInt(nSlider?.value || 6);
     const j = Math.min(parseInt(modeSlider?.value || 1), Math.min(N, 4));
     if (modeSlider) modeSlider.max = Math.min(N, 4);
@@ -5054,6 +5072,7 @@ function initTravelingVsStanding() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const k = parseFloat(kSlider?.value || 2);
     const omega = k * 1.5;
     document.getElementById('tvs-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
@@ -5231,6 +5250,7 @@ function initStringTransverseWave() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const freq = parseFloat(freqSlider?.value || 1.2);
     const A = parseFloat(ampSlider?.value || 0.8);
     const speed = parseFloat(speedSlider?.value || 0.015);
@@ -5375,6 +5395,7 @@ function initSoundWaveLongitudinal() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const wl = parseFloat(wlSlider?.value || 100);  // wavelength in px
     const freq = parseFloat(freqSlider?.value || 1.0);
     const phaseSpeed = wl * freq;  // v = λf, derived
@@ -5561,6 +5582,7 @@ function initBoundaryConditionsDemo() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const n = parseInt(modeSlider?.value || 1);
     document.getElementById('bcd-mode-val')?.replaceChildren(document.createTextNode(n));
 
@@ -5732,6 +5754,7 @@ function initStandingWaveModes() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
 
@@ -5868,6 +5891,7 @@ function initHelmholtzResonator() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     const A = parseFloat(aSlider?.value || 4);
     const V = parseFloat(vSlider?.value || 80);
     const L = parseFloat(lSlider?.value || 5);
@@ -6036,6 +6060,7 @@ function initBeatsDemo() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const df = parseFloat(dfSlider?.value || 3);
     document.getElementById('bd-df-val')?.replaceChildren(document.createTextNode(df.toFixed(1)));
     // Update live audio if playing
@@ -6192,6 +6217,7 @@ function initConsonanceDissonance() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const ratio = parseFloat(ratioSlider?.value || 1.5);
     document.getElementById('cd-ratio-val')?.replaceChildren(document.createTextNode(ratio.toFixed(2)));
     // Update live audio if playing
@@ -7003,6 +7029,7 @@ function initWaveTransportEnergy() {
   if (widthSlider) widthSlider.addEventListener('input', onWteInput);
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
     draw();
@@ -7115,6 +7142,7 @@ function initTransverseLongitudinalDemo() {
   const longY = H * 0.72;
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.04;
     wClear(ctx, W, H);
     draw();
@@ -7401,6 +7429,7 @@ function initEmPlaneWave() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
     draw();
@@ -7527,6 +7556,7 @@ function initLinearPolarization() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.04;
     wClear(ctx, W, H);
     draw();
@@ -7664,6 +7694,7 @@ function initCircularPolarization() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
     draw();
@@ -7786,6 +7817,7 @@ function initMalusLaw() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
     draw();
@@ -10219,6 +10251,7 @@ function initStringJunction() {
   setMode('physical');
 
   function tick() {
+    if (!canvas.isConnected) return;
     const zRatio = parseFloat(zSlider?.value || 2);
     if (zValSpan) zValSpan.textContent = zRatio.toFixed(1);
 
@@ -10417,6 +10450,7 @@ function initMassCollisionImpedance() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const mRatio = parseFloat(mRatioSlider?.value || 1);
     document.getElementById('mci-ratio-val')?.replaceChildren(document.createTextNode(mRatio.toFixed(1)));
 
@@ -10787,6 +10821,7 @@ function initWaveEnergyString() {
   if (kSlider) kSlider.addEventListener('input', onWesInput);
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.03;
     wClear(ctx, W, H);
 
@@ -11009,106 +11044,281 @@ function initDecibelScale() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let distSlider = document.getElementById('db-dist');
-  if (!distSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>Distance (m): <input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>';
-      parent.appendChild(controls);
-      distSlider = document.getElementById('db-dist');
-    }
-  }
+  // Remove old slider controls if present
+  var oldControls = canvas.parentElement?.querySelector('.scene-controls');
+  if (oldControls) oldControls.remove();
 
-  const sounds = [
-    { name: 'Breathing', desc: 'barely audible', dB: 10, color: WCOLORS.teal },
-    { name: 'Whisper', desc: 'very quiet', dB: 30, color: WCOLORS.teal },
-    { name: 'Conversation', desc: 'moderate', dB: 60, color: WCOLORS.amber },
-    { name: 'Traffic', desc: 'loud', dB: 80, color: WCOLORS.amber },
-    { name: 'Factory', desc: 'very loud', dB: 90, color: WCOLORS.orange },
-    { name: 'Concert', desc: 'risk of damage', dB: 110, color: WCOLORS.red },
-    { name: 'Jet engine', desc: 'extreme pain', dB: 140, color: WCOLORS.red },
+  var sounds = [
+    { name: 'Breathing',    dB: 10,  color: WCOLORS.teal },
+    { name: 'Whisper',      dB: 30,  color: WCOLORS.teal },
+    { name: 'Conversation', dB: 60,  color: WCOLORS.amber },
+    { name: 'Traffic',      dB: 80,  color: WCOLORS.amber },
+    { name: 'Vacuum',       dB: 90,  color: WCOLORS.orange },
+    { name: 'Concert',      dB: 120, color: WCOLORS.red },
+    { name: 'Jet engine',   dB: 150, color: WCOLORS.red },
   ];
 
-  function draw() {
-    const dist = parseFloat(distSlider?.value || 1);
-    document.getElementById('db-dist-val')?.replaceChildren(document.createTextNode(dist.toFixed(0) + ' m'));
+  var selectedIdx = 3; // start with Traffic (80 dB)
+  var listenerDist = 1; // meters from source (1-64)
+  var dragging = false;
+  var maxDist = 64;
 
-    wClear(ctx, W, H);
+  // Spatial view geometry
+  var spY = 210; // vertical center of spatial view
+  var srcX = 55; // source position
+  var farX = W - 20; // max listener x
+  var spSpan = farX - srcX;
 
-    // 1/r² falloff: dB drops by 20 log10(r) from reference at 1m
-    const dbDrop = 20 * Math.log10(dist);
+  function distToX(d) { return srcX + (Math.log2(Math.max(1, d)) / Math.log2(maxDist)) * spSpan; }
+  function xToDist(x) { return Math.pow(2, ((x - srcX) / spSpan) * Math.log2(maxDist)); }
 
-    // Left: vertical dB scale
-    const scaleL = 60, scaleR = 80;
-    const scaleT = 30, scaleB = H - 25;
-    const scaleH = scaleB - scaleT;
-    const dbMin = 0, dbMax = 150;
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Decibel Scale', W / 2, 16);
-
-    // Scale bar
-    const gradient = ctx.createLinearGradient(scaleL, scaleT, scaleL, scaleB);
-    gradient.addColorStop(0, WCOLORS.red);
-    gradient.addColorStop(0.3, WCOLORS.orange);
-    gradient.addColorStop(0.6, WCOLORS.amber);
-    gradient.addColorStop(1, WCOLORS.teal);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(scaleL, scaleT, scaleR - scaleL, scaleH);
-
-    // dB tick marks
-    for (let db = 0; db <= 140; db += 20) {
-      const y = scaleB - (db / dbMax) * scaleH;
-      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(scaleL - 5, y); ctx.lineTo(scaleR + 5, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText(db + ' dB', scaleL - 8, y + 3);
-    }
-
-    // Sound markers
-    sounds.forEach(s => {
-      const adjDb = Math.max(0, s.dB - dbDrop);
-      const y = scaleB - (adjDb / dbMax) * scaleH;
-      const refY = scaleB - (s.dB / dbMax) * scaleH;
-
-      // Reference position (thin line if distance > 1)
-      if (dist > 1) {
-        ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-        ctx.beginPath(); ctx.moveTo(scaleR + 5, refY); ctx.lineTo(scaleR + 30, refY); ctx.stroke();
-      }
-
-      // Current position
-      ctx.fillStyle = s.color;
-      ctx.beginPath(); ctx.arc(scaleR + 15, y, 5, 0, Math.PI * 2); ctx.fill();
-
-      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(s.name + ' (' + adjDb.toFixed(0) + ' dB)', scaleR + 25, y + 1);
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-      ctx.fillText(s.desc, scaleR + 25, y + 12);
-    });
-
-    // Right side: intensity info
-    const infoX = W * 0.6;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('At distance ' + dist + ' m:', infoX, scaleT + 15);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('dB drop = 20 log\u2081\u2080(' + dist + ') = ' + dbDrop.toFixed(1) + ' dB', infoX, scaleT + 35);
-    ctx.fillText('Intensity \u221D 1/r\u00B2', infoX, scaleT + 55);
-    ctx.fillText('Intensity ratio: 1/' + (dist * dist).toFixed(0), infoX, scaleT + 75);
-
-    // Pain threshold line
-    const painY = scaleB - (120 / dbMax) * scaleH;
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-    ctx.beginPath(); ctx.moveTo(scaleL - 10, painY); ctx.lineTo(scaleR + 20, painY); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('Pain threshold', scaleL - 12, painY + 3);
+  function dbColor(db) {
+    if (db <= 40) return WCOLORS.teal;
+    if (db <= 70) return WCOLORS.amber;
+    if (db <= 100) return WCOLORS.orange;
+    return WCOLORS.red;
   }
 
-  distSlider?.addEventListener('input', draw);
+  function draw() {
+    wClear(ctx, W, H);
+    var src = sounds[selectedIdx];
+    var dbDrop = 20 * Math.log10(Math.max(1, listenerDist));
+    var heardDb = Math.max(0, src.dB - dbDrop);
+
+    // === TOP: Horizontal dB scale with source buttons ===
+    var barL = 50, barR = W - 15, barY = 38, barH = 14;
+    var barW = barR - barL;
+    var dbMax = 160;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Decibel scale', 10, 16);
+    ctx.font = '10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
+    ctx.fillText('click a source, drag the listener', W - 10, 16);
+
+    // Gradient bar
+    var grad = ctx.createLinearGradient(barL, 0, barR, 0);
+    grad.addColorStop(0, WCOLORS.teal);
+    grad.addColorStop(0.4, WCOLORS.amber);
+    grad.addColorStop(0.65, WCOLORS.orange);
+    grad.addColorStop(0.85, WCOLORS.red);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(barL, barY, barW, barH, 3);
+    ctx.fill();
+
+    // dB ticks and labels
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    for (var db = 0; db <= 150; db += 30) {
+      var tx = barL + (db / dbMax) * barW;
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(tx, barY + barH); ctx.lineTo(tx, barY + barH + 4); ctx.stroke();
+      ctx.fillStyle = WCOLORS.text;
+      ctx.fillText(db, tx, barY + barH + 13);
+    }
+    ctx.fillText('dB', barR + 2, barY + barH + 13);
+
+    // Pain threshold marker
+    var painX = barL + (130 / dbMax) * barW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5; ctx.setLineDash([3, 2]);
+    ctx.beginPath(); ctx.moveTo(painX, barY - 2); ctx.lineTo(painX, barY + barH + 2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('pain', painX, barY - 4);
+
+    // Source buttons along the bar
+    for (var si = 0; si < sounds.length; si++) {
+      var s = sounds[si];
+      var sx = barL + (s.dB / dbMax) * barW;
+      var isSelected = si === selectedIdx;
+      var r = isSelected ? 7 : 5;
+      ctx.strokeStyle = isSelected ? s.color : WCOLORS.grid; ctx.lineWidth = isSelected ? 1.5 : 0.5;
+      ctx.beginPath(); ctx.moveTo(sx, barY - 2); ctx.lineTo(sx, barY - 8 - r); ctx.stroke();
+      ctx.fillStyle = isSelected ? s.color : 'rgba(31,42,46,0.15)';
+      ctx.beginPath(); ctx.arc(sx, barY - 8 - r, r, 0, Math.PI * 2); ctx.fill();
+      if (isSelected) { ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke(); }
+      ctx.fillStyle = isSelected ? WCOLORS.text : WCOLORS.textDim;
+      ctx.font = isSelected ? 'bold 9px system-ui' : '8px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.name, sx, barY - 12 - 2 * r);
+    }
+
+    // Heard-level indicator on bar (triangle pointing up into bar)
+    var heardX = barL + (heardDb / dbMax) * barW;
+    ctx.fillStyle = dbColor(heardDb);
+    ctx.beginPath();
+    ctx.moveTo(heardX - 4, barY + barH + 2); ctx.lineTo(heardX + 4, barY + barH + 2);
+    ctx.lineTo(heardX, barY + barH - 2); ctx.closePath(); ctx.fill();
+
+    // === MIDDLE: Info readout ===
+    var infoY = 78;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(src.name + ' at source: ' + src.dB + ' dB', 10, infoY);
+
+    if (listenerDist > 1.05) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
+      ctx.fillText('At ' + listenerDist.toFixed(1) + ' m:  ' + heardDb.toFixed(1) + ' dB', 10, infoY + 16);
+      ctx.fillText('(\u221220 log\u2081\u2080(' + listenerDist.toFixed(1) + ') = \u2212' + dbDrop.toFixed(1) + ' dB)', 210, infoY + 16);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
+      ctx.fillText('Drag the listener to see how dB drops with distance', 10, infoY + 16);
+    }
+
+    // Intensity comparison
+    ctx.font = '10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
+    fillTextSub(ctx, 'I_{source} = I_0 \u00D7 10^{' + (src.dB / 10).toFixed(0) + '}', W - 200, infoY);
+    if (listenerDist > 1.05) {
+      fillTextSub(ctx, 'I_{heard} = I_0 \u00D7 10^{' + (heardDb / 10).toFixed(1) + '}', W - 200, infoY + 15);
+    }
+
+    // === BOTTOM: Spatial view - source and listener ===
+
+    // Ground line
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(srcX - 15, spY + 35); ctx.lineTo(farX + 10, spY + 35); ctx.stroke();
+
+    // Distance doubling markers + "-6 dB" annotations
+    ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    for (var exp = 0; exp <= 6; exp++) {
+      var d = Math.pow(2, exp);
+      if (d > maxDist) break;
+      var dx = distToX(d);
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(dx, spY + 30); ctx.lineTo(dx, spY + 38); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText(d + 'm', dx, spY + 48);
+      if (exp > 0) {
+        var prevDx = distToX(Math.pow(2, exp - 1));
+        var midX = (prevDx + dx) / 2;
+        ctx.fillStyle = WCOLORS.orange; ctx.font = 'bold 8px system-ui';
+        ctx.fillText('\u22126 dB', midX, spY + 58);
+        ctx.font = '8px system-ui';
+      }
+    }
+
+    // Expanding wavefront arcs from source (animated)
+    var time = Date.now() / 1000;
+    for (var ri = 0; ri < 5; ri++) {
+      var phase = ((time * 0.6 + ri / 5) % 1);
+      var ringR = phase * 120;
+      var alpha = 0.3 * (1 - phase);
+      ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(srcX, spY, ringR, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+    }
+
+    // Source icon (speaker shape)
+    ctx.fillStyle = src.color;
+    ctx.fillRect(srcX - 10, spY - 8, 8, 16);
+    ctx.beginPath();
+    ctx.moveTo(srcX - 2, spY - 8); ctx.lineTo(srcX + 8, spY - 15);
+    ctx.lineTo(srcX + 8, spY + 15); ctx.lineTo(srcX - 2, spY + 8);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('source', srcX, spY + 28);
+
+    // Listener position
+    var lx = distToX(listenerDist);
+    var earSize = 6 + 8 * (heardDb / 150);
+    ctx.fillStyle = dbColor(heardDb);
+    ctx.beginPath(); ctx.arc(lx, spY, earSize, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(heardDb.toFixed(0) + ' dB', lx, spY - earSize - 5);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.fillText('listener', lx, spY + 28);
+
+    // Dashed connection line source to listener
+    ctx.strokeStyle = dbColor(heardDb); ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(srcX + 10, spY); ctx.lineTo(lx - earSize - 2, spY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Intensity falloff bars between source and listener
+    if (listenerDist > 1.5) {
+      var nBars = Math.min(8, Math.floor((lx - srcX - 20) / 15));
+      for (var bi = 0; bi < nBars; bi++) {
+        var frac = (bi + 1) / (nBars + 1);
+        var bx = srcX + 15 + frac * (lx - srcX - 25);
+        var bDist = xToDist(bx);
+        var bDb = Math.max(0, src.dB - 20 * Math.log10(bDist));
+        var bH = 2 + 20 * (bDb / 150);
+        var bAlpha = 0.15 + 0.2 * (bDb / 150);
+        ctx.fillStyle = 'rgba(15,118,110,' + bAlpha + ')';
+        ctx.fillRect(bx - 1.5, spY - bH / 2, 3, bH);
+      }
+    }
+
+    // Key insight box
+    var boxX = W - 225, boxY = 112, boxW = 215, boxH = 50;
+    ctx.fillStyle = 'rgba(15,118,110,0.06)';
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, boxH, 4); ctx.fill();
+    ctx.strokeStyle = 'rgba(15,118,110,0.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(boxX, boxY, boxW, boxH, 4); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Why logarithmic?', boxX + 8, boxY + 14);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    var ratio = Math.pow(10, src.dB / 10);
+    ctx.fillText(src.name + ' is 10^' + (src.dB / 10).toFixed(0) + ' = ' +
+      ratio.toExponential(0) + '\u00D7 more intense', boxX + 8, boxY + 28);
+    ctx.fillText('than the threshold of hearing.', boxX + 8, boxY + 40);
+
+    requestAnimationFrame(draw);
+  }
+
+  // Hit testing for source buttons
+  function hitSource(mx, my) {
+    var bL = 50, bR = W - 15, bY = 38;
+    var bW = bR - bL;
+    var dbM = 160;
+    for (var i = 0; i < sounds.length; i++) {
+      var x = bL + (sounds[i].dB / dbM) * bW;
+      var r = i === selectedIdx ? 7 : 5;
+      var cy = bY - 8 - r;
+      if ((mx - x) * (mx - x) + (my - cy) * (my - cy) < (r + 4) * (r + 4)) return i;
+    }
+    return -1;
+  }
+
+  function getCanvasPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var touch = e.touches ? e.touches[0] : e;
+    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+  }
+
+  function onDown(e) {
+    var pos = getCanvasPos(e);
+    var srcHit = hitSource(pos.x, pos.y);
+    if (srcHit >= 0) { selectedIdx = srcHit; return; }
+    if (pos.y > 100 && pos.y < H) {
+      dragging = true;
+      updateListener(pos.x);
+    }
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    updateListener(getCanvasPos(e).x);
+  }
+
+  function onUp() { dragging = false; }
+
+  function updateListener(mx) {
+    var clamped = Math.max(srcX, Math.min(farX, mx));
+    listenerDist = Math.max(1, Math.min(maxDist, xToDist(clamped)));
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseup', onUp);
+  canvas.addEventListener('mouseleave', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: true });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  canvas.addEventListener('touchend', onUp);
+
   draw();
 }
 
@@ -11138,6 +11348,7 @@ function initPlaneWave3d() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const angleDeg = parseFloat(angleSlider?.value || 30);
     const angle = angleDeg * Math.PI / 180;
     document.getElementById('pw3d-angle-val')?.replaceChildren(document.createTextNode(angleDeg.toFixed(0) + '\u00B0'));
@@ -11282,6 +11493,7 @@ function initInterferenceDemo() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const dOverLambda = parseFloat(sepSlider?.value || 2);
     document.getElementById('intdemo-sep-val')?.replaceChildren(document.createTextNode(dOverLambda.toFixed(2)));
 
@@ -11618,143 +11830,257 @@ function initAmplitudeModulation() {
 // 20. Dispersion Relations
 // =========================================================================
 function initDispersionRelations() {
-  const canvas = document.getElementById('scene-dispersion-relations');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
+  const curveCanvas = document.getElementById('scene-disp-curve');
+  const waveCanvas = document.getElementById('scene-disp-wave');
+  if (!curveCanvas || !waveCanvas) return;
+  const cs = wSetupCanvas(curveCanvas);
+  const ws = wSetupCanvas(waveCanvas);
+  if (!cs || !ws) return;
+  const { ctx: cCtx, W: cW, H: cH } = cs;
+  const { ctx: wCtx, W: wW, H: wH } = ws;
 
-  let k0Slider = document.getElementById('disp-k0');
-  if (!k0Slider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>k\u2080: <input type="range" id="disp-k0" min="0.5" max="4" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>';
-      parent.appendChild(controls);
-      k0Slider = document.getElementById('disp-k0');
-    }
-  }
+  const k0Slider = document.getElementById('disp-k0');
+  const vpvgEl = document.getElementById('disp-vp-vg');
+  const radios = document.querySelectorAll('input[name="disp-rel"]');
 
   const relations = [
-    { name: 'Linear (\u03C9=ck)', fn: k => k, color: WCOLORS.teal },
-    { name: 'Deep water (\u03C9\u221D\u221Ak)', fn: k => Math.sqrt(k * 2), color: WCOLORS.amber },
-    { name: 'Capillary (\u03C9\u221Dk^(3/2))', fn: k => Math.pow(k, 1.5) * 0.7, color: WCOLORS.blue },
-    { name: 'Plasma (\u03C9\u00B2=\u03C9p\u00B2+c\u00B2k\u00B2)', fn: k => Math.sqrt(1 + k * k), color: WCOLORS.red },
+    { name: 'Non-dispersive', fn: k => k, color: WCOLORS.teal },
+    { name: 'Deep water', fn: k => Math.sqrt(k * 2), color: WCOLORS.amber },
+    { name: 'Capillary', fn: k => Math.pow(k, 1.5) * 0.7, color: WCOLORS.blue },
+    { name: 'Plasma', fn: k => Math.sqrt(1 + k * k), color: WCOLORS.red },
   ];
 
-  function draw() {
+  let selected = 0;
+  let t = 0;
+
+  function getSelected() {
+    for (const r of radios) { if (r.checked) return parseInt(r.value); }
+    return 0;
+  }
+
+  function getVpVg(rel, k0) {
+    const omega0 = rel.fn(k0);
+    const vp = omega0 / k0;
+    const dk = 0.001;
+    const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
+    const d2 = (rel.fn(k0 + dk) - 2 * omega0 + rel.fn(k0 - dk)) / (dk * dk);
+    return { omega0, vp, vg, d2 };
+  }
+
+  function drawCurve() {
     const k0 = parseFloat(k0Slider?.value || 2);
+    const rel = relations[selected];
     document.getElementById('disp-k0-val')?.replaceChildren(document.createTextNode(k0.toFixed(1)));
 
-    wClear(ctx, W, H);
+    wClear(cCtx, cW, cH);
 
-    const plotL = 50, plotR = W - 130, plotT = 30, plotB = H - 30;
+    const plotL = 40, plotR = cW - 12, plotT = 28, plotB = cH - 24;
     const plotW = plotR - plotL, plotH = plotB - plotT;
-    const kMax = 5, omegaMax = 6;
+    const kMax = 5.5, omegaMax = 6;
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Dispersion relations \u03C9(k)', plotL + plotW / 2, 16);
+    cCtx.fillStyle = WCOLORS.text; cCtx.font = 'bold 11px system-ui'; cCtx.textAlign = 'center';
+    cCtx.fillText('ω(k) curve', plotL + plotW / 2, 14);
 
     // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    cCtx.strokeStyle = WCOLORS.axis; cCtx.lineWidth = 1;
+    cCtx.beginPath(); cCtx.moveTo(plotL, plotB); cCtx.lineTo(plotR, plotB); cCtx.stroke();
+    cCtx.beginPath(); cCtx.moveTo(plotL, plotT); cCtx.lineTo(plotL, plotB); cCtx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('k', plotL + plotW / 2, plotB + 18);
-    ctx.save(); ctx.translate(plotL - 30, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
-    ctx.fillText('\u03C9', 0, 0); ctx.restore();
+    cCtx.fillStyle = WCOLORS.textDim; cCtx.font = '10px system-ui'; cCtx.textAlign = 'center';
+    cCtx.fillText('k', plotL + plotW / 2, plotB + 18);
+    cCtx.save(); cCtx.translate(plotL - 24, plotT + plotH / 2); cCtx.rotate(-Math.PI / 2);
+    cCtx.fillText('ω', 0, 0); cCtx.restore();
 
-    // Draw each curve
-    relations.forEach((rel, idx) => {
-      ctx.strokeStyle = rel.color; ctx.lineWidth = 2;
-      ctx.beginPath();
+    // Ghost all other curves lightly
+    relations.forEach((r, idx) => {
+      if (idx === selected) return;
+      cCtx.strokeStyle = r.color; cCtx.lineWidth = 1; cCtx.globalAlpha = 0.15;
+      cCtx.beginPath();
       for (let i = 0; i <= 200; i++) {
         const k = kMax * i / 200;
-        const omega = rel.fn(k);
+        const omega = r.fn(k);
         if (omega > omegaMax) break;
         const px = plotL + (k / kMax) * plotW;
         const py = plotB - (omega / omegaMax) * plotH;
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        i === 0 ? cCtx.moveTo(px, py) : cCtx.lineTo(px, py);
       }
-      ctx.stroke();
-
-      // Mark selected point
-      const omega0 = rel.fn(k0);
-      if (omega0 <= omegaMax) {
-        const px = plotL + (k0 / kMax) * plotW;
-        const py = plotB - (omega0 / omegaMax) * plotH;
-        ctx.fillStyle = rel.color;
-        ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
-
-        // vp = ω/k, vg = dω/dk
-        const vp = omega0 / k0;
-        const dk = 0.01;
-        const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
-
-        // Draw vp line (from origin)
-        ctx.strokeStyle = rel.color; ctx.lineWidth = 0.8; ctx.setLineDash([2, 4]);
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath(); ctx.moveTo(plotL, plotB);
-        const vpEndK = kMax;
-        const vpEndOmega = vp * vpEndK;
-        ctx.lineTo(plotL + plotW, plotB - Math.min(vpEndOmega / omegaMax, 1) * plotH);
-        ctx.stroke();
-        ctx.setLineDash([]); ctx.globalAlpha = 1;
-
-        // Draw vg tangent line at k0
-        ctx.strokeStyle = rel.color; ctx.lineWidth = 1.2; ctx.setLineDash([6, 3]);
-        ctx.globalAlpha = 0.7;
-        const tangentSpan = 1.5;
-        const tgK1 = Math.max(0, k0 - tangentSpan), tgK2 = Math.min(kMax, k0 + tangentSpan);
-        const tgOm1 = omega0 + vg * (tgK1 - k0), tgOm2 = omega0 + vg * (tgK2 - k0);
-        const tgPx1 = plotL + (tgK1 / kMax) * plotW, tgPy1 = plotB - (tgOm1 / omegaMax) * plotH;
-        const tgPx2 = plotL + (tgK2 / kMax) * plotW, tgPy2 = plotB - (tgOm2 / omegaMax) * plotH;
-        ctx.beginPath(); ctx.moveTo(tgPx1, Math.max(plotT, Math.min(plotB, tgPy1)));
-        ctx.lineTo(tgPx2, Math.max(plotT, Math.min(plotB, tgPy2))); ctx.stroke();
-        ctx.setLineDash([]); ctx.globalAlpha = 1;
-      }
-
-      // Legend
-      const legX = plotR + 15, legY = plotT + 15 + idx * 45;
-      ctx.fillStyle = rel.color; ctx.fillRect(legX, legY, 12, 3);
-      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(rel.name, legX + 16, legY + 4);
-
-      if (rel.fn(k0) <= omegaMax) {
-        const vp = rel.fn(k0) / k0;
-        const dk = 0.01;
-        const vg = (rel.fn(k0 + dk) - rel.fn(k0 - dk)) / (2 * dk);
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-        ctx.fillText('vp=' + vp.toFixed(2), legX + 16, legY + 16);
-        ctx.fillText('vg=' + vg.toFixed(2), legX + 16, legY + 28);
-      }
+      cCtx.stroke();
+      cCtx.globalAlpha = 1;
     });
 
-    // k0 vertical line
-    const k0x = plotL + (k0 / kMax) * plotW;
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(k0x, plotT); ctx.lineTo(k0x, plotB); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('k\u2080', k0x, plotB + 14);
+    // Draw selected curve prominently
+    cCtx.strokeStyle = rel.color; cCtx.lineWidth = 2.5;
+    cCtx.beginPath();
+    for (let i = 0; i <= 200; i++) {
+      const k = kMax * i / 200;
+      const omega = rel.fn(k);
+      if (omega > omegaMax) break;
+      const px = plotL + (k / kMax) * plotW;
+      const py = plotB - (omega / omegaMax) * plotH;
+      i === 0 ? cCtx.moveTo(px, py) : cCtx.lineTo(px, py);
+    }
+    cCtx.stroke();
 
-    // Line type legend
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.8; ctx.setLineDash([2, 4]);
-    ctx.beginPath(); ctx.moveTo(plotL + 5, plotT + 10); ctx.lineTo(plotL + 20, plotT + 10); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillText('vp = \u03C9/k (slope from origin)', plotL + 24, plotT + 13);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.2; ctx.setLineDash([6, 3]);
-    ctx.beginPath(); ctx.moveTo(plotL + 5, plotT + 22); ctx.lineTo(plotL + 20, plotT + 22); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillText('vg = d\u03C9/dk (tangent)', plotL + 24, plotT + 25);
+    const { omega0, vp, vg } = getVpVg(rel, k0);
+    if (omega0 > omegaMax) return;
+
+    const px = plotL + (k0 / kMax) * plotW;
+    const py = plotB - (omega0 / omegaMax) * plotH;
+
+    // vp line: from origin through (k0, omega0)
+    cCtx.strokeStyle = WCOLORS.red; cCtx.lineWidth = 1.2; cCtx.setLineDash([3, 4]);
+    cCtx.globalAlpha = 0.7;
+    cCtx.beginPath(); cCtx.moveTo(plotL, plotB);
+    const vpEndOmega = vp * kMax;
+    cCtx.lineTo(plotL + plotW, plotB - Math.min(vpEndOmega / omegaMax, 1) * plotH);
+    cCtx.stroke();
+    cCtx.setLineDash([]); cCtx.globalAlpha = 1;
+
+    // vg tangent line
+    cCtx.strokeStyle = WCOLORS.blue; cCtx.lineWidth = 1.5; cCtx.setLineDash([6, 3]);
+    cCtx.globalAlpha = 0.8;
+    const tangentSpan = 1.8;
+    const tgK1 = Math.max(0, k0 - tangentSpan), tgK2 = Math.min(kMax, k0 + tangentSpan);
+    const tgOm1 = omega0 + vg * (tgK1 - k0), tgOm2 = omega0 + vg * (tgK2 - k0);
+    const tgPx1 = plotL + (tgK1 / kMax) * plotW, tgPy1 = plotB - (tgOm1 / omegaMax) * plotH;
+    const tgPx2 = plotL + (tgK2 / kMax) * plotW, tgPy2 = plotB - (tgOm2 / omegaMax) * plotH;
+    cCtx.beginPath();
+    cCtx.moveTo(tgPx1, Math.max(plotT, Math.min(plotB, tgPy1)));
+    cCtx.lineTo(tgPx2, Math.max(plotT, Math.min(plotB, tgPy2)));
+    cCtx.stroke();
+    cCtx.setLineDash([]); cCtx.globalAlpha = 1;
+
+    // Dot on curve
+    cCtx.fillStyle = rel.color;
+    cCtx.beginPath(); cCtx.arc(px, py, 5, 0, Math.PI * 2); cCtx.fill();
+    cCtx.strokeStyle = '#fff'; cCtx.lineWidth = 1.5;
+    cCtx.beginPath(); cCtx.arc(px, py, 5, 0, Math.PI * 2); cCtx.stroke();
+
+    // Legend for vp / vg lines
+    const legY = plotT + 6;
+    cCtx.font = '10px system-ui'; cCtx.textAlign = 'left';
+    cCtx.strokeStyle = WCOLORS.red; cCtx.lineWidth = 1.2; cCtx.setLineDash([3, 4]);
+    cCtx.beginPath(); cCtx.moveTo(plotL + 4, legY); cCtx.lineTo(plotL + 18, legY); cCtx.stroke();
+    cCtx.setLineDash([]);
+    cCtx.fillStyle = WCOLORS.red;
+    cCtx.fillText('vₚ = ω/k', plotL + 21, legY + 3);
+    cCtx.strokeStyle = WCOLORS.blue; cCtx.lineWidth = 1.5; cCtx.setLineDash([6, 3]);
+    cCtx.beginPath(); cCtx.moveTo(plotL + 4, legY + 14); cCtx.lineTo(plotL + 18, legY + 14); cCtx.stroke();
+    cCtx.setLineDash([]);
+    cCtx.fillStyle = WCOLORS.blue;
+    cCtx.fillText('vᵍ = dω/dk', plotL + 21, legY + 17);
+
+    // Update readout
+    if (vpvgEl) {
+      const ratio = vg / vp;
+      vpvgEl.textContent = 'vₚ = ' + vp.toFixed(2) + '    vᵍ = ' + vg.toFixed(2) + '    vᵍ/vₚ = ' + ratio.toFixed(2);
+    }
   }
 
-  k0Slider?.addEventListener('input', draw);
-  draw();
+  function drawWave() {
+    const k0 = parseFloat(k0Slider?.value || 2);
+    const rel = relations[selected];
+    const { omega0, vp, vg, d2 } = getVpVg(rel, k0);
+
+    wClear(wCtx, wW, wH);
+
+    wCtx.fillStyle = WCOLORS.text; wCtx.font = 'bold 11px system-ui'; wCtx.textAlign = 'center';
+    wCtx.fillText('Wavepacket at this k₀', wW / 2, 14);
+
+    const midY = wH / 2;
+    const amp = wH * 0.28;
+    const margin = 10;
+
+    // Zero line
+    wCtx.strokeStyle = WCOLORS.grid; wCtx.lineWidth = 0.5;
+    wCtx.beginPath(); wCtx.moveTo(margin, midY); wCtx.lineTo(wW - margin, midY); wCtx.stroke();
+
+    const sigma = 3.0;
+    const xMin = -20, xMax = 20;
+    const nPts = 400;
+
+    // Compute spreading envelope width
+    const spreadFactor = 1 + (d2 * d2 * t * t) / (sigma * sigma * sigma * sigma);
+    const sigmaT = sigma * Math.sqrt(spreadFactor);
+    const ampScale = 1 / Math.sqrt(Math.sqrt(spreadFactor));
+
+    // Draw envelope (dashed)
+    wCtx.strokeStyle = rel.color; wCtx.lineWidth = 1; wCtx.setLineDash([4, 3]);
+    wCtx.globalAlpha = 0.5;
+    for (let sign = -1; sign <= 1; sign += 2) {
+      wCtx.beginPath();
+      for (let i = 0; i <= nPts; i++) {
+        const x = xMin + (xMax - xMin) * i / nPts;
+        const envArgT = (x - vg * t) / sigmaT;
+        const env = Math.exp(-0.5 * envArgT * envArgT) * ampScale;
+        const px = margin + ((x - xMin) / (xMax - xMin)) * (wW - 2 * margin);
+        const py = midY - sign * env * amp;
+        i === 0 ? wCtx.moveTo(px, py) : wCtx.lineTo(px, py);
+      }
+      wCtx.stroke();
+    }
+    wCtx.setLineDash([]); wCtx.globalAlpha = 1;
+
+    // Draw wavepacket
+    wCtx.strokeStyle = rel.color; wCtx.lineWidth = 1.8;
+    wCtx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const x = xMin + (xMax - xMin) * i / nPts;
+      const envArgT = (x - vg * t) / sigmaT;
+      const env = Math.exp(-0.5 * envArgT * envArgT) * ampScale;
+      const carrier = Math.cos(k0 * x - omega0 * t);
+      const y = env * carrier;
+      const px = margin + ((x - xMin) / (xMax - xMin)) * (wW - 2 * margin);
+      const py = midY - y * amp;
+      i === 0 ? wCtx.moveTo(px, py) : wCtx.lineTo(px, py);
+    }
+    wCtx.stroke();
+
+    // Labels
+    wCtx.font = '10px system-ui'; wCtx.textAlign = 'left';
+    wCtx.fillStyle = WCOLORS.red; wCtx.globalAlpha = 0.8;
+    wCtx.fillText('vₚ → crests', margin, wH - 28);
+    wCtx.fillStyle = WCOLORS.blue;
+    wCtx.fillText('vᵍ → envelope', margin, wH - 14);
+    wCtx.globalAlpha = 1;
+
+    // Spreading indicator
+    if (Math.abs(d2) > 0.01 && spreadFactor > 1.05) {
+      wCtx.fillStyle = WCOLORS.textDim; wCtx.font = '10px system-ui'; wCtx.textAlign = 'right';
+      wCtx.fillText('spreading ×' + Math.sqrt(spreadFactor).toFixed(1), wW - margin, wH - 14);
+    }
+
+    // vg direction arrow at envelope center
+    const envCenterX = vg * t;
+    if (envCenterX > xMin && envCenterX < xMax) {
+      const arrowPx = margin + ((envCenterX - xMin) / (xMax - xMin)) * (wW - 2 * margin);
+      const arrowY = wH - 42;
+      wCtx.strokeStyle = WCOLORS.blue; wCtx.lineWidth = 2;
+      wCtx.beginPath();
+      wCtx.moveTo(arrowPx, arrowY); wCtx.lineTo(arrowPx + 15, arrowY);
+      wCtx.lineTo(arrowPx + 10, arrowY - 4); wCtx.moveTo(arrowPx + 15, arrowY);
+      wCtx.lineTo(arrowPx + 10, arrowY + 4);
+      wCtx.stroke();
+    }
+  }
+
+  function animate() {
+    t += 0.04;
+    if (t > 25) t = 0;
+    drawCurve();
+    drawWave();
+    requestAnimationFrame(animate);
+  }
+
+  function onInput() {
+    selected = getSelected();
+    t = 0;
+  }
+
+  k0Slider?.addEventListener('input', onInput);
+  radios.forEach(r => r.addEventListener('change', onInput));
+
+  animate();
 }
 
 // =========================================================================
@@ -11784,6 +12110,7 @@ function initPhaseVelocityDemo() {
   if (dkSlider) dkSlider.addEventListener('input', onPvdInput);
 
   function tick() {
+    if (!canvas.isConnected) return;
     t += 0.02;
     wClear(ctx, W, H);
 
@@ -11899,6 +12226,7 @@ function initGroupVelocityDemo() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const dispersion = parseFloat(dispSlider?.value || 1);
     document.getElementById('gvd-disp-val')?.replaceChildren(document.createTextNode(dispersion.toFixed(1)));
 
@@ -12053,6 +12381,7 @@ function initWavepacketDispersion() {
   let t = 0;
 
   function tick() {
+    if (!canvas.isConnected) return;
     const alpha = parseFloat(dispSlider?.value || 0.15);
     document.getElementById('wpdisp-d-val')?.replaceChildren(document.createTextNode(alpha.toFixed(2)));
 
@@ -13208,6 +13537,7 @@ function initMonopoleRadiationPattern() {
   if (expSlider) expSlider.addEventListener('input', onMrpInput);
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.03;
     wClear(ctx, W, H);
 
@@ -13348,6 +13678,7 @@ function initTwoSourceInterference() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.04;
     wClear(ctx, W, H);
 
@@ -13704,6 +14035,7 @@ function initHuygensPrincipleDemo() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.06;
     wClear(ctx, W, H);
 
@@ -14242,6 +14574,7 @@ function initPhotoelectricEffectDemo() {
   }
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.03;
     wClear(ctx, W, H);
 
@@ -14460,6 +14793,7 @@ function initDoubleSlitPhotonBuildup() {
   });
 
   function tick() {
+    if (!canvas.isConnected) return;
     // Add new photons
     for (let i = 0; i < speed; i++) {
       const y = sampleY();
@@ -14704,6 +15038,7 @@ function initQuantumWavepacketDispersion() {
   const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.008;
     wClear(ctx, W, H);
 
@@ -14840,6 +15175,7 @@ function initDopplerMovingSource() {
   const emitInterval = 18;
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 1;
 
     // Source position
@@ -14944,6 +15280,7 @@ function initDopplerAngle() {
   if (speedSlider) speedSlider.addEventListener('input', onDaInput);
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.03;
     wClear(ctx, W, H);
 
@@ -15079,6 +15416,7 @@ function initSonicBoomMachCone() {
   const emitInterval = 12;
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 1;
 
     const sourceSpeed = mach * soundSpeed;
@@ -15319,6 +15657,7 @@ function initDopplerSpectroscopyExoplanet() {
   const orbitR = Math.min(W * 0.15, H * 0.25);
 
   function tick() {
+    if (!canvas.isConnected) return;
     time += 0.02;
     wClear(ctx, W, H);
 

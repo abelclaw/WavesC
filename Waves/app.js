@@ -3777,12 +3777,9 @@ function sceneMarkup(type) {
     case "decibel-scale":
       return `
         <div class="scene-label">Decibel Scale</div>
-        <p class="scene-caption">Common sounds on the dB scale. Sound intensity drops as 1/r&sup2; with distance from the source.</p>
+        <p class="scene-caption">Select a sound source and drag the listener to see how intensity drops with distance. Each doubling of distance costs 6 dB.</p>
         <div class="interactive-scene">
           <canvas id="scene-decibel-scale" width="600" height="320"></canvas>
-          <div class="scene-controls">
-            <label><span>Distance (m): </span><input type="range" id="db-dist" min="1" max="100" step="1" value="1"><span class="scene-val" id="db-dist-val">1 m</span></label>
-          </div>
         </div>
       `;
     case "plane-wave-3d":
@@ -3824,24 +3821,34 @@ function sceneMarkup(type) {
       `;
     case "amplitude-modulation":
       return `
-        <div class="scene-label">Amplitude Modulation</div>
-        <p class="scene-caption">A slowly varying envelope modulates a high-frequency carrier. Sidebands appear in the frequency domain.</p>
+        <div class="scene-label">AM Radio: Bandwidth &amp; Information</div>
+        <p class="scene-caption">Gaussian wavepackets encode information on a carrier. Narrower pulses carry more data but require more bandwidth: &Delta;f = 1/(2&pi;&sigma;<sub>t</sub>).</p>
         <div class="interactive-scene">
-          <canvas id="scene-amplitude-modulation" width="600" height="300"></canvas>
+          <canvas id="scene-amplitude-modulation" width="600" height="400"></canvas>
           <div class="scene-controls">
-            <label><span>f<sub>c</sub>: </span><input type="range" id="am-fc" min="20" max="100" step="5" value="50"><span class="scene-val" id="am-fc-val">50</span></label>
-            <label><span>f<sub>m</sub>: </span><input type="range" id="am-fm" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="am-fm-val">5.0</span></label>
+            <label><span>&sigma;<sub>t</sub> (pulse width): </span><input type="range" id="am-sigma" min="0.3" max="3.0" step="0.1" value="1.0"><span class="scene-val" id="am-sigma-val">1.0</span></label>
+            <label><span>f<sub>c</sub> (carrier): </span><input type="range" id="am-fc" min="8" max="40" step="1" value="20"><span class="scene-val" id="am-fc-val">20</span></label>
           </div>
         </div>
       `;
     case "dispersion-relations":
       return `
         <div class="scene-label">Dispersion Relations</div>
-        <p class="scene-caption">Different media have different &omega;(k) curves. The slope at any point gives the group velocity.</p>
+        <p class="scene-caption">The &omega;(k) curve encodes everything: slope from origin = v<sub>p</sub>, tangent slope = v<sub>g</sub>, curvature = spreading.</p>
         <div class="interactive-scene">
-          <canvas id="scene-dispersion-relations" width="600" height="300"></canvas>
-          <div class="scene-controls">
-            <label><span>k<sub>0</sub>: </span><input type="range" id="disp-k0" min="0.5" max="5" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>
+          <div style="display:flex;gap:4px;align-items:start;">
+            <canvas id="scene-disp-curve" width="310" height="280"></canvas>
+            <canvas id="scene-disp-wave" width="290" height="280"></canvas>
+          </div>
+          <div class="scene-controls" style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;">
+            <label><span>k<sub>0</sub>: </span><input type="range" id="disp-k0" min="0.3" max="5" step="0.1" value="2"><span class="scene-val" id="disp-k0-val">2.0</span></label>
+            <span style="font-size:12px;color:#596166;" id="disp-vp-vg"></span>
+          </div>
+          <div class="scene-controls" style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;">
+            <label><input type="radio" name="disp-rel" value="0" checked> Non-dispersive (&omega;=ck)</label>
+            <label><input type="radio" name="disp-rel" value="1"> Deep water (&omega;=&radic;gk)</label>
+            <label><input type="radio" name="disp-rel" value="2"> Capillary (&omega;&prop;k<sup>3/2</sup>)</label>
+            <label><input type="radio" name="disp-rel" value="3"> Plasma (&omega;&sup2;=&omega;<sub>p</sub>&sup2;+c&sup2;k&sup2;)</label>
           </div>
         </div>
       `;
