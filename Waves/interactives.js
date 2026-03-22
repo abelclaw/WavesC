@@ -5361,14 +5361,26 @@ function initSoundWaveLongitudinal() {
 
   let t = 0;
 
-  // Air molecule grid
-  const cols = 80;
-  const rows = 14;
-  const ampDisp = 6; // max displacement in px
+  const ampDisp = 7; // max radial displacement in px
 
-  // Source: vibrating plate/speaker on the left
-  const srcX = 55;
-  const srcW = 10;
+  // Pre-build dot positions: concentric semicircular arcs of dots
+  // Each arc is at a fixed equilibrium radius; dots are spaced along the arc
+  const numArcs = 40;       // number of concentric arcs
+  const arcSpacing = 12;    // px between arcs (equilibrium)
+  const dotAngularGap = 12; // px gap between dots along each arc
+  const angleSpan = 0.9;    // half-angle in radians (~52°)
+
+  const dots = []; // { eqR, angle } — equilibrium radius and angle
+  for (let i = 0; i < numArcs; i++) {
+    const eqR = 15 + i * arcSpacing;
+    // Number of dots on this arc: arc length / gap
+    const arcLen = 2 * angleSpan * eqR;
+    const nDots = Math.max(3, Math.round(arcLen / dotAngularGap));
+    for (let j = 0; j < nDots; j++) {
+      const angle = -angleSpan + (2 * angleSpan) * (j + 0.5) / nDots;
+      dots.push({ eqR, angle });
+    }
+  }
 
   function tick() {
     const freq = parseFloat(freqSlider?.value || 1.2);
@@ -5381,61 +5393,62 @@ function initSoundWaveLongitudinal() {
 
     const airL = 30;
     const airR = W - 10;
-    const airT = 30;
-    const airB = H - 22;
-    const airW = airR - airL;
-    const airH = airB - airT;
+    const airT = 28;
+    const airB = H - 20;
 
-    const k = freq * 0.08; // wave number
-    const omega = freq * 3.0; // angular frequency
-    const waveSpeed = omega / k; // phase velocity in px/frame-unit
-    const wl = 2 * Math.PI / k; // wavelength in px
+    const k = freq * 0.08;
+    const omega = freq * 3.0;
+    const waveSpeed = omega / k;
+    const wl = 2 * Math.PI / k;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Radial Sound Wave from Point Source', W / 2, 16);
+    ctx.fillText('Radial Longitudinal Sound Wave', W / 2, 16);
 
-    // Source position — point source at left edge, vertically centered
+    // Source at left edge, vertically centered
     const srcCX = airL;
     const srcCY = (airT + airB) / 2;
 
-    // Background fill for the air region
-    ctx.fillStyle = '#1a3a42';
-    ctx.fillRect(airL, airT, airW, airH);
-
-    // Clip to air region for the rings
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(airL, airT, airW, airH);
-    ctx.clip();
-
-    // Wavefront propagation radius
+    // Wavefront radius
     const wavefrontR = waveSpeed * t;
 
-    // Draw concentric ring bands as thick arcs
-    // Each ring is a half-wavelength wide, alternating compression/rarefaction
-    const maxR = Math.min(wavefrontR, airW + airH);
-    const ringStep = 2; // px step for smooth rendering
-    for (let r = 5; r < maxR; r += ringStep) {
-      // Envelope ramps up over one wavelength behind the wavefront
-      const distBehindFront = wavefrontR - r;
-      if (distBehindFront < 0) continue;
-      const envelope = Math.min(1, distBehindFront / (wl * 0.8));
+    // Clip to drawing region
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(airL - 4, airT, airR - airL + 8, airB - airT);
+    ctx.clip();
 
-      // Pressure: cos(kr - ωt), no decay so rings stay visible at distance
-      const pressure = envelope * Math.cos(k * r - omega * t);
+    // Draw each dot displaced radially
+    for (let i = 0; i < dots.length; i++) {
+      const { eqR, angle } = dots[i];
 
-      // Map to brightness: compression = bright teal, rarefaction = dark
-      const brightness = 0.25 + 0.75 * (1 + pressure) / 2;
-      const cr = Math.round(70 * brightness);
-      const cg = Math.round(190 * brightness);
-      const cb = Math.round(210 * brightness);
+      // Radial displacement: longitudinal oscillation along the radial direction
+      let disp = 0;
+      let normDens = 0;
+      if (eqR < wavefrontR) {
+        const distBehindFront = wavefrontR - eqR;
+        const envelope = Math.min(1, distBehindFront / (wl * 0.8));
+        disp = ampDisp * envelope * Math.sin(k * eqR - omega * t);
+        // Density ~ -d(displacement)/dr = compression indicator
+        normDens = envelope * Math.cos(k * eqR - omega * t);
+      }
 
-      ctx.strokeStyle = `rgb(${cr}, ${cg}, ${cb})`;
-      ctx.lineWidth = ringStep + 0.5;
+      const r = eqR + disp;
+      const x = srcCX + r * Math.cos(angle);
+      const y = srcCY + r * Math.sin(angle);
+
+      // Brightness from density: compression = bright, rarefaction = dim
+      const brightness = 0.3 + 0.6 * (1 + normDens) / 2;
+      const dotSize = 1.8 + 1.0 * (1 + normDens) / 2;
+
+      const cr = Math.round(90 * brightness);
+      const cg = Math.round(200 * brightness);
+      const cb = Math.round(220 * brightness);
+
+      ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.5 + 0.5 * brightness})`;
       ctx.beginPath();
-      ctx.arc(srcCX, srcCY, r, -Math.PI * 0.48, Math.PI * 0.48);
-      ctx.stroke();
+      ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.restore();
@@ -5448,32 +5461,12 @@ function initSoundWaveLongitudinal() {
 
     // Source label
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Source', srcCX, airB + 14);
-
-    // C / R labels along the center line
-    if (wavefrontR > wl * 1.5) {
-      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      const refPhase = omega * t;
-      for (let n = 0; n < 8; n++) {
-        // Compression peaks: cos(kr - ωt) = 1 => kr - ωt = 2nπ => r = (2nπ + ωt)/k
-        const compR = (2 * n * Math.PI + refPhase) / k;
-        if (compR > 20 && compR < Math.min(wavefrontR - 15, airW - 10)) {
-          ctx.fillStyle = 'rgba(180, 230, 240, 0.7)';
-          ctx.fillText('C', srcCX + compR, srcCY - 6);
-        }
-        // Rarefaction: cos = -1 => kr - ωt = (2n+1)π
-        const rarR = ((2 * n + 1) * Math.PI + refPhase) / k;
-        if (rarR > 20 && rarR < Math.min(wavefrontR - 15, airW - 10)) {
-          ctx.fillStyle = 'rgba(100, 150, 160, 0.7)';
-          ctx.fillText('R', srcCX + rarR, srcCY - 6);
-        }
-      }
-    }
+    ctx.fillText('Source', srcCX, airB + 13);
 
     // Legend
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('C = compression   R = rarefaction', airL + 5, H - 4);
+    ctx.fillText('Dots displaced radially — bright = compression, dim = rarefaction', airR, H - 4);
 
     requestAnimationFrame(tick);
   }
