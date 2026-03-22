@@ -7178,18 +7178,12 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(60, longY); ctx.lineTo(W - 60, longY); ctx.stroke();
     ctx.setLineDash([]);
 
+    ctx.fillStyle = WCOLORS.teal;
     for (let i = 0; i < N; i++) {
       const eqX = 70 + i * spacing;
       const dx = amp * 0.7 * Math.sin(k * eqX - omega * t);
       const px = eqX + dx;
-
-      // Color by compression/rarefaction
-      const density = -amp * 0.7 * k * Math.cos(k * eqX - omega * t);
-      const c = density > 0 ? WCOLORS.blue : WCOLORS.red;
-      ctx.fillStyle = c;
-      ctx.globalAlpha = 0.4 + 0.6 * Math.min(Math.abs(density) / (amp * 0.7 * k), 1);
       ctx.beginPath(); ctx.arc(px, longY, 4, 0, 2 * Math.PI); ctx.fill();
-      ctx.globalAlpha = 1;
     }
 
     // Displacement arrow (horizontal)
@@ -7209,10 +7203,6 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY2); ctx.lineTo(W / 2 + 34, propArrowY2 - 4); ctx.lineTo(W / 2 + 34, propArrowY2 + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
 
-    // Compression/rarefaction labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('● compression', 20, H - 8);
-    ctx.fillStyle = WCOLORS.red; ctx.fillText('● rarefaction', 120, H - 8);
   }
 
   tick();
