@@ -10132,15 +10132,9 @@ function initStringJunction() {
     const r = (zRatio - 1) / (zRatio + 1); // reflected amplitude fraction
     const tr = 2 / (zRatio + 1); // transmitted amplitude fraction
 
-    // String thickness
-    const thick1 = 3;
-    const thick2 = 3 * Math.sqrt(zRatio);
-
-    // Draw junction marker
-    ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(jx, midY, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Junction (x = 0)', jx, midY + 55);
+    // String thickness — right side noticeably heavier
+    const thick1 = 2;
+    const thick2 = 2 + 5 * Math.sqrt(zRatio);
 
     // Gaussian pulse parameters
     const sigma = 30; // width in pixels
@@ -10152,16 +10146,48 @@ function initStringJunction() {
       return Math.exp(-dx * dx / (2 * s * s));
     }
 
-    // Draw string 1 (left side)
+    // Compute junction y so both halves meet exactly
+    let junctionY = midY;
+    if (pulseCenter < jx + sigma * 3) {
+      junctionY -= amp * gaussPulse(jx, pulseCenter, sigma);
+    }
+    if (pulseCenter > jx - sigma) {
+      const refCenter = 2 * jx - pulseCenter;
+      junctionY -= amp * r * gaussPulse(jx, refCenter, sigma);
+    }
+
+    // Draw junction marker
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(jx, junctionY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Junction (x = 0)', jx, midY + 55);
+
+    ctx.lineCap = 'round';
+
+    // Draw string 2 (right side) first — thicker, drawn underneath
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
+    ctx.beginPath();
+    ctx.moveTo(jx, junctionY);
+    for (let x = jx + 1; x <= stringR; x++) {
+      let y = midY;
+      if (pulseCenter > jx - sigma) {
+        const transSpeed = speed / Math.sqrt(zRatio);
+        const delay = (jx - stringL) / speed;
+        const transCenter = jx + transSpeed * (t - delay);
+        y -= amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
+      }
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Draw string 1 (left side) on top — thinner
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
     ctx.beginPath();
     for (let x = stringL; x <= jx; x++) {
       let y = midY;
-      // Incident pulse
       if (pulseCenter < jx + sigma * 3) {
         y -= amp * gaussPulse(x, pulseCenter, sigma);
       }
-      // Reflected pulse (only after it has reached junction)
       if (pulseCenter > jx - sigma) {
         const refCenter = 2 * jx - pulseCenter;
         y -= amp * r * gaussPulse(x, refCenter, sigma);
@@ -10170,33 +10196,19 @@ function initStringJunction() {
     }
     ctx.stroke();
 
-    // Draw string 2 (right side)
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = Math.max(1.5, thick2);
-    ctx.beginPath();
-    for (let x = jx; x <= stringR; x++) {
-      let y = midY;
-      // Transmitted pulse (only after it reaches junction)
-      if (pulseCenter > jx - sigma) {
-        const transSpeed = speed / Math.sqrt(zRatio);
-        const delay = (jx - stringL) / speed;
-        const transCenter = jx + transSpeed * (t - delay);
-        y -= amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
-      }
-      x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
+    ctx.lineCap = 'butt';
 
     // Labels
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('String 1', stringL, 25);
-    ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.teal; ctx.textAlign = 'right';
     ctx.fillText('String 2', stringR, 25);
 
     // Z labels on each side of junction
     ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
     ctx.fillStyle = WCOLORS.teal;
     ctx.fillText('Z\u2081', jx - 40, midY + 40);
-    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillStyle = WCOLORS.teal;
     ctx.fillText('Z\u2082', jx + 40, midY + 40);
 
     // Coefficients with formulas
