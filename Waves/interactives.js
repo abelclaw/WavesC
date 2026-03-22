@@ -5348,6 +5348,12 @@ function initSoundWaveLongitudinal() {
   const freqSlider = document.getElementById('swl-freq');
 
   let t = 0;
+  let paused = false;
+  const pauseBtn = document.getElementById('swl-pause');
+  pauseBtn?.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Play' : 'Pause';
+  });
 
   const ampDisp = 7; // max radial displacement in px
 
@@ -5377,7 +5383,7 @@ function initSoundWaveLongitudinal() {
     document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
     document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
 
-    t += 0.02;
+    if (!paused) t += 0.02;
     wClear(ctx, W, H);
 
     const airL = 30;

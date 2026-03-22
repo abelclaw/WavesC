@@ -3472,6 +3472,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
           <div class="scene-controls">
+            <button id="swl-pause" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Pause</button>
             <label><span>Wavelength λ: </span><input type="range" id="swl-wl" min="30" max="200" step="5" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
             <label><span>Frequency f: </span><input type="range" id="swl-freq" min="0.3" max="3" step="0.1" value="1.0"><span class="scene-val" id="swl-freq-val">1.0</span></label>
           </div>
