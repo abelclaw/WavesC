@@ -9656,10 +9656,12 @@ function initFourierMagnitudePhase() {
 
   function makeSignal(type) {
     const arr = new Array(N);
+    const periods = (type === 'pulse') ? 1 : 4;
     for (let i = 0; i < N; i++) {
-      if (type === 'square') arr[i] = (i < N / 2) ? 1 : -1;
-      else if (type === 'triangle') arr[i] = 1 - 4 * Math.abs(i / N - 0.5);
-      else if (type === 'sawtooth') arr[i] = 2 * i / N - 1;
+      const t = (i * periods / N) % 1;          // phase within current period [0,1)
+      if (type === 'square') arr[i] = (t < 0.5) ? 1 : -1;
+      else if (type === 'triangle') arr[i] = 1 - 4 * Math.abs(t - 0.5);
+      else if (type === 'sawtooth') arr[i] = 2 * t - 1;
       else if (type === 'pulse') arr[i] = (i > N * 0.4 && i < N * 0.6) ? 1 : 0;
     }
     return arr;
@@ -9734,8 +9736,14 @@ function initFourierMagnitudePhase() {
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke();
-    ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText(label, x0 + 2, y0 + 12);
+    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
+    const labelX = x0 + w - 3;
+    const labelY = y0 + 12;
+    const lw = ctx.measureText(label).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(labelX - lw - 3, labelY - 10, lw + 6, 13);
+    ctx.fillStyle = color;
+    ctx.fillText(label, labelX, labelY);
   }
 
   function draw() {
@@ -9915,8 +9923,14 @@ function initFourierFiltering() {
       i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
     }
     ctx.stroke();
-    ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText(label, x0 + 2, y0 + 12);
+    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
+    const labelX = x0 + w - 3;
+    const labelY = y0 + 12;
+    const lw = ctx.measureText(label).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(labelX - lw - 3, labelY - 10, lw + 6, 13);
+    ctx.fillStyle = color;
+    ctx.fillText(label, labelX, labelY);
   }
 
   function draw() {
