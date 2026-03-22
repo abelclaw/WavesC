@@ -9659,8 +9659,45 @@ function initFourierMagnitudePhase() {
 
   const N = 128; // image size (must be power of 2 for FFT)
 
+  // --- Image cache ---
+  const imageCache = {};
+
+  // Photo-based images (loaded from files)
+  const photoImages = ['cat', 'panda', 'einstein', 'sunflower', 'butterfly', 'guitar'];
+
+  // --- Load an image file and extract NxN grayscale pixels ---
+  function loadImageFile(name) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const oc = document.createElement('canvas');
+        oc.width = N; oc.height = N;
+        const g = oc.getContext('2d');
+        // Draw centered and cropped to square
+        const s = Math.min(img.width, img.height);
+        const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+        g.drawImage(img, sx, sy, s, s, 0, 0, N, N);
+        const imgData = g.getImageData(0, 0, N, N);
+        const pixels = new Float64Array(N * N);
+        for (let i = 0; i < N * N; i++) {
+          // Convert to grayscale using luminance weights
+          const r = imgData.data[i * 4];
+          const gr = imgData.data[i * 4 + 1];
+          const b = imgData.data[i * 4 + 2];
+          pixels[i] = (0.299 * r + 0.587 * gr + 0.114 * b) / 255;
+        }
+        resolve(pixels);
+      };
+      img.onerror = () => {
+        // Fallback to procedural star if image fails to load
+        resolve(makeProceduralImage('star'));
+      };
+      img.src = 'images/' + name + '.png';
+    });
+  }
+
   // --- Procedural image generators (draw white on black, N×N) ---
-  function drawImage(type) {
+  function makeProceduralImage(type) {
     const oc = document.createElement('canvas');
     oc.width = N; oc.height = N;
     const g = oc.getContext('2d');
@@ -9677,51 +9714,35 @@ function initFourierMagnitudePhase() {
         i === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
       }
       g.closePath(); g.fill();
-    } else if (type === 'heart') {
-      g.beginPath();
-      const s = N * 0.028;
-      g.moveTo(cx, cy + s * 12);
-      g.bezierCurveTo(cx + s * 16, cy - s * 2, cx + s * 10, cy - s * 14, cx, cy - s * 6);
-      g.bezierCurveTo(cx - s * 10, cy - s * 14, cx - s * 16, cy - s * 2, cx, cy + s * 12);
-      g.fill();
-    } else if (type === 'circle') {
-      g.beginPath(); g.arc(cx, cy, N * 0.35, 0, 2 * Math.PI); g.fill();
-    } else if (type === 'arrow') {
-      g.lineWidth = N * 0.08; g.lineCap = 'round'; g.lineJoin = 'round';
-      g.beginPath();
-      g.moveTo(N * 0.15, cy); g.lineTo(N * 0.85, cy);
-      g.moveTo(N * 0.6, N * 0.25); g.lineTo(N * 0.85, cy); g.lineTo(N * 0.6, N * 0.75);
-      g.stroke();
-    } else if (type === 'letterF') {
-      g.font = `bold ${N * 0.75}px serif`;
-      g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText('F', cx, cy + N * 0.04);
     } else if (type === 'checkerboard') {
       const sq = N / 8;
       for (let r = 0; r < 8; r++)
         for (let c = 0; c < 8; c++)
           if ((r + c) % 2 === 0) g.fillRect(c * sq, r * sq, sq, sq);
-    } else if (type === 'stripes') {
-      for (let i = 0; i < 8; i++)
-        g.fillRect(0, i * N / 8, N, N / 16);
-    } else if (type === 'diamond') {
-      g.beginPath();
-      g.moveTo(cx, N * 0.08); g.lineTo(N * 0.92, cy);
-      g.lineTo(cx, N * 0.92); g.lineTo(N * 0.08, cy);
-      g.closePath(); g.fill();
     }
 
-    // Extract grayscale pixel data
     const imgData = g.getImageData(0, 0, N, N);
     const pixels = new Float64Array(N * N);
     for (let i = 0; i < N * N; i++) pixels[i] = imgData.data[i * 4] / 255;
     return pixels;
   }
 
+  // --- Get image pixels (async, uses cache) ---
+  async function getImage(type) {
+    if (imageCache[type]) return imageCache[type];
+    let pixels;
+    if (photoImages.includes(type)) {
+      pixels = await loadImageFile(type);
+    } else {
+      pixels = makeProceduralImage(type);
+    }
+    imageCache[type] = pixels;
+    return pixels;
+  }
+
   // --- Cooley-Tukey radix-2 FFT (1D, in-place) ---
   function fft1d(re, im, invert) {
     const n = re.length;
-    // bit-reversal permutation
     for (let i = 1, j = 0; i < n; i++) {
       let bit = n >> 1;
       for (; j & bit; bit >>= 1) j ^= bit;
@@ -9761,14 +9782,12 @@ function initFourierMagnitudePhase() {
     if (!invert) for (let i = 0; i < N * N; i++) re[i] = pixels[i];
     else { re.set(pixels.re); im.set(pixels.im); }
 
-    // rows
     const rowRe = new Float64Array(N), rowIm = new Float64Array(N);
     for (let y = 0; y < N; y++) {
       for (let x = 0; x < N; x++) { rowRe[x] = re[y * N + x]; rowIm[x] = im[y * N + x]; }
       fft1d(rowRe, rowIm, invert);
       for (let x = 0; x < N; x++) { re[y * N + x] = rowRe[x]; im[y * N + x] = rowIm[x]; }
     }
-    // columns
     const colRe = new Float64Array(N), colIm = new Float64Array(N);
     for (let x = 0; x < N; x++) {
       for (let y = 0; y < N; y++) { colRe[y] = re[y * N + x]; colIm[y] = im[y * N + x]; }
@@ -9778,7 +9797,6 @@ function initFourierMagnitudePhase() {
     return { re, im };
   }
 
-  // --- Magnitude and phase decomposition ---
   function decompose(ft) {
     const mag = new Float64Array(N * N);
     const phase = new Float64Array(N * N);
@@ -9789,7 +9807,6 @@ function initFourierMagnitudePhase() {
     return { mag, phase };
   }
 
-  // --- Recombine magnitude + phase into complex spectrum ---
   function recombine(mag, phase) {
     const re = new Float64Array(N * N);
     const im = new Float64Array(N * N);
@@ -9800,7 +9817,6 @@ function initFourierMagnitudePhase() {
     return { re, im };
   }
 
-  // --- Render grayscale array to canvas ---
   function renderToCanvas(canvasId, pixels, logMag) {
     const cvs = document.getElementById(canvasId);
     if (!cvs) return;
@@ -9809,7 +9825,6 @@ function initFourierMagnitudePhase() {
     const imgData = g.createImageData(N, N);
 
     if (logMag) {
-      // log-scale magnitude with DC shift to center
       const shifted = new Float64Array(N * N);
       for (let y = 0; y < N; y++)
         for (let x = 0; x < N; x++) {
@@ -9831,7 +9846,6 @@ function initFourierMagnitudePhase() {
         imgData.data[i * 4 + 3] = 255;
       }
     } else {
-      // normalize to [0, 255]
       let mn = Infinity, mx = -Infinity;
       for (let i = 0; i < N * N; i++) {
         if (pixels[i] < mn) mn = pixels[i];
@@ -9849,41 +9863,37 @@ function initFourierMagnitudePhase() {
     g.putImageData(imgData, 0, 0);
   }
 
-  // --- Main update ---
-  function update() {
+  // --- Main update (async for image loading) ---
+  let updating = false;
+  async function update() {
+    if (updating) return;
+    updating = true;
     const selA = document.getElementById('fmp-selA');
     const selB = document.getElementById('fmp-selB');
-    const typeA = selA ? selA.value : 'star';
-    const typeB = selB ? selB.value : 'heart';
+    const typeA = selA ? selA.value : 'cat';
+    const typeB = selB ? selB.value : 'panda';
 
-    const pixA = drawImage(typeA);
-    const pixB = drawImage(typeB);
+    const [pixA, pixB] = await Promise.all([getImage(typeA), getImage(typeB)]);
 
-    // Show original images
     renderToCanvas('fmp-imgA', pixA, false);
     renderToCanvas('fmp-imgB', pixB, false);
 
-    // 2D FFT
     const ftA = fft2d(pixA, false);
     const ftB = fft2d(pixB, false);
-
-    // Decompose
     const dA = decompose(ftA);
     const dB = decompose(ftB);
 
-    // Show magnitudes (log scale)
     renderToCanvas('fmp-magA', dA.mag, true);
     renderToCanvas('fmp-magB', dB.mag, true);
 
-    // Swap: mag(A) + phase(B)
     const swapAB = recombine(dA.mag, dB.phase);
     const resultAB = fft2d(swapAB, true);
     renderToCanvas('fmp-swapAB', resultAB.re, false);
 
-    // Swap: mag(B) + phase(A)
     const swapBA = recombine(dB.mag, dA.phase);
     const resultBA = fft2d(swapBA, true);
     renderToCanvas('fmp-swapBA', resultBA.re, false);
+    updating = false;
   }
 
   document.getElementById('fmp-selA')?.addEventListener('change', update);
@@ -10248,7 +10258,9 @@ function initStringJunction() {
 
     function leftY(x) {
       let y = midY;
-      if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, pulseCenter, sigma);
+      // Incident pulse (always present — Gaussian naturally decays to zero)
+      y -= amp * gaussPulse(x, pulseCenter, sigma);
+      // Reflected pulse (appears after incident reaches junction)
       if (hasHit) y -= amp * r * gaussPulse(x, 2 * jx - pulseCenter, sigma);
       return y;
     }
@@ -10270,24 +10282,24 @@ function initStringJunction() {
       ctx.globalAlpha = alpha;
       ctx.lineCap = 'round';
 
-      // Right side (thicker, drawn first — starts before junction so it
-      // extends underneath the thin left string, hiding the thickness seam)
-      const overlap = Math.ceil(thick2 / 2);
+      // Precompute y for the entire string as one continuous curve
+      const yVals = new Float32Array(stringR - stringL + 1);
+      for (let x = stringL; x <= stringR; x++) {
+        yVals[x - stringL] = x <= jx ? leftY(x) : rightY(x);
+      }
+
+      // Draw thick right half first (jx to stringR)
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
       ctx.beginPath();
-      ctx.moveTo(jx - overlap, leftY(jx - overlap));
-      for (let x = jx - overlap + 1; x <= stringR; x++) {
-        ctx.lineTo(x, x <= jx ? leftY(x) : rightY(x));
-      }
+      ctx.moveTo(jx, yVals[jx - stringL]);
+      for (let x = jx + 1; x <= stringR; x++) ctx.lineTo(x, yVals[x - stringL]);
       ctx.stroke();
 
-      // Left side (thinner, on top — overlaps past junction onto thick string)
-      ctx.lineWidth = thick1;
+      // Draw thin left half on top (stringL to jx), sharing the junction pixel
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
       ctx.beginPath();
-      for (let x = stringL; x <= jx + overlap; x++) {
-        const y = x <= jx ? leftY(x) : rightY(x);
-        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
+      ctx.moveTo(stringL, yVals[0]);
+      for (let x = stringL + 1; x <= jx; x++) ctx.lineTo(x, yVals[x - stringL]);
       ctx.stroke();
 
       // Junction marker on top of everything
@@ -10324,7 +10336,7 @@ function initStringJunction() {
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
       ctx.beginPath();
       for (let x = stringL; x <= jx; x++) {
-        const y = midY - (pulseCenter < jx + sigma * 3 ? amp * gaussPulse(x, pulseCenter, sigma) : 0);
+        const y = midY - amp * gaussPulse(x, pulseCenter, sigma);
         x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
