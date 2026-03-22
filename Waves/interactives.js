@@ -5344,20 +5344,7 @@ function initSoundWaveLongitudinal() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let freqSlider = document.getElementById('swl-freq');
-  if (!freqSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>Frequency: <input type="range" id="swl-freq" min="0.5" max="3" step="0.1" value="1.2"><span class="scene-val" id="swl-freq-val">1.2</span></label>' +
-        '<label>Speed: <input type="range" id="swl-speed" min="0.005" max="0.06" step="0.005" value="0.02"><span class="scene-val" id="swl-speed-val">0.67x</span></label>';
-      parent.appendChild(controls);
-      freqSlider = document.getElementById('swl-freq');
-    }
-  }
-  const swlSpeedSlider = document.getElementById('swl-speed');
+  const wlSlider = document.getElementById('swl-wl');
 
   let t = 0;
 
@@ -5383,12 +5370,11 @@ function initSoundWaveLongitudinal() {
   }
 
   function tick() {
-    const freq = parseFloat(freqSlider?.value || 1.2);
-    const speed = parseFloat(swlSpeedSlider?.value || 0.02);
-    document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
-    document.getElementById('swl-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
+    const wl = parseFloat(wlSlider?.value || 100); // wavelength in px
+    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
 
-    t += speed;
+    const phaseSpeed = 1.5; // constant wave speed (px per time unit)
+    t += 0.02;
     wClear(ctx, W, H);
 
     const airL = 30;
@@ -5396,10 +5382,8 @@ function initSoundWaveLongitudinal() {
     const airT = 28;
     const airB = H - 20;
 
-    const k = freq * 0.08;
-    const omega = freq * 3.0;
-    const waveSpeed = omega / k;
-    const wl = 2 * Math.PI / k;
+    const k = 2 * Math.PI / wl;
+    const omega = phaseSpeed * k;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
@@ -5511,8 +5495,7 @@ function initSoundWaveLongitudinal() {
     requestAnimationFrame(tick);
   }
 
-  freqSlider?.addEventListener('input', () => {});
-  swlSpeedSlider?.addEventListener('input', () => {});
+  wlSlider?.addEventListener('input', () => {});
   tick();
 }
 
