@@ -8927,6 +8927,12 @@ function initViolinSpectrum() {
   let Qs = presets.violin.Qs.slice();
   let activePreset = 'violin';
 
+  // Live audio state: track per-harmonic gain nodes for smooth updates
+  let liveGainNodes = null; // array of GainNode, one per harmonic (indices 0..7)
+  let liveOscNodes = null;
+  let liveMaster = null;
+  let liveActx = null;
+
   // Setup controls
   let f0Slider = document.getElementById('violin-f0');
   if (!f0Slider) {
@@ -8968,7 +8974,7 @@ function initViolinSpectrum() {
           activePreset = key;
           updatePresetBtns();
           draw();
-          updateAudio();
+          syncLiveAudio();
         });
         presetRow.appendChild(btn);
       }
@@ -8987,38 +8993,83 @@ function initViolinSpectrum() {
     }
   }
 
-  // Play button — onPlay starts audio directly
+  // Play button — onPlay starts audio, onStop clears live state
   {
     const controls = f0Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('violin-play')) {
       wMakePlayBtn(controls, 'violin-play', '\u25B6 Listen', () => {
         startAudio();
+      }, () => {
+        // wStopTones already handled oscillator cleanup; just clear local refs
+        liveGainNodes = null;
+        liveOscNodes = null;
+        liveMaster = null;
+        liveActx = null;
       });
     }
   }
 
-  function buildHarmonics() {
-    const h = [];
-    for (let n = 1; n <= nHarmonics; n++) {
-      if (amps[n - 1] > 0.001) h.push({ n, gain: amps[n - 1] });
-    }
-    if (h.length === 0) h.push({ n: 1, gain: 0.001 });
-    return h;
-  }
-
+  // Start audio with per-harmonic oscillators+gains so we can update smoothly
   function startAudio() {
+    stopLiveAudio();
+    const actx = wGetAudioCtx();
+    const master = actx.createGain();
+    master.gain.value = 0;
+    master.connect(actx.destination);
+    master.gain.setTargetAtTime(0.25, actx.currentTime, 0.04);
+
     const f0 = parseFloat(f0Slider?.value || 440);
-    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
+    const gains = [];
+    const oscs = [];
+    for (let n = 1; n <= nHarmonics; n++) {
+      const osc = actx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = f0 * n;
+      const g = actx.createGain();
+      g.gain.value = amps[n - 1] * 0.5;
+      osc.connect(g);
+      g.connect(master);
+      osc.start();
+      oscs.push(osc);
+      gains.push(g);
+    }
+
+    liveGainNodes = gains;
+    liveOscNodes = oscs;
+    liveMaster = master;
+    liveActx = actx;
+
+    // Also register with the global audio tracker so wMakePlayBtn stop works
+    _wavesAudioActive['violin-play'] = { master, nodes: oscs, actx };
   }
 
-  function updateAudio() {
-    if (!wIsPlaying('violin-play')) return;
-    // Restart to pick up changed harmonic count/gains
+  function stopLiveAudio() {
+    if (liveMaster) {
+      const now = liveActx?.currentTime || 0;
+      liveMaster.gain.setTargetAtTime(0, now, 0.05);
+      const oscs = liveOscNodes;
+      const m = liveMaster;
+      setTimeout(() => {
+        for (const osc of oscs) { try { osc.stop(); } catch(e){} }
+        try { m.disconnect(); } catch(e){}
+      }, 200);
+    }
+    liveGainNodes = null;
+    liveOscNodes = null;
+    liveMaster = null;
+    liveActx = null;
+    delete _wavesAudioActive['violin-play'];
+  }
+
+  // Smoothly update gains and frequencies on existing oscillators (no click/pop)
+  function syncLiveAudio() {
+    if (!liveGainNodes || !liveActx) return;
+    const now = liveActx.currentTime;
     const f0 = parseFloat(f0Slider?.value || 440);
-    wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
-    // Keep button styled as stop
-    const btn = document.getElementById('violin-play');
-    if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
+    for (let n = 1; n <= nHarmonics; n++) {
+      liveGainNodes[n - 1].gain.setTargetAtTime(amps[n - 1] * 0.5, now, 0.02);
+      liveOscNodes[n - 1].frequency.setTargetAtTime(f0 * n, now, 0.02);
+    }
   }
 
   // Plot geometry
@@ -9120,7 +9171,7 @@ function initViolinSpectrum() {
     activePreset = '';
     updatePresetBtns();
     draw();
-    updateAudio();
+    syncLiveAudio();
   }
 
   canvas.addEventListener('mousedown', (e) => {
@@ -9300,12 +9351,7 @@ function initViolinSpectrum() {
 
   f0Slider?.addEventListener('input', () => {
     draw();
-    if (wIsPlaying('violin-play')) {
-      const f0 = parseFloat(f0Slider?.value || 440);
-      wPlayTones('violin-play', [{ freq: f0, gain: 0.5, harmonics: buildHarmonics() }], 0);
-      const btn = document.getElementById('violin-play');
-      if (btn) { btn.textContent = '\u25A0 Stop'; btn.style.background = '#dc2626'; }
-    }
+    syncLiveAudio();
   });
   draw();
   updatePresetBtns();
