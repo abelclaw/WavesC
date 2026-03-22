@@ -11852,10 +11852,15 @@ function initPhaseVelocityDemo() {
     }
     ctx.stroke();
 
-    // Mark a crest
+    // Mark a crest — track a constant-phase point of the carrier
     const omega0 = Math.sqrt(g * k0);
     const vp = omega0 / k0;
-    const crestX = ((vp * t) % (2 * Math.PI / k0 * 20 / (2 * Math.PI))) * plotW / 20 + plotL;
+    const lambda = 2 * Math.PI / k0;
+    // Find the crest nearest the centre of the visible window
+    const xCenter = 10;
+    const nCrest = Math.round((xCenter - vp * t) / lambda);
+    const xCrest = vp * t + nCrest * lambda;
+    const crestX = plotL + (xCrest / 20) * plotW;
     if (crestX > plotL && crestX < plotR) {
       ctx.fillStyle = WCOLORS.red;
       ctx.beginPath(); ctx.moveTo(crestX, midY - amp - 15); ctx.lineTo(crestX - 5, midY - amp - 5); ctx.lineTo(crestX + 5, midY - amp - 5); ctx.fill();
@@ -11918,16 +11923,16 @@ function initGroupVelocityDemo() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Group velocity: envelope moves at vg = d\u03C9/dk', W / 2, 16);
 
-    // ω(k) = c*k + α*(k-k0)² (tunable dispersion)
+    // ω(k) = c*k + α*(k² − k0*k)  →  vp(k0)=c, vg(k0)=c+α*k0
     const k0 = 4, c = 1.5;
     const alpha = dispersion * 0.3;
 
     function omega(k) {
-      return c * k + alpha * (k - k0) * (k - k0);
+      return c * k + alpha * (k * k - k0 * k);
     }
 
-    const vg = c; // dω/dk at k0 = c + 2α(k-k0) = c at k=k0
-    const vp = omega(k0) / k0; // c + 0 = c at k0
+    const vp = c;                       // ω(k0)/k0 = c
+    const vg = c + alpha * k0;          // dω/dk at k0 = c + α*(2k0−k0)
 
     // Build wavepacket
     const sigmaK = 0.6;
@@ -11997,9 +12002,10 @@ function initGroupVelocityDemo() {
       ctx.setLineDash([]);
     }
 
-    // Mark a crest (vp) - phase velocity
-    const crestPhase = (vp * t) % (2 * Math.PI / k0);
-    const nearestCrestX = vp * t;
+    // Mark a crest (vp) — find the crest nearest the envelope peak
+    const lambda = 2 * Math.PI / k0;
+    const nCrest = Math.round((vg * t - vp * t) / lambda);
+    const nearestCrestX = vp * t + nCrest * lambda;
     const crestPx = plotL + (nearestCrestX / xRange) * plotW;
     if (crestPx > plotL && crestPx < plotR) {
       ctx.fillStyle = WCOLORS.red;
