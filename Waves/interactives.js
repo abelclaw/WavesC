@@ -319,7 +319,6 @@ function initSceneInteractives() {
   initDiracDeltaVisualization();
   // Chapter 9 - Reflection & Transmission
   initStringJunction();
-  initReflectionTransmissionPulse();
   initPhaseFlipDemo();
   initMassCollisionImpedance();
   initComplexImpedance();
@@ -10101,7 +10100,7 @@ function initDiracDeltaVisualization() {
 // =========================================================================
 
 // =========================================================================
-// 7. String Junction
+// 7. String Junction (combined physical + decomposed views)
 // =========================================================================
 function initStringJunction() {
   const canvas = document.getElementById('scene-string-junction');
@@ -10110,117 +10109,169 @@ function initStringJunction() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let zSlider = document.getElementById('sj-z');
-  if (!zSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>Z\u2082/Z\u2081: <input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>';
-      parent.appendChild(controls);
-      zSlider = document.getElementById('sj-z');
-    }
+  const zSlider = document.getElementById('sj-z');
+  const zValSpan = document.getElementById('sj-z-val');
+  const btnPhysical = document.getElementById('sj-physical');
+  const btnDecomposed = document.getElementById('sj-decomposed');
+  const btnBoth = document.getElementById('sj-both');
+  const btnRestart = document.getElementById('sj-restart');
+
+  let mode = 'physical';
+  let t = 0;
+
+  function setMode(m) {
+    mode = m;
+    t = 0;
+    [btnPhysical, btnDecomposed, btnBoth].forEach(b => b && b.classList.remove('active'));
+    if (m === 'physical' && btnPhysical) btnPhysical.classList.add('active');
+    if (m === 'decomposed' && btnDecomposed) btnDecomposed.classList.add('active');
+    if (m === 'both' && btnBoth) btnBoth.classList.add('active');
   }
 
-  let t = 0;
+  if (btnPhysical) btnPhysical.addEventListener('click', () => setMode('physical'));
+  if (btnDecomposed) btnDecomposed.addEventListener('click', () => setMode('decomposed'));
+  if (btnBoth) btnBoth.addEventListener('click', () => setMode('both'));
+  if (btnRestart) btnRestart.addEventListener('click', () => { t = 0; });
+  setMode('physical');
 
   function tick() {
     const zRatio = parseFloat(zSlider?.value || 2);
-    document.getElementById('sj-z-val')?.replaceChildren(document.createTextNode(zRatio.toFixed(1)));
+    if (zValSpan) zValSpan.textContent = zRatio.toFixed(1);
 
     t += 0.02;
     wClear(ctx, W, H);
 
     const midY = H / 2;
-    const jx = W / 2; // junction position
+    const jx = W / 2;
     const amp = 40;
     const stringL = 30, stringR = W - 30;
+    const sigma = 30;
+    const speed = 60;
 
-    // Reflection and transmission coefficients
-    const r = (zRatio - 1) / (zRatio + 1); // reflected amplitude fraction
-    const tr = 2 / (zRatio + 1); // transmitted amplitude fraction
-
-    // String thickness — right side noticeably heavier
+    const r = (zRatio - 1) / (zRatio + 1);
+    const tr = 2 / (zRatio + 1);
     const thick1 = 2;
     const thick2 = 2 + 5 * Math.sqrt(zRatio);
-
-    // Gaussian pulse parameters
-    const sigma = 30; // width in pixels
-    const speed = 60; // pixels per time unit
     const pulseCenter = stringL + speed * t;
+    const hasHit = pulseCenter > jx - sigma;
 
     function gaussPulse(x, center, s) {
-      const dx = x - center;
-      return Math.exp(-dx * dx / (2 * s * s));
+      return Math.exp(-(x - center) * (x - center) / (2 * s * s));
     }
 
-    // Compute junction y so both halves meet exactly
-    let junctionY = midY;
-    if (pulseCenter < jx + sigma * 3) {
-      junctionY -= amp * gaussPulse(jx, pulseCenter, sigma);
-    }
-    if (pulseCenter > jx - sigma) {
-      const refCenter = 2 * jx - pulseCenter;
-      junctionY -= amp * r * gaussPulse(jx, refCenter, sigma);
-    }
-
-    // Draw junction marker
-    ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(jx, junctionY, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Junction (x = 0)', jx, midY + 55);
-
-    ctx.lineCap = 'round';
-
-    // Draw string 2 (right side) first — thicker, drawn underneath
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
-    ctx.beginPath();
-    ctx.moveTo(jx, junctionY);
-    for (let x = jx + 1; x <= stringR; x++) {
+    function leftY(x) {
       let y = midY;
-      if (pulseCenter > jx - sigma) {
+      if (pulseCenter < jx + sigma * 3) y -= amp * gaussPulse(x, pulseCenter, sigma);
+      if (hasHit) y -= amp * r * gaussPulse(x, 2 * jx - pulseCenter, sigma);
+      return y;
+    }
+    function rightY(x) {
+      let y = midY;
+      if (hasHit) {
+        const transSpeed = speed / Math.sqrt(zRatio);
+        const delay = (jx - stringL) / speed;
+        y -= amp * tr * gaussPulse(x, jx + transSpeed * (t - delay), sigma / Math.sqrt(zRatio));
+      }
+      return y;
+    }
+
+    const junctionY = leftY(jx);
+
+    // --- Physical string view ---
+    if (mode === 'physical' || mode === 'both') {
+      const alpha = mode === 'both' ? 0.3 : 1;
+      ctx.globalAlpha = alpha;
+
+      // Junction marker
+      ctx.fillStyle = WCOLORS.red;
+      ctx.beginPath(); ctx.arc(jx, junctionY, 5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.lineCap = 'round';
+
+      // Right side first (thicker, underneath)
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
+      ctx.beginPath();
+      ctx.moveTo(jx, junctionY);
+      for (let x = jx + 1; x <= stringR; x++) ctx.lineTo(x, rightY(x));
+      ctx.stroke();
+
+      // Left side on top (thinner)
+      ctx.lineWidth = thick1;
+      ctx.beginPath();
+      for (let x = stringL; x <= jx; x++) {
+        x === stringL ? ctx.moveTo(x, leftY(x)) : ctx.lineTo(x, leftY(x));
+      }
+      ctx.stroke();
+      ctx.lineCap = 'butt';
+      ctx.globalAlpha = 1;
+
+      if (mode === 'physical') {
+        ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'left'; ctx.fillText('String 1', stringL, 25);
+        ctx.textAlign = 'right'; ctx.fillText('String 2', stringR, 25);
+        ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('Junction (x = 0)', jx, midY + 55);
+        ctx.font = 'bold 14px system-ui'; ctx.fillStyle = WCOLORS.teal;
+        ctx.fillText('Z\u2081', jx - 40, midY + 40);
+        ctx.fillText('Z\u2082', jx + 40, midY + 40);
+      }
+    }
+
+    // --- Decomposed view ---
+    if (mode === 'decomposed' || mode === 'both') {
+      // Baseline
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
+
+      // Junction dashed line
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(jx, 25); ctx.lineTo(jx, H - 35); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Incident (teal)
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let x = stringL; x <= jx; x++) {
+        const y = midY - (pulseCenter < jx + sigma * 3 ? amp * gaussPulse(x, pulseCenter, sigma) : 0);
+        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Reflected (amber)
+      if (hasHit) {
+        ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const refCenter = 2 * jx - pulseCenter;
+        for (let x = stringL; x <= jx; x++) {
+          const y = midY - amp * r * gaussPulse(x, refCenter, sigma);
+          x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // Transmitted (blue)
+      if (hasHit) {
+        ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2.5;
+        ctx.beginPath();
         const transSpeed = speed / Math.sqrt(zRatio);
         const delay = (jx - stringL) / speed;
         const transCenter = jx + transSpeed * (t - delay);
-        y -= amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
+        for (let x = jx; x <= stringR; x++) {
+          const y = midY - amp * tr * gaussPulse(x, transCenter, sigma / Math.sqrt(zRatio));
+          x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
       }
-      ctx.lineTo(x, y);
+
+      // Legend
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      const legY = 20;
+      ctx.fillStyle = WCOLORS.teal; ctx.fillRect(stringL, legY - 2, 14, 4); ctx.fillText('Incident', stringL + 18, legY + 3);
+      ctx.fillStyle = WCOLORS.amber; ctx.fillRect(stringL + 90, legY - 2, 14, 4); ctx.fillText('Reflected', stringL + 108, legY + 3);
+      ctx.fillStyle = WCOLORS.blue; ctx.fillRect(stringL + 185, legY - 2, 14, 4); ctx.fillText('Transmitted', stringL + 203, legY + 3);
     }
-    ctx.stroke();
 
-    // Draw string 1 (left side) on top — thinner
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = thick1;
-    ctx.beginPath();
-    for (let x = stringL; x <= jx; x++) {
-      let y = midY;
-      if (pulseCenter < jx + sigma * 3) {
-        y -= amp * gaussPulse(x, pulseCenter, sigma);
-      }
-      if (pulseCenter > jx - sigma) {
-        const refCenter = 2 * jx - pulseCenter;
-        y -= amp * r * gaussPulse(x, refCenter, sigma);
-      }
-      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    ctx.lineCap = 'butt';
-
-    // Labels
-    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('String 1', stringL, 25);
-    ctx.fillStyle = WCOLORS.teal; ctx.textAlign = 'right';
-    ctx.fillText('String 2', stringR, 25);
-
-    // Z labels on each side of junction
-    ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center';
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('Z\u2081', jx - 40, midY + 40);
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('Z\u2082', jx + 40, midY + 40);
-
-    // Coefficients with formulas
+    // Coefficients (always shown)
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('r = (Z\u2082\u2013Z\u2081)/(Z\u2082+Z\u2081) = ' + r.toFixed(3) + '     t = 2Z\u2081/(Z\u2082+Z\u2081) = ' + tr.toFixed(3), W / 2, H - 12);
     if (r < 0) {
@@ -10228,123 +10279,7 @@ function initStringJunction() {
       ctx.fillText('(phase flip on reflection)', W / 2, H - 26);
     }
 
-    // Reset animation
     if (pulseCenter > stringR + sigma * 3) t = 0;
-
-    requestAnimationFrame(tick);
-  }
-
-  tick();
-}
-
-// =========================================================================
-// 8. Reflection/Transmission Pulse
-// =========================================================================
-function initReflectionTransmissionPulse() {
-  const canvas = document.getElementById('scene-reflection-transmission-pulse');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
-
-  let zSlider = document.getElementById('rtp-z');
-  if (!zSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>Z\u2082/Z\u2081: <input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="3"><span class="scene-val" id="rtp-z-val">3.0</span></label>';
-      parent.appendChild(controls);
-      zSlider = document.getElementById('rtp-z');
-    }
-  }
-
-  let t = 0;
-
-  function tick() {
-    const zRatio = parseFloat(zSlider?.value || 3);
-    document.getElementById('rtp-z-val')?.replaceChildren(document.createTextNode(zRatio.toFixed(1)));
-
-    t += 0.025;
-    wClear(ctx, W, H);
-
-    const midY = H / 2;
-    const jx = W * 0.45;
-    const amp = 45;
-    const stringL = 20, stringR = W - 20;
-    const sigma = 25;
-    const speed = 70;
-
-    const r = (zRatio - 1) / (zRatio + 1);
-    const tr = 2 / (zRatio + 1);
-
-    const pulseCenter = stringL - sigma * 2 + speed * t;
-    const hitTime = (jx - stringL + sigma * 2) / speed;
-    const hasHitJunction = t > hitTime;
-
-    // Draw junction
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(jx, 20); ctx.lineTo(jx, H - 20); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Junction', jx, 16);
-
-    function gaussPulse(x, center, s) {
-      return Math.exp(-(x - center) * (x - center) / (2 * s * s));
-    }
-
-    // Incident wave (teal)
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let x = stringL; x <= jx; x++) {
-      let y = midY;
-      if (!hasHitJunction || pulseCenter < jx + sigma * 3) {
-        y -= amp * gaussPulse(x, Math.min(pulseCenter, jx), sigma);
-      }
-      x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    // Reflected wave (amber, may be inverted)
-    if (hasHitJunction) {
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-      ctx.beginPath();
-      const refCenter = 2 * jx - pulseCenter;
-      for (let x = stringL; x <= jx; x++) {
-        const y = midY - amp * r * gaussPulse(x, refCenter, sigma);
-        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Transmitted wave (blue)
-    if (hasHitJunction) {
-      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-      ctx.beginPath();
-      const transSpeed = speed / Math.sqrt(zRatio);
-      const transCenter = jx + transSpeed * (t - hitTime);
-      for (let x = jx; x <= stringR; x++) {
-        const y = midY - amp * tr * gaussPulse(x, transCenter, sigma);
-        x === jx ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Baseline string
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(stringL, midY); ctx.lineTo(stringR, midY); ctx.stroke();
-
-    // Color legend
-    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    const legY = H - 30;
-    ctx.fillStyle = WCOLORS.teal; ctx.fillRect(20, legY - 2, 18, 5); ctx.fillText('Incident', 42, legY + 5);
-    ctx.fillStyle = WCOLORS.amber; ctx.fillRect(110, legY - 2, 18, 5); ctx.fillText('Reflected (r=' + r.toFixed(2) + ')', 132, legY + 5);
-    ctx.fillStyle = WCOLORS.blue; ctx.fillRect(290, legY - 2, 18, 5); ctx.fillText('Transmitted (t=' + tr.toFixed(2) + ')', 312, legY + 5);
-
-    // Reset
-    if (t > hitTime + (stringR - jx) / (speed / Math.sqrt(zRatio)) + 2) t = 0;
-
     requestAnimationFrame(tick);
   }
 

@@ -168,8 +168,8 @@ window.LECTURE_CONTENT_8_11 = {
 <p>Note that when $Z_{1} = Z_{2}$ there is no reflection and complete transmission. If we want no reflection, we need to <strong>match impedances</strong>. For example, if we want to impedance-match across two strings with different mass densities $\\mu_{1}$ and $\\mu_{2}$, we can choose $T_{2}$ = ($\\mu_{1}/\\mu_{2})T_{1}$ so that $Z_{2} = Z_{1}$.</p>
 <p>Note also that the transmission coefficient is greater than 1 if $Z_{1}$ &gt; $Z_{2}$. That means the <strong>amplitude increases</strong> when a wave travels from a medium of higher impedance to one of lower impedance. This is an important fact with real consequences.</p>
 <span class='inline-math-link' data-math='reflection-transmission-math'>Reflection & Transmission Derivation $\\rightarrow$</span>`,
-      interactive: "reflection-transmission-pulse",
-      interactiveCaption: "Incident, reflected, and transmitted waves at a junction between two strings with different impedances",
+      interactive: "string-junction",
+      interactiveCaption: "Use the Decomposed view to see the individual incident, reflected, and transmitted components",
       mathLinks: ["reflection-transmission-math", "impedance-math"]
     },
     {

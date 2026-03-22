@@ -3652,24 +3652,18 @@ function sceneMarkup(type) {
     // CHAPTER 9: REFLECTION & TRANSMISSION
     // =====================================================================
     case "string-junction":
+    case "reflection-transmission-pulse":
       return `
         <div class="scene-label">String Junction</div>
-        <p class="scene-caption">A pulse hits a junction between two strings of different impedance. Part reflects, part transmits.</p>
+        <p class="scene-caption">A pulse hits a junction between two strings of different impedance. Toggle views to see the decomposed incident, reflected, and transmitted components.</p>
         <div class="interactive-scene">
           <canvas id="scene-string-junction" width="600" height="280"></canvas>
           <div class="scene-controls">
+            <button id="sj-physical" class="scene-btn active">Physical</button>
+            <button id="sj-decomposed" class="scene-btn">Decomposed</button>
+            <button id="sj-both" class="scene-btn">Both</button>
+            <button id="sj-restart" class="scene-btn">&#8635; Restart</button>
             <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
-          </div>
-        </div>
-      `;
-    case "reflection-transmission-pulse":
-      return `
-        <div class="scene-label">Reflection &amp; Transmission</div>
-        <p class="scene-caption">Watch incident (teal), reflected (amber), and transmitted (blue) pulses at a junction.</p>
-        <div class="interactive-scene">
-          <canvas id="scene-reflection-transmission-pulse" width="600" height="280"></canvas>
-          <div class="scene-controls">
-            <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="rtp-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="rtp-z-val">2.0</span></label>
           </div>
         </div>
       `;
