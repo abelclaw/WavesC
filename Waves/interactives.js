@@ -5379,108 +5379,101 @@ function initSoundWaveLongitudinal() {
     t += speed;
     wClear(ctx, W, H);
 
-    const airL = srcX + srcW + 2;
-    const airR = W - 20;
-    const airT = 35;
-    const airB = H - 30;
+    const airL = 30;
+    const airR = W - 10;
+    const airT = 30;
+    const airB = H - 22;
     const airW = airR - airL;
     const airH = airB - airT;
 
     const k = freq * 0.08; // wave number
     const omega = freq * 3.0; // angular frequency
     const waveSpeed = omega / k; // phase velocity in px/frame-unit
+    const wl = 2 * Math.PI / k; // wavelength in px
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Radial Longitudinal Sound Wave from Point Source', W / 2, 16);
+    ctx.fillText('Radial Sound Wave from Point Source', W / 2, 16);
 
-    // Source position — point source at left-center
-    const srcCX = srcX + srcW / 2;
+    // Source position — point source at left edge, vertically centered
+    const srcCX = airL;
     const srcCY = (airT + airB) / 2;
 
-    // Vibrating source displacement
-    const srcDisp = ampDisp * Math.sin(omega * t);
+    // Background fill for the air region
+    ctx.fillStyle = '#1a3a42';
+    ctx.fillRect(airL, airT, airW, airH);
 
-    // Speaker body
-    ctx.fillStyle = '#4a6670';
-    ctx.fillRect(10, srcCY - 40, srcX - 15, 80);
-
-    // Speaker cone (vibrating)
-    ctx.fillStyle = WCOLORS.amber;
+    // Clip to air region for the rings
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(srcX - 5, srcCY - 35);
-    ctx.lineTo(srcCX + srcDisp, srcCY - 8);
-    ctx.lineTo(srcCX + srcDisp, srcCY + 8);
-    ctx.lineTo(srcX - 5, srcCY + 35);
-    ctx.closePath();
-    ctx.fill();
-
-    // Speaker label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Source', srcX - 10, srcCY + 52);
+    ctx.rect(airL, airT, airW, airH);
+    ctx.clip();
 
     // Wavefront propagation radius
     const wavefrontR = waveSpeed * t;
-    const wl = 2 * Math.PI / k;
 
-    // Render pressure field as pixel data for clean concentric rings
-    const imgData = ctx.createImageData(airW, airH);
-    const data = imgData.data;
+    // Draw concentric ring bands as thick arcs
+    // Each ring is a half-wavelength wide, alternating compression/rarefaction
+    const maxR = Math.min(wavefrontR, airW + airH);
+    const ringStep = 2; // px step for smooth rendering
+    for (let r = 5; r < maxR; r += ringStep) {
+      // Envelope ramps up over one wavelength behind the wavefront
+      const distBehindFront = wavefrontR - r;
+      if (distBehindFront < 0) continue;
+      const envelope = Math.min(1, distBehindFront / (wl * 0.8));
 
-    for (let py = 0; py < airH; py++) {
-      const worldY = airT + py;
-      const dy = worldY - srcCY;
-      for (let px = 0; px < airW; px++) {
-        const worldX = airL + px;
-        const dx = worldX - srcCX;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+      // Pressure: cos(kr - ωt), no decay so rings stay visible at distance
+      const pressure = envelope * Math.cos(k * r - omega * t);
 
-        let pressure = 0; // normalized pressure perturbation [-1, 1]
-        if (dist > 5 && dist < wavefrontR) {
-          // Envelope ramps up over one wavelength behind the front
-          const distBehindFront = wavefrontR - dist;
-          const envelope = Math.min(1, distBehindFront / (wl * 0.8));
-          // 1/sqrt(r) amplitude decay for 2D
-          const decay = Math.sqrt(30 / Math.max(dist, 30));
-          pressure = envelope * decay * Math.cos(k * dist - omega * t);
-        }
+      // Map to brightness: compression = bright teal, rarefaction = dark
+      const brightness = 0.25 + 0.75 * (1 + pressure) / 2;
+      const cr = Math.round(70 * brightness);
+      const cg = Math.round(190 * brightness);
+      const cb = Math.round(210 * brightness);
 
-        // Map pressure to teal color: compression = bright, rarefaction = dim
-        const brightness = 0.18 + 0.72 * (1 + pressure) / 2;
-        const idx = (py * airW + px) * 4;
-        data[idx]     = Math.round(60 * brightness);   // R
-        data[idx + 1] = Math.round(170 * brightness);  // G
-        data[idx + 2] = Math.round(195 * brightness);  // B
-        data[idx + 3] = 255;                            // A
-      }
+      ctx.strokeStyle = `rgb(${cr}, ${cg}, ${cb})`;
+      ctx.lineWidth = ringStep + 0.5;
+      ctx.beginPath();
+      ctx.arc(srcCX, srcCY, r, -Math.PI * 0.48, Math.PI * 0.48);
+      ctx.stroke();
     }
 
-    ctx.putImageData(imgData, airL, airT);
+    ctx.restore();
 
-    // Wavefront arc indicator
-    if (wavefrontR > 10 && wavefrontR < airW + airH) {
-      ctx.strokeStyle = 'rgba(255, 180, 50, 0.4)';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([5, 5]);
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(airL, airT, airW, airH);
-      ctx.clip();
-      ctx.beginPath();
-      ctx.arc(srcCX, srcCY, wavefrontR, -Math.PI / 2, Math.PI / 2);
-      ctx.stroke();
-      ctx.restore();
-      ctx.setLineDash([]);
+    // Source dot
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.arc(srcCX, srcCY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Source label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Source', srcCX, airB + 14);
+
+    // C / R labels along the center line
+    if (wavefrontR > wl * 1.5) {
+      ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      const refPhase = omega * t;
+      for (let n = 0; n < 8; n++) {
+        // Compression peaks: cos(kr - ωt) = 1 => kr - ωt = 2nπ => r = (2nπ + ωt)/k
+        const compR = (2 * n * Math.PI + refPhase) / k;
+        if (compR > 20 && compR < Math.min(wavefrontR - 15, airW - 10)) {
+          ctx.fillStyle = 'rgba(180, 230, 240, 0.7)';
+          ctx.fillText('C', srcCX + compR, srcCY - 6);
+        }
+        // Rarefaction: cos = -1 => kr - ωt = (2n+1)π
+        const rarR = ((2 * n + 1) * Math.PI + refPhase) / k;
+        if (rarR > 20 && rarR < Math.min(wavefrontR - 15, airW - 10)) {
+          ctx.fillStyle = 'rgba(100, 150, 160, 0.7)';
+          ctx.fillText('R', srcCX + rarR, srcCY - 6);
+        }
+      }
     }
 
     // Legend
     ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('Bright = compression   Dim = rarefaction', airL, H - 6);
-
-    // Direction arrows showing radial propagation
-    ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right'; ctx.font = '10px system-ui';
-    ctx.fillText('radial propagation \u2192', airR, H - 6);
+    ctx.fillText('C = compression   R = rarefaction', airL + 5, H - 4);
 
     requestAnimationFrame(tick);
   }
