@@ -10270,20 +10270,23 @@ function initStringJunction() {
       ctx.globalAlpha = alpha;
       ctx.lineCap = 'round';
 
-      // Right side (thicker, drawn first so left overlaps at junction)
-      // With correct R,T satisfying 1+R=T, leftY(jx) = rightY(jx) by physics
+      // Right side (thicker, drawn first — starts before junction so it
+      // extends underneath the thin left string, hiding the thickness seam)
+      const overlap = Math.ceil(thick2 / 2);
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
       ctx.beginPath();
-      for (let x = jx; x <= stringR; x++) {
-        x === jx ? ctx.moveTo(x, rightY(x)) : ctx.lineTo(x, rightY(x));
+      ctx.moveTo(jx - overlap, leftY(jx - overlap));
+      for (let x = jx - overlap + 1; x <= stringR; x++) {
+        ctx.lineTo(x, x <= jx ? leftY(x) : rightY(x));
       }
       ctx.stroke();
 
-      // Left side (thinner, on top)
+      // Left side (thinner, on top — overlaps past junction onto thick string)
       ctx.lineWidth = thick1;
       ctx.beginPath();
-      for (let x = stringL; x <= jx; x++) {
-        x === stringL ? ctx.moveTo(x, leftY(x)) : ctx.lineTo(x, leftY(x));
+      for (let x = stringL; x <= jx + overlap; x++) {
+        const y = x <= jx ? leftY(x) : rightY(x);
+        x === stringL ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
 
