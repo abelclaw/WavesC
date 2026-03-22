@@ -3472,7 +3472,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <label><span>Wavelength: </span><input type="range" id="swl-wl" min="40" max="200" step="10" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
+            <label><span>Wavelength λ: </span><input type="range" id="swl-wl" min="30" max="200" step="5" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
+            <label><span>Frequency f: </span><input type="range" id="swl-freq" min="0.3" max="3" step="0.1" value="1.0"><span class="scene-val" id="swl-freq-val">1.0</span></label>
+            <label><span>Speed v: </span><input type="range" id="swl-speed" min="20" max="300" step="10" value="120"><span class="scene-val" id="swl-speed-val">120</span></label>
           </div>
         </div>
       `;

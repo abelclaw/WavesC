@@ -5345,6 +5345,8 @@ function initSoundWaveLongitudinal() {
   const { ctx, W, H } = setup;
 
   const wlSlider = document.getElementById('swl-wl');
+  const freqSlider = document.getElementById('swl-freq');
+  const speedSlider = document.getElementById('swl-speed');
 
   let t = 0;
 
@@ -5370,10 +5372,13 @@ function initSoundWaveLongitudinal() {
   }
 
   function tick() {
-    const wl = parseFloat(wlSlider?.value || 100); // wavelength in px
+    const wl = parseFloat(wlSlider?.value || 100);
+    const freq = parseFloat(freqSlider?.value || 1.0);
+    const phaseSpeed = parseFloat(speedSlider?.value || 120);
     document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
+    document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
+    document.getElementById('swl-speed-val')?.replaceChildren(document.createTextNode(phaseSpeed));
 
-    const phaseSpeed = 120; // wave speed in px per time unit
     t += 0.02;
     wClear(ctx, W, H);
 
@@ -5383,7 +5388,7 @@ function initSoundWaveLongitudinal() {
     const airB = H - 20;
 
     const k = 2 * Math.PI / wl;
-    const omega = phaseSpeed * k;
+    const omega = 2 * Math.PI * freq;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
@@ -5496,6 +5501,8 @@ function initSoundWaveLongitudinal() {
   }
 
   wlSlider?.addEventListener('input', () => {});
+  freqSlider?.addEventListener('input', () => {});
+  speedSlider?.addEventListener('input', () => {});
   tick();
 }
 
