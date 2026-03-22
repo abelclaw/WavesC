@@ -5373,7 +5373,7 @@ function initSoundWaveLongitudinal() {
     const wl = parseFloat(wlSlider?.value || 100); // wavelength in px
     document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
 
-    const phaseSpeed = 1.5; // constant wave speed (px per time unit)
+    const phaseSpeed = 120; // wave speed in px per time unit
     t += 0.02;
     wClear(ctx, W, H);
 
