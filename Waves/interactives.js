@@ -5444,7 +5444,7 @@ function initSoundWaveLongitudinal() {
     ctx.fillText('Speaker', spkX + spkW / 2, srcCY + spkH / 2 + 12);
 
     // Wavefront radius
-    const wavefrontR = waveSpeed * t;
+    const wavefrontR = phaseSpeed * t;
 
     // Clip to drawing region (right of speaker)
     ctx.save();
