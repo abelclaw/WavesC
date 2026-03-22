@@ -8969,6 +8969,8 @@ function initViolinSpectrum() {
         btn.style.fontSize = '11px';
         btn.style.padding = '2px 10px';
         btn.addEventListener('click', () => {
+          drag = null;
+          hovered = null;
           amps = presets[key].amps.slice();
           Qs = presets[key].Qs.slice();
           activePreset = key;
@@ -9198,9 +9200,10 @@ function initViolinSpectrum() {
     }
   });
 
-  canvas.addEventListener('mouseup', () => { drag = null; });
+  // Use document-level mouseup so drag clears even if mouse leaves canvas
+  document.addEventListener('mouseup', () => { drag = null; });
   canvas.addEventListener('mouseleave', () => {
-    drag = null; hovered = null;
+    hovered = null;
     canvas.style.cursor = 'default';
     draw();
   });
