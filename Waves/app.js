@@ -3710,7 +3710,7 @@ function sceneMarkup(type) {
             <button id="sj-decomposed" class="scene-btn">Decomposed</button>
             <button id="sj-both" class="scene-btn">Both</button>
             <button id="sj-phase-flip" class="scene-btn">Phase Flip</button>
-            <button id="sj-restart" class="scene-btn">&#8635;</button>
+            <button id="sj-restart" class="scene-btn">Restart</button>
             <label><span>Z<sub>2</sub>/Z<sub>1</sub>: </span><input type="range" id="sj-z" min="0.2" max="5" step="0.1" value="2"><span class="scene-val" id="sj-z-val">2.0</span></label>
           </div>
         </div>
