@@ -5405,17 +5405,67 @@ function initSoundWaveLongitudinal() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Radial Longitudinal Sound Wave', W / 2, 16);
 
-    // Source at left edge, vertically centered
-    const srcCX = airL;
+    // Speaker positioned at left, vertically centered
+    const spkW = 28;  // speaker cabinet width
+    const spkH = 60;  // speaker cabinet height
+    const spkX = 8;   // left edge of cabinet
     const srcCY = (airT + airB) / 2;
+    const srcCX = spkX + spkW + 6; // source point = just past the cone
+
+    // Pulsing cone displacement
+    const coneDisp = 4 * Math.sin(omega * t);
+
+    // Speaker cabinet
+    ctx.fillStyle = '#3a3a3a';
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(spkX, srcCY - spkH / 2, spkW, spkH, 3);
+    ctx.fill();
+    ctx.stroke();
+
+    // Speaker cone (trapezoidal, pulsing outward)
+    const coneBase = spkX + spkW;
+    const coneTip = coneBase + 10 + coneDisp;
+    ctx.fillStyle = '#666';
+    ctx.beginPath();
+    ctx.moveTo(coneBase, srcCY - 20);
+    ctx.lineTo(coneTip, srcCY - 6);
+    ctx.lineTo(coneTip, srcCY + 6);
+    ctx.lineTo(coneBase, srcCY + 20);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Speaker magnet circle (decorative, on the cabinet)
+    ctx.fillStyle = '#2a2a2a';
+    ctx.beginPath();
+    ctx.arc(spkX + spkW / 2, srcCY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#555';
+    ctx.beginPath();
+    ctx.arc(spkX + spkW / 2, srcCY, 10, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner dust cap
+    ctx.fillStyle = '#444';
+    ctx.beginPath();
+    ctx.arc(spkX + spkW / 2, srcCY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Speaker label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Speaker', spkX + spkW / 2, srcCY + spkH / 2 + 12);
 
     // Wavefront radius
     const wavefrontR = waveSpeed * t;
 
-    // Clip to drawing region
+    // Clip to drawing region (right of speaker)
     ctx.save();
     ctx.beginPath();
-    ctx.rect(airL - 4, airT, airR - airL + 8, airB - airT);
+    ctx.rect(srcCX - 2, airT, airR - srcCX + 4, airB - airT);
     ctx.clip();
 
     // Draw each dot displaced radially
@@ -5453,20 +5503,10 @@ function initSoundWaveLongitudinal() {
 
     ctx.restore();
 
-    // Source dot
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.beginPath();
-    ctx.arc(srcCX, srcCY, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Source label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Source', srcCX, airB + 13);
-
     // Legend
     ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('Dots displaced radially — bright = compression, dim = rarefaction', airR, H - 4);
+    ctx.fillText('Bright = compression   Dim = rarefaction', airR, H - 4);
 
     requestAnimationFrame(tick);
   }
