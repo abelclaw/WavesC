@@ -8896,6 +8896,8 @@ function initPrismDispersion() {
 function initViolinSpectrum() {
   const canvas = document.getElementById('scene-violin-spectrum');
   if (!canvas) return;
+  if (canvas._vsInit) return;
+  canvas._vsInit = true;
   const setup = wSetupCanvas(canvas);
   if (!setup) return;
   const { ctx, W, H } = setup;
