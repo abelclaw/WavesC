@@ -449,7 +449,7 @@ window.LECTURE_CONTENT_8_11 = {
 <p style="text-align:center;">$$f(t) = e^{-(t-t_0)^2/(2\\sigma_t^2)} e^{i\\omega_ct}  \\; \\Leftrightarrow \\;  \\tilde{f}(\\omega) = (\\sigma_t/\\sqrt{2\\pi}) e^{-\\sigma_t^2(\\omega-\\omega_c)^2/2} e^{-it_0(\\omega-\\omega_c)}$$</p>
 <p>To construct a signal f(t) with width $\\sigma_{t}$, we need frequencies within a range <strong>$\\sigma_{\\omega}$ = 1/$\\sigma_{t}$</strong> centered around any $\\omega_{c}$. The central (carrier) frequency can be anything. The key is that enough frequencies around $\\omega_{c}$ be included. More precisely, we need a <strong>band of width $\\sigma_{\\omega}$ = 1/$\\sigma_{t}$</strong> to construct pulses of width $\\sigma_{t}$. The pulses should be separated by, at minimum, $\\sigma_{t}$. Thus the feature which limits how much information can be transmitted is the <strong>bandwidth</strong>. To send more information (smaller distance between pulses), a larger bandwidth is needed.</p>`,
       interactive: "amplitude-modulation",
-      interactiveCaption: "Amplitude modulation: a slowly varying envelope shapes a high-frequency carrier to encode information. Wider bandwidth allows narrower (faster) pulses.",
+      interactiveCaption: "Gaussian wavepackets encode information on a carrier. Drag \u03C3_t to see the bandwidth\u2013pulse width tradeoff: narrower pulses carry more data but need more bandwidth (\u0394f = 1/2\u03C0\u03C3_t). Make pulses too wide and they overlap, losing information.",
       mathLinks: ["am-radio-math", "bandwidth-math"]
     },
     {

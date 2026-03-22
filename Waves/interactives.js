@@ -11715,7 +11715,7 @@ function initGaussianWavepacket() {
 }
 
 // =========================================================================
-// 19. Amplitude Modulation
+// 19. Amplitude Modulation — Bandwidth & Information
 // =========================================================================
 function initAmplitudeModulation() {
   const canvas = document.getElementById('scene-amplitude-modulation');
@@ -11724,106 +11724,254 @@ function initAmplitudeModulation() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let fcSlider = document.getElementById('am-fc');
-  if (!fcSlider) {
+  let sigmaSlider = document.getElementById('am-sigma');
+  if (!sigmaSlider) {
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>Carrier f<sub>c</sub>: <input type="range" id="am-fc" min="5" max="30" step="1" value="15"><span class="scene-val" id="am-fc-val">15</span></label>' +
-        '<label>Mod f<sub>m</sub>: <input type="range" id="am-fm" min="1" max="8" step="0.5" value="2"><span class="scene-val" id="am-fm-val">2.0</span></label>';
+        '<label>\u03C3<sub>t</sub> (pulse width): <input type="range" id="am-sigma" min="0.3" max="3.0" step="0.1" value="1.0"><span class="scene-val" id="am-sigma-val">1.0</span></label>' +
+        '<label>f<sub>c</sub> (carrier): <input type="range" id="am-fc" min="8" max="40" step="1" value="20"><span class="scene-val" id="am-fc-val">20</span></label>';
       parent.appendChild(controls);
-      fcSlider = document.getElementById('am-fc');
+      sigmaSlider = document.getElementById('am-sigma');
     }
   }
-  const fmSlider = document.getElementById('am-fm');
+  const fcSlider = document.getElementById('am-fc');
+
+  // Pulse amplitudes encoding a "message"
+  const pulseAmps = [0.9, 0.4, 1.0, 0.6, 0.2, 0.8, 0.5, 1.0];
+  const pulseSpacing = 3.0;
+
+  let tScroll = 0;
+  let lastTime = null;
+
+  function tick(now) {
+    if (lastTime !== null) {
+      var dt = (now - lastTime) / 1000;
+      tScroll += dt * 1.2;
+    }
+    lastTime = now;
+    draw();
+    requestAnimationFrame(tick);
+  }
 
   function draw() {
-    const fc = parseFloat(fcSlider?.value || 15);
-    const fm = parseFloat(fmSlider?.value || 2);
+    var sigmaT = parseFloat(sigmaSlider?.value || 1);
+    var fc = parseFloat(fcSlider?.value || 20);
+    var sigmaF = 1 / (2 * Math.PI * sigmaT);
+    document.getElementById('am-sigma-val')?.replaceChildren(document.createTextNode(sigmaT.toFixed(1)));
     document.getElementById('am-fc-val')?.replaceChildren(document.createTextNode(fc.toFixed(0)));
-    document.getElementById('am-fm-val')?.replaceChildren(document.createTextNode(fm.toFixed(1)));
 
     wClear(ctx, W, H);
 
-    const plotL = 30, plotR = W * 0.58, plotT = 5;
-    const plotW = plotR - plotL;
-    const rowH = (H - 15) / 3;
+    // ===== LAYOUT =====
+    var topH = H * 0.48;
+    var gap = H * 0.04;
+    var botY = topH + gap;
 
-    // Frequency domain on right
-    const fL = W * 0.62, fR = W - 15;
-    const fW = fR - fL;
-    const fPlotT = plotT + rowH * 2;
-    const fPlotB = plotT + rowH * 3 - 10;
-    const fPlotH = fPlotB - fPlotT;
+    // Top panel: full-width pulse train
+    var tL = 50, tR = W - 15, tT = 30, tB = topH - 5;
+    var tW = tR - tL, tH2 = tB - tT;
+    var tMid = (tT + tB) / 2;
 
-    function drawWave(arr, y0, h, color, label) {
-      const mid = y0 + h / 2;
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(plotL, mid); ctx.lineTo(plotR, mid); ctx.stroke();
-      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let i = 0; i < arr.length; i++) {
-        const px = plotL + plotW * i / arr.length;
-        const py = mid - arr[i] * h * 0.35;
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-      }
-      ctx.stroke();
-      ctx.fillStyle = color; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-      fillTextSub(ctx, label, plotL, y0 + 12);
-    }
+    // Bottom-left: single wavepacket close-up
+    var bL = 50, bR = W * 0.46, bT = botY + 20, bB = H - 10;
+    var bW = bR - bL, bH2 = bB - bT;
+    var bMid = (bT + bB) / 2;
 
-    const N = 400;
-    const carrier = [], envelope = [], am = [];
-    for (let i = 0; i < N; i++) {
-      const t = i / N * 4;
-      carrier.push(Math.cos(2 * Math.PI * fc * t));
-      envelope.push(1 + 0.8 * Math.cos(2 * Math.PI * fm * t));
-      am.push((1 + 0.8 * Math.cos(2 * Math.PI * fm * t)) * Math.cos(2 * Math.PI * fc * t));
-    }
+    // Bottom-right: frequency spectrum
+    var fL = W * 0.54, fR2 = W - 15, fT = botY + 20, fB = H - 10;
+    var fW2 = fR2 - fL, fH2 = fB - fT;
 
-    drawWave(carrier, plotT, rowH, WCOLORS.teal, 'Carrier (f_c = ' + fc + ')');
-    drawWave(envelope, plotT + rowH, rowH, WCOLORS.amber, 'Envelope (f_m = ' + fm.toFixed(1) + ')');
-    drawWave(am, plotT + 2 * rowH, rowH, WCOLORS.blue, 'AM signal');
-
-    // Frequency domain
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Frequency domain', fL + fW / 2, plotT + 12);
+    // ===== TOP: ANIMATED PULSE TRAIN =====
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('AM Signal: Pulse Train Encoding Information', tL + tW / 2, 16);
 
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(fL, fPlotB); ctx.lineTo(fR, fPlotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tL, tB); ctx.lineTo(tR, tB); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(tL, tMid); ctx.lineTo(tR, tMid); ctx.stroke();
 
-    const fMax = fc + fm * 3;
-    function freqToX(f) { return fL + (f / fMax) * fW; }
+    var tRange = 12;
+    var tStart = tScroll;
+    var tEnd = tStart + tRange;
 
-    // Carrier spike
-    const carrX = freqToX(fc);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(carrX, fPlotB); ctx.lineTo(carrX, fPlotT + 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'f_c', carrX, fPlotB + 12);
+    var overlapDetected = 2 * sigmaT > pulseSpacing * 0.45;
 
-    // Sidebands
-    const lsbX = freqToX(fc - fm);
-    const usbX = freqToX(fc + fm);
-    const sbH = (fPlotB - fPlotT - 30) * 0.4;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(lsbX, fPlotB); ctx.lineTo(lsbX, fPlotB - sbH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(usbX, fPlotB); ctx.lineTo(usbX, fPlotB - sbH); ctx.stroke();
+    // Envelopes (dashed)
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = overlapDetected ? 'rgba(220,38,38,0.4)' : WCOLORS.amber;
+    ctx.lineWidth = 1;
+    for (var pi = 0; pi < pulseAmps.length; pi++) {
+      var tc = pi * pulseSpacing;
+      for (var sign = -1; sign <= 1; sign += 2) {
+        ctx.beginPath();
+        var started = false;
+        for (var i = 0; i <= tW; i++) {
+          var t = tStart + tRange * i / tW;
+          var dd = t - tc;
+          var env = sign * pulseAmps[pi] * Math.exp(-dd * dd / (2 * sigmaT * sigmaT));
+          if (Math.abs(env) < 0.005) continue;
+          var px = tL + i;
+          var py = tMid - env * tH2 * 0.4;
+          if (!started) { ctx.moveTo(px, py); started = true; }
+          else ctx.lineTo(px, py);
+        }
+        if (started) ctx.stroke();
+      }
+    }
+    ctx.setLineDash([]);
 
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui';
-    fillTextSub(ctx, 'f_c–f_m', lsbX, fPlotB + 12);
-    fillTextSub(ctx, 'f_c+f_m', usbX, fPlotB + 12);
+    // AM signal
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var i2 = 0; i2 <= tW; i2++) {
+      var t2 = tStart + tRange * i2 / tW;
+      var val = 0;
+      for (var pj = 0; pj < pulseAmps.length; pj++) {
+        var tc2 = pj * pulseSpacing;
+        var dd2 = t2 - tc2;
+        val += pulseAmps[pj] * Math.exp(-dd2 * dd2 / (2 * sigmaT * sigmaT)) * Math.cos(2 * Math.PI * fc * dd2);
+      }
+      var px2 = tL + i2;
+      var py2 = tMid - val * tH2 * 0.4;
+      i2 === 0 ? ctx.moveTo(px2, py2) : ctx.lineTo(px2, py2);
+    }
+    ctx.stroke();
 
-    // Labels
+    // Amplitude labels
+    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    for (var pk = 0; pk < pulseAmps.length; pk++) {
+      var tc3 = pk * pulseSpacing;
+      if (tc3 < tStart - sigmaT * 2 || tc3 > tEnd + sigmaT * 2) continue;
+      var px3 = tL + (tc3 - tStart) / tRange * tW;
+      if (px3 < tL + 10 || px3 > tR - 10) continue;
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText('A=' + pulseAmps[pk].toFixed(1), px3, tT + 2);
+    }
+
+    if (overlapDetected) {
+      ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('Pulses overlap! Information lost.', tR, tT + 2);
+    }
+
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'Sidebands at f_c ± f_m', fL + fW / 2, fPlotT + 25);
+    ctx.fillText('t', tL + tW / 2, tB + 12);
+
+    // ===== BOTTOM LEFT: SINGLE WAVEPACKET =====
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Single Wavepacket', bL + bW / 2, botY + 14);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(bL, bB); ctx.lineTo(bR, bB); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(bL, bMid); ctx.lineTo(bR, bMid); ctx.stroke();
+
+    var xRange = Math.max(sigmaT * 5, 3);
+
+    // Envelope (dashed)
+    ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    for (var s2 = -1; s2 <= 1; s2 += 2) {
+      ctx.beginPath();
+      for (var j = 0; j <= 300; j++) {
+        var tt = -xRange + 2 * xRange * j / 300;
+        var ev = s2 * Math.exp(-tt * tt / (2 * sigmaT * sigmaT));
+        var ppx = bL + bW * j / 300;
+        var ppy = bMid - ev * bH2 * 0.38;
+        j === 0 ? ctx.moveTo(ppx, ppy) : ctx.lineTo(ppx, ppy);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Carrier inside envelope
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var j2 = 0; j2 <= 300; j2++) {
+      var tt2 = -xRange + 2 * xRange * j2 / 300;
+      var v2 = Math.exp(-tt2 * tt2 / (2 * sigmaT * sigmaT)) * Math.cos(2 * Math.PI * fc * tt2);
+      var ppx2 = bL + bW * j2 / 300;
+      var ppy2 = bMid - v2 * bH2 * 0.38;
+      j2 === 0 ? ctx.moveTo(ppx2, ppy2) : ctx.lineTo(ppx2, ppy2);
+    }
+    ctx.stroke();
+
+    // sigma_t annotation
+    var sigPx = sigmaT / xRange * bW / 2;
+    var centerBL = bL + bW / 2;
+    var annY = bMid + bH2 * 0.32;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(centerBL - sigPx, annY); ctx.lineTo(centerBL + sigPx, annY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(centerBL - sigPx, annY - 4); ctx.lineTo(centerBL - sigPx, annY + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(centerBL + sigPx, annY - 4); ctx.lineTo(centerBL + sigPx, annY + 4); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    fillTextSub(ctx, '\u03C3_t = ' + sigmaT.toFixed(1), centerBL, annY + 14);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('t', bL + bW / 2, bB + 12);
+
+    // ===== BOTTOM RIGHT: FREQUENCY SPECTRUM =====
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Frequency Spectrum', fL + fW2 / 2, botY + 14);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(fL, fB); ctx.lineTo(fR2, fB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fL, fB); ctx.lineTo(fL, fT); ctx.stroke();
+
+    var fMax = fc + Math.max(sigmaF * 5, 5);
+    var fMin = Math.max(0, fc - Math.max(sigmaF * 5, 5));
+    var fRng = fMax - fMin;
+
+    // Gaussian peak
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (var k = 0; k <= 300; k++) {
+      var f = fMin + fRng * k / 300;
+      var ft = Math.exp(-(f - fc) * (f - fc) / (2 * sigmaF * sigmaF));
+      var fpx = fL + fW2 * k / 300;
+      var fpy = fB - ft * fH2 * 0.8;
+      k === 0 ? ctx.moveTo(fpx, fpy) : ctx.lineTo(fpx, fpy);
+    }
+    ctx.stroke();
+
+    // Fill under curve
+    ctx.lineTo(fL + fW2, fB); ctx.lineTo(fL, fB); ctx.closePath();
+    ctx.fillStyle = 'rgba(37,99,235,0.08)'; ctx.fill();
+
+    // Mark f_c
+    var fcPx = fL + (fc - fMin) / fRng * fW2;
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(fcPx, fB); ctx.lineTo(fcPx, fT + 10); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    fillTextSub(ctx, 'f_c = ' + fc, fcPx, fB + 12);
+
+    // Bandwidth annotation
+    var bwPx = sigmaF / fRng * fW2;
+    var bwY = fB - fH2 * 0.8 * Math.exp(-0.5);
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(fcPx - bwPx, bwY); ctx.lineTo(fcPx + bwPx, bwY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fcPx - bwPx, bwY - 4); ctx.lineTo(fcPx - bwPx, bwY + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(fcPx + bwPx, bwY - 4); ctx.lineTo(fcPx + bwPx, bwY + 4); ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    fillTextSub(ctx, '\u0394f = ' + sigmaF.toFixed(2), fcPx, bwY - 6);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('f', fL + fW2 / 2, fB + 12);
+
+    // ===== KEY RELATION =====
+    var relY = botY + 6;
+    ctx.fillStyle = 'rgba(15,118,110,0.10)';
+    ctx.fillRect(W / 2 - 135, relY - 10, 270, 18);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    fillTextSub(ctx, 'Bandwidth: \u0394f = 1/(2\u03C0\u03C3_t) = ' + sigmaF.toFixed(2), W / 2, relY + 3);
   }
 
+  sigmaSlider?.addEventListener('input', draw);
   fcSlider?.addEventListener('input', draw);
-  fmSlider?.addEventListener('input', draw);
-  draw();
+  requestAnimationFrame(tick);
 }
 
 // =========================================================================
