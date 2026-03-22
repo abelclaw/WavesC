@@ -10267,27 +10267,36 @@ function initStringJunction() {
     if (mode === 'physical' || mode === 'both') {
       const alpha = mode === 'both' ? 0.3 : 1;
       ctx.globalAlpha = alpha;
-
-      // Junction marker
-      ctx.fillStyle = WCOLORS.red;
-      ctx.beginPath(); ctx.arc(jx, junctionY, 5, 0, Math.PI * 2); ctx.fill();
-
       ctx.lineCap = 'round';
 
-      // Right side first (thicker, underneath)
+      // Draw as one continuous path with varying thickness:
+      // We draw the thick right side first, then the thin left side on top.
+      // Both meet exactly at junctionY.
+
+      // Right side (thicker, drawn first so left overlaps at junction)
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = Math.max(2, thick2);
       ctx.beginPath();
       ctx.moveTo(jx, junctionY);
-      for (let x = jx + 1; x <= stringR; x++) ctx.lineTo(x, rightY(x));
+      for (let x = jx + 1; x <= stringR; x++) {
+        // Blend from junctionY to rightY over a short transition zone
+        const blend = Math.min(1, (x - jx) / 8);
+        const y = junctionY * (1 - blend) + rightY(x) * blend;
+        ctx.lineTo(x, y);
+      }
       ctx.stroke();
 
-      // Left side on top (thinner)
+      // Left side (thinner, on top)
       ctx.lineWidth = thick1;
       ctx.beginPath();
       for (let x = stringL; x <= jx; x++) {
         x === stringL ? ctx.moveTo(x, leftY(x)) : ctx.lineTo(x, leftY(x));
       }
       ctx.stroke();
+
+      // Junction marker on top of everything
+      ctx.fillStyle = WCOLORS.red;
+      ctx.beginPath(); ctx.arc(jx, junctionY, 4, 0, Math.PI * 2); ctx.fill();
+
       ctx.lineCap = 'butt';
       ctx.globalAlpha = 1;
 
