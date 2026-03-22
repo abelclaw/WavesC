@@ -10535,8 +10535,8 @@ function initComplexImpedance() {
       controls.className = 'scene-controls';
       controls.innerHTML =
         '<label>m: <input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>' +
-        '<label>b: <input type="range" id="ci-b" min="0.1" max="3" step="0.1" value="0.5"><span class="scene-val" id="ci-b-val">0.5</span></label>' +
-        '<label>k: <input type="range" id="ci-k" min="0.5" max="20" step="0.5" value="5"><span class="scene-val" id="ci-k-val">5.0</span></label>';
+        '<label>b: <input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>' +
+        '<label>k: <input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>';
       parent.appendChild(controls);
       mSlider = document.getElementById('ci-m');
     }
@@ -10546,57 +10546,77 @@ function initComplexImpedance() {
 
   function draw() {
     const m = parseFloat(mSlider?.value || 1);
-    const b = parseFloat(bSlider?.value || 0.5);
-    const k = parseFloat(kSlider?.value || 5);
+    const b = parseFloat(bSlider?.value || 1);
+    const k = parseFloat(kSlider?.value || 10);
     document.getElementById('ci-m-val')?.replaceChildren(document.createTextNode(m.toFixed(1)));
     document.getElementById('ci-b-val')?.replaceChildren(document.createTextNode(b.toFixed(1)));
     document.getElementById('ci-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
 
     wClear(ctx, W, H);
 
-    const plotL = 60, plotR = W - 30, plotT = 35, plotB = H - 40;
+    const plotL = 55, plotR = W - 20, plotT = 28, plotB = H - 30;
     const plotW = plotR - plotL, plotH = plotB - plotT;
     const plotMidY = (plotT + plotB) / 2;
 
     // Z(ω) = b + i(mω - k/ω)
-    // Re(Z) = b, Im(Z) = mω - k/ω
     const omega0 = Math.sqrt(k / m);
+    // Start from omega0/5 to avoid divergence near ω→0
+    const omegaMin = omega0 * 0.2;
     const omegaMax = omega0 * 3;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Complex impedance: Z(\u03C9) = b + i(m\u03C9 \u2013 k/\u03C9)', plotL + plotW / 2, 16);
+    ctx.fillText('Z(\u03C9) = b + i(m\u03C9 \u2013 k/\u03C9)', plotL + plotW / 2, 16);
 
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    // Zero line
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
 
-    // Find max Im(Z) range for scaling
-    let maxImZ = 0;
-    for (let i = 1; i <= 200; i++) {
-      const omega = omegaMax * i / 200;
+    // Scale based on the visible range (omegaMin to omegaMax)
+    let maxAbsZ = 0;
+    for (let i = 0; i <= 200; i++) {
+      const omega = omegaMin + (omegaMax - omegaMin) * i / 200;
       const imZ = m * omega - k / omega;
-      if (Math.abs(imZ) > maxImZ) maxImZ = Math.abs(imZ);
+      if (Math.abs(imZ) > maxAbsZ) maxAbsZ = Math.abs(imZ);
     }
-    maxImZ = Math.max(maxImZ, b * 2);
+    maxAbsZ = Math.max(maxAbsZ, b * 1.5, 1);
+
+    // Plot |Z| = sqrt(b² + Im²) as faint fill
+    ctx.fillStyle = 'rgba(15, 118, 110, 0.06)';
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotMidY);
+    for (let i = 0; i <= 300; i++) {
+      const omega = omegaMin + (omegaMax - omegaMin) * i / 300;
+      const imZ = m * omega - k / omega;
+      const absZ = Math.sqrt(b * b + imZ * imZ);
+      const px = plotL + (i / 300) * plotW;
+      const py = plotMidY - (absZ / maxAbsZ) * plotH * 0.45;
+      ctx.lineTo(px, Math.max(plotT, py));
+    }
+    ctx.lineTo(plotR, plotMidY);
+    ctx.closePath();
+    ctx.fill();
 
     // Plot Re(Z) = b (constant)
-    const reY = plotMidY - (b / maxImZ) * plotH * 0.4;
+    const reY = plotMidY - (b / maxAbsZ) * plotH * 0.45;
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
     ctx.beginPath(); ctx.moveTo(plotL, reY); ctx.lineTo(plotR, reY); ctx.stroke();
+    ctx.setLineDash([]);
 
     // Plot Im(Z) = mω - k/ω
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
     ctx.beginPath();
     let firstPt = true;
-    for (let i = 1; i <= 300; i++) {
-      const omega = omegaMax * i / 300;
+    for (let i = 0; i <= 300; i++) {
+      const omega = omegaMin + (omegaMax - omegaMin) * i / 300;
       const imZ = m * omega - k / omega;
-      const px = plotL + (omega / omegaMax) * plotW;
-      const py = plotMidY - (imZ / maxImZ) * plotH * 0.4;
+      const px = plotL + (i / 300) * plotW;
+      const py = plotMidY - (imZ / maxAbsZ) * plotH * 0.45;
       if (py >= plotT && py <= plotB) {
         if (firstPt) { ctx.moveTo(px, py); firstPt = false; }
         else ctx.lineTo(px, py);
@@ -10605,39 +10625,45 @@ function initComplexImpedance() {
     ctx.stroke();
 
     // Mark resonance: Im(Z) = 0 at ω₀
-    const resX = plotL + (omega0 / omegaMax) * plotW;
+    const resX = plotL + ((omega0 - omegaMin) / (omegaMax - omegaMin)) * plotW;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(resX, plotT); ctx.lineTo(resX, plotB); ctx.stroke();
     ctx.setLineDash([]);
+
+    // Resonance label below x-axis
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(2), resX, plotB + 14);
-    ctx.fillText('Im(Z) = 0', resX, plotT - 5);
+    ctx.fillText('\u03C9\u2080=' + omega0.toFixed(1), resX, plotB + 12);
 
     // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9 (angular frequency)', plotL + plotW / 2, plotB + 30);
-    ctx.save(); ctx.translate(plotL - 42, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Z (impedance)', 0, 0); ctx.restore();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9', plotR + 10, plotB + 4);
+    ctx.save(); ctx.translate(plotL - 8, plotT - 4); ctx.fillText('Z', 0, 0); ctx.restore();
 
-    // Resonance annotation
-    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u2190 Resonance: Z purely real \u2192', resX, plotT - 16);
+    // Zero label on midline
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('0', plotL - 4, plotMidY + 3);
 
-    // Legend
-    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    // Legend (top-left, inside plot)
+    const legX = plotL + 8, legY = plotT + 12;
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(legX, legY - 3); ctx.lineTo(legX + 18, legY - 3); ctx.stroke();
+    ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.teal;
-    ctx.fillRect(plotR - 120, plotT + 5, 15, 3);
-    ctx.fillText('Re(Z) = b', plotR - 100, plotT + 10);
+    ctx.fillText('Re(Z) = b = ' + b.toFixed(1), legX + 22, legY);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(legX, legY + 11); ctx.lineTo(legX + 18, legY + 11); ctx.stroke();
     ctx.fillStyle = WCOLORS.amber;
-    ctx.fillRect(plotR - 120, plotT + 20, 15, 3);
-    ctx.fillText('Im(Z)', plotR - 100, plotT + 25);
+    ctx.fillText('Im(Z) = m\u03C9 \u2013 k/\u03C9', legX + 22, legY + 14);
 
-    // Stiffness/mass dominated labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Stiffness-dominated', plotL + (resX - plotL) / 2, plotB - 5);
-    ctx.fillText('(Im < 0)', plotL + (resX - plotL) / 2, plotB + 6);
-    ctx.fillText('Mass-dominated', resX + (plotR - resX) / 2, plotB - 5);
-    ctx.fillText('(Im > 0)', resX + (plotR - resX) / 2, plotB + 6);
+    // Region labels along x-axis area
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    if (resX - plotL > 60) {
+      ctx.fillText('stiffness-dominated', plotL + (resX - plotL) / 2, plotB + 24);
+    }
+    if (plotR - resX > 60) {
+      ctx.fillText('mass-dominated', resX + (plotR - resX) / 2, plotB + 24);
+    }
   }
 
   mSlider?.addEventListener('input', draw);

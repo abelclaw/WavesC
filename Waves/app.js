@@ -3731,10 +3731,10 @@ function sceneMarkup(type) {
         <div class="scene-label">Complex Impedance</div>
         <p class="scene-caption">Real and imaginary parts of impedance vs frequency. At resonance, Im(Z)=0 and the system is purely resistive.</p>
         <div class="interactive-scene">
-          <canvas id="scene-complex-impedance" width="600" height="300"></canvas>
+          <canvas id="scene-complex-impedance" width="600" height="340"></canvas>
           <div class="scene-controls">
             <label><span>m: </span><input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>
-            <label><span>b: </span><input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>
+            <label><span>b (damping): </span><input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>
             <label><span>k: </span><input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>
           </div>
         </div>
