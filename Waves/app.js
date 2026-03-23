@@ -3731,7 +3731,7 @@ function sceneMarkup(type) {
         <div class="scene-label">Complex Impedance</div>
         <p class="scene-caption">Sweep the driving frequency \u03C9 and watch the mass response blow up at resonance, where impedance collapses to just damping.</p>
         <div class="interactive-scene">
-          <canvas id="scene-complex-impedance" width="600" height="380"></canvas>
+          <canvas id="scene-complex-impedance" width="600" height="440"></canvas>
           <div class="scene-controls">
             <label><span>\u03C9 (drive): </span><input type="range" id="ci-w" min="0.3" max="6" step="0.02" value="1"><span class="scene-val" id="ci-w-val">1.00</span></label>
             <label><span>m: </span><input type="range" id="ci-m" min="0.2" max="4" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>

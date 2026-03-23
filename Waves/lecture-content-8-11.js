@@ -205,24 +205,11 @@ window.LECTURE_CONTENT_8_11 = {
 <p>Think of it as an <strong>impedance mismatch</strong> between the driver and the oscillator. Far from resonance, the driver and oscillator are badly mismatched: the driver pushes, but the oscillator barely responds. At resonance, the match is perfect — every bit of the driver's effort goes into moving the mass.</p>
 <p>Each part of the oscillator contributes its own impedance. The mass resists changes in velocity (inertia), contributing $Z_m$ = i$\\omega$m. The spring resists displacement, contributing $Z_k$ = $-$ik/$\\omega$. The damper resists velocity directly, contributing $Z_\\gamma$ = $\\gamma$. The total impedance is:</p>
 <p style="text-align:center;">$$Z_{total} = \\gamma + i(\\omega m - k/\\omega)$$</p>
-<p>At <strong>low frequencies</strong>, the spring term $k/\\omega$ dominates — this is <strong>stiffness-dominated</strong> impedance. The spring is too stiff for the slow driver. At <strong>high frequencies</strong>, the mass term $\\omega m$ dominates — the mass can't keep up with the fast driver. At <strong>resonance</strong> ($\\omega = \\sqrt{k/m}$), the mass and spring impedances cancel exactly, leaving only damping: Z = $\\gamma$. Nothing else impedes the motion.</p>`,
-      interactive: "driven-oscillator",
-      interactiveCaption: "The driven oscillator from Chapter 2, now understood through impedance: the response peaks at resonance because |Z| is minimized there. Sweep ωd through ω₀ and watch the amplitude explode.",
-      mathLinks: ["complex-impedance-math"]
-    },
-    {
-      heading: "Impedance in the Complex Plane",
-      body: `<p>Since impedance is complex, we can visualize it as a vector in the complex plane. The real part ($\\gamma$, the damping) points along the real axis. The imaginary part (m$\\omega$ $-$ k/$\\omega$) points along the imaginary axis. The total impedance Z is their vector sum.</p>
-<p>The phasor diagram below shows how the three components of Z stack up as vectors. As you sweep $\\omega$:</p>
-<ul>
-<li>Below resonance, the stiffness arrow (blue, pointing down) is longer than the mass arrow (amber, pointing up). The phasor points into the lower half-plane.</li>
-<li>At resonance, the stiffness and mass arrows cancel. The phasor collapses to just $\\gamma$ on the real axis — its shortest possible length.</li>
-<li>Above resonance, the mass arrow dominates. The phasor rotates into the upper half-plane.</li>
-</ul>
-<p>The magnitude |Z| determines the response: velocity amplitude = $F_0$/|Z|. The <strong>phase angle</strong> $\\phi$ = arg(Z) is the angle between force and velocity. At resonance, $\\phi$ = 0 — force and velocity are perfectly in phase, which is why power transfer is maximized.</p>`,
+<p>At <strong>low frequencies</strong>, the spring term $k/\\omega$ dominates — this is <strong>stiffness-dominated</strong> impedance. The spring is too stiff for the slow driver. At <strong>high frequencies</strong>, the mass term $\\omega m$ dominates — the mass can't keep up with the fast driver. At <strong>resonance</strong> ($\\omega = \\sqrt{k/m}$), the mass and spring impedances cancel exactly, leaving only damping: Z = $\\gamma$. Nothing else impedes the motion.</p>
+<p>Since impedance is complex, we can visualize it as a <strong>phasor</strong> in the complex plane. The animation below shows both the physical system and its impedance decomposition side by side. As you sweep $\\omega$, watch the blue (stiffness) and amber (mass) arrows trade dominance in the phasor diagram, while the mass-spring response changes to match. At resonance, the phasor collapses to just $\\gamma$ on the real axis — its shortest length — and the oscillator responds maximally.</p>`,
       interactive: "complex-impedance",
-      interactiveCaption: "The three impedance components as vectors in the complex plane. At resonance, the mass and stiffness terms cancel, leaving Z = γ on the real axis.",
-      mathLinks: []
+      interactiveCaption: "Left: the driven oscillator from Chapter 2, with response amplitude ∝ 1/|Z|. Right: the impedance phasor showing how mass, spring, and damping contributions add as vectors. At resonance they cancel, leaving Z = γ.",
+      mathLinks: ["complex-impedance-math"]
     },
     {
       heading: "Circuits (optional)",
