@@ -7201,66 +7201,86 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (slinky / accordion) ---
-    // Draw a thick coil that compresses and stretches to show longitudinal wave.
-    // Each coil ring is a vertical line; spacing between rings varies with the wave.
-    const coilN = 60; // number of coil rings
-    const coilLeft = 70, coilRight = W - 70;
-    const coilLen = coilRight - coilLeft;
-    const coilSpacing = coilLen / (coilN - 1);
-    const coilHalfH = 16; // half-height of the slinky
-    const coilAmp = coilSpacing * 0.6; // max displacement of each ring
+    // --- Longitudinal (3D slinky) ---
+    // A proper slinky: helical coil viewed from the side. Each coil is an
+    // elliptical arc alternating front/back. Horizontal position of each
+    // node is displaced by the longitudinal wave, so coils bunch up
+    // (compression) and spread apart (rarefaction) naturally.
 
-    // Draw top and bottom rails (faint guide)
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(coilLeft, longY - coilHalfH); ctx.lineTo(coilRight, longY - coilHalfH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(coilLeft, longY + coilHalfH); ctx.lineTo(coilRight, longY + coilHalfH); ctx.stroke();
-    ctx.setLineDash([]);
+    const coilCount = 24;               // number of full coils
+    const nodes = coilCount * 2 + 1;    // top and bottom crossing points
+    const slinkyLeft = 70, slinkyRight = W - 70;
+    const slinkyLen = slinkyRight - slinkyLeft;
+    const nodeSpacing = slinkyLen / (nodes - 1);
+    const coilRadius = 20;              // half-height of the slinky
+    const slinkyAmp = nodeSpacing * 1.8; // longitudinal displacement amplitude
 
-    // Draw coil rings — each displaced horizontally by the wave
-    for (let i = 0; i < coilN; i++) {
-      const eqX = coilLeft + i * coilSpacing;
-      const dx = coilAmp * Math.sin(k * eqX - omega * t);
-      const px = eqX + dx;
-
-      // Density: derivative of displacement → how compressed the coil is locally
-      const density = 1 + coilAmp * k * Math.cos(k * eqX - omega * t) / coilSpacing;
-      // Thicker lines where compressed, thinner where stretched
-      const lw = Math.max(0.5, Math.min(4.5, 2 / Math.max(density, 0.3)));
-      const alpha = Math.max(0.25, Math.min(1.0, 1.2 / Math.max(density, 0.3)));
-
-      ctx.strokeStyle = WCOLORS.teal;
-      ctx.lineWidth = lw;
-      ctx.globalAlpha = alpha;
-      ctx.beginPath();
-      ctx.moveTo(px, longY - coilHalfH);
-      ctx.lineTo(px, longY + coilHalfH);
-      ctx.stroke();
+    // Compute displaced x-position for each node
+    const nodeX = [];
+    for (let i = 0; i < nodes; i++) {
+      const eqX = slinkyLeft + i * nodeSpacing;
+      const dx = slinkyAmp * Math.sin(k * eqX - omega * t);
+      nodeX.push(eqX + dx);
     }
-    ctx.globalAlpha = 1;
 
-    // End caps (solid vertical lines at slinky ends)
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(coilLeft, longY - coilHalfH); ctx.lineTo(coilLeft, longY + coilHalfH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(coilRight, longY - coilHalfH); ctx.lineTo(coilRight, longY + coilHalfH); ctx.stroke();
+    // Each pair of adjacent nodes forms one half-coil arc.
+    // Even arcs go top→bottom (front, drawn last), odd go bottom→top (back, drawn first).
+    // Back arcs first (dimmer, thinner) for depth.
+    ctx.lineCap = 'round';
 
-    // "Compression" and "Rarefaction" labels that follow the wave
-    // Find a compression peak and a rarefaction peak
-    let compX = null, rareX = null;
-    let maxDens = -Infinity, minDens = Infinity;
-    for (let x = coilLeft; x <= coilRight; x += 2) {
-      const d = 1 + coilAmp * k * Math.cos(k * x - omega * t) / coilSpacing;
-      if (d > maxDens) { maxDens = d; compX = x + coilAmp * Math.sin(k * x - omega * t); }
-      if (d < minDens) { minDens = d; rareX = x + coilAmp * Math.sin(k * x - omega * t); }
+    for (let pass = 0; pass < 2; pass++) {
+      // pass 0 = back arcs, pass 1 = front arcs
+      for (let i = 0; i < nodes - 1; i++) {
+        const isBack = (i % 2 === 1);
+        if (pass === 0 && !isBack) continue;
+        if (pass === 1 && isBack) continue;
+
+        const x0 = nodeX[i];
+        const x1 = nodeX[i + 1];
+        const midX = (x0 + x1) / 2;
+        const halfW = Math.abs(x1 - x0) / 2;
+
+        // Top node y or bottom node y
+        const y0 = (i % 2 === 0) ? longY - coilRadius : longY + coilRadius;
+        const y1 = (i % 2 === 0) ? longY + coilRadius : longY - coilRadius;
+
+        if (isBack) {
+          // Back arc: thinner, dimmer
+          ctx.strokeStyle = 'rgba(15,118,110,0.25)';
+          ctx.lineWidth = 2;
+        } else {
+          // Front arc: thick, vivid
+          ctx.strokeStyle = WCOLORS.teal;
+          ctx.lineWidth = 3.5;
+        }
+
+        // Draw elliptical arc using bezier curve
+        const cpOffsetX = halfW * 0.55;
+        const cpY0 = y0;
+        const cpY1 = y1;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.bezierCurveTo(
+          x0 + (x1 > x0 ? cpOffsetX : -cpOffsetX), cpY0,
+          x1 - (x1 > x0 ? cpOffsetX : -cpOffsetX), cpY1,
+          x1, y1
+        );
+        ctx.stroke();
+      }
     }
-    ctx.font = '10px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = WCOLORS.textDim;
-    if (compX > coilLeft + 30 && compX < coilRight - 30)
-      ctx.fillText('compressed', compX, longY + coilHalfH + 14);
-    if (rareX > coilLeft + 30 && rareX < coilRight - 30)
-      ctx.fillText('stretched', rareX, longY + coilHalfH + 14);
+
+    // Highlight front arc shadows for 3D pop — subtle darker stroke underneath front arcs
+    // (already handled by back/front pass ordering)
+
+    // End mounting points (small filled circles where slinky attaches to walls)
+    ctx.fillStyle = WCOLORS.text;
+    ctx.beginPath(); ctx.arc(nodeX[0], longY - coilRadius, 4, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(nodeX[nodes - 1], (nodes - 1) % 2 === 0 ? longY - coilRadius : longY + coilRadius, 4, 0, 2 * Math.PI); ctx.fill();
+
+    ctx.lineCap = 'butt';
 
     // Propagation arrow
-    const propArrowY2 = longY + coilHalfH + 28;
+    const propArrowY2 = longY + coilRadius + 18;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
