@@ -11871,26 +11871,63 @@ function initAmplitudeModulation() {
       controls.className = 'scene-controls';
       controls.innerHTML =
         '<label>\u03C3<sub>t</sub> (pulse width): <input type="range" id="am-sigma" min="0.3" max="3.0" step="0.1" value="1.0"><span class="scene-val" id="am-sigma-val">1.0</span></label>' +
-        '<label>f<sub>c</sub> (carrier): <input type="range" id="am-fc" min="8" max="40" step="1" value="20"><span class="scene-val" id="am-fc-val">20</span></label>';
+        '<label>f<sub>c</sub> (carrier): <input type="range" id="am-fc" min="8" max="40" step="1" value="20"><span class="scene-val" id="am-fc-val">20</span></label>' +
+        '<button id="am-pause" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Pause</button>' +
+        '<button id="am-send" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Send Pulse</button>' +
+        '<button id="am-reset" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Reset</button>';
       parent.appendChild(controls);
       sigmaSlider = document.getElementById('am-sigma');
     }
   }
   const fcSlider = document.getElementById('am-fc');
+  const pauseBtn = document.getElementById('am-pause');
+  const sendBtn = document.getElementById('am-send');
+  const resetBtn = document.getElementById('am-reset');
 
-  // Pulse amplitudes encoding a "message"
-  const pulseAmps = [0.9, 0.4, 1.0, 0.6, 0.2, 0.8, 0.5, 1.0];
-  const pulseSpacing = 3.0;
+  // Pulses are launched by the user and travel rightward across a fixed window
+  var tWindow = 25; // total time span visible in the top panel
+  var pulses = [];  // { t0: launch time (in sim time), amp: amplitude }
+  var simTime = 0;
+  var paused = false;
+  var lastTime = null;
+  var pulseSpeed = 3.0; // how fast pulses move across the window (units/sec)
 
-  let tScroll = 0;
-  let lastTime = null;
+  // Randomize amplitude for next pulse
+  var ampChoices = [0.2, 0.4, 0.5, 0.6, 0.8, 0.9, 1.0];
+  function randomAmp() { return ampChoices[Math.floor(Math.random() * ampChoices.length)]; }
+
+  // Pre-fill a few pulses so it's not empty on load
+  for (var pp = 0; pp < 5; pp++) {
+    pulses.push({ t0: -pp * 3.0, amp: randomAmp() });
+  }
+
+  pauseBtn?.addEventListener('click', function() {
+    paused = !paused;
+    if (paused) lastTime = null;
+    pauseBtn.textContent = paused ? 'Play' : 'Pause';
+  });
+
+  sendBtn?.addEventListener('click', function() {
+    pulses.push({ t0: simTime, amp: randomAmp() });
+  });
+
+  resetBtn?.addEventListener('click', function() {
+    pulses.length = 0;
+    simTime = 0;
+    lastTime = null;
+    for (var pp2 = 0; pp2 < 5; pp2++) {
+      pulses.push({ t0: -pp2 * 3.0, amp: randomAmp() });
+    }
+  });
 
   function tick(now) {
-    if (lastTime !== null) {
-      var dt = (now - lastTime) / 1000;
-      tScroll += dt * 1.2;
+    if (!paused) {
+      if (lastTime !== null) {
+        var dt = (now - lastTime) / 1000;
+        simTime += dt * pulseSpeed;
+      }
+      lastTime = now;
     }
-    lastTime = now;
     draw();
     requestAnimationFrame(tick);
   }
@@ -11909,7 +11946,7 @@ function initAmplitudeModulation() {
     var gap = H * 0.04;
     var botY = topH + gap;
 
-    // Top panel: full-width pulse train
+    // Top panel: pulse train on a fixed window — pulses move right to left
     var tL = 50, tR = W - 15, tT = 30, tB = topH - 5;
     var tW = tR - tL, tH2 = tB - tT;
     var tMid = (tT + tB) / 2;
@@ -11923,34 +11960,50 @@ function initAmplitudeModulation() {
     var fL = W * 0.54, fR2 = W - 15, fT = botY + 20, fB = H - 10;
     var fW2 = fR2 - fL, fH2 = fB - fT;
 
-    // ===== TOP: ANIMATED PULSE TRAIN =====
+    // ===== TOP: PULSE TRAIN =====
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('AM Signal: Pulse Train Encoding Information', tL + tW / 2, 16);
+    ctx.fillText('AM Signal: Wavepackets Encoding Information', tL + tW / 2, 16);
 
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(tL, tB); ctx.lineTo(tR, tB); ctx.stroke();
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(tL, tMid); ctx.lineTo(tR, tMid); ctx.stroke();
 
-    var tRange = 12;
-    var tStart = tScroll;
-    var tEnd = tStart + tRange;
+    // The visible window: positions 0..tWindow mapped to tL..tR
+    // Each pulse position = simTime - pulse.t0 (how far it has traveled)
+    // Pulse enters from the left (pos=0) and moves right (pos increases)
 
-    var overlapDetected = 2 * sigmaT > pulseSpacing * 0.45;
+    // Check for overlap between adjacent pulses
+    var overlapDetected = false;
+    var visiblePulses = [];
+    for (var pi = 0; pi < pulses.length; pi++) {
+      var pos = simTime - pulses[pi].t0;
+      if (pos > -sigmaT * 4 && pos < tWindow + sigmaT * 4) {
+        visiblePulses.push({ pos: pos, amp: pulses[pi].amp });
+      }
+    }
+    visiblePulses.sort(function(a, b) { return a.pos - b.pos; });
+    for (var vi = 0; vi < visiblePulses.length - 1; vi++) {
+      if (visiblePulses[vi + 1].pos - visiblePulses[vi].pos < 2.5 * sigmaT) {
+        overlapDetected = true;
+        break;
+      }
+    }
 
-    // Envelopes (dashed)
+    // Draw envelopes (dashed)
     ctx.setLineDash([4, 3]);
     ctx.strokeStyle = overlapDetected ? 'rgba(220,38,38,0.4)' : WCOLORS.amber;
     ctx.lineWidth = 1;
-    for (var pi = 0; pi < pulseAmps.length; pi++) {
-      var tc = pi * pulseSpacing;
+    for (var qi = 0; qi < visiblePulses.length; qi++) {
+      var ppos = visiblePulses[qi].pos;
+      var pamp = visiblePulses[qi].amp;
       for (var sign = -1; sign <= 1; sign += 2) {
         ctx.beginPath();
         var started = false;
         for (var i = 0; i <= tW; i++) {
-          var t = tStart + tRange * i / tW;
-          var dd = t - tc;
-          var env = sign * pulseAmps[pi] * Math.exp(-dd * dd / (2 * sigmaT * sigmaT));
+          var x = tWindow * i / tW;
+          var dd = x - ppos;
+          var env = sign * pamp * Math.exp(-dd * dd / (2 * sigmaT * sigmaT));
           if (Math.abs(env) < 0.005) continue;
           var px = tL + i;
           var py = tMid - env * tH2 * 0.4;
@@ -11962,16 +12015,15 @@ function initAmplitudeModulation() {
     }
     ctx.setLineDash([]);
 
-    // AM signal
+    // Draw AM signal (sum of all visible pulses)
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (var i2 = 0; i2 <= tW; i2++) {
-      var t2 = tStart + tRange * i2 / tW;
+      var x2 = tWindow * i2 / tW;
       var val = 0;
-      for (var pj = 0; pj < pulseAmps.length; pj++) {
-        var tc2 = pj * pulseSpacing;
-        var dd2 = t2 - tc2;
-        val += pulseAmps[pj] * Math.exp(-dd2 * dd2 / (2 * sigmaT * sigmaT)) * Math.cos(2 * Math.PI * fc * dd2);
+      for (var qj = 0; qj < visiblePulses.length; qj++) {
+        var dd2 = x2 - visiblePulses[qj].pos;
+        val += visiblePulses[qj].amp * Math.exp(-dd2 * dd2 / (2 * sigmaT * sigmaT)) * Math.cos(2 * Math.PI * fc * dd2);
       }
       var px2 = tL + i2;
       var py2 = tMid - val * tH2 * 0.4;
@@ -11979,15 +12031,13 @@ function initAmplitudeModulation() {
     }
     ctx.stroke();
 
-    // Amplitude labels
+    // Amplitude labels above visible pulses
     ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    for (var pk = 0; pk < pulseAmps.length; pk++) {
-      var tc3 = pk * pulseSpacing;
-      if (tc3 < tStart - sigmaT * 2 || tc3 > tEnd + sigmaT * 2) continue;
-      var px3 = tL + (tc3 - tStart) / tRange * tW;
-      if (px3 < tL + 10 || px3 > tR - 10) continue;
+    for (var qk = 0; qk < visiblePulses.length; qk++) {
+      var lpx = tL + visiblePulses[qk].pos / tWindow * tW;
+      if (lpx < tL + 10 || lpx > tR - 10) continue;
       ctx.fillStyle = WCOLORS.textDim;
-      ctx.fillText('A=' + pulseAmps[pk].toFixed(1), px3, tT + 2);
+      ctx.fillText('A=' + visiblePulses[qk].amp.toFixed(1), lpx, tT + 2);
     }
 
     if (overlapDetected) {
@@ -11995,8 +12045,19 @@ function initAmplitudeModulation() {
       ctx.fillText('Pulses overlap! Information lost.', tR, tT + 2);
     }
 
+    if (paused) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText('PAUSED', tL + 2, tT + 2);
+    }
+
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('t', tL + tW / 2, tB + 12);
+
+    // Direction arrow on time axis
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(tR - 20, tB + 6); ctx.lineTo(tR - 5, tB + 6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tR - 5, tB + 6); ctx.lineTo(tR - 10, tB + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tR - 5, tB + 6); ctx.lineTo(tR - 10, tB + 9); ctx.stroke();
 
     // ===== BOTTOM LEFT: SINGLE WAVEPACKET =====
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';

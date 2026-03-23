@@ -3829,6 +3829,9 @@ function sceneMarkup(type) {
           <div class="scene-controls">
             <label><span>&sigma;<sub>t</sub> (pulse width): </span><input type="range" id="am-sigma" min="0.3" max="3.0" step="0.1" value="1.0"><span class="scene-val" id="am-sigma-val">1.0</span></label>
             <label><span>f<sub>c</sub> (carrier): </span><input type="range" id="am-fc" min="8" max="40" step="1" value="20"><span class="scene-val" id="am-fc-val">20</span></label>
+            <button id="am-pause" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Pause</button>
+            <button id="am-send" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Send Pulse</button>
+            <button id="am-reset" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Reset</button>
           </div>
         </div>
       `;
