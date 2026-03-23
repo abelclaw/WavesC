@@ -7201,93 +7201,97 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (3D slinky — parametric helix) ---
-    // A helix viewed from the side: x advances along the axis (with
-    // longitudinal wave displacement), y = R·sin(θ), z = R·cos(θ).
-    // z controls depth → brightness, thickness, and color for 3D effect.
-    // We sample densely and draw short line segments, varying style per segment.
+    // --- Longitudinal (accordion bellows) ---
+    // Zigzag folds like an accordion/concertina. Each fold vertex is
+    // displaced horizontally by the longitudinal wave. Where folds bunch
+    // together = compression, where they spread = rarefaction.
+    // Each fold panel is shaded to give a 3D bellows look.
 
-    const slinkyCoils = 18;
-    const slinkyLeft = 60, slinkyRight = W - 60;
-    const slinkyLen = slinkyRight - slinkyLeft;
-    const R = 22;                                 // coil radius (vertical extent)
-    const slinkyAmp = 14;                         // longitudinal displacement amplitude
-    const samples = slinkyCoils * 40;             // total sample points (smooth)
-    const thetaPerSample = (slinkyCoils * 2 * Math.PI) / samples;
+    const foldCount = 30;                     // number of fold vertices (peaks)
+    const bellowsLeft = 60, bellowsRight = W - 60;
+    const bellowsLen = bellowsRight - bellowsLeft;
+    const foldSpacing = bellowsLen / (foldCount - 1);
+    const bellowsHalfH = 20;                 // half-height of bellows
+    const bellowsAmp = foldSpacing * 0.7;    // longitudinal displacement
 
-    // Precompute all sample positions + depth
-    const pts = [];
-    for (let i = 0; i <= samples; i++) {
-      const theta = i * thetaPerSample;
-      // equilibrium x: linear along axis
-      const eqX = slinkyLeft + (i / samples) * slinkyLen;
-      // longitudinal wave displacement
-      const dx = slinkyAmp * Math.sin(k * eqX - omega * t);
+    // Compute displaced x for each fold vertex
+    // Vertices alternate top and bottom: top, bottom, top, bottom, ...
+    const folds = [];
+    for (let i = 0; i < foldCount; i++) {
+      const eqX = bellowsLeft + i * foldSpacing;
+      const dx = bellowsAmp * Math.sin(k * eqX - omega * t);
       const px = eqX + dx;
-      const py = longY + R * Math.sin(theta);
-      const z = Math.cos(theta);   // -1 = far back, +1 = near front
-      pts.push({ x: px, y: py, z });
+      const isTop = (i % 2 === 0);
+      folds.push({
+        x: px,
+        yTop: longY - bellowsHalfH,
+        yBot: longY + bellowsHalfH,
+        isTop
+      });
     }
 
-    // Draw in two passes: back half (z < 0) first, then front half (z >= 0)
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    // Draw filled fold panels with alternating shading for 3D depth
+    for (let i = 0; i < foldCount - 1; i++) {
+      const f0 = folds[i], f1 = folds[i + 1];
+      // Each panel is a quadrilateral: two fold lines connected at top and bottom
+      // f0 is at top or bottom, f1 is at the opposite
 
-    for (let pass = 0; pass < 2; pass++) {
-      for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[i], p1 = pts[i + 1];
-        const avgZ = (p0.z + p1.z) / 2;
+      const x0 = f0.x, x1 = f1.x;
 
-        // pass 0: back segments (avgZ < 0), pass 1: front segments (avgZ >= 0)
-        if (pass === 0 && avgZ >= 0) continue;
-        if (pass === 1 && avgZ < 0) continue;
+      // Panel shape: from fold peak/valley to next valley/peak
+      // The zigzag goes: top-peak → bottom-valley → top-peak → ...
+      // So the panel is a triangle-ish shape connecting them via the top and bottom rails
+      const y0 = f0.isTop ? f0.yTop : f0.yBot;   // the peak/valley point
+      const y1 = f1.isTop ? f1.yTop : f1.yBot;
 
-        // Map z from [-1,1] to visual properties
-        // Depth factor: 0 (far back) → 1 (front)
-        const depthFactor = (avgZ + 1) / 2;
+      // Draw the panel as a filled quad:
+      // Two triangles making up the fold panel with 3D shading
+      // Left-leaning folds are "lit", right-leaning are "shadowed"
+      const facingRight = (f0.isTop);  // fold goes from top-left to bottom-right
+      const shade = facingRight ? 'rgba(15,118,110,0.12)' : 'rgba(15,118,110,0.06)';
 
-        // Line width: back=1.5, front=5
-        const lw = 1.5 + depthFactor * 3.5;
+      ctx.fillStyle = shade;
+      ctx.beginPath();
+      ctx.moveTo(x0, f0.yTop);
+      ctx.lineTo(x1, f1.yTop);
+      ctx.lineTo(x1, f1.yBot);
+      ctx.lineTo(x0, f0.yBot);
+      ctx.closePath();
+      ctx.fill();
 
-        // Color: teal with varying lightness and alpha for depth
-        // Back: dim, desaturated. Front: bright, saturated.
-        const r = Math.round(15 + depthFactor * 20);
-        const g = Math.round(80 + depthFactor * 58);
-        const b = Math.round(75 + depthFactor * 50);
-        const a = 0.2 + depthFactor * 0.8;
-
-        // Specular highlight near the front-top of each coil
-        let sr = r, sg = g, sb = b;
-        if (depthFactor > 0.85) {
-          const spec = (depthFactor - 0.85) / 0.15;
-          sr = Math.round(r + (255 - r) * spec * 0.4);
-          sg = Math.round(g + (255 - g) * spec * 0.4);
-          sb = Math.round(b + (255 - b) * spec * 0.4);
-        }
-
-        ctx.strokeStyle = `rgba(${sr},${sg},${sb},${a.toFixed(2)})`;
-        ctx.lineWidth = lw;
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
-        ctx.stroke();
-      }
+      // Draw the diagonal fold line (the zigzag crease)
+      ctx.strokeStyle = WCOLORS.teal;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
     }
 
-    // Subtle shadow on the ground beneath the slinky
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    ctx.fillStyle = '#000';
+    // Draw top and bottom edges of the bellows
+    ctx.strokeStyle = WCOLORS.teal;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.ellipse(W / 2, longY + R + 8, slinkyLen / 2 - 10, 4, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.restore();
+    ctx.moveTo(folds[0].x, folds[0].yTop);
+    for (let i = 1; i < foldCount; i++) {
+      ctx.lineTo(folds[i].x, folds[i].yTop);
+    }
+    ctx.stroke();
 
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    ctx.moveTo(folds[0].x, folds[0].yBot);
+    for (let i = 1; i < foldCount; i++) {
+      ctx.lineTo(folds[i].x, folds[i].yBot);
+    }
+    ctx.stroke();
+
+    // End caps — solid vertical bars at each end
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(folds[0].x, folds[0].yTop); ctx.lineTo(folds[0].x, folds[0].yBot); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(folds[foldCount - 1].x, folds[foldCount - 1].yTop); ctx.lineTo(folds[foldCount - 1].x, folds[foldCount - 1].yBot); ctx.stroke();
 
     // Propagation arrow
-    const propArrowY2 = longY + R + 18;
+    const propArrowY2 = longY + bellowsHalfH + 16;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
