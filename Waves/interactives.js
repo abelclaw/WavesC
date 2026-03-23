@@ -14002,6 +14002,60 @@ function initCieColorSpaceGamut() {
     return { x: plotL + cx * plotSize * 1.15, y: plotB - cy * plotSize * 1.3 };
   }
 
+  // XYZ to linear sRGB
+  function xyzToLinearRGB(X, Y, Z) {
+    return [
+       3.2406 * X - 1.5372 * Y - 0.4986 * Z,
+      -0.9689 * X + 1.8758 * Y + 0.0415 * Z,
+       0.0557 * X - 0.2040 * Y + 1.0570 * Z
+    ];
+  }
+
+  function gammaCorrect(c) {
+    return c > 0.0031308 ? 1.055 * Math.pow(c, 1/2.4) - 0.055 : 12.92 * c;
+  }
+
+  // Convert xy chromaticity to displayable RGB with proper gamut mapping
+  function xyToDisplayRGB(cx, cy) {
+    if (cy < 0.001) return [0, 0, 0];
+    const xn = cx / cy;
+    const zn = (1 - cx - cy) / cy;
+    var rgb = xyzToLinearRGB(xn, 1, zn);
+    var maxComp = Math.max(rgb[0], rgb[1], rgb[2]);
+    var minComp = Math.min(rgb[0], rgb[1], rgb[2]);
+    if (maxComp <= 0) return [0, 0, 0];
+
+    var scale;
+    if (minComp < 0) {
+      // Out of gamut: desaturate toward D65 white point until in gamut
+      var wx = 0.3127, wy = 0.3290;
+      var lo = 0, hi = 1;
+      for (var iter = 0; iter < 16; iter++) {
+        var t = (lo + hi) / 2;
+        var mx = wx + t * (cx - wx);
+        var my = wy + t * (cy - wy);
+        var mxn = mx / my, mzn = (1 - mx - my) / my;
+        var mrgb = xyzToLinearRGB(mxn, 1, mzn);
+        if (Math.min(mrgb[0], mrgb[1], mrgb[2]) >= 0 && Math.max(mrgb[0], mrgb[1], mrgb[2]) > 0) lo = t;
+        else hi = t;
+      }
+      var ft = lo;
+      var fmx = wx + ft * (cx - wx);
+      var fmy = wy + ft * (cy - wy);
+      rgb = xyzToLinearRGB(fmx / fmy, 1, (1 - fmx - fmy) / fmy);
+      maxComp = Math.max(rgb[0], rgb[1], rgb[2]);
+      scale = maxComp > 0 ? 1 / maxComp : 0;
+    } else {
+      scale = 1 / maxComp;
+    }
+
+    return [
+      gammaCorrect(Math.max(0, Math.min(1, rgb[0] * scale))),
+      gammaCorrect(Math.max(0, Math.min(1, rgb[1] * scale))),
+      gammaCorrect(Math.max(0, Math.min(1, rgb[2] * scale)))
+    ];
+  }
+
   function draw() {
     wClear(ctx, W, H);
 
@@ -14027,11 +14081,7 @@ function initCieColorSpaceGamut() {
       ctx.fillText(v.toFixed(1), plotL - 5, p2.y + 3);
     }
 
-    // Fill horseshoe shape with colors using pixel-by-pixel approach
-    // Simplified: draw filled spectral locus
-    const imgData = ctx.createImageData(1, 1);
-
-    // Draw spectral locus curve (filled with approximate colors)
+    // Build spectral locus clipping path
     ctx.beginPath();
     let started = false;
     for (let i = 0; i < spectralX.length; i++) {
@@ -14040,36 +14090,36 @@ function initCieColorSpaceGamut() {
       if (!started) { ctx.moveTo(p.x, p.y); started = true; }
       else ctx.lineTo(p.x, p.y);
     }
-    // Close with purple line
     ctx.closePath();
 
-    // Fill with a gradient approximation
+    // Fill with properly gamut-mapped colors
+    // Use offscreen canvas since putImageData ignores clip
     ctx.save();
     ctx.clip();
-    // Paint interior with colored pixels
-    for (let px = plotL; px < plotR + 20; px += 3) {
-      for (let py = plotT; py < plotB; py += 3) {
-        const cx = (px - plotL) / (plotSize * 1.15);
-        const cy = (plotB - py) / (plotSize * 1.3);
-        // Convert xy to approximate RGB
-        const Y = 1.0;
-        const X = (Y / Math.max(cy, 0.001)) * cx;
-        const Z = (Y / Math.max(cy, 0.001)) * (1 - cx - cy);
-        // XYZ to sRGB
-        let r =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
-        let g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
-        let b =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
-        // Gamma correction
-        r = r > 0.0031308 ? 1.055 * Math.pow(r, 1/2.4) - 0.055 : 12.92 * r;
-        g = g > 0.0031308 ? 1.055 * Math.pow(g, 1/2.4) - 0.055 : 12.92 * g;
-        b = b > 0.0031308 ? 1.055 * Math.pow(b, 1/2.4) - 0.055 : 12.92 * b;
-        r = Math.max(0, Math.min(1, r));
-        g = Math.max(0, Math.min(1, g));
-        b = Math.max(0, Math.min(1, b));
-        ctx.fillStyle = 'rgb(' + Math.round(r*255) + ',' + Math.round(g*255) + ',' + Math.round(b*255) + ')';
-        ctx.fillRect(px, py, 3, 3);
+    const fillL = Math.floor(plotL);
+    const fillT2 = Math.floor(plotT);
+    const fillW = Math.ceil(plotR + 20) - fillL;
+    const fillH = Math.ceil(plotB) - fillT2;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = fillW; offCanvas.height = fillH;
+    const offCtx = offCanvas.getContext('2d');
+    const imgData = offCtx.createImageData(fillW, fillH);
+    const data = imgData.data;
+    for (let py = 0; py < fillH; py++) {
+      for (let px = 0; px < fillW; px++) {
+        const cx = (fillL + px - plotL) / (plotSize * 1.15);
+        const cy = (plotB - (fillT2 + py)) / (plotSize * 1.3);
+        if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
+        const rgb = xyToDisplayRGB(cx, cy);
+        const idx = (py * fillW + px) * 4;
+        data[idx]     = Math.round(rgb[0] * 255);
+        data[idx + 1] = Math.round(rgb[1] * 255);
+        data[idx + 2] = Math.round(rgb[2] * 255);
+        data[idx + 3] = 255;
       }
     }
+    offCtx.putImageData(imgData, 0, 0);
+    ctx.drawImage(offCanvas, fillL, fillT2);
     ctx.restore();
 
     // Spectral locus outline
@@ -14086,18 +14136,17 @@ function initCieColorSpaceGamut() {
     ctx.stroke();
 
     // Wavelength labels on spectral locus
-    const labelWLs = [460, 480, 500, 520, 540, 560, 580, 600, 620, 700];
+    const labelWLs = [460, 480, 500, 520, 540, 560, 580, 600, 700];
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui';
     for (let k = 0; k < labelWLs.length; k++) {
       const idx = Math.round((labelWLs[k] - 380) / 5);
       if (idx >= 0 && idx < spectralX.length && (spectralX[idx] > 0 || spectralY[idx] > 0)) {
         const p = toScreen(spectralX[idx], spectralY[idx]);
-        // Offset outward
         const cx = 0.33, cy = 0.33;
         const dx = spectralX[idx] - cx, dy = spectralY[idx] - cy;
         const len = Math.sqrt(dx*dx + dy*dy);
         ctx.textAlign = 'center';
-        ctx.fillText(labelWLs[k], p.x + (dx/len)*16, p.y - (dy/len)*10);
+        ctx.fillText(labelWLs[k], p.x + (dx/len)*18, p.y - (dy/len)*12);
       }
     }
 
@@ -14105,14 +14154,12 @@ function initCieColorSpaceGamut() {
     const srgbR = toScreen(0.64, 0.33);
     const srgbG = toScreen(0.30, 0.60);
     const srgbB = toScreen(0.15, 0.06);
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(srgbR.x, srgbR.y);
     ctx.lineTo(srgbG.x, srgbG.y);
     ctx.lineTo(srgbB.x, srgbB.y);
     ctx.closePath();
-    ctx.stroke();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.stroke();
 
     // Label gamut vertices
