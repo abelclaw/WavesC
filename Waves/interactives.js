@@ -14490,6 +14490,53 @@ function initBlackbodyPlanckianLocus() {
       ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = WCOLORS.axis; ctx.fill();
       if (m.label) {
+        ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText(m.label, s.x + 6, s.y - 4);
+      }
+    });
+
+    // Current temperature on locus
+    const curP = planckianXY(temperature);
+    const curS = toScreen(curP.x, curP.y);
+    ctx.beginPath(); ctx.arc(curS.x, curS.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Color swatch
+    const swX = W - 140, swY = 20, swW = 120, swH = 70;
+    ctx.fillStyle = blackbodyRGB(temperature);
+    ctx.fillRect(swX, swY, swW, swH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(swX, swY, swW, swH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(temperature + ' K', swX + swW/2, swY + swH + 16);
+
+    // Slider
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    // Color gradient on slider
+    for (let i = 0; i < sliderW; i++) {
+      const T = 1000 + (i / sliderW) * 9000;
+      ctx.fillStyle = blackbodyRGB(T);
+      ctx.fillRect(sliderX + i, sliderY - 3, 1, 6);
+    }
+    const st = (temperature - 1000) / 9000;
+    ctx.beginPath();
+    ctx.arc(sliderX + sliderW * st, sliderY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('1000K', sliderX, sliderY - 10);
+    ctx.textAlign = 'right'; ctx.fillText('10000K', sliderX + sliderW, sliderY - 10);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Planckian Locus', plotL, plotT - 2);
+  }
+
+  draw();
+}
 
 // =========================================================================
 // 5. HSV Color Explorer — dual HSB / RGB sliders
@@ -14735,53 +14782,6 @@ function initHsvColorExplorer() {
     // Hint text
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Drag any slider \u2014 both sides stay linked', W / 2, H - 8);
-  }
-
-  draw();
-}
-    const selR = sat * wheelR;
-    const selX = wheelCX + Math.cos(selRad) * selR;
-    const selY = wheelCY + Math.sin(selRad) * selR;
-    ctx.beginPath(); ctx.arc(selX, selY, 6, 0, Math.PI * 2);
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
-
-    // Value slider
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Value (Brightness)', sliderX, sliderY - 15);
-
-    for (let i = 0; i < sliderW; i++) {
-      const v = i / sliderW;
-      ctx.fillStyle = hsvToRGB(hue, sat, v);
-      ctx.fillRect(sliderX + i, sliderY - 4, 1, 8);
-    }
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(sliderX, sliderY - 4, sliderW, 8);
-
-    const vThumbX = sliderX + val * sliderW;
-    ctx.beginPath(); ctx.arc(vThumbX, sliderY, 7, 0, Math.PI * 2);
-    ctx.fillStyle = hsvToRGB(hue, sat, val); ctx.fill();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
-
-    // Color swatch
-    const swX = W * 0.65, swY = 20, swW = W * 0.28, swH = 70;
-    ctx.fillStyle = hsvToRGB(hue, sat, val);
-    ctx.fillRect(swX, swY, swW, swH);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(swX, swY, swW, swH);
-
-    // HSV values
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('H: ' + Math.round(hue) + '\u00B0', swX, swY + swH + 18);
-    ctx.fillText('S: ' + (sat * 100).toFixed(0) + '%', swX + 70, swY + swH + 18);
-    ctx.fillText('V: ' + (val * 100).toFixed(0) + '%', swX + 140, swY + swH + 18);
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('HSV Color Explorer', W / 2, 14);
-
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Click wheel to select hue & saturation', wheelCX, H - 8);
   }
 
   draw();
