@@ -11218,7 +11218,7 @@ function initDecibelScale() {
   ];
 
   var selectedIdx = 5; // start with Concert (120 dB)
-  var listenerDist = 48; // meters from source (1-64)
+  var listenerDist = 4; // meters from source (1-64)
   var dragging = false; // 'listener' or 'source' or false
   var maxDist = 64;
 
