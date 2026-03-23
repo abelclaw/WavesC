@@ -200,21 +200,29 @@ window.LECTURE_CONTENT_8_11 = {
     },
     {
       heading: "Complex Impedance",
-      body: `<p>It is sometimes useful to generalize impedance to <strong>complex numbers</strong>. Suppose we have a driven oscillator satisfying m$\\ddot{x}$ + kx = $F_{0}$e<sup>i$\\omega$t</sup>.</p>
-<p>First consider the case where k $\\approx$ 0. Then m$\\ddot{x} = F_{0}$e<sup>i$\\omega$t</sup>. Integrating gives $\\dot{x} = F_{0}$e<sup>i$\\omega$t</sup>/(i$\\omega$m). Thus:</p>
-<p style="text-align:center;">$$Z_m = force/velocity = i\\omega m$$</p>
-<p>In the other case, when m $\\approx$ 0, kx = $F_{0}$e<sup>i$\\omega$t</sup> and $\\dot{x}$ = i$\\omega F_{0}$e<sup>i$\\omega$t</sup>/k. Thus:</p>
-<p style="text-align:center;">$$Z_k = force/velocity = -ik/\\omega$$</p>
-<p>The impedance of the whole system is the sum:</p>
-<p style="text-align:center;">$$Z_{total} = Z_m + Z_k = i(\\omega m - k/\\omega)$$</p>
-<p>At high frequencies, the mass term dominates — this is called <strong>mass-dominated impedance</strong>. Physically, when the driver is going very fast, the mass has no time to react. At low frequencies, the <em>k</em> term dominates — this is called <strong>stiffness-dominated impedance</strong>.</p>
-<p>Note that $Z_{total}$ = 0 when $\\omega = \\sqrt{k/m}$ — that is, at resonance. At the resonant frequency, <strong>nothing impedes the motion</strong>: a small force gives a huge velocity.</p>
-<p>Adding a damping term $\\gamma \\dot{x}$ contributes Z$_{\\gamma} = \\gamma$. This makes perfect sense: <strong>damping impedes the transfer of energy</strong> from the driver to the oscillator. With all three terms:</p>
+      body: `<p>Let's revisit the driven oscillator from Chapter 2. Recall the equation of motion: m$\\ddot{x}$ + $\\gamma\\dot{x}$ + kx = $F_{0}$e<sup>i$\\omega$t</sup>. Back then we focused on finding the amplitude and phase of the response. Now we can reinterpret the same system through the lens of <strong>impedance</strong>.</p>
+<p>The key idea: impedance is the ratio of force to velocity, Z = F/$\\dot{x}$. It tells you <strong>how much a system resists being driven</strong>. When you sweep the driving frequency in the animation below, the response amplitude blows up at resonance. Why? Because the impedance is minimized there — the system puts up the least resistance to the driver.</p>
+<p>Think of it as an <strong>impedance mismatch</strong> between the driver and the oscillator. Far from resonance, the driver and oscillator are badly mismatched: the driver pushes, but the oscillator barely responds. At resonance, the match is perfect — every bit of the driver's effort goes into moving the mass.</p>
+<p>Each part of the oscillator contributes its own impedance. The mass resists changes in velocity (inertia), contributing $Z_m$ = i$\\omega$m. The spring resists displacement, contributing $Z_k$ = $-$ik/$\\omega$. The damper resists velocity directly, contributing $Z_\\gamma$ = $\\gamma$. The total impedance is:</p>
 <p style="text-align:center;">$$Z_{total} = \\gamma + i(\\omega m - k/\\omega)$$</p>
-<p>Now the impedance is always nonzero, for any frequency.</p>`,
-      interactive: "complex-impedance",
-      interactiveCaption: "Complex impedance of a driven oscillator: mass-dominated at high frequencies, stiffness-dominated at low frequencies, and vanishing at resonance (without damping)",
+<p>At <strong>low frequencies</strong>, the spring term $k/\\omega$ dominates — this is <strong>stiffness-dominated</strong> impedance. The spring is too stiff for the slow driver. At <strong>high frequencies</strong>, the mass term $\\omega m$ dominates — the mass can't keep up with the fast driver. At <strong>resonance</strong> ($\\omega = \\sqrt{k/m}$), the mass and spring impedances cancel exactly, leaving only damping: Z = $\\gamma$. Nothing else impedes the motion.</p>`,
+      interactive: "driven-oscillator",
+      interactiveCaption: "The driven oscillator from Chapter 2, now understood through impedance: the response peaks at resonance because |Z| is minimized there. Sweep ωd through ω₀ and watch the amplitude explode.",
       mathLinks: ["complex-impedance-math"]
+    },
+    {
+      heading: "Impedance in the Complex Plane",
+      body: `<p>Since impedance is complex, we can visualize it as a vector in the complex plane. The real part ($\\gamma$, the damping) points along the real axis. The imaginary part (m$\\omega$ $-$ k/$\\omega$) points along the imaginary axis. The total impedance Z is their vector sum.</p>
+<p>The phasor diagram below shows how the three components of Z stack up as vectors. As you sweep $\\omega$:</p>
+<ul>
+<li>Below resonance, the stiffness arrow (blue, pointing down) is longer than the mass arrow (amber, pointing up). The phasor points into the lower half-plane.</li>
+<li>At resonance, the stiffness and mass arrows cancel. The phasor collapses to just $\\gamma$ on the real axis — its shortest possible length.</li>
+<li>Above resonance, the mass arrow dominates. The phasor rotates into the upper half-plane.</li>
+</ul>
+<p>The magnitude |Z| determines the response: velocity amplitude = $F_0$/|Z|. The <strong>phase angle</strong> $\\phi$ = arg(Z) is the angle between force and velocity. At resonance, $\\phi$ = 0 — force and velocity are perfectly in phase, which is why power transfer is maximized.</p>`,
+      interactive: "complex-impedance",
+      interactiveCaption: "The three impedance components as vectors in the complex plane. At resonance, the mass and stiffness terms cancel, leaving Z = γ on the real axis.",
+      mathLinks: []
     },
     {
       heading: "Circuits (optional)",
