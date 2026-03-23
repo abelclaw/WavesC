@@ -10577,6 +10577,7 @@ function initMassCollisionImpedance() {
   tick();
 }
 
+
 // =========================================================================
 // 11. Complex Impedance
 // =========================================================================
@@ -10606,251 +10607,284 @@ function initComplexImpedance() {
   const gSlider = document.getElementById('ci-g');
   const kSlider = document.getElementById('ci-k');
 
-  // Layout regions
-  const midX = W * 0.38;
-  // Left: driven mass-spring
-  const springAnchorX = 18, massEqX = midX * 0.55, massW = 28, massH = 22;
-  const trackY = H * 0.24, maxDisp = 50;
-  // Right top: complex plane
-  const cpCx = midX + (W - midX) / 2, cpCy = H * 0.32, cpR = Math.min((W - midX) / 2 - 30, H * 0.28);
-  // Bottom: response curve
-  const rcL = 20, rcR = W - 16, rcT = H * 0.65, rcB = H - 12;
-  const rcW = rcR - rcL, rcH = rcB - rcT;
+  // Layout: phasor diagram on left, two mini-plots (|Z| and phase) on right
+  const cpCx = W * 0.28, cpCy = H * 0.38, cpR = Math.min(W * 0.22, H * 0.30);
+  // Right plots
+  const pL = W * 0.56, pR = W - 16;
+  const pW = pR - pL;
+  // Top right: |Z| plot
+  const zT = 28, zB = H * 0.46, zH = zB - zT;
+  // Bottom right: phase plot
+  const phT = H * 0.54, phB = H - 14, phH = phB - phT;
+  const wMin = 0.3, wMax = 6;
 
-  function drawHorizSpring(x1, x2, y, coils) {
-    const len = x2 - x1;
-    if (len <= 4) return;
-    ctx.beginPath(); ctx.moveTo(x1, y);
-    const seg = len / (coils * 2 + 2);
-    let cx = x1 + seg;
-    ctx.lineTo(cx, y);
-    for (let i = 0; i < coils; i++) {
-      const mx = cx + seg;
-      ctx.lineTo(mx, y + 8 * ((i % 2 === 0) ? 1 : -1));
-      cx = mx + seg; ctx.lineTo(cx, y);
-    }
-    ctx.lineTo(x2, y); ctx.stroke();
+  function drawArrow(x0, y0, x1, y1, color, lw) {
+    ctx.strokeStyle = color; ctx.lineWidth = lw;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    const a = Math.atan2(y1 - y0, x1 - x0), aL = 7;
+    ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x1 - aL * Math.cos(a - 0.4), y1 - aL * Math.sin(a - 0.4));
+    ctx.lineTo(x1 - aL * Math.cos(a + 0.4), y1 - aL * Math.sin(a + 0.4));
+    ctx.closePath(); ctx.fill();
   }
 
-  function tick() {
-    if (!canvas.isConnected) return;
+  function draw() {
     const omega = parseFloat(wSlider?.value || 2);
     const m = parseFloat(mSlider?.value || 1);
     const gamma = parseFloat(gSlider?.value || 0.3);
     const k = parseFloat(kSlider?.value || 4);
     const omega0 = Math.sqrt(k / m);
-    const dt = 0.025;
-    t += dt;
 
-    // Update readouts
     document.getElementById('ci-w-val')?.replaceChildren(document.createTextNode(omega.toFixed(2)));
     document.getElementById('ci-m-val')?.replaceChildren(document.createTextNode(m.toFixed(1)));
     document.getElementById('ci-g-val')?.replaceChildren(document.createTextNode(gamma.toFixed(2)));
     document.getElementById('ci-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
 
-    // Z = gamma + i(m*omega - k/omega)
+    // Impedance components
+    const Zm = m * omega;       // mass impedance (imaginary, positive)
+    const Zk = -k / omega;      // stiffness impedance (imaginary, negative)
     const reZ = gamma;
-    const imZ = m * omega - k / omega;
+    const imZ = Zm + Zk;        // total imaginary part
     const absZ = Math.sqrt(reZ * reZ + imZ * imZ);
-    // Velocity amplitude = F0/|Z|  (F0 = 1)
-    const velAmp = absZ > 0.01 ? 1 / absZ : 100;
-    // Clamp display amplitude
-    const dispAmp = Math.min(velAmp * 12, maxDisp);
+    const phase = Math.atan2(imZ, reZ); // angle of Z
 
-    // Steady-state: x(t) is integral of v(t), but for display we show velocity
-    // v(t) = velAmp * cos(omega*t - phi), phi = atan2(imZ, reZ)
-    const phi = Math.atan2(imZ, reZ);
-    const vNow = Math.cos(omega * t - phi);
-    const driverX = Math.cos(omega * t);
-
-    draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, dispAmp, vNow, driverX, phi);
-    requestAnimationFrame(tick);
-  }
-
-  function draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, dispAmp, vNow, driverX, phi) {
     wClear(ctx, W, H);
 
-    // ── LEFT: Driven mass-spring ──
-    const driverPx = springAnchorX + 14 + driverX * 12;
-    const massPx = massEqX + vNow * dispAmp;
-
-    // Wall
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(springAnchorX - 4, trackY - 30, 4, 60);
-    for (let i = 0; i < 5; i++) {
-      ctx.beginPath();
-      ctx.moveTo(springAnchorX - 4, trackY - 28 + i * 14);
-      ctx.lineTo(springAnchorX - 12, trackY - 22 + i * 14);
-      ctx.stroke();
-    }
-
-    // Driver piston
-    ctx.fillStyle = WCOLORS.blue;
-    ctx.fillRect(driverPx - 4, trackY - 14, 8, 28);
-
-    // Spring
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5;
-    drawHorizSpring(driverPx + 4, massPx - massW / 2, trackY, 7);
-
-    // Mass block
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath();
-    ctx.roundRect(massPx - massW / 2, trackY - massH / 2, massW, massH, 4);
-    ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('m', massPx, trackY + 4);
-
-    // Track
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(springAnchorX, trackY + massH / 2 + 4); ctx.lineTo(midX - 8, trackY + massH / 2 + 4); ctx.stroke();
-
-    // Amplitude indicator
-    const ampBarY = trackY + massH / 2 + 16;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(massEqX - dispAmp, ampBarY); ctx.lineTo(massEqX + dispAmp, ampBarY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(massEqX - dispAmp, ampBarY - 3); ctx.lineTo(massEqX - dispAmp, ampBarY + 3); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(massEqX + dispAmp, ampBarY - 3); ctx.lineTo(massEqX + dispAmp, ampBarY + 3); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('response \u221D 1/|Z|', massEqX, ampBarY + 13);
-
-    // Labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('driver', driverPx, trackY - 22);
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui';
-    ctx.fillText('Driven Oscillator', midX / 2, 14);
-
-    // ── RIGHT: Complex plane (Argand diagram) ──
+    // ── PHASOR DIAGRAM (left) ──
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Impedance Z in complex plane', cpCx, cpCy - cpR - 10);
+    ctx.fillText('Impedance phasor', cpCx, 14);
+
+    // Fixed scale: pick a scale that shows structure across the full ω range
+    let maxZ = 0;
+    for (let i = 0; i <= 100; i++) {
+      const w = wMin + (wMax - wMin) * i / 100;
+      const im = m * w - k / w;
+      const az = Math.sqrt(gamma * gamma + im * im);
+      if (az > maxZ) maxZ = az;
+    }
+    const zScale = cpR * 0.85 / Math.max(maxZ, 0.5);
+
+    // Grid circles at round values
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    const gridStep = Math.pow(10, Math.floor(Math.log10(maxZ)));
+    const niceStep = maxZ / gridStep > 4 ? gridStep * 2 : gridStep;
+    for (let r = niceStep; r * zScale < cpR + 5; r += niceStep) {
+      ctx.beginPath(); ctx.arc(cpCx, cpCy, r * zScale, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(r.toFixed(1), cpCx + 3, cpCy - r * zScale - 2);
+    }
 
     // Axes
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(cpCx - cpR - 5, cpCy); ctx.lineTo(cpCx + cpR + 5, cpCy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cpCx, cpCy - cpR - 5); ctx.lineTo(cpCx, cpCy + cpR + 5); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-    ctx.textAlign = 'left'; ctx.fillText('Re', cpCx + cpR + 6, cpCy + 3);
-    ctx.textAlign = 'center'; ctx.fillText('Im', cpCx + 8, cpCy - cpR - 6);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(cpCx - cpR - 8, cpCy); ctx.lineTo(cpCx + cpR + 8, cpCy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cpCx, cpCy + cpR + 8); ctx.lineTo(cpCx, cpCy - cpR - 8); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('Re', cpCx + cpR + 10, cpCy + 4);
+    ctx.textAlign = 'center'; ctx.fillText('Im', cpCx, cpCy - cpR - 12);
 
-    // Scale for phasor: choose a nice scale so the phasor fits
-    const zScale = cpR * 0.8 / Math.max(absZ, 1);
-    const pxRe = cpCx + reZ * zScale;
-    const pxIm = cpCy - imZ * zScale; // y-axis inverted
-
-    // Draw the real component (gamma)
-    if (reZ > 0.01) {
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(cpCx, cpCy); ctx.lineTo(pxRe, cpCy); ctx.stroke();
-      ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('\u03B3', (cpCx + pxRe) / 2, cpCy + 14);
-    }
-
-    // Draw the imaginary component
-    if (Math.abs(imZ) > 0.01) {
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
-      ctx.beginPath(); ctx.moveTo(pxRe, cpCy); ctx.lineTo(pxRe, pxIm); ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // Phasor arrow (Z vector)
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cpCx, cpCy); ctx.lineTo(pxRe, pxIm); ctx.stroke();
-    // Arrowhead
-    const aLen = 8, aAngle = Math.atan2(cpCy - pxIm, pxRe - cpCx);
-    ctx.fillStyle = WCOLORS.red;
+    // Trace: show where Z tip goes for all ω (ghosted vertical line at Re=γ)
+    ctx.strokeStyle = 'rgba(220,38,38,0.15)'; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(pxRe, pxIm);
-    ctx.lineTo(pxRe - aLen * Math.cos(aAngle - 0.35), pxIm + aLen * Math.sin(aAngle - 0.35));
-    ctx.lineTo(pxRe - aLen * Math.cos(aAngle + 0.35), pxIm + aLen * Math.sin(aAngle + 0.35));
-    ctx.closePath(); ctx.fill();
-
-    // |Z| label at tip
-    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui';
-    const labelOffX = imZ >= 0 ? 10 : 10;
-    const labelOffY = imZ >= 0 ? -8 : 14;
-    ctx.textAlign = 'left';
-    ctx.fillText('|Z|=' + absZ.toFixed(2), pxRe + labelOffX, pxIm + labelOffY);
-
-    // Regime annotation
-    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    if (Math.abs(omega - omega0) < 0.15) {
-      ctx.fillStyle = WCOLORS.red;
-      ctx.fillText('Resonance! Z \u2248 \u03B3 (purely real)', cpCx, cpCy + cpR + 18);
-    } else if (omega < omega0) {
-      ctx.fillStyle = WCOLORS.textDim;
-      ctx.fillText('Stiffness-dominated: Im(Z) < 0', cpCx, cpCy + cpR + 18);
-    } else {
-      ctx.fillStyle = WCOLORS.textDim;
-      ctx.fillText('Mass-dominated: Im(Z) > 0', cpCx, cpCy + cpR + 18);
-    }
-
-    // ── BOTTOM: Response curve 1/|Z| vs ω ──
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('velocity / force  =  1/|Z|', rcL, rcT - 5);
-
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(rcL, rcB); ctx.lineTo(rcR, rcB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(rcL, rcT); ctx.lineTo(rcL, rcB); ctx.stroke();
-
-    const wMin = 0.3, wMax = 6;
-    // Find peak for scaling
-    let maxResp = 0;
     for (let i = 0; i <= 200; i++) {
       const w = wMin + (wMax - wMin) * i / 200;
-      const re = gamma, im = m * w - k / w;
-      const resp = 1 / Math.sqrt(re * re + im * im);
-      if (resp > maxResp) maxResp = resp;
-    }
-
-    // Fill under curve
-    ctx.fillStyle = 'rgba(15, 118, 110, 0.08)';
-    ctx.beginPath();
-    ctx.moveTo(rcL, rcB);
-    for (let i = 0; i <= 300; i++) {
-      const w = wMin + (wMax - wMin) * i / 300;
-      const re = gamma, im = m * w - k / w;
-      const resp = 1 / Math.sqrt(re * re + im * im);
-      const px = rcL + (i / 300) * rcW;
-      const py = rcB - (resp / maxResp) * rcH * 0.9;
-      ctx.lineTo(px, py);
-    }
-    ctx.lineTo(rcR, rcB); ctx.closePath(); ctx.fill();
-
-    // Curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i <= 300; i++) {
-      const w = wMin + (wMax - wMin) * i / 300;
-      const re = gamma, im = m * w - k / w;
-      const resp = 1 / Math.sqrt(re * re + im * im);
-      const px = rcL + (i / 300) * rcW;
-      const py = rcB - (resp / maxResp) * rcH * 0.9;
+      const im = m * w - k / w;
+      const px = cpCx + gamma * zScale;
+      const py = cpCy - im * zScale;
       if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
     }
     ctx.stroke();
 
-    // Current frequency marker
-    const curPx = rcL + ((omega - wMin) / (wMax - wMin)) * rcW;
-    const curResp = 1 / Math.max(absZ, 0.01);
-    const curPy = rcB - (curResp / maxResp) * rcH * 0.9;
+    // Component vectors: build Z = Zk + Zm + γ as stacked arrows
+    // Start from origin. Stack: Zk (down), then Zm (up), then γ (right)
+    const ox = cpCx, oy = cpCy;
+
+    // 1) Stiffness: Zk = -ik/ω  (points down)
+    const zkEndX = ox;
+    const zkEndY = oy - Zk * zScale; // Zk is negative, so this goes down
+    drawArrow(ox, oy, zkEndX, zkEndY, WCOLORS.blue, 2);
+
+    // 2) Mass: Zm = imω  (points up from Zk tip)
+    const zmEndX = zkEndX;
+    const zmEndY = zkEndY - Zm * zScale;
+    drawArrow(zkEndX, zkEndY, zmEndX, zmEndY, WCOLORS.amber, 2);
+
+    // 3) Damping: γ  (points right from Zm tip)
+    const gEndX = zmEndX + gamma * zScale;
+    const gEndY = zmEndY;
+    if (gamma > 0.01) {
+      drawArrow(zmEndX, zmEndY, gEndX, gEndY, WCOLORS.teal, 2);
+    }
+
+    // Total Z vector (origin to tip)
+    const tipX = cpCx + reZ * zScale;
+    const tipY = cpCy - imZ * zScale;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cpCx, cpCy); ctx.lineTo(tipX, tipY); ctx.stroke();
+    // Dot at tip
     ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(curPx, curPy, 5, 0, Math.PI * 2); ctx.fill();
-    // Vertical line
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(curPx, curPy + 5); ctx.lineTo(curPx, rcB); ctx.stroke();
+    ctx.beginPath(); ctx.arc(tipX, tipY, 4, 0, Math.PI * 2); ctx.fill();
+
+    // Phase arc
+    if (absZ * zScale > 12) {
+      const arcR = Math.min(absZ * zScale * 0.35, 25);
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1;
+      const endAngle = -phase; // canvas y is flipped
+      ctx.beginPath(); ctx.arc(cpCx, cpCy, arcR, 0, endAngle, phase > 0); ctx.stroke();
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      const labelAngle = -phase / 2;
+      ctx.fillText('\u03C6', cpCx + (arcR + 6) * Math.cos(labelAngle), cpCy + (arcR + 6) * Math.sin(labelAngle) + 3);
+    }
+
+    // Component labels (positioned near arrow midpoints)
+    ctx.font = '10px system-ui';
+    ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'right';
+    ctx.fillText('Z\u2096 = \u2013ik/\u03C9', ox - 6, (oy + zkEndY) / 2 + 3);
+    ctx.fillStyle = WCOLORS.amber; ctx.textAlign = 'right';
+    ctx.fillText('Z\u2098 = im\u03C9', zkEndX - 6, (zkEndY + zmEndY) / 2 + 3);
+    if (gamma > 0.01) {
+      ctx.fillStyle = WCOLORS.teal; ctx.textAlign = 'center';
+      ctx.fillText('\u03B3', (zmEndX + gEndX) / 2, zmEndY - 8);
+    }
+
+    // |Z| readout
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('|Z| = ' + absZ.toFixed(2), 10, H - 24);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('\u03C9\u2080 = ' + omega0.toFixed(2), 10, H - 10);
+
+    // Regime label below phasor
+    ctx.textAlign = 'center'; ctx.font = '10px system-ui';
+    const nearRes = Math.abs(omega - omega0) / omega0 < 0.08;
+    if (nearRes) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.fillText('At resonance: Z \u2248 \u03B3 (purely real)', cpCx, cpCy + cpR + 22);
+    } else if (omega < omega0) {
+      ctx.fillStyle = WCOLORS.blue;
+      ctx.fillText('Below resonance: stiffness dominates', cpCx, cpCy + cpR + 22);
+    } else {
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('Above resonance: mass dominates', cpCx, cpCy + cpR + 22);
+    }
+
+    // ── RIGHT TOP: |Z| vs ω ──
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('|Z|  vs  \u03C9', pL, zT - 6);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pL, zB); ctx.lineTo(pR, zB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pL, zT); ctx.lineTo(pL, zB); ctx.stroke();
+
+    // |Z| curve
+    let maxAbsZ = 0;
+    for (let i = 0; i <= 200; i++) {
+      const w = wMin + (wMax - wMin) * i / 200;
+      const az = Math.sqrt(gamma * gamma + Math.pow(m * w - k / w, 2));
+      if (az > maxAbsZ) maxAbsZ = az;
+    }
+    maxAbsZ = Math.max(maxAbsZ, 1);
+
+    // Shaded fill
+    ctx.fillStyle = 'rgba(220,38,38,0.06)';
+    ctx.beginPath(); ctx.moveTo(pL, zB);
+    for (let i = 0; i <= 300; i++) {
+      const w = wMin + (wMax - wMin) * i / 300;
+      const az = Math.sqrt(gamma * gamma + Math.pow(m * w - k / w, 2));
+      ctx.lineTo(pL + (i / 300) * pW, zB - (az / maxAbsZ) * zH * 0.9);
+    }
+    ctx.lineTo(pR, zB); ctx.closePath(); ctx.fill();
+
+    // Line
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const w = wMin + (wMax - wMin) * i / 300;
+      const az = Math.sqrt(gamma * gamma + Math.pow(m * w - k / w, 2));
+      const px = pL + (i / 300) * pW;
+      const py = zB - (az / maxAbsZ) * zH * 0.9;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current ω dot
+    const zDotX = pL + ((omega - wMin) / (wMax - wMin)) * pW;
+    const zDotY = zB - (absZ / maxAbsZ) * zH * 0.9;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(zDotX, zDotY, 4, 0, Math.PI * 2); ctx.fill();
+
+    // ω₀ marker
+    const resWx = pL + ((omega0 - wMin) / (wMax - wMin)) * pW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 0.8; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(resWx, zT); ctx.lineTo(resWx, zB); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080', resWx, zB + 10);
 
-    // Resonance marker on x-axis
-    const resPx = rcL + ((omega0 - wMin) / (wMax - wMin)) * rcW;
-    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u2080', resPx, rcB + 11);
+    // Min label: at resonance |Z| = γ
+    if (gamma > 0.01) {
+      const minY = zB - (gamma / maxAbsZ) * zH * 0.9;
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(pL, minY); ctx.lineTo(pR, minY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('min = \u03B3', pR, minY - 3);
+    }
 
-    // ω label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('\u03C9', rcR + 2, rcB + 11);
+    // ── RIGHT BOTTOM: Phase angle vs ω ──
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('phase \u03C6  vs  \u03C9', pL, phT - 6);
+
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pL, phB); ctx.lineTo(pR, phB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pL, phT); ctx.lineTo(pL, phB); ctx.stroke();
+    // Zero line
+    const phMid = (phT + phB) / 2;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(pL, phMid); ctx.lineTo(pR, phMid); ctx.stroke();
+
+    // Phase labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('+\u03C0/2', pL - 3, phT + 6);
+    ctx.fillText('0', pL - 3, phMid + 3);
+    ctx.fillText('\u2013\u03C0/2', pL - 3, phB - 2);
+
+    // Phase curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i <= 300; i++) {
+      const w = wMin + (wMax - wMin) * i / 300;
+      const im = m * w - k / w;
+      const ph = Math.atan2(im, gamma);
+      const px = pL + (i / 300) * pW;
+      const py = phMid - (ph / (Math.PI / 2)) * phH * 0.45;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Current ω dot
+    const phDotX = pL + ((omega - wMin) / (wMax - wMin)) * pW;
+    const phDotY = phMid - (phase / (Math.PI / 2)) * phH * 0.45;
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(phDotX, phDotY, 4, 0, Math.PI * 2); ctx.fill();
+
+    // ω₀ marker
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 0.8; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(resWx, phT); ctx.lineTo(resWx, phB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080', resWx, phB + 10);
+
+    // ω axis label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('\u03C9', pR + 1, phB + 10);
+    ctx.fillText('\u03C9', pR + 1, zB + 10);
   }
 
-  tick();
+  wSlider?.addEventListener('input', draw);
+  mSlider?.addEventListener('input', draw);
+  gSlider?.addEventListener('input', draw);
+  kSlider?.addEventListener('input', draw);
+  draw();
 }
 
 // =========================================================================
