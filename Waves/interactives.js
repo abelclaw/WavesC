@@ -10551,149 +10551,272 @@ function initComplexImpedance() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let mSlider = document.getElementById('ci-m');
-  if (!mSlider) {
+  let wSlider = document.getElementById('ci-w');
+  if (!wSlider) {
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>m: <input type="range" id="ci-m" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>' +
-        '<label>b: <input type="range" id="ci-b" min="0.1" max="5" step="0.1" value="1"><span class="scene-val" id="ci-b-val">1.0</span></label>' +
-        '<label>k: <input type="range" id="ci-k" min="1" max="50" step="1" value="10"><span class="scene-val" id="ci-k-val">10.0</span></label>';
+        '<label>\u03C9: <input type="range" id="ci-w" min="0.3" max="6" step="0.02" value="1"><span class="scene-val" id="ci-w-val">1.00</span></label>' +
+        '<label>m: <input type="range" id="ci-m" min="0.2" max="4" step="0.1" value="1"><span class="scene-val" id="ci-m-val">1.0</span></label>' +
+        '<label>\u03B3: <input type="range" id="ci-g" min="0" max="3" step="0.05" value="0.3"><span class="scene-val" id="ci-g-val">0.3</span></label>' +
+        '<label>k: <input type="range" id="ci-k" min="0.5" max="10" step="0.5" value="4"><span class="scene-val" id="ci-k-val">4.0</span></label>';
       parent.appendChild(controls);
-      mSlider = document.getElementById('ci-m');
+      wSlider = document.getElementById('ci-w');
     }
   }
-  const bSlider = document.getElementById('ci-b');
+  const mSlider = document.getElementById('ci-m');
+  const gSlider = document.getElementById('ci-g');
   const kSlider = document.getElementById('ci-k');
 
-  function draw() {
+  let t = 0;
+
+  // Layout regions
+  const midX = W * 0.38;
+  // Left: driven mass-spring
+  const springAnchorX = 18, massEqX = midX * 0.55, massW = 28, massH = 22;
+  const trackY = H * 0.24, maxDisp = 50;
+  // Right top: complex plane
+  const cpCx = midX + (W - midX) / 2, cpCy = H * 0.32, cpR = Math.min((W - midX) / 2 - 30, H * 0.28);
+  // Bottom: response curve
+  const rcL = 20, rcR = W - 16, rcT = H * 0.65, rcB = H - 12;
+  const rcW = rcR - rcL, rcH = rcB - rcT;
+
+  function drawHorizSpring(x1, x2, y, coils) {
+    const len = x2 - x1;
+    if (len <= 4) return;
+    ctx.beginPath(); ctx.moveTo(x1, y);
+    const seg = len / (coils * 2 + 2);
+    let cx = x1 + seg;
+    ctx.lineTo(cx, y);
+    for (let i = 0; i < coils; i++) {
+      const mx = cx + seg;
+      ctx.lineTo(mx, y + 8 * ((i % 2 === 0) ? 1 : -1));
+      cx = mx + seg; ctx.lineTo(cx, y);
+    }
+    ctx.lineTo(x2, y); ctx.stroke();
+  }
+
+  function tick() {
+    if (!canvas.isConnected) return;
+    const omega = parseFloat(wSlider?.value || 2);
     const m = parseFloat(mSlider?.value || 1);
-    const b = parseFloat(bSlider?.value || 1);
-    const k = parseFloat(kSlider?.value || 10);
+    const gamma = parseFloat(gSlider?.value || 0.3);
+    const k = parseFloat(kSlider?.value || 4);
+    const omega0 = Math.sqrt(k / m);
+    const dt = 0.025;
+    t += dt;
+
+    // Update readouts
+    document.getElementById('ci-w-val')?.replaceChildren(document.createTextNode(omega.toFixed(2)));
     document.getElementById('ci-m-val')?.replaceChildren(document.createTextNode(m.toFixed(1)));
-    document.getElementById('ci-b-val')?.replaceChildren(document.createTextNode(b.toFixed(1)));
+    document.getElementById('ci-g-val')?.replaceChildren(document.createTextNode(gamma.toFixed(2)));
     document.getElementById('ci-k-val')?.replaceChildren(document.createTextNode(k.toFixed(1)));
 
+    // Z = gamma + i(m*omega - k/omega)
+    const reZ = gamma;
+    const imZ = m * omega - k / omega;
+    const absZ = Math.sqrt(reZ * reZ + imZ * imZ);
+    // Velocity amplitude = F0/|Z|  (F0 = 1)
+    const velAmp = absZ > 0.01 ? 1 / absZ : 100;
+    // Clamp display amplitude
+    const dispAmp = Math.min(velAmp * 12, maxDisp);
+
+    // Steady-state: x(t) is integral of v(t), but for display we show velocity
+    // v(t) = velAmp * cos(omega*t - phi), phi = atan2(imZ, reZ)
+    const phi = Math.atan2(imZ, reZ);
+    const vNow = Math.cos(omega * t - phi);
+    const driverX = Math.cos(omega * t);
+
+    draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, dispAmp, vNow, driverX, phi);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, dispAmp, vNow, driverX, phi) {
     wClear(ctx, W, H);
 
-    const plotL = 55, plotR = W - 20, plotT = 28, plotB = H - 30;
-    const plotW = plotR - plotL, plotH = plotB - plotT;
-    const plotMidY = (plotT + plotB) / 2;
+    // ── LEFT: Driven mass-spring ──
+    const driverPx = springAnchorX + 14 + driverX * 12;
+    const massPx = massEqX + vNow * dispAmp;
 
-    // Z(ω) = b + i(mω - k/ω)
-    const omega0 = Math.sqrt(k / m);
-    // Start from omega0/5 to avoid divergence near ω→0
-    const omegaMin = omega0 * 0.2;
-    const omegaMax = omega0 * 3;
+    // Wall
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(springAnchorX - 4, trackY - 30, 4, 60);
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(springAnchorX - 4, trackY - 28 + i * 14);
+      ctx.lineTo(springAnchorX - 12, trackY - 22 + i * 14);
+      ctx.stroke();
+    }
 
-    // Title
+    // Driver piston
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.fillRect(driverPx - 4, trackY - 14, 8, 28);
+
+    // Spring
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5;
+    drawHorizSpring(driverPx + 4, massPx - massW / 2, trackY, 7);
+
+    // Mass block
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath();
+    ctx.roundRect(massPx - massW / 2, trackY - massH / 2, massW, massH, 4);
+    ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('m', massPx, trackY + 4);
+
+    // Track
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(springAnchorX, trackY + massH / 2 + 4); ctx.lineTo(midX - 8, trackY + massH / 2 + 4); ctx.stroke();
+
+    // Amplitude indicator
+    const ampBarY = trackY + massH / 2 + 16;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(massEqX - dispAmp, ampBarY); ctx.lineTo(massEqX + dispAmp, ampBarY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(massEqX - dispAmp, ampBarY - 3); ctx.lineTo(massEqX - dispAmp, ampBarY + 3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(massEqX + dispAmp, ampBarY - 3); ctx.lineTo(massEqX + dispAmp, ampBarY + 3); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('response \u221D 1/|Z|', massEqX, ampBarY + 13);
+
+    // Labels
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('driver', driverPx, trackY - 22);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui';
+    ctx.fillText('Driven Oscillator', midX / 2, 14);
+
+    // ── RIGHT: Complex plane (Argand diagram) ──
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Z(\u03C9) = b + i(m\u03C9 \u2013 k/\u03C9)', plotL + plotW / 2, 16);
+    ctx.fillText('Impedance Z in complex plane', cpCx, cpCy - cpR - 10);
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cpCx - cpR - 5, cpCy); ctx.lineTo(cpCx + cpR + 5, cpCy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cpCx, cpCy - cpR - 5); ctx.lineTo(cpCx, cpCy + cpR + 5); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('Re', cpCx + cpR + 6, cpCy + 3);
+    ctx.textAlign = 'center'; ctx.fillText('Im', cpCx + 8, cpCy - cpR - 6);
+
+    // Scale for phasor: choose a nice scale so the phasor fits
+    const zScale = cpR * 0.8 / Math.max(absZ, 1);
+    const pxRe = cpCx + reZ * zScale;
+    const pxIm = cpCy - imZ * zScale; // y-axis inverted
+
+    // Draw the real component (gamma)
+    if (reZ > 0.01) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(cpCx, cpCy); ctx.lineTo(pxRe, cpCy); ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u03B3', (cpCx + pxRe) / 2, cpCy + 14);
+    }
+
+    // Draw the imaginary component
+    if (Math.abs(imZ) > 0.01) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(pxRe, cpCy); ctx.lineTo(pxRe, pxIm); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Phasor arrow (Z vector)
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cpCx, cpCy); ctx.lineTo(pxRe, pxIm); ctx.stroke();
+    // Arrowhead
+    const aLen = 8, aAngle = Math.atan2(cpCy - pxIm, pxRe - cpCx);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath();
+    ctx.moveTo(pxRe, pxIm);
+    ctx.lineTo(pxRe - aLen * Math.cos(aAngle - 0.35), pxIm + aLen * Math.sin(aAngle - 0.35));
+    ctx.lineTo(pxRe - aLen * Math.cos(aAngle + 0.35), pxIm + aLen * Math.sin(aAngle + 0.35));
+    ctx.closePath(); ctx.fill();
+
+    // |Z| label at tip
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui';
+    const labelOffX = imZ >= 0 ? 10 : 10;
+    const labelOffY = imZ >= 0 ? -8 : 14;
+    ctx.textAlign = 'left';
+    ctx.fillText('|Z|=' + absZ.toFixed(2), pxRe + labelOffX, pxIm + labelOffY);
+
+    // Regime annotation
+    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    if (Math.abs(omega - omega0) < 0.15) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.fillText('Resonance! Z \u2248 \u03B3 (purely real)', cpCx, cpCy + cpR + 18);
+    } else if (omega < omega0) {
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText('Stiffness-dominated: Im(Z) < 0', cpCx, cpCy + cpR + 18);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText('Mass-dominated: Im(Z) > 0', cpCx, cpCy + cpR + 18);
+    }
+
+    // ── BOTTOM: Response curve 1/|Z| vs ω ──
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('velocity / force  =  1/|Z|', rcL, rcT - 5);
 
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
-    // Zero line
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(plotL, plotMidY); ctx.lineTo(plotR, plotMidY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rcL, rcB); ctx.lineTo(rcR, rcB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rcL, rcT); ctx.lineTo(rcL, rcB); ctx.stroke();
 
-    // Scale based on the visible range (omegaMin to omegaMax)
-    let maxAbsZ = 0;
+    const wMin = 0.3, wMax = 6;
+    // Find peak for scaling
+    let maxResp = 0;
     for (let i = 0; i <= 200; i++) {
-      const omega = omegaMin + (omegaMax - omegaMin) * i / 200;
-      const imZ = m * omega - k / omega;
-      if (Math.abs(imZ) > maxAbsZ) maxAbsZ = Math.abs(imZ);
+      const w = wMin + (wMax - wMin) * i / 200;
+      const re = gamma, im = m * w - k / w;
+      const resp = 1 / Math.sqrt(re * re + im * im);
+      if (resp > maxResp) maxResp = resp;
     }
-    maxAbsZ = Math.max(maxAbsZ, b * 1.5, 1);
 
-    // Plot |Z| = sqrt(b² + Im²) as faint fill
-    ctx.fillStyle = 'rgba(15, 118, 110, 0.06)';
+    // Fill under curve
+    ctx.fillStyle = 'rgba(15, 118, 110, 0.08)';
     ctx.beginPath();
-    ctx.moveTo(plotL, plotMidY);
+    ctx.moveTo(rcL, rcB);
     for (let i = 0; i <= 300; i++) {
-      const omega = omegaMin + (omegaMax - omegaMin) * i / 300;
-      const imZ = m * omega - k / omega;
-      const absZ = Math.sqrt(b * b + imZ * imZ);
-      const px = plotL + (i / 300) * plotW;
-      const py = plotMidY - (absZ / maxAbsZ) * plotH * 0.45;
-      ctx.lineTo(px, Math.max(plotT, py));
+      const w = wMin + (wMax - wMin) * i / 300;
+      const re = gamma, im = m * w - k / w;
+      const resp = 1 / Math.sqrt(re * re + im * im);
+      const px = rcL + (i / 300) * rcW;
+      const py = rcB - (resp / maxResp) * rcH * 0.9;
+      ctx.lineTo(px, py);
     }
-    ctx.lineTo(plotR, plotMidY);
-    ctx.closePath();
-    ctx.fill();
+    ctx.lineTo(rcR, rcB); ctx.closePath(); ctx.fill();
 
-    // Plot Re(Z) = b (constant)
-    const reY = plotMidY - (b / maxAbsZ) * plotH * 0.45;
+    // Curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(plotL, reY); ctx.lineTo(plotR, reY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Plot Im(Z) = mω - k/ω
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
     ctx.beginPath();
-    let firstPt = true;
     for (let i = 0; i <= 300; i++) {
-      const omega = omegaMin + (omegaMax - omegaMin) * i / 300;
-      const imZ = m * omega - k / omega;
-      const px = plotL + (i / 300) * plotW;
-      const py = plotMidY - (imZ / maxAbsZ) * plotH * 0.45;
-      if (py >= plotT && py <= plotB) {
-        if (firstPt) { ctx.moveTo(px, py); firstPt = false; }
-        else ctx.lineTo(px, py);
-      }
+      const w = wMin + (wMax - wMin) * i / 300;
+      const re = gamma, im = m * w - k / w;
+      const resp = 1 / Math.sqrt(re * re + im * im);
+      const px = rcL + (i / 300) * rcW;
+      const py = rcB - (resp / maxResp) * rcH * 0.9;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
     }
     ctx.stroke();
 
-    // Mark resonance: Im(Z) = 0 at ω₀
-    const resX = plotL + ((omega0 - omegaMin) / (omegaMax - omegaMin)) * plotW;
+    // Current frequency marker
+    const curPx = rcL + ((omega - wMin) / (wMax - wMin)) * rcW;
+    const curResp = 1 / Math.max(absZ, 0.01);
+    const curPy = rcB - (curResp / maxResp) * rcH * 0.9;
+    ctx.fillStyle = WCOLORS.red;
+    ctx.beginPath(); ctx.arc(curPx, curPy, 5, 0, Math.PI * 2); ctx.fill();
+    // Vertical line
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(resX, plotT); ctx.lineTo(resX, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(curPx, curPy + 5); ctx.lineTo(curPx, rcB); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Resonance label below x-axis
-    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u2080=' + omega0.toFixed(1), resX, plotB + 12);
+    // Resonance marker on x-axis
+    const resPx = rcL + ((omega0 - wMin) / (wMax - wMin)) * rcW;
+    ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u2080', resPx, rcB + 11);
 
-    // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9', plotR + 10, plotB + 4);
-    ctx.save(); ctx.translate(plotL - 8, plotT - 4); ctx.fillText('Z', 0, 0); ctx.restore();
-
-    // Zero label on midline
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('0', plotL - 4, plotMidY + 3);
-
-    // Legend (top-left, inside plot)
-    const legX = plotL + 8, legY = plotT + 12;
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(legX, legY - 3); ctx.lineTo(legX + 18, legY - 3); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('Re(Z) = b = ' + b.toFixed(1), legX + 22, legY);
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(legX, legY + 11); ctx.lineTo(legX + 18, legY + 11); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('Im(Z) = m\u03C9 \u2013 k/\u03C9', legX + 22, legY + 14);
-
-    // Region labels along x-axis area
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    if (resX - plotL > 60) {
-      ctx.fillText('stiffness-dominated', plotL + (resX - plotL) / 2, plotB + 24);
-    }
-    if (plotR - resX > 60) {
-      ctx.fillText('mass-dominated', resX + (plotR - resX) / 2, plotB + 24);
-    }
+    // ω label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('\u03C9', rcR + 2, rcB + 11);
   }
 
-  mSlider?.addEventListener('input', draw);
-  bSlider?.addEventListener('input', draw);
-  kSlider?.addEventListener('input', draw);
-  draw();
+  tick();
 }
 
 // =========================================================================
@@ -11060,7 +11183,7 @@ function initDecibelScale() {
 
   var selectedIdx = 3; // start with Traffic (80 dB)
   var listenerDist = 1; // meters from source (1-64)
-  var dragging = false;
+  var dragging = false; // 'listener' or 'source' or false
   var maxDist = 64;
 
   // Spatial view geometry
