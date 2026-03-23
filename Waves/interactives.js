@@ -8849,9 +8849,9 @@ function initThinFilmInterference() {
   }
 
   const nFilm = 1.4;
+  let t = 0;
 
   function wavelengthToRGB(wl) {
-    // Approximate visible spectrum to RGB
     let r = 0, g = 0, b = 0;
     if (wl >= 380 && wl < 440) { r = -(wl - 440) / 60; b = 1; }
     else if (wl >= 440 && wl < 490) { g = (wl - 440) / 50; b = 1; }
@@ -8859,7 +8859,6 @@ function initThinFilmInterference() {
     else if (wl >= 510 && wl < 580) { r = (wl - 510) / 70; g = 1; }
     else if (wl >= 580 && wl < 645) { r = 1; g = -(wl - 645) / 65; }
     else if (wl >= 645 && wl <= 780) { r = 1; }
-    // Intensity falloff at edges
     let factor = 1;
     if (wl >= 380 && wl < 420) factor = 0.3 + 0.7 * (wl - 380) / 40;
     else if (wl > 700 && wl <= 780) factor = 0.3 + 0.7 * (780 - wl) / 80;
@@ -8867,176 +8866,286 @@ function initThinFilmInterference() {
     return [Math.round(r * factor * 255), Math.round(g * factor * 255), Math.round(b * factor * 255)];
   }
 
+  function getReflectedColor(d) {
+    let tR = 0, tG = 0, tB = 0, tW = 0;
+    for (let wl = 380; wl <= 780; wl += 2) {
+      const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
+      const refl = Math.sin(delta / 2) ** 2;
+      const [r, g, b] = wavelengthToRGB(wl);
+      tR += r * refl; tG += g * refl; tB += b * refl; tW++;
+    }
+    return [
+      Math.min(255, Math.round(tR / tW * 2.5)),
+      Math.min(255, Math.round(tG / tW * 2.5)),
+      Math.min(255, Math.round(tB / tW * 2.5))
+    ];
+  }
+
   function draw() {
     wClear(ctx, W, H);
+    t += 0.03;
 
     const d = parseFloat(thickSlider?.value || 250);
     document.getElementById('thinfilm-thickness-val')?.replaceChildren(document.createTextNode(d.toFixed(0)));
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Thin film interference', W / 2, 16);
+    const midX = W * 0.48;
 
-    // --- Film diagram (left) ---
-    const filmL = 30, filmR = W * 0.42;
-    const filmT = 70, filmB = 160;
-    const filmH = filmB - filmT;
+    // Film height scales with thickness: 12px at 50nm, 140px at 800nm
+    const filmMinH = 12, filmMaxH = 140;
+    const filmH = filmMinH + (filmMaxH - filmMinH) * (d - 50) / (800 - 50);
+    const filmCenterY = H * 0.52;
+    const filmT = filmCenterY - filmH / 2;
+    const filmB = filmCenterY + filmH / 2;
+    const filmL = 18, filmR = midX - 20;
+    const filmW = filmR - filmL;
 
-    // Air above
-    ctx.fillStyle = 'rgba(200,220,255,0.1)';
-    ctx.fillRect(filmL, 30, filmR - filmL, filmT - 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('n = 1.0 (air)', filmL + 3, 45);
+    const beamX = filmL + filmW * 0.35;
+    const beamWidth = 14;
+    const [avgR, avgG, avgB] = getReflectedColor(d);
+    const reflColor = `rgb(${avgR},${avgG},${avgB})`;
 
-    // Film
-    ctx.fillStyle = 'rgba(15, 118, 110, 0.15)';
-    ctx.fillRect(filmL, filmT, filmR - filmL, filmH);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
-    ctx.strokeRect(filmL, filmT, filmR - filmL, filmH);
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('n = ' + nFilm.toFixed(1), (filmL + filmR) / 2, (filmT + filmB) / 2 + 4);
-    ctx.fillText('d = ' + d.toFixed(0) + ' nm', (filmL + filmR) / 2, (filmT + filmB) / 2 + 18);
-
-    // Substrate below
-    ctx.fillStyle = 'rgba(100,100,120,0.1)';
-    ctx.fillRect(filmL, filmB, filmR - filmL, 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('n = 1.5 (glass)', filmL + 3, filmB + 20);
-
-    // Thickness dimension
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(filmR + 8, filmT); ctx.lineTo(filmR + 8, filmB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(filmR + 4, filmT); ctx.lineTo(filmR + 12, filmT); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(filmR + 4, filmB); ctx.lineTo(filmR + 12, filmB); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('d', filmR + 14, (filmT + filmB) / 2 + 3);
-
-    // Incident ray
-    const rayInX = filmL + 60;
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(rayInX - 20, 30); ctx.lineTo(rayInX, filmT); ctx.stroke();
-
-    // Reflected ray 1 (from top surface, with phase flip)
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(rayInX, filmT); ctx.lineTo(rayInX + 20, 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('R₁ (π shift)', rayInX + 22, 38);
-
-    // Ray into film
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6;
-    ctx.beginPath(); ctx.moveTo(rayInX, filmT); ctx.lineTo(rayInX + 15, filmB); ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Reflected ray 2 (from bottom surface)
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(rayInX + 15, filmB); ctx.lineTo(rayInX + 35, filmT); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(rayInX + 35, filmT); ctx.lineTo(rayInX + 55, 30); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui';
-    ctx.fillText('R₂ (no shift)', rayInX + 57, 38);
-
-    // Path difference info
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Path diff ≈ 2n·d = ' + (2 * nFilm * d).toFixed(0) + ' nm', filmL, filmB + 50);
-    ctx.fillText('+ λ/2 shift (reflection from n₂ > n₁)', filmL, filmB + 65);
-
-    // --- Color/spectrum view (right) ---
-    const specL = W * 0.52, specR = W - 15;
-    const specT = 35, specB = H - 20;
-    const specW = specR - specL;
-
-    // For each visible wavelength, compute constructive/destructive interference
-    // Condition: 2*n*d + λ/2 = m*λ for constructive (including phase flip)
-    // Reflectance: R ~ sin²(2πnd/λ) approximately
-    const wlMin = 380, wlMax = 780;
-
-    // Spectrum bar
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Reflected color', (specL + specR) / 2, specT - 5);
-
-    // Draw spectrum with reflectance modulation
-    let totalR = 0, totalG = 0, totalB = 0, totalW = 0;
-    for (let i = 0; i < specW; i++) {
-      const wl = wlMin + (wlMax - wlMin) * i / specW;
-      const x = specL + i;
-      // Phase difference including π shift from top reflection
+    // Find dominant reflected wavelength
+    let bestWL = 550, bestBright = 0;
+    for (let wl = 380; wl <= 780; wl += 5) {
       const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
-      const reflectance = Math.sin(delta / 2) ** 2;
-      const [r, g, b] = wavelengthToRGB(wl);
-
-      // Unmodulated spectrum
-      ctx.fillStyle = `rgb(${r},${g},${b})`;
-      ctx.fillRect(x, specT, 1, 15);
-
-      // Modulated (reflected)
-      const mr = Math.round(r * reflectance);
-      const mg = Math.round(g * reflectance);
-      const mb = Math.round(b * reflectance);
-      ctx.fillStyle = `rgb(${mr},${mg},${mb})`;
-      ctx.fillRect(x, specT + 20, 1, 25);
-
-      totalR += mr; totalG += mg; totalB += mb; totalW++;
+      const refl = Math.sin(delta / 2) ** 2;
+      const [rr, gg, bb] = wavelengthToRGB(wl);
+      const bright = (rr + gg + bb) * refl;
+      if (bright > bestBright) { bestBright = bright; bestWL = wl; }
     }
 
+    // --- Substrate below film ---
+    ctx.fillStyle = 'rgba(100,100,120,0.08)';
+    ctx.fillRect(filmL, filmB, filmW, H - filmB - 8);
+
+    // --- Film (height scales with d) ---
+    const filmGrad = ctx.createLinearGradient(0, filmT, 0, filmB);
+    filmGrad.addColorStop(0, 'rgba(15, 118, 110, 0.25)');
+    filmGrad.addColorStop(0.5, 'rgba(15, 118, 110, 0.10)');
+    filmGrad.addColorStop(1, 'rgba(15, 118, 110, 0.25)');
+    ctx.fillStyle = filmGrad;
+    ctx.fillRect(filmL, filmT, filmW, filmH);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(filmL, filmT); ctx.lineTo(filmR, filmT); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(filmL, filmB); ctx.lineTo(filmR, filmB); ctx.stroke();
+
     // Labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('380nm', specL, specT + 55); ctx.textAlign = 'right';
-    ctx.fillText('780nm', specR, specT + 55);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('all λ', specL - 5, specT + 10);
-    ctx.fillText('reflected', specL - 5, specT + 36);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n = 1.0 (air)', filmL + 2, filmT - 8);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
+    if (filmH > 28) {
+      ctx.textAlign = 'center';
+      ctx.fillText('n = ' + nFilm.toFixed(1), (filmL + filmR) / 2, filmCenterY + 4);
+    } else {
+      ctx.textAlign = 'left';
+      ctx.fillText('n = ' + nFilm.toFixed(1), filmR + 16, filmCenterY + 4);
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('n = 1.5 (glass)', filmL + 2, Math.min(filmB + 16, H - 12));
 
-    // Perceived reflected color swatch
-    const avgR = Math.min(255, Math.round(totalR / totalW * 2.5));
-    const avgG = Math.min(255, Math.round(totalG / totalW * 2.5));
-    const avgB = Math.min(255, Math.round(totalB / totalW * 2.5));
-    ctx.fillStyle = `rgb(${avgR},${avgG},${avgB})`;
-    ctx.fillRect(specL, specT + 65, specW, 30);
+    // Thickness dimension arrow
+    const dimX = filmR + 5;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(dimX, filmT); ctx.lineTo(dimX, filmB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dimX - 3, filmT + 4); ctx.lineTo(dimX, filmT); ctx.lineTo(dimX + 3, filmT + 4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dimX - 3, filmB - 4); ctx.lineTo(dimX, filmB); ctx.lineTo(dimX + 3, filmB - 4); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d=' + d.toFixed(0) + 'nm', dimX + 4, filmCenterY + 4);
+
+    // --- Incoming white light beam (rainbow stripes) ---
+    const inTopY = 16;
+    const hitY = filmT;
+    const rainbowWLs = [650, 600, 570, 530, 490, 460, 420];
+    const nStripes = rainbowWLs.length;
+    for (let i = 0; i < nStripes; i++) {
+      const frac = (i + 0.5) / nStripes;
+      const sx = beamX - beamWidth / 2 + beamWidth * frac;
+      const [cr, cg, cb] = wavelengthToRGB(rainbowWLs[i]);
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.55)`;
+      ctx.lineWidth = beamWidth / nStripes + 0.5;
+      ctx.beginPath(); ctx.moveTo(sx - 6, inTopY); ctx.lineTo(sx, hitY); ctx.stroke();
+    }
+    // White glow
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = beamWidth * 0.4;
+    ctx.beginPath(); ctx.moveTo(beamX - 3, inTopY); ctx.lineTo(beamX, hitY); ctx.stroke();
+
+    // Animated wave fronts in incoming beam
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(beamX - beamWidth / 2 - 8, inTopY);
+    ctx.lineTo(beamX - beamWidth / 2, hitY);
+    ctx.lineTo(beamX + beamWidth / 2, hitY);
+    ctx.lineTo(beamX + beamWidth / 2 + 2, inTopY);
+    ctx.closePath(); ctx.clip();
+    const wfSpacing = 12;
+    const beamLen = hitY - inTopY;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+    for (let yy = (t * 40) % wfSpacing; yy < beamLen; yy += wfSpacing) {
+      const fy = inTopY + yy;
+      const frac2 = yy / beamLen;
+      const cx = beamX - 3 * (1 - frac2);
+      ctx.beginPath(); ctx.moveTo(cx - beamWidth * 0.6, fy); ctx.lineTo(cx + beamWidth * 0.6, fy); ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('white light', beamX - 3, inTopY - 2);
+
+    // --- Reflected beam (colored) ---
+    const reflEndX = beamX + 55;
+    const reflTopY = 16;
+    ctx.strokeStyle = reflColor; ctx.lineWidth = beamWidth * 0.65; ctx.globalAlpha = 0.75;
+    ctx.beginPath(); ctx.moveTo(beamX, hitY); ctx.lineTo(reflEndX, reflTopY); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Animated wave fronts in reflected beam
+    ctx.save();
+    const rDx = reflEndX - beamX, rDy = reflTopY - hitY;
+    const rLen = Math.sqrt(rDx * rDx + rDy * rDy);
+    const rnx = -rDy / rLen, rny = rDx / rLen;
+    ctx.beginPath();
+    ctx.moveTo(beamX - 12, hitY - 12); ctx.lineTo(reflEndX - 12, reflTopY - 12);
+    ctx.lineTo(reflEndX + 15, reflTopY + 8); ctx.lineTo(beamX + 15, hitY + 8);
+    ctx.closePath(); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
+    for (let s = (t * 40) % 10; s < rLen; s += 10) {
+      const f3 = s / rLen;
+      const px = beamX + rDx * f3, py = hitY + rDy * f3;
+      ctx.beginPath();
+      ctx.moveTo(px + rnx * beamWidth * 0.45, py + rny * beamWidth * 0.45);
+      ctx.lineTo(px - rnx * beamWidth * 0.45, py - rny * beamWidth * 0.45);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = reflColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('reflected', reflEndX + 4, reflTopY + 10);
+    ctx.font = '10px system-ui';
+    ctx.fillText(Math.round(bestWL) + ' nm', reflEndX + 4, reflTopY + 23);
+
+    // Ray paths inside film (dashed)
+    const ray2X = beamX + 8 * (filmH / 50);
+    ctx.strokeStyle = 'rgba(15,118,110,0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(beamX, filmT); ctx.lineTo(ray2X, filmB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ray2X, filmB); ctx.lineTo(beamX + 16 * (filmH / 50), filmT); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Transmitted beam (dim)
+    ctx.strokeStyle = 'rgba(180,180,180,0.3)'; ctx.lineWidth = beamWidth * 0.4;
+    ctx.beginPath(); ctx.moveTo(ray2X, filmB); ctx.lineTo(ray2X + 4, H - 8); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('transmitted', ray2X + 8, H - 12);
+
+    // Path difference annotation
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('2nd = ' + (2 * nFilm * d).toFixed(0) + ' nm  (+λ/2 shift)', filmL, H - 5);
+
+    // ===================== Right half: spectrum =====================
+    const specL = midX + 8, specR = W - 10;
+    const specW2 = specR - specL;
+    const wlMin = 380, wlMax = 780;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Reflected spectrum', (specL + specR) / 2, 28);
+
+    // Input spectrum (all wavelengths)
+    const barY1 = 38;
+    for (let i = 0; i < specW2; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW2;
+      const [r, g, b] = wavelengthToRGB(wl);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(specL + i, barY1, 1, 12);
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('in', specL - 4, barY1 + 10);
+
+    // Reflected spectrum (modulated)
+    const barY2 = barY1 + 17;
+    for (let i = 0; i < specW2; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW2;
+      const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
+      const refl = Math.sin(delta / 2) ** 2;
+      const [r, g, b] = wavelengthToRGB(wl);
+      ctx.fillStyle = `rgb(${Math.round(r * refl)},${Math.round(g * refl)},${Math.round(b * refl)})`;
+      ctx.fillRect(specL + i, barY2, 1, 16);
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('out', specL - 4, barY2 + 12);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.textAlign = 'left'; ctx.fillText('380', specL, barY2 + 28);
+    ctx.textAlign = 'right'; ctx.fillText('780 nm', specR, barY2 + 28);
+
+    // Perceived color swatch
+    const swY = barY2 + 33;
+    ctx.fillStyle = reflColor;
+    ctx.fillRect(specL, swY, specW2, 22);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
-    ctx.strokeRect(specL, specT + 65, specW, 30);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('perceived', specL - 5, specT + 84);
+    ctx.strokeRect(specL, swY, specW2, 22);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('eye sees', specL - 4, swY + 15);
 
-    // Reflectance curve
-    const plotT2 = specT + 110, plotB2 = specB;
-    const plotH = plotB2 - plotT2;
+    // Reflectance curve R(lambda)
+    const plotT2 = swY + 34;
+    const plotB2 = H - 16;
+    const plotH2 = plotB2 - plotT2;
 
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(specL, plotT2); ctx.lineTo(specL, plotB2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(specL, plotB2); ctx.lineTo(specR, plotB2); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Wavelength (nm)', (specL + specR) / 2, plotB2 + 12);
-    ctx.save(); ctx.translate(specL - 10, (plotT2 + plotB2) / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('λ (nm)', (specL + specR) / 2, plotB2 + 13);
+    ctx.save(); ctx.translate(specL - 8, (plotT2 + plotB2) / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('R', 0, 0); ctx.restore();
 
+    // Grid + color background
+    for (let wl = 400; wl <= 750; wl += 50) {
+      const x = specL + (wl - wlMin) / (wlMax - wlMin) * specW2;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(x, plotT2); ctx.lineTo(x, plotB2); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(wl, x, plotB2 + 9);
+    }
+    for (let i = 0; i < specW2; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW2;
+      const [r, g, b] = wavelengthToRGB(wl);
+      ctx.fillStyle = `rgba(${r},${g},${b},0.06)`;
+      ctx.fillRect(specL + i, plotT2, 1, plotH2);
+    }
+
+    // Reflectance curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let i = 0; i <= specW; i++) {
-      const wl = wlMin + (wlMax - wlMin) * i / specW;
+    for (let i = 0; i <= specW2; i++) {
+      const wl = wlMin + (wlMax - wlMin) * i / specW2;
       const delta = 2 * Math.PI * 2 * nFilm * d / wl + Math.PI;
       const R = Math.sin(delta / 2) ** 2;
-      const x = specL + i;
-      const y = plotB2 - R * plotH;
+      const x = specL + i, y = plotB2 - R * plotH2;
       if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
 
-    // Constructive peaks
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    // Constructive peak markers
+    ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     for (let m = 1; m <= 10; m++) {
-      // 2nd = mλ → λ = 2nd/m
       const wlPeak = 2 * nFilm * d / m;
       if (wlPeak >= wlMin && wlPeak <= wlMax) {
-        const x = specL + (wlPeak - wlMin) / (wlMax - wlMin) * specW;
-        ctx.fillStyle = WCOLORS.red;
-        ctx.beginPath(); ctx.arc(x, plotT2 + 3, 3, 0, 2 * Math.PI); ctx.fill();
+        const x = specL + (wlPeak - wlMin) / (wlMax - wlMin) * specW2;
+        const [pr, pg, pb] = wavelengthToRGB(wlPeak);
+        ctx.fillStyle = `rgb(${pr},${pg},${pb})`;
+        ctx.beginPath(); ctx.arc(x, plotT2 + 4, 4, 0, 2 * Math.PI); ctx.fill();
+        ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
+        ctx.fillStyle = WCOLORS.text;
         ctx.fillText(Math.round(wlPeak), x, plotT2 - 3);
       }
     }
+
+    requestAnimationFrame(draw);
   }
 
   draw();
 }
-
 // =========================================================================
 function initBrewsterAngle() {
   const canvas = document.getElementById('scene-brewster-angle');
@@ -14765,7 +14874,342 @@ function initAdditiveSubtractiveMixing() {
 }
 
 // =========================================================================
-// 7. Rod and Cone Sensitivity
+// 7. Eye Anatomy Diagram
+// =========================================================================
+function initEyeAnatomyDiagram() {
+  const canvas = document.getElementById('scene-eye-anatomy-diagram');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Center of the eyeball
+    const cx = W * 0.42, cy = H * 0.48;
+    const R = Math.min(W, H) * 0.38; // eyeball radius
+
+    // --- Sclera (white outer shell) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R, R * 0.95, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f5f0e8';
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Choroid layer (dark lining inside sclera on back half) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R * 0.95, R * 0.90, 0, 0.45, Math.PI * 2 - 0.45);
+    ctx.strokeStyle = '#8b4513';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Retina (inner lining, back portion) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R * 0.88, R * 0.83, 0, 0.55, Math.PI * 2 - 0.55);
+    ctx.strokeStyle = '#d4a574';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Vitreous humor (fill interior) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, R * 0.85, R * 0.80, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(200, 220, 240, 0.3)';
+    ctx.fill();
+    ctx.restore();
+
+    // --- Cornea (front bulge) ---
+    var corneaExtent = R * 0.38;
+    var corneaDepth = R * 0.22;
+    ctx.save();
+    ctx.beginPath();
+    // Bulging arc on the left side of the eye
+    var corneaX = cx - R;
+    ctx.moveTo(corneaX, cy - corneaExtent);
+    ctx.quadraticCurveTo(corneaX - corneaDepth, cy, corneaX, cy + corneaExtent);
+    ctx.strokeStyle = '#4488cc';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    // Fill the cornea area
+    ctx.beginPath();
+    ctx.moveTo(corneaX, cy - corneaExtent);
+    ctx.quadraticCurveTo(corneaX - corneaDepth, cy, corneaX, cy + corneaExtent);
+    // Close back through the sclera arc
+    ctx.arc(cx, cy, R, Math.atan2(corneaExtent, -(R)), Math.atan2(-corneaExtent, -(R)), true);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(180, 210, 240, 0.35)';
+    ctx.fill();
+    ctx.restore();
+
+    // --- Aqueous humor (between cornea and lens) ---
+    ctx.save();
+    var aqL = corneaX - corneaDepth * 0.4;
+    var aqR = cx - R * 0.62;
+    ctx.beginPath();
+    ctx.ellipse((aqL + aqR) / 2, cy, (aqR - aqL) / 2, corneaExtent * 0.7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(180, 220, 250, 0.25)';
+    ctx.fill();
+    ctx.restore();
+
+    // --- Iris (colored ring with pupil hole) ---
+    var irisX = cx - R * 0.72;
+    var irisHalfH = R * 0.35;
+    var pupilHalfH = R * 0.13;
+    // Upper iris
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(irisX, cy - irisHalfH);
+    ctx.lineTo(irisX, cy - pupilHalfH);
+    var irisGrad = ctx.createLinearGradient(irisX, cy - irisHalfH, irisX, cy - pupilHalfH);
+    irisGrad.addColorStop(0, '#5a8f3c');
+    irisGrad.addColorStop(1, '#3d6b2e');
+    ctx.strokeStyle = irisGrad;
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    // Lower iris
+    ctx.beginPath();
+    ctx.moveTo(irisX, cy + pupilHalfH);
+    ctx.lineTo(irisX, cy + irisHalfH);
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Pupil (dark opening) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(irisX, cy - pupilHalfH);
+    ctx.lineTo(irisX, cy + pupilHalfH);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Lens (biconvex shape) ---
+    var lensX = cx - R * 0.55;
+    var lensW = R * 0.22;
+    var lensH = R * 0.32;
+    ctx.save();
+    ctx.beginPath();
+    // Left convex surface
+    ctx.moveTo(lensX, cy - lensH);
+    ctx.quadraticCurveTo(lensX - lensW * 0.6, cy, lensX, cy + lensH);
+    // Right convex surface
+    ctx.quadraticCurveTo(lensX + lensW, cy, lensX, cy - lensH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(220, 230, 245, 0.6)';
+    ctx.fill();
+    ctx.strokeStyle = '#6699bb';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Ciliary body (attaches to lens, top and bottom) ---
+    ctx.save();
+    ctx.strokeStyle = '#8b6b4a';
+    ctx.lineWidth = 3;
+    // Top
+    ctx.beginPath();
+    ctx.moveTo(lensX - lensW * 0.2, cy - lensH);
+    ctx.quadraticCurveTo(lensX - lensW * 0.8, cy - lensH - R * 0.12, irisX + 3, cy - irisHalfH);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lensX + lensW * 0.5, cy - lensH);
+    ctx.lineTo(cx - R * 0.65, cy - R * 0.55);
+    ctx.stroke();
+    // Bottom
+    ctx.beginPath();
+    ctx.moveTo(lensX - lensW * 0.2, cy + lensH);
+    ctx.quadraticCurveTo(lensX - lensW * 0.8, cy + lensH + R * 0.12, irisX + 3, cy + irisHalfH);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lensX + lensW * 0.5, cy + lensH);
+    ctx.lineTo(cx - R * 0.65, cy + R * 0.55);
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Fovea (small pit on back of retina, slightly below center) ---
+    var foveaAngle = 0.08; // slightly below optical axis
+    var foveaX = cx + R * 0.86 * Math.cos(foveaAngle);
+    var foveaY = cy + R * 0.86 * Math.sin(foveaAngle);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(foveaX, foveaY, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#cc8833';
+    ctx.fill();
+    ctx.restore();
+
+    // --- Macula (region around fovea) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(foveaX - 2, foveaY, 18, 12, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(204, 136, 51, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // --- Optic nerve (exits back of eye, slightly below center) ---
+    var onAngle = 0.35;
+    var onX = cx + R * Math.cos(onAngle);
+    var onY = cy + R * Math.sin(onAngle);
+    ctx.save();
+    // Nerve bundle exiting
+    ctx.beginPath();
+    ctx.moveTo(onX - 4, onY - 10);
+    ctx.quadraticCurveTo(onX + R * 0.25, onY + R * 0.08, onX + R * 0.32, onY + R * 0.25);
+    ctx.quadraticCurveTo(onX + R * 0.22, onY + R * 0.12, onX + 6, onY + 8);
+    ctx.closePath();
+    ctx.fillStyle = '#c4a66a';
+    ctx.fill();
+    ctx.strokeStyle = '#8b7340';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Blind spot (where optic nerve meets retina) ---
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(onX, onY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#ddc880';
+    ctx.fill();
+    ctx.restore();
+
+    // --- Light rays entering the eye ---
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 200, 50, 0.5)';
+    ctx.lineWidth = 1.5;
+    var rayStartX = corneaX - corneaDepth - 40;
+    for (var ri = -2; ri <= 2; ri++) {
+      var rayY = cy + ri * 18;
+      ctx.beginPath();
+      ctx.moveTo(rayStartX, rayY);
+      // Ray hits cornea
+      ctx.lineTo(corneaX - corneaDepth * 0.5, cy + ri * 14);
+      ctx.stroke();
+      // Refracted through lens to fovea
+      ctx.beginPath();
+      ctx.setLineDash([4, 3]);
+      ctx.moveTo(corneaX - corneaDepth * 0.5, cy + ri * 14);
+      ctx.lineTo(foveaX - 5, foveaY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    // Arrowheads on incoming rays
+    for (var ri = -2; ri <= 2; ri++) {
+      var rayY = cy + ri * 18;
+      ctx.beginPath();
+      ctx.moveTo(rayStartX + 8, rayY - 3);
+      ctx.lineTo(rayStartX + 14, rayY);
+      ctx.lineTo(rayStartX + 8, rayY + 3);
+      ctx.fillStyle = 'rgba(255, 200, 50, 0.7)';
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // --- Labels with leader lines ---
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'left';
+
+    function label(text, tx, ty, ptX, ptY, align) {
+      ctx.save();
+      ctx.fillStyle = WCOLORS.text;
+      ctx.textAlign = align || 'left';
+      ctx.font = '11px system-ui';
+      // Leader line
+      ctx.beginPath();
+      ctx.moveTo(ptX, ptY);
+      ctx.lineTo(tx, ty);
+      ctx.strokeStyle = 'rgba(150,150,150,0.6)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Dot at structure
+      ctx.beginPath();
+      ctx.arc(ptX, ptY, 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(150,150,150,0.8)';
+      ctx.fill();
+      // Text
+      ctx.fillStyle = WCOLORS.text;
+      ctx.fillText(text, tx, ty);
+      ctx.restore();
+    }
+
+    // Cornea
+    label('Cornea', corneaX - corneaDepth - 30, cy - corneaExtent - 14, corneaX - corneaDepth * 0.5, cy - corneaExtent * 0.5, 'center');
+
+    // Pupil
+    label('Pupil', irisX - 40, cy - pupilHalfH - 30, irisX, cy, 'center');
+
+    // Iris
+    label('Iris', irisX - 55, cy + irisHalfH + 22, irisX, cy + irisHalfH * 0.7, 'center');
+
+    // Lens
+    label('Lens', lensX - 10, cy - lensH - 18, lensX, cy - lensH + 5, 'center');
+
+    // Vitreous humor
+    ctx.save();
+    ctx.fillStyle = WCOLORS.text;
+    ctx.font = 'italic 11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.6;
+    ctx.fillText('Vitreous', cx + R * 0.1, cy - 8);
+    ctx.fillText('humor', cx + R * 0.1, cy + 8);
+    ctx.globalAlpha = 1.0;
+    ctx.restore();
+
+    // Retina
+    label('Retina', cx + R * 0.55, cy - R * 0.78, cx + R * 0.6, cy - R * 0.62, 'left');
+
+    // Fovea
+    label('Fovea', foveaX + 20, foveaY - 28, foveaX, foveaY, 'left');
+
+    // Macula
+    label('Macula', foveaX + 24, foveaY + 24, foveaX - 10, foveaY + 10, 'left');
+
+    // Optic nerve
+    label('Optic nerve', onX + R * 0.12, onY + R * 0.32, onX + R * 0.15, onY + R * 0.12, 'left');
+
+    // Blind spot
+    label('Blind spot', onX + 18, onY - 20, onX, onY, 'left');
+
+    // Ciliary body
+    label('Ciliary body', cx - R * 0.85, cy + R * 0.72, cx - R * 0.6, cy + R * 0.5, 'left');
+
+    // Aqueous humor
+    label('Aqueous humor', corneaX - corneaDepth - 10, cy + corneaExtent + 36, (aqL + aqR) / 2, cy + corneaExtent * 0.4, 'center');
+
+    // Optical axis (dashed line)
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([6, 4]);
+    ctx.moveTo(rayStartX, cy);
+    ctx.lineTo(cx + R * 0.9, cy);
+    ctx.strokeStyle = 'rgba(150,150,150,0.35)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // Title
+    ctx.fillStyle = WCOLORS.text;
+    ctx.font = 'bold 12px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText('Cross-Section of the Human Eye', 10, 18);
+  }
+
+  draw();
+}
+
+// =========================================================================
+// 8. Rod and Cone Sensitivity
 // =========================================================================
 function initRodConeSensitivity() {
   const canvas = document.getElementById('scene-rod-cone-sensitivity');
