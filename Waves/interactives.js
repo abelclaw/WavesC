@@ -7201,127 +7201,124 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (bellows with rounded pleats) ---
-    // Accordion bellows: smooth puffy folds that compress and expand.
-    // Each pleat is a lens/lozenge shape between crease points. The
-    // crease positions are displaced by the longitudinal wave.
+    // --- Longitudinal (large accordion bellows) ---
+    // Big, dramatic bellows with few folds and its OWN wave number so
+    // only ~1.5 wavelengths are visible. This makes the compression
+    // zone clearly propagate instead of everything shaking.
 
-    const nCreases = 26;  // number of crease (pinch) points
-    const bLeft = 60, bRight = W - 60;
+    const nCreases = 14;
+    const bLeft = 50, bRight = W - 50;
     const bLen = bRight - bLeft;
     const creaseSpacing = bLen / (nCreases - 1);
-    const bHalf = 22;     // max half-height of each pleat bulge
-    const bAmp = creaseSpacing * 0.65;  // longitudinal displacement amplitude
+    const bMaxH = 34;       // max half-height of pleat bulge
+    const bMinH = 3;        // min half-height when fully compressed
+    // Use a separate wave number: ~1.5 wavelengths across the bellows
+    const kB = 1.5 * 2 * Math.PI / bLen;
+    const bAmp = creaseSpacing * 0.9;  // large displacement
 
     // Compute displaced x for each crease point
     const cx = [];
     for (let i = 0; i < nCreases; i++) {
       const eqX = bLeft + i * creaseSpacing;
-      cx.push(eqX + bAmp * Math.sin(k * eqX - omega * t));
+      cx.push(eqX + bAmp * Math.sin(kB * eqX - omega * t));
     }
 
-    // Draw each pleat (between consecutive creases) as a filled lens shape
-    // with gradient shading for 3D rounded look
+    // Draw each pleat as a big puffy lens shape
     for (let i = 0; i < nCreases - 1; i++) {
       const x0 = cx[i], x1 = cx[i + 1];
       const midX = (x0 + x1) / 2;
       const span = Math.abs(x1 - x0);
 
-      // Pleat bulge height proportional to how stretched it is
-      const bulge = Math.min(bHalf, Math.max(4, span * 0.45));
+      // Bulge height: big when stretched, flat when compressed
+      const eqSpan = creaseSpacing;
+      const stretchRatio = span / eqSpan;
+      const bulge = Math.max(bMinH, Math.min(bMaxH, bMaxH * stretchRatio * 0.6));
 
-      // --- Fill the pleat with a vertical gradient for roundedness ---
+      // --- Gradient fill for 3D rounded volume ---
       const grad = ctx.createLinearGradient(midX, longY - bulge, midX, longY + bulge);
-      // Light on top (highlight), rich teal in middle, darker at bottom (shadow)
-      grad.addColorStop(0, 'rgba(140,210,200,0.55)');
-      grad.addColorStop(0.3, 'rgba(15,118,110,0.45)');
-      grad.addColorStop(0.5, 'rgba(15,118,110,0.35)');
-      grad.addColorStop(0.7, 'rgba(15,118,110,0.45)');
-      grad.addColorStop(1, 'rgba(8,70,65,0.55)');
+      grad.addColorStop(0,   'rgba(160,225,215,0.7)');   // bright highlight top
+      grad.addColorStop(0.2, 'rgba(40,160,148,0.6)');
+      grad.addColorStop(0.45,'rgba(15,118,110,0.5)');
+      grad.addColorStop(0.55,'rgba(15,118,110,0.5)');
+      grad.addColorStop(0.8, 'rgba(10,90,82,0.6)');
+      grad.addColorStop(1,   'rgba(5,55,50,0.7)');       // dark shadow bottom
 
       ctx.fillStyle = grad;
       ctx.beginPath();
-      // Top arc: crease → bulge up at mid → next crease
       ctx.moveTo(x0, longY);
       ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
-      // Bottom arc: next crease → bulge down at mid → back to crease
       ctx.quadraticCurveTo(midX, longY + bulge, x0, longY);
       ctx.closePath();
       ctx.fill();
 
-      // Outline the pleat for definition
-      // Top arc
-      ctx.strokeStyle = 'rgba(15,118,110,0.7)';
-      ctx.lineWidth = 1.5;
+      // Top outline — lighter
+      ctx.strokeStyle = 'rgba(80,190,175,0.8)';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(x0, longY);
       ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
       ctx.stroke();
-      // Bottom arc
-      ctx.strokeStyle = 'rgba(8,80,75,0.7)';
+
+      // Bottom outline — darker
+      ctx.strokeStyle = 'rgba(8,70,65,0.8)';
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(x0, longY);
       ctx.quadraticCurveTo(midX, longY + bulge, x1, longY);
       ctx.stroke();
 
-      // Highlight arc on top of each pleat — specular gleam
-      if (bulge > 8) {
-        const highlightY = longY - bulge * 0.55;
-        const hlSpan = span * 0.3;
-        ctx.strokeStyle = 'rgba(200,240,235,0.5)';
-        ctx.lineWidth = 1.2;
+      // Specular highlight arc across the top of each pleat
+      if (bulge > 10) {
+        const hlY = longY - bulge * 0.5;
+        const hlW = span * 0.35;
+        ctx.strokeStyle = 'rgba(220,250,245,0.6)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(midX - hlSpan, highlightY + 2);
-        ctx.quadraticCurveTo(midX, highlightY - 1, midX + hlSpan, highlightY + 2);
+        ctx.moveTo(midX - hlW, hlY + 1);
+        ctx.quadraticCurveTo(midX, hlY - 2, midX + hlW, hlY + 1);
         ctx.stroke();
       }
     }
 
-    // Draw crease lines at pinch points (darker vertical ticks)
-    ctx.strokeStyle = 'rgba(15,118,110,0.9)';
-    ctx.lineWidth = 2;
+    // Crease lines at each pinch point
     for (let i = 0; i < nCreases; i++) {
-      // Crease height: how tall the adjacent pleats are at this point
-      let maxBulge = 6;
+      // Height of crease tick matches adjacent pleat edges
+      let h = 5;
       if (i > 0) {
-        const span = Math.abs(cx[i] - cx[i - 1]);
-        maxBulge = Math.max(maxBulge, Math.min(bHalf, span * 0.45));
+        const s = Math.abs(cx[i] - cx[i - 1]);
+        const r = s / creaseSpacing;
+        h = Math.max(h, bMaxH * r * 0.6);
       }
       if (i < nCreases - 1) {
-        const span = Math.abs(cx[i + 1] - cx[i]);
-        maxBulge = Math.max(maxBulge, Math.min(bHalf, span * 0.45));
+        const s = Math.abs(cx[i + 1] - cx[i]);
+        const r = s / creaseSpacing;
+        h = Math.max(h, bMaxH * r * 0.6);
       }
-      // Small vertical tick at each crease
-      const tickH = Math.max(3, maxBulge * 0.3);
+      h = Math.min(h, bMaxH);
+      ctx.strokeStyle = 'rgba(15,118,110,0.9)';
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      ctx.moveTo(cx[i], longY - tickH);
-      ctx.lineTo(cx[i], longY + tickH);
+      ctx.moveTo(cx[i], longY - h);
+      ctx.lineTo(cx[i], longY + h);
       ctx.stroke();
     }
 
-    // End plates — solid rounded rectangles at the bellows ends
-    const plateW = 6, plateH = bHalf + 4;
-    ctx.fillStyle = WCOLORS.teal;
-    // Left plate
+    // End plates — thick solid bars
+    const plateW = 8, plateH = bMaxH + 6;
+    ctx.fillStyle = '#0d6b63';
     ctx.beginPath();
-    ctx.roundRect(cx[0] - plateW, longY - plateH, plateW, plateH * 2, 2);
+    ctx.roundRect(cx[0] - plateW - 1, longY - plateH, plateW, plateH * 2, 3);
     ctx.fill();
-    // Right plate
     ctx.beginPath();
-    ctx.roundRect(cx[nCreases - 1], longY - plateH, plateW, plateH * 2, 2);
+    ctx.roundRect(cx[nCreases - 1] + 1, longY - plateH, plateW, plateH * 2, 3);
     ctx.fill();
-
-    // Subtle ground shadow
-    ctx.save();
-    ctx.globalAlpha = 0.05;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.ellipse(W / 2, longY + bHalf + 10, bLen / 2.5, 3, 0, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.restore();
+    // Plate highlights
+    ctx.fillStyle = 'rgba(160,225,215,0.3)';
+    ctx.fillRect(cx[0] - plateW, longY - plateH + 2, plateW - 2, 4);
+    ctx.fillRect(cx[nCreases - 1] + 2, longY - plateH + 2, plateW - 2, 4);
 
     // Propagation arrow
-    const propArrowY2 = longY + bHalf + 18;
+    const propArrowY2 = longY + bMaxH + 16;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
