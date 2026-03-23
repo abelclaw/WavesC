@@ -9034,7 +9034,6 @@ function initThinFilmInterference() {
     }
   }
 
-  thickSlider?.addEventListener('input', draw);
   draw();
 }
 
@@ -14269,39 +14268,87 @@ function initBlackbodyPlanckianLocus() {
     draw();
   }
 
-  const cie = getCIEData();
-  const spectralX = [], spectralY = [];
-  for (let i = 0; i < cie.wavelengths.length; i++) {
-    const X = cie.xbar[i], Y = cie.ybar[i], Z = cie.zbar[i];
-    const sum = X + Y + Z;
-    if (sum > 0.001) { spectralX.push(X / sum); spectralY.push(Y / sum); }
-    else { spectralX.push(0); spectralY.push(0); }
-  }
+  // Tabulated CIE 1931 spectral locus (xy chromaticity), 380-700nm at 5nm
+  var spectralLocus = [
+    {x:0.1741,y:0.0050},{x:0.1740,y:0.0050},{x:0.1738,y:0.0049},
+    {x:0.1736,y:0.0049},{x:0.1733,y:0.0048},{x:0.1730,y:0.0048},
+    {x:0.1726,y:0.0048},{x:0.1721,y:0.0048},{x:0.1714,y:0.0051},
+    {x:0.1703,y:0.0058},{x:0.1689,y:0.0069},{x:0.1669,y:0.0086},
+    {x:0.1644,y:0.0109},{x:0.1611,y:0.0138},{x:0.1566,y:0.0177},
+    {x:0.1510,y:0.0227},{x:0.1440,y:0.0297},{x:0.1355,y:0.0399},
+    {x:0.1241,y:0.0578},{x:0.1096,y:0.0868},{x:0.0913,y:0.1327},
+    {x:0.0687,y:0.2007},{x:0.0454,y:0.2950},{x:0.0235,y:0.4127},
+    {x:0.0082,y:0.5384},{x:0.0039,y:0.6548},{x:0.0139,y:0.7502},
+    {x:0.0389,y:0.8120},{x:0.0743,y:0.8338},{x:0.1142,y:0.8262},
+    {x:0.1547,y:0.8059},{x:0.1929,y:0.7816},{x:0.2296,y:0.7543},
+    {x:0.2658,y:0.7243},{x:0.3016,y:0.6923},{x:0.3373,y:0.6589},
+    {x:0.3731,y:0.6245},{x:0.4087,y:0.5896},{x:0.4441,y:0.5547},
+    {x:0.4788,y:0.5202},{x:0.5125,y:0.4866},{x:0.5448,y:0.4544},
+    {x:0.5752,y:0.4242},{x:0.6029,y:0.3965},{x:0.6270,y:0.3725},
+    {x:0.6482,y:0.3514},{x:0.6658,y:0.3340},{x:0.6801,y:0.3197},
+    {x:0.6915,y:0.3083},{x:0.7006,y:0.2993},{x:0.7079,y:0.2920},
+    {x:0.7140,y:0.2859},{x:0.7190,y:0.2809},{x:0.7230,y:0.2770},
+    {x:0.7260,y:0.2740},{x:0.7283,y:0.2717},{x:0.7300,y:0.2700},
+    {x:0.7311,y:0.2689},{x:0.7320,y:0.2680},{x:0.7327,y:0.2673},
+    {x:0.7334,y:0.2666},{x:0.7340,y:0.2660},{x:0.7344,y:0.2656},
+    {x:0.7346,y:0.2654},{x:0.7347,y:0.2653}
+  ];
 
-  const plotL = 55, plotB2 = H - 45, plotT = 15;
-  const plotSize = Math.min(W * 0.55, H - 80);
+  var plotL = 55, plotB2 = H - 45, plotT = 15;
+  var plotSize = Math.min(W * 0.55, H - 80);
 
   function toScreen(cx, cy) {
     return { x: plotL + cx * plotSize * 1.15, y: plotB2 - cy * plotSize * 1.3 };
   }
 
+  function xyToRGB(cx, cy) {
+    var Y2 = 1.0, X2 = (Y2 / cy) * cx, Z2 = (Y2 / cy) * (1 - cx - cy);
+    var r2 = 3.2406*X2 - 1.5372*Y2 - 0.4986*Z2;
+    var g2 = -0.9689*X2 + 1.8758*Y2 + 0.0415*Z2;
+    var b2 = 0.0557*X2 - 0.2040*Y2 + 1.0570*Z2;
+    function gm(v){return v<=0.0031308?12.92*v:1.055*Math.pow(v,1/2.4)-0.055;}
+    r2=gm(Math.max(0,r2));g2=gm(Math.max(0,g2));b2=gm(Math.max(0,b2));
+    var mx2=Math.max(r2,g2,b2,1);
+    return 'rgb('+Math.round(255*r2/mx2)+','+Math.round(255*g2/mx2)+','+Math.round(255*b2/mx2)+')';
+  }
+
+  function isInsideLocus(px, py) {
+    var pts = spectralLocus, inside = false;
+    for (var i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      var xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+      if ((yi>py)!==(yj>py) && px<(xj-xi)*(py-yi)/(yj-yi)+xi) inside=!inside;
+    }
+    return inside;
+  }
+
+  var offscreen = document.createElement('canvas');
+  offscreen.width = W; offscreen.height = H;
+  var offCtx = offscreen.getContext('2d');
+  for (var px = 0; px < W; px += 2) {
+    for (var py = plotT; py < plotB2; py += 2) {
+      var cx2 = (px - plotL) / (plotSize * 1.15);
+      var cy2 = (plotB2 - py) / (plotSize * 1.3);
+      if (cx2>=0 && cx2<=0.8 && cy2>0.005 && cy2<=0.9 && isInsideLocus(cx2, cy2)) {
+        offCtx.fillStyle = xyToRGB(cx2, cy2);
+        offCtx.fillRect(px, py, 2, 2);
+      }
+    }
+  }
+
   function draw() {
     wClear(ctx, W, H);
 
-    // Spectral locus outline
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.drawImage(offscreen, 0, 0);
+
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    let started = false;
-    for (let i = 0; i < spectralX.length; i++) {
-      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
-      const p = toScreen(spectralX[i], spectralY[i]);
-      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-      else ctx.lineTo(p.x, p.y);
+    for (var i = 0; i < spectralLocus.length; i++) {
+      var p = toScreen(spectralLocus[i].x, spectralLocus[i].y);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.closePath();
     ctx.stroke();
 
-    // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB2); ctx.lineTo(plotL + plotSize * 1.15, plotB2); ctx.stroke();
