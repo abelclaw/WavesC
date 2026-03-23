@@ -148,6 +148,13 @@ window.LECTURE_CONTENT_12_16 = {
 
 "14": [
   {
+    heading: "Phonon Polarizations",
+    body: "<p>Before discussing the polarization of light, let's build intuition with a simpler system: waves in a crystal lattice. In a 3D crystal, atoms sit at regular lattice sites and can vibrate in three independent directions relative to the wave's propagation direction.</p><p>A <strong>longitudinal</strong> phonon has atoms displaced along the propagation direction — compressions and rarefactions, like a sound wave. The two <strong>transverse</strong> phonons have atoms displaced perpendicular to propagation. In a 3D crystal with propagation along z, one transverse mode displaces atoms in x and the other in y.</p><p>These three modes — one longitudinal and two transverse — are the three <strong>polarizations</strong> of a phonon. The concept generalizes directly to electromagnetic waves, where E and B are always transverse to k (there is no longitudinal polarization for light in vacuum).</p>",
+    interactive: "phonon-polarizations",
+    interactiveCaption: "A crystal lattice with three phonon polarization modes. Click each button to see longitudinal (along k) and two transverse (perpendicular to k) vibrations.",
+    mathLinks: []
+  },
+  {
     heading: "Polarization Vectors",
     body: "<p>Maxwell's equations admit plane wave solutions E = $E_{0}$e<sup>i(k$\\cdot$x - $\\omega$t)</sup> and B = $B_{0}$e<sup>i(k$\\cdot$x - $\\omega$t)</sup>. The vectors $E_{0}$ and $B_{0}$ are called the <strong>polarization vectors</strong> for the electric and magnetic fields. These are complex 3-dimensional vectors. The wavevector k and angular frequency $\\omega$ are real and related by $\\omega$ = c|k| in vacuum.</p><p>We found that $B_{0}$ = (1/$\\omega$)(k $\\times E_{0}$), meaning the magnetic field is completely determined by the electric field. Choosing coordinates with k in the z-direction, the electric field becomes:</p><p style='text-align:center;'>$$E = E_0 e^{i\\omega(z/c - t)}$$</p><p>Since $E_{0}$ is orthogonal to k, we can write $E_{0}$ = ($E_{x}, E_{y}$, 0) with $E_{x}$ and $E_{y}$ complex numbers. Writing $E_{x}$ = |$E_{x}$|e<sup>i$\\phi_{x}$</sup> and $E_{y}$ = |$E_{y}$|e<sup>i$\\phi_{y}$</sup>, we need four real numbers to specify the polarization vector. However, we usually don't care about the overall phase or the overall magnitude E = |$E_{x}$|<sup>2</sup> + |$E_{y}$|<sup>2</sup>. Thus, to specify polarization, we talk about the <strong>relative size</strong> of $E_{x}$ and $E_{y}$ and the <strong>phase difference</strong> $\\phi = \\phi_{x} - \\phi_{y}$.</p>",
     interactive: null,

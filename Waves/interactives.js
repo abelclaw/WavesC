@@ -299,6 +299,7 @@ function initSceneInteractives() {
   // Chapter 13 - Light
   initEmPlaneWave();
   // Chapter 14 - Polarization
+  initPhononPolarizations();
   initLinearPolarization();
   initCircularPolarization();
   initMalusLaw();
@@ -7628,6 +7629,215 @@ function initEmPlaneWave() {
 // CHAPTER 14 - POLARIZATION
 // =========================================================================
 
+function initPhononPolarizations() {
+  const canvas = document.getElementById('scene-phonon-polarizations');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let mode = 'longitudinal'; // 'longitudinal', 'transverse-x', 'transverse-y'
+  let t = 0;
+
+  // Create buttons
+  const parent = canvas.parentElement;
+  let controls = document.getElementById('phonon-pol-controls');
+  if (!controls && parent) {
+    controls = document.createElement('div');
+    controls.className = 'scene-controls';
+    controls.id = 'phonon-pol-controls';
+    controls.innerHTML =
+      '<button id="phonon-btn-long" class="phonon-pol-btn phonon-pol-btn-active" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Longitudinal</button>' +
+      '<button id="phonon-btn-tx" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Transverse (x)</button>' +
+      '<button id="phonon-btn-ty" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;">Transverse (y)</button>';
+    parent.appendChild(controls);
+  }
+
+  function setActive(id) {
+    document.querySelectorAll('.phonon-pol-btn').forEach(b => {
+      b.style.fontWeight = b.id === id ? 'bold' : 'normal';
+      b.style.background = b.id === id ? '#0f766e' : '';
+      b.style.color = b.id === id ? '#fff' : '';
+    });
+  }
+
+  document.getElementById('phonon-btn-long')?.addEventListener('click', () => { mode = 'longitudinal'; setActive('phonon-btn-long'); });
+  document.getElementById('phonon-btn-tx')?.addEventListener('click', () => { mode = 'transverse-x'; setActive('phonon-btn-tx'); });
+  document.getElementById('phonon-btn-ty')?.addEventListener('click', () => { mode = 'transverse-y'; setActive('phonon-btn-ty'); });
+  setActive('phonon-btn-long');
+
+  // Lattice parameters
+  const nRows = 7;
+  const nCols = 9;
+  const spacingX = W / (nCols + 1);
+  const spacingY = H / (nRows + 2);
+  const amp = spacingX * 0.28;
+  const k = 2 * Math.PI / (spacingX * 3.5);
+  const omega = 2.2;
+  const atomR = Math.min(spacingX, spacingY) * 0.16;
+
+  // 3D isometric projection for depth effect
+  // "into screen" (y-axis in physics) is rendered as slight diagonal offset
+  const depthX = 0.35;
+  const depthY = 0.25;
+
+  function tick() {
+    if (!canvas.isConnected) return;
+    t += 0.03;
+    wClear(ctx, W, H);
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    const labels = { 'longitudinal': 'Longitudinal phonon (displacement ∥ k)', 'transverse-x': 'Transverse phonon (displacement ⊥ k, horizontal)', 'transverse-y': 'Transverse phonon (displacement ⊥ k, vertical)' };
+    ctx.fillText(labels[mode], W / 2, 16);
+
+    // Propagation arrow
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k →', W - 50, H - 10);
+
+    // Draw bonds and atoms
+    const positions = [];
+    for (let row = 0; row < nRows; row++) {
+      positions[row] = [];
+      for (let col = 0; col < nCols; col++) {
+        const baseX = spacingX * (col + 1);
+        const baseY = spacingY * (row + 1.5);
+        const phase = k * baseX - omega * t;
+        const disp = amp * Math.sin(phase);
+
+        let dx = 0, dy = 0;
+        if (mode === 'longitudinal') {
+          dx = disp; // displacement along propagation (z mapped to screen-x)
+        } else if (mode === 'transverse-x') {
+          // horizontal transverse: displacement perpendicular in screen plane
+          // show as "into/out of screen" with size+opacity change
+          const d = disp;
+          dx = d * depthX;
+          dy = d * depthY;
+        } else {
+          dy = disp; // vertical transverse
+        }
+
+        positions[row][col] = { x: baseX + dx, y: baseY + dy };
+      }
+    }
+
+    // Draw horizontal bonds
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    for (let row = 0; row < nRows; row++) {
+      for (let col = 0; col < nCols - 1; col++) {
+        const a = positions[row][col], b = positions[row][col + 1];
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    // Draw vertical bonds
+    for (let row = 0; row < nRows - 1; row++) {
+      for (let col = 0; col < nCols; col++) {
+        const a = positions[row][col], b = positions[row + 1][col];
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // Draw atoms
+    for (let row = 0; row < nRows; row++) {
+      for (let col = 0; col < nCols; col++) {
+        const p = positions[row][col];
+        const baseX = spacingX * (col + 1);
+        const phase = k * baseX - omega * t;
+        const disp = Math.sin(phase);
+
+        // Color atoms by displacement for visual clarity
+        let r, g, b;
+        if (mode === 'longitudinal') {
+          // Teal for positive displacement, amber for negative
+          const f = (disp + 1) / 2; // 0 to 1
+          r = Math.round(15 + f * (217 - 15));
+          g = Math.round(118 + f * (119 - 118));
+          b = Math.round(110 + f * (6 - 110));
+        } else if (mode === 'transverse-x') {
+          // Blue-ish for into screen, red-ish for out
+          const f = (disp + 1) / 2;
+          r = Math.round(37 + f * (220 - 37));
+          g = Math.round(99 + f * (38 - 99));
+          b = Math.round(235 + f * (38 - 235));
+        } else {
+          const f = (disp + 1) / 2;
+          r = Math.round(15 + f * (217 - 15));
+          g = Math.round(118 + f * (119 - 118));
+          b = Math.round(110 + f * (6 - 110));
+        }
+
+        // Size variation for transverse-x to suggest depth
+        let drawR = atomR;
+        if (mode === 'transverse-x') {
+          drawR = atomR * (1 + 0.25 * disp);
+        }
+
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, drawR, 0, 2 * Math.PI); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Draw displacement arrows on a few atoms in the middle row
+    const midRow = Math.floor(nRows / 2);
+    const arrowCols = [2, 4, 6];
+    for (const col of arrowCols) {
+      const baseX = spacingX * (col + 1);
+      const baseY = spacingY * (midRow + 1.5);
+      const phase = k * baseX - omega * t;
+      const disp = amp * Math.sin(phase);
+      const p = positions[midRow][col];
+
+      if (Math.abs(disp) > amp * 0.15) {
+        ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (mode === 'longitudinal') {
+          ctx.moveTo(baseX, baseY - atomR - 3);
+          ctx.lineTo(baseX + disp, baseY - atomR - 3);
+          // arrowhead
+          const sign = disp > 0 ? 1 : -1;
+          ctx.lineTo(baseX + disp - sign * 4, baseY - atomR - 7);
+          ctx.moveTo(baseX + disp, baseY - atomR - 3);
+          ctx.lineTo(baseX + disp - sign * 4, baseY - atomR + 1);
+        } else if (mode === 'transverse-y') {
+          ctx.moveTo(baseX + atomR + 3, baseY);
+          ctx.lineTo(baseX + atomR + 3, baseY + disp);
+          const sign = disp > 0 ? 1 : -1;
+          ctx.lineTo(baseX + atomR - 1, baseY + disp - sign * 4);
+          ctx.moveTo(baseX + atomR + 3, baseY + disp);
+          ctx.lineTo(baseX + atomR + 7, baseY + disp - sign * 4);
+        } else {
+          // transverse-x: draw a circle+dot or circle+cross for into/out of screen
+          const cx = baseX - atomR - 8;
+          const cy = baseY;
+          const cr = 5;
+          ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI); ctx.stroke();
+          if (disp > 0) {
+            // out of screen: dot
+            ctx.fillStyle = WCOLORS.red;
+            ctx.beginPath(); ctx.arc(cx, cy, 1.5, 0, 2 * Math.PI); ctx.fill();
+          } else {
+            // into screen: cross
+            ctx.beginPath(); ctx.moveTo(cx - 3, cy - 3); ctx.lineTo(cx + 3, cy + 3); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx + 3, cy - 3); ctx.lineTo(cx - 3, cy + 3); ctx.stroke();
+          }
+        }
+        ctx.stroke();
+      }
+    }
+  }
+
+  tick();
+}
+
+// =========================================================================
 function initLinearPolarization() {
   const canvas = document.getElementById('scene-linear-polarization');
   if (!canvas) return;
@@ -7636,22 +7846,45 @@ function initLinearPolarization() {
   const { ctx, W, H } = setup;
 
   let angleSlider = document.getElementById('linear-pol-angle');
-  if (!angleSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML = '<label>Polarization angle θ: <input type="range" id="linear-pol-angle" min="0" max="180" step="1" value="0"><span class="scene-val" id="linear-pol-angle-val">0°</span></label>';
-      parent.appendChild(controls);
-      angleSlider = document.getElementById('linear-pol-angle');
-    }
-  }
 
   let t = 0;
 
+  // 3D oblique projection parameters
+  const cx = W * 0.38, cy = H / 2;
+  const axisLen = W * 0.30;
+  const amp = 50;
+  // projK: propagation direction (into screen, angled right-down)
+  const projK = { x: 0.85, y: 0.30 };
+  // projE: "up" direction on screen (electric field default vertical)
+  const projE = { x: 0, y: -1 };
+  // projB: "sideways" direction (magnetic field, into screen perspective)
+  const projB = { x: -0.45, y: 0.20 };
+
+  function to2D(kk, e, b) {
+    return {
+      x: cx + kk * projK.x * axisLen + e * projE.x * amp + b * projB.x * amp,
+      y: cy + kk * projK.y * axisLen + e * projE.y * amp + b * projB.y * amp
+    };
+  }
+
+  function drawArrowhead(fx, fy, tx, ty, color, size) {
+    const dx = tx - fx, dy = ty - fy;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 2) return;
+    const ux = dx / len, uy = dy / len;
+    const px = -uy, py = ux;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - ux * size + px * size * 0.4, ty - uy * size + py * size * 0.4);
+    ctx.lineTo(tx - ux * size - px * size * 0.4, ty - uy * size - py * size * 0.4);
+    ctx.closePath();
+    ctx.fill();
+  }
+
   function tick() {
     if (!canvas.isConnected) return;
-    t += 0.04;
+    t += 0.03;
     wClear(ctx, W, H);
     draw();
     requestAnimationFrame(tick);
@@ -7659,89 +7892,168 @@ function initLinearPolarization() {
 
   function draw() {
     const theta = parseFloat(angleSlider?.value || 0) * Math.PI / 180;
-    document.getElementById('linear-pol-angle-val')?.replaceChildren(document.createTextNode((theta * 180 / Math.PI).toFixed(0) + '°'));
+    const valEl = document.getElementById('linear-pol-angle-val');
+    if (valEl) valEl.textContent = Math.round(theta * 180 / Math.PI) + '°';
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Linear polarization', W / 2, 16);
-
-    // --- Wave view (left side) ---
-    const waveL = 30, waveR = W * 0.6, waveY = H / 2;
-    const nPts = 80;
-    const amp = 35;
-    const k = 0.12;
-
-    // Propagation axis
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(waveL, waveY); ctx.lineTo(waveR, waveY); ctx.stroke();
-
-    // E-field arrows along wave
     const cosT = Math.cos(theta), sinT = Math.sin(theta);
-    const nArrows = 20;
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
-    for (let i = 0; i <= nArrows; i++) {
-      const x = waveL + i * (waveR - waveL) / nArrows;
-      const val = amp * Math.sin(k * x - t * 2);
-      const ey = val * cosT;
-      // For the wave view, show only vertical component visually
-      ctx.beginPath(); ctx.moveTo(x, waveY); ctx.lineTo(x, waveY - ey); ctx.stroke();
-    }
+    const nWave = 1.5; // number of wavelengths visible
 
-    // Wave curve (projected vertical component)
+    // --- Draw propagation (k) axis ---
+    const kStart = to2D(-1.15, 0, 0);
+    const kEnd = to2D(1.25, 0, 0);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k', kEnd.x + 5, kEnd.y);
+
+    // --- E-field (teal): oscillates in the plane defined by theta ---
+    // E direction in 3D: cosT * "up" + sinT * "sideways"
+    const nPts = 200;
+    const nArrows = 22;
+
+    // E-field envelope curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
-      const x = waveL + i * (waveR - waveL) / nPts;
-      const val = amp * Math.sin(k * x - t * 2) * cosT;
-      if (i === 0) ctx.moveTo(x, waveY - val); else ctx.lineTo(x, waveY - val);
+      const kk = -1 + 2 * i / nPts;
+      const phase = 2 * Math.PI * kk * nWave - t * 2;
+      const val = Math.sin(phase);
+      const eComp = val * cosT; // vertical component
+      const bComp = val * sinT; // sideways component (for rotated E)
+      const p = to2D(kk, eComp * 0.85, bComp * 0.85);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
 
-    // Propagation arrow
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('propagation →', (waveL + waveR) / 2, waveY + 25);
+    // E-field arrows
+    for (let i = 0; i <= nArrows; i++) {
+      const kk = -1 + 2 * i / nArrows;
+      const phase = 2 * Math.PI * kk * nWave - t * 2;
+      const val = Math.sin(phase);
+      const eComp = val * cosT;
+      const bComp = val * sinT;
+      const base = to2D(kk, 0, 0);
+      const tip = to2D(kk, eComp * 0.85, bComp * 0.85);
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // --- B-field (amber): perpendicular to E and k ---
+    // B is rotated 90° from E in the transverse plane: -sinT * "up" + cosT * "sideways"
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= nPts; i++) {
+      const kk = -1 + 2 * i / nPts;
+      const phase = 2 * Math.PI * kk * nWave - t * 2;
+      const val = Math.sin(phase);
+      const eComp = -val * sinT; // vertical component of B
+      const bComp = val * cosT;  // sideways component of B
+      const p = to2D(kk, eComp * 0.55, bComp * 0.55);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // B-field arrows
+    for (let i = 0; i <= nArrows; i++) {
+      const kk = -1 + 2 * i / nArrows;
+      const phase = 2 * Math.PI * kk * nWave - t * 2;
+      const val = Math.sin(phase);
+      const eComp = -val * sinT;
+      const bComp = val * cosT;
+      const base = to2D(kk, 0, 0);
+      const tip = to2D(kk, eComp * 0.55, bComp * 0.55);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
+      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // --- Snapshot arrows at k=0 with arrowheads ---
+    const phase0 = -t * 2;
+    const val0 = Math.sin(phase0);
+    // E arrow
+    const eBase = to2D(0, 0, 0);
+    const eTip = to2D(0, val0 * cosT * 0.85, val0 * sinT * 0.85);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(eTip.x, eTip.y); ctx.stroke();
+    drawArrowhead(eBase.x, eBase.y, eTip.x, eTip.y, WCOLORS.teal, 7);
+    // B arrow
+    const bTip = to2D(0, -val0 * sinT * 0.55, val0 * cosT * 0.55);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(bTip.x, bTip.y); ctx.stroke();
+    drawArrowhead(eBase.x, eBase.y, bTip.x, bTip.y, WCOLORS.amber, 7);
+
+    // --- Legend ---
+    const lgX = W * 0.78, lgY = H * 0.30;
+    ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('E', lgX + 18, lgY);
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(lgX - 8, lgY - 4); ctx.lineTo(lgX + 12, lgY - 4); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('B/c', lgX + 18, lgY + 22);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(lgX - 8, lgY + 18); ctx.lineTo(lgX + 12, lgY + 18); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('θ = ' + Math.round(theta * 180 / Math.PI) + '°', lgX - 8, lgY + 44);
 
     // --- Cross-section view (right side) ---
-    const cxPos = W * 0.8, cyPos = H / 2;
-    const radius = Math.min(H / 2 - 30, 50);
+    const cxR = W * 0.82, cyR = H * 0.68;
+    const radius = 38;
 
-    // Circle outline
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cxPos, cyPos, radius, 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cxR, cyR, radius, 0, 2 * Math.PI); ctx.stroke();
 
     // Axes
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(cxPos - radius - 10, cyPos); ctx.lineTo(cxPos + radius + 10, cyPos); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cxPos, cyPos - radius - 10); ctx.lineTo(cxPos, cyPos + radius + 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cxR - radius - 6, cyR); ctx.lineTo(cxR + radius + 6, cyR); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cxR, cyR - radius - 6); ctx.lineTo(cxR, cyR + radius + 6); ctx.stroke();
 
-    // E-vector direction line (the fixed direction of oscillation)
-    const lineLen = radius + 5;
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    // E direction line (dashed)
+    const eAng = -theta + Math.PI / 2; // angle from horizontal
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    ctx.moveTo(cxPos - lineLen * Math.sin(theta), cyPos - lineLen * Math.cos(theta));
-    ctx.lineTo(cxPos + lineLen * Math.sin(theta), cyPos + lineLen * Math.cos(theta));
+    ctx.moveTo(cxR - (radius + 4) * Math.cos(eAng), cyR - (radius + 4) * Math.sin(eAng));
+    ctx.lineTo(cxR + (radius + 4) * Math.cos(eAng), cyR + (radius + 4) * Math.sin(eAng));
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Current E-vector tip
-    const eNow = Math.sin(-t * 2);
-    const tipX = cxPos + eNow * radius * Math.sin(theta);
-    const tipY = cyPos - eNow * radius * Math.cos(theta);
+    // B direction line (dashed) - perpendicular to E
+    const bAng = eAng + Math.PI / 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(cxR - (radius + 4) * Math.cos(bAng), cyR - (radius + 4) * Math.sin(bAng));
+    ctx.lineTo(cxR + (radius + 4) * Math.cos(bAng), cyR + (radius + 4) * Math.sin(bAng));
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // E arrow from center
+    // Current E vector
+    const eNow = Math.sin(phase0);
+    const eTipX = cxR + eNow * radius * 0.8 * Math.cos(eAng);
+    const eTipY = cyR + eNow * radius * 0.8 * Math.sin(eAng);
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cxPos, cyPos); ctx.lineTo(tipX, tipY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(eTipX, eTipY); ctx.stroke();
     ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(eTipX, eTipY, 3, 0, 2 * Math.PI); ctx.fill();
+
+    // Current B vector
+    const bTipX = cxR + eNow * radius * 0.8 * Math.cos(bAng);
+    const bTipY = cyR + eNow * radius * 0.8 * Math.sin(bAng);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(bTipX, bTipY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath(); ctx.arc(bTipX, bTipY, 3, 0, 2 * Math.PI); ctx.fill();
 
     // Labels
-    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('E', tipX + 12, tipY - 5);
+    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('E', eTipX + (eNow >= 0 ? 10 : -10), eTipY - 6);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('B', bTipX + (eNow >= 0 ? 10 : -10), bTipY - 6);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('End-on view', cxPos, cyPos + radius + 25);
-    ctx.fillText('(tip traces a line)', cxPos, cyPos + radius + 38);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('θ = ' + (theta * 180 / Math.PI).toFixed(0) + '°', cxPos - radius, cyPos - radius - 12);
+    ctx.fillText('End-on view', cxR, cyR + radius + 18);
   }
 
   tick();

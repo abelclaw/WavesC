@@ -609,8 +609,9 @@ window.WAVES_SOURCE_DATA = {
   },
 
   "14-Polarization": {
-    pageCount: 8,
+    pageCount: 9,
     sections: [
+      "Phonon Polarizations",
       "Linear Polarization",
       "Circular and Elliptical Polarization",
       "Polarizers and Malus's Law",
@@ -620,6 +621,7 @@ window.WAVES_SOURCE_DATA = {
       "Optical Activity"
     ],
     sectionAnchors: [
+      { title: "Phonon Polarizations", anchor: "phonon-polarizations" },
       { title: "Linear Polarization", anchor: "linear-polarization" },
       { title: "Circular and Elliptical Polarization", anchor: "circular-elliptical" },
       { title: "Polarizers and Malus's Law", anchor: "polarizers-malus-law" },
