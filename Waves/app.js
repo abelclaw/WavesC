@@ -4225,9 +4225,9 @@ function sceneMarkup(type) {
     case "quantum-wavepacket-dispersion":
       return `
         <div class="scene-label">Quantum Wavepacket Spreading</div>
-        <p class="scene-caption">A free quantum particle&rsquo;s wavepacket spreads over time due to dispersion in the Schr&ouml;dinger equation.</p>
+        <p class="scene-caption">A narrow wavepacket has a wide momentum distribution and spreads fast. A wide wavepacket has a narrow momentum distribution and is stable. This is the uncertainty principle in action: &sigma;<sub>x</sub>&sigma;<sub>k</sub> &ge; &frac12;.</p>
         <div class="interactive-scene">
-          <canvas id="scene-quantum-wavepacket-dispersion" width="600" height="300"></canvas>
+          <canvas id="scene-quantum-wavepacket-dispersion" width="600" height="350"></canvas>
         </div>
       `;
 

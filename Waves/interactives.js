@@ -17032,124 +17032,246 @@ function initQuantumWavepacketDispersion() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let sigma0 = 0.05;
-  let time = 0;
-  let running = true;
-  let draggingSlider = false;
-  const sliderX = 20, sliderW = W * 0.3, sliderY = H - 16;
+  var sigma0 = 0.4;
+  var time = 0;
+  var draggingSlider = false;
 
+  // Physics
+  var k0 = 15;        // carrier wavevector
+  var xMax = 3.0;     // position range [-xMax, xMax]
+  var dkMax = 4.5;    // momentum range [-dkMax, dkMax]
+
+  // Layout — top: position Re(psi), bottom: momentum |psi~|^2
+  var posT = 34, posB = 200, posMidY = 117;
+  var posL = 10, posR = W - 10, posPW = posR - posL;
+  var momT = 222, momB = 305, momH2 = momB - momT;
+  var momL = Math.round(W * 0.15), momR = Math.round(W * 0.85), momPW = momR - momL;
+  var sliderX = 10, sliderW = Math.round(W * 0.28), sliderY = H - 15;
+
+  // Events
   canvas.addEventListener('mousedown', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (Math.abs(my - sliderY) < 15 && mx >= sliderX && mx <= sliderX + sliderW) {
       draggingSlider = true; handleDrag(mx);
-    }
-    // Reset on click on canvas area
-    if (my > 20 && my < H - 40 && mx > W * 0.6 && mx < W - 10) {
+    } else if (my > posT && my < posB) {
       time = 0;
     }
   });
-  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!draggingSlider) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
   canvas.addEventListener('mouseup', function() { draggingSlider = false; });
   canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
-  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var tx = e.touches[0].clientX - rect.left, ty = e.touches[0].clientY - rect.top;
+    if (Math.abs(ty - sliderY) < 20 && tx >= sliderX - 5 && tx <= sliderX + sliderW + 5) {
+      draggingSlider = true; handleDrag(tx);
+    } else if (ty > posT && ty < posB) {
+      time = 0;
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!draggingSlider) return; e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
   canvas.addEventListener('touchend', function() { draggingSlider = false; });
 
   function handleDrag(mx) {
-    sigma0 = 0.02 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 0.13;
+    sigma0 = 0.2 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 1.0;
     time = 0;
   }
 
-  const plotL2 = 40, plotR2 = W - 20, plotT2 = 30, plotB2 = H - 35;
-  const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
-
   function tick() {
     if (!canvas.isConnected) return;
-    time += 0.008;
+    time += 0.006;
     wClear(ctx, W, H);
 
-    const tau = 2 * sigma0 * sigma0; // characteristic time
-    const sigmaT = sigma0 * Math.sqrt(1 + Math.pow(time / tau, 2));
+    var tau = 2 * sigma0 * sigma0;
+    var tRatio = time / tau;
+    var sigmaT = sigma0 * Math.sqrt(1 + tRatio * tRatio);
+    var sigmaK = 1 / (2 * sigma0);
+    var halfH = (posB - posT) / 2;
+    var ampScale = halfH * 0.82;
 
-    // Axes
+    // === Title ===
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Quantum Wavepacket Spreading', 10, 16);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('click waveform to reset', W - 10, 16);
+
+    // === POSITION SPACE ===
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Position space:  Re(\u03C8(x, t))', posL + 5, posT - 6);
+
+    // Center axis
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(posL, posMidY); ctx.lineTo(posR, posMidY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('x', (posL + posR) / 2, posB + 10);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('x', (plotL2 + plotR2) / 2, plotB2 + 13);
-    ctx.textAlign = 'right';
-    ctx.fillText('|\u03C8|\u00B2', plotL2 - 5, plotT2 + 5);
+    // Amplitude decay from spreading
+    var decayFactor = Math.pow(1 + tRatio * tRatio, -0.25);
+    var px, x, env, a0;
 
-    // Draw initial packet (ghost)
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    // Ghost initial envelope (amber dashed) — after some spreading
+    if (tRatio > 0.15) {
+      ctx.strokeStyle = 'rgba(217,119,6,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      for (px = 0; px <= posPW; px++) {
+        x = (px / posPW - 0.5) * 2 * xMax;
+        a0 = Math.exp(-x * x / (4 * sigma0 * sigma0));
+        ctx.lineTo(posL + px, posMidY - a0 * ampScale);
+      }
+      ctx.stroke();
+      ctx.beginPath();
+      for (px = 0; px <= posPW; px++) {
+        x = (px / posPW - 0.5) * 2 * xMax;
+        a0 = Math.exp(-x * x / (4 * sigma0 * sigma0));
+        ctx.lineTo(posL + px, posMidY + a0 * ampScale);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Current envelope (teal dashed)
+    ctx.strokeStyle = 'rgba(15,118,110,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath();
-    for (let px = 0; px <= pW; px++) {
-      const x = (px / pW - 0.5);
-      const psi2 = Math.exp(-x * x / (2 * sigma0 * sigma0)) / (sigma0 * Math.sqrt(2 * Math.PI));
-      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
-      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    for (px = 0; px <= posPW; px++) {
+      x = (px / posPW - 0.5) * 2 * xMax;
+      env = decayFactor * Math.exp(-x * x / (4 * sigmaT * sigmaT));
+      ctx.lineTo(posL + px, posMidY - env * ampScale);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (px = 0; px <= posPW; px++) {
+      x = (px / posPW - 0.5) * 2 * xMax;
+      env = decayFactor * Math.exp(-x * x / (4 * sigmaT * sigmaT));
+      ctx.lineTo(posL + px, posMidY + env * ampScale);
     }
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw current packet
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    // Re(psi) — oscillating wavefunction with carrier and chirp
+    // Phase: k0*x + chirp. Chirp = x^2*(t/tau)/(4*sigma(t)^2)
+    // The chirp makes outer parts oscillate faster (higher local momentum = spreading outward)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let px = 0; px <= pW; px++) {
-      const x = (px / pW - 0.5);
-      const psi2 = Math.exp(-x * x / (2 * sigmaT * sigmaT)) / (sigmaT * Math.sqrt(2 * Math.PI));
-      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
-      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    for (px = 0; px <= posPW; px++) {
+      x = (px / posPW - 0.5) * 2 * xMax;
+      env = decayFactor * Math.exp(-x * x / (4 * sigmaT * sigmaT));
+      var chirp = x * x * tRatio / (4 * sigmaT * sigmaT);
+      var phase = k0 * x + chirp;
+      var rePsi = env * Math.cos(phase);
+      var py = posMidY - rePsi * ampScale;
+      if (px === 0) ctx.moveTo(posL, py); else ctx.lineTo(posL + px, py);
     }
     ctx.stroke();
 
-    // Fill
-    ctx.fillStyle = 'rgba(15,118,110,0.1)';
-    ctx.beginPath();
-    for (let px = 0; px <= pW; px++) {
-      const x = (px / pW - 0.5);
-      const psi2 = Math.exp(-x * x / (2 * sigmaT * sigmaT)) / (sigmaT * Math.sqrt(2 * Math.PI));
-      const py = plotB2 - Math.min(psi2 * sigma0 * 3, 1) * pH * 0.85;
-      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    // Width indicator below position panel
+    var sxPx = (sigmaT / xMax) * (posPW / 2);
+    var cPx = posL + posPW / 2;
+    if (sxPx > 3 && sxPx < posPW * 0.45) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cPx - sxPx, posB + 2); ctx.lineTo(cPx + sxPx, posB + 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cPx - sxPx, posB - 1); ctx.lineTo(cPx - sxPx, posB + 5);
+      ctx.moveTo(cPx + sxPx, posB - 1); ctx.lineTo(cPx + sxPx, posB + 5);
+      ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u03C3\u2093(t)', cPx, posB + 14);
     }
-    ctx.lineTo(plotR2, plotB2);
-    ctx.lineTo(plotL2, plotB2);
-    ctx.closePath();
-    ctx.fill();
+
+    // t/tau display
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('t/\u03C4 = ' + tRatio.toFixed(1), posR - 5, posT + 10);
+
+    // === Separator ===
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(posL + 20, momT - 8); ctx.lineTo(posR - 20, momT - 8); ctx.stroke();
+
+    // === MOMENTUM SPACE ===
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Momentum space:  |\u03C8\u0303(k)|\u00B2', momL - 5, momT - 14);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('(constant in time \u2014 set at t = 0)', momR + 5, momT - 14);
+
+    // Bottom axis
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(momL, momB); ctx.lineTo(momR, momB); ctx.stroke();
+
+    // Center tick and label
+    var mCtr = momL + momPW / 2;
+    ctx.beginPath(); ctx.moveTo(mCtr, momB); ctx.lineTo(mCtr, momB + 4); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('k\u2080', mCtr, momB + 13);
+    ctx.fillText('k', (momL + momR) / 2, momB + 13);
+
+    // Momentum distribution (peak-normalized)
+    var momScale = momH2 * 0.85;
+
+    // Filled
+    ctx.fillStyle = 'rgba(217,119,6,0.15)';
+    ctx.beginPath(); ctx.moveTo(momL, momB);
+    for (px = 0; px <= momPW; px++) {
+      var dk = (px / momPW - 0.5) * 2 * dkMax;
+      var val = Math.exp(-dk * dk / (2 * sigmaK * sigmaK));
+      ctx.lineTo(momL + px, momB - val * momScale);
+    }
+    ctx.lineTo(momR, momB); ctx.closePath(); ctx.fill();
+
+    // Outline
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (px = 0; px <= momPW; px++) {
+      var dk2 = (px / momPW - 0.5) * 2 * dkMax;
+      val = Math.exp(-dk2 * dk2 / (2 * sigmaK * sigmaK));
+      ctx.lineTo(momL + px, momB - val * momScale);
+    }
+    ctx.stroke();
 
     // Width indicator
-    const widthPx = (sigmaT / 0.5) * pW;
-    const centerPx = plotL2 + pW / 2;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(centerPx - widthPx, plotB2 + 3);
-    ctx.lineTo(centerPx + widthPx, plotB2 + 3);
-    ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C3(t)', centerPx, plotB2 + 12);
+    var skPx = (sigmaK / dkMax) * (momPW / 2);
+    if (skPx > 3 && skPx < momPW * 0.45) {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(mCtr - skPx, momB + 3); ctx.lineTo(mCtr + skPx, momB + 3); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(mCtr - skPx, momB); ctx.lineTo(mCtr - skPx, momB + 6);
+      ctx.moveTo(mCtr + skPx, momB); ctx.lineTo(mCtr + skPx, momB + 6);
+      ctx.stroke();
+    }
 
-    // Info
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('\u03C3(t) = \u03C3\u2080\u221A(1 + (t/\u03C4)\u00B2)', W * 0.55, plotT2 + 5);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('\u03C3\u2080 = ' + sigma0.toFixed(3), W * 0.55, plotT2 + 20);
-    ctx.fillText('\u03C3(t) = ' + sigmaT.toFixed(3), W * 0.55, plotT2 + 33);
-    ctx.fillText('t/\u03C4 = ' + (time / tau).toFixed(2), W * 0.55, plotT2 + 46);
+    // === INFO BAR ===
+    var infoY = H - 30;
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('\u03C3\u2093(t) = ' + sigmaT.toFixed(2), sliderW + 55, infoY);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('\u03C3\u2096 = ' + sigmaK.toFixed(2), sliderW + 55, infoY + 14);
+    // Uncertainty product
+    var product = sigmaT * sigmaK;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui';
+    ctx.fillText('\u03C3\u2093\u00B7\u03C3\u2096 = ' + product.toFixed(2) + '  (\u2265 \u00BD)', W * 0.55, infoY);
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('\u03C4 = 2\u03C3\u2080\u00B2 = ' + tau.toFixed(3), W * 0.55, infoY + 14);
 
-    // Slider
+    // === SLIDER ===
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = (sigma0 - 0.02) / 0.13;
+    var st = (sigma0 - 0.2) / 1.0;
     ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
     ctx.fillStyle = WCOLORS.teal; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('\u03C3\u2080 = ' + sigma0.toFixed(3), sliderX + sliderW + 10, sliderY + 4);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Quantum Wavepacket Dispersion', 10, 18);
+    ctx.fillText('\u03C3\u2080 = ' + sigma0.toFixed(2), sliderX + sliderW + 8, sliderY + 4);
+    // Slider end labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('narrow', sliderX, sliderY - 8);
+    ctx.fillText('wide', sliderX + sliderW, sliderY - 8);
 
     requestAnimationFrame(tick);
   }
