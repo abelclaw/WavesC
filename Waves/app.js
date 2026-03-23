@@ -3729,7 +3729,7 @@ function sceneMarkup(type) {
     case "complex-impedance":
       return `
         <div class="scene-label">Complex Impedance</div>
-        <p class="scene-caption">Sweep the driving frequency \u03C9 and watch the mass response blow up at resonance, where impedance collapses to just damping.</p>
+        <p class="scene-caption">Sweep \u03C9 to see how impedance mismatch controls the response. At resonance, there is no mismatch and the driver couples perfectly to the oscillator.</p>
         <div class="interactive-scene">
           <canvas id="scene-complex-impedance" width="600" height="440"></canvas>
           <div class="scene-controls">
