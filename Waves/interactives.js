@@ -12517,20 +12517,33 @@ function initPhaseVelocityDemo() {
     }
     ctx.stroke();
 
-    // Mark a crest — track a constant-phase point of the carrier
+    // Mark the actual highest crest nearest the view centre
     const omega0 = Math.sqrt(g * k0);
     const vp = omega0 / k0;
-    const lambda = 2 * Math.PI / k0;
-    // Find the crest nearest the centre of the visible window
-    const xCenter = 10;
-    const nCrest = Math.round((xCenter - vp * t) / lambda);
-    const xCrest = vp * t + nCrest * lambda;
-    const crestX = plotL + (xCrest / 20) * plotW;
-    if (crestX > plotL && crestX < plotR) {
+    // Find all local maxima of the plotted waveform
+    const peaks = [];
+    for (let i = 1; i < sumVals.length - 1; i++) {
+      if (sumVals[i] > sumVals[i - 1] && sumVals[i] >= sumVals[i + 1] && sumVals[i] > 0) {
+        peaks.push(i);
+      }
+    }
+    if (peaks.length > 0) {
+      // Pick the peak nearest the centre of the view
+      let best = peaks[0];
+      for (const p of peaks) {
+        if (Math.abs(p - 200) < Math.abs(best - 200)) best = p;
+      }
+      const crestPx = plotL + plotW * best / 400;
+      const crestPy = midY - (sumVals[best] / Math.max(maxSum, 0.1)) * amp;
+      // Downward-pointing arrow above the peak
       ctx.fillStyle = WCOLORS.red;
-      ctx.beginPath(); ctx.moveTo(crestX, midY - amp - 15); ctx.lineTo(crestX - 5, midY - amp - 5); ctx.lineTo(crestX + 5, midY - amp - 5); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(crestPx, crestPy - 3);              // tip just above peak
+      ctx.lineTo(crestPx - 5, crestPy - 14);
+      ctx.lineTo(crestPx + 5, crestPy - 14);
+      ctx.fill();
       ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('crest (vp)', crestX, midY - amp - 18);
+      ctx.fillText('crest (vp = ' + vp.toFixed(2) + ')', crestPx, crestPy - 17);
     }
 
     // Axis
@@ -12655,33 +12668,43 @@ function initGroupVelocityDemo() {
     }
     ctx.stroke(); ctx.setLineDash([]);
 
-    // Mark envelope peak (vg) - group velocity
-    const envPeakX = plotL + (vg * t / xRange) * plotW;
-    if (envPeakX > plotL && envPeakX < plotR) {
+    // Mark envelope peak (vg) — find actual peak of envelope
+    const envPeakIdx = envVals.indexOf(Math.max(...envVals));
+    const envPeakPx = plotL + plotW * envPeakIdx / 400;
+    const envPeakPy = midY - (envVals[envPeakIdx] / Math.max(maxEnv, 0.01)) * amp;
+    if (envPeakPx > plotL && envPeakPx < plotR) {
       ctx.fillStyle = WCOLORS.amber;
-      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp - 12); ctx.lineTo(envPeakX - 6, midY - amp - 1); ctx.lineTo(envPeakX + 6, midY - amp - 1); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(envPeakPx, envPeakPy - 3);
+      ctx.lineTo(envPeakPx - 6, envPeakPy - 14);
+      ctx.lineTo(envPeakPx + 6, envPeakPy - 14);
+      ctx.fill();
       ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('vg (group)', envPeakX, midY - amp - 16);
-      // Vertical dashed line from marker
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
-      ctx.beginPath(); ctx.moveTo(envPeakX, midY - amp); ctx.lineTo(envPeakX, midY); ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.fillText('vg (group)', envPeakPx, envPeakPy - 17);
     }
 
-    // Mark a crest (vp) — find the crest nearest the envelope peak
-    const lambda = 2 * Math.PI / k0;
-    const nCrest = Math.round((vg * t - vp * t) / lambda);
-    const nearestCrestX = vp * t + nCrest * lambda;
-    const crestPx = plotL + (nearestCrestX / xRange) * plotW;
-    if (crestPx > plotL && crestPx < plotR) {
+    // Mark actual crest nearest the envelope peak (vp)
+    const peaks = [];
+    for (let i = 1; i < sumVals.length - 1; i++) {
+      if (sumVals[i] > sumVals[i - 1] && sumVals[i] >= sumVals[i + 1] && sumVals[i] > 0) {
+        peaks.push(i);
+      }
+    }
+    if (peaks.length > 0) {
+      let best = peaks[0];
+      for (const p of peaks) {
+        if (Math.abs(p - envPeakIdx) < Math.abs(best - envPeakIdx)) best = p;
+      }
+      const crestPx = plotL + plotW * best / 400;
+      const crestPy = midY - (sumVals[best] / Math.max(maxV, 0.1)) * amp;
       ctx.fillStyle = WCOLORS.red;
-      ctx.beginPath(); ctx.moveTo(crestPx, midY + amp + 12); ctx.lineTo(crestPx - 6, midY + amp + 1); ctx.lineTo(crestPx + 6, midY + amp + 1); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(crestPx, crestPy + 3);
+      ctx.lineTo(crestPx - 6, crestPy + 14);
+      ctx.lineTo(crestPx + 6, crestPy + 14);
+      ctx.fill();
       ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('vp (phase)', crestPx, midY + amp + 24);
-      // Vertical dashed line from marker
-      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
-      ctx.beginPath(); ctx.moveTo(crestPx, midY); ctx.lineTo(crestPx, midY + amp); ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.fillText('vp (phase)', crestPx, crestPy + 26);
     }
 
     // Baseline
