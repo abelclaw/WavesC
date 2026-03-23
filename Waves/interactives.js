@@ -14381,56 +14381,9 @@ function initBlackbodyPlanckianLocus() {
       ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2);
       ctx.fillStyle = WCOLORS.axis; ctx.fill();
       if (m.label) {
-        ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-        ctx.fillText(m.label, s.x + 6, s.y - 4);
-      }
-    });
-
-    // Current temperature on locus
-    const curP = planckianXY(temperature);
-    const curS = toScreen(curP.x, curP.y);
-    ctx.beginPath(); ctx.arc(curS.x, curS.y, 6, 0, Math.PI * 2);
-    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
-
-    // Color swatch
-    const swX = W - 140, swY = 20, swW = 120, swH = 70;
-    ctx.fillStyle = blackbodyRGB(temperature);
-    ctx.fillRect(swX, swY, swW, swH);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(swX, swY, swW, swH);
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(temperature + ' K', swX + swW/2, swY + swH + 16);
-
-    // Slider
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    // Color gradient on slider
-    for (let i = 0; i < sliderW; i++) {
-      const T = 1000 + (i / sliderW) * 9000;
-      ctx.fillStyle = blackbodyRGB(T);
-      ctx.fillRect(sliderX + i, sliderY - 3, 1, 6);
-    }
-    const st = (temperature - 1000) / 9000;
-    ctx.beginPath();
-    ctx.arc(sliderX + sliderW * st, sliderY, 7, 0, Math.PI * 2);
-    ctx.fillStyle = blackbodyRGB(temperature); ctx.fill();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
-
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
-    ctx.textAlign = 'left'; ctx.fillText('1000K', sliderX, sliderY - 10);
-    ctx.textAlign = 'right'; ctx.fillText('10000K', sliderX + sliderW, sliderY - 10);
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Planckian Locus', plotL, plotT - 2);
-  }
-
-  draw();
-}
 
 // =========================================================================
-// 5. HSV Color Explorer
+// 5. HSV Color Explorer — dual HSB / RGB sliders
 // =========================================================================
 function initHsvColorExplorer() {
   const canvas = document.getElementById('scene-hsv-color-explorer');
@@ -14439,97 +14392,244 @@ function initHsvColorExplorer() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let hue = 0, sat = 1.0, val = 1.0;
-  let draggingWheel = false, draggingSlider = false;
+  // State: HSB is the source of truth
+  let hue = 0, sat = 1.0, bri = 1.0;
+  let dragging = null;
 
-  const wheelCX = W * 0.3, wheelCY = H * 0.45;
-  const wheelR = Math.min(W * 0.25, H * 0.38);
-  const sliderX = W * 0.65, sliderW = W * 0.25, sliderY = H * 0.78;
-
-  function hsvToRGB(h, s, v) {
-    const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
-    let r, g, b;
-    if (h < 60) { r = c; g = x; b = 0; }
-    else if (h < 120) { r = x; g = c; b = 0; }
-    else if (h < 180) { r = 0; g = c; b = x; }
-    else if (h < 240) { r = 0; g = x; b = c; }
-    else if (h < 300) { r = x; g = 0; b = c; }
-    else { r = c; g = 0; b = x; }
-    return 'rgb(' + Math.round((r+m)*255) + ',' + Math.round((g+m)*255) + ',' + Math.round((b+m)*255) + ')';
+  // --- Conversion helpers ---
+  function hsbToRGBArray(h, s, b) {
+    const c = b * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = b - c;
+    let r, g, bl;
+    if (h < 60)       { r = c; g = x; bl = 0; }
+    else if (h < 120) { r = x; g = c; bl = 0; }
+    else if (h < 180) { r = 0; g = c; bl = x; }
+    else if (h < 240) { r = 0; g = x; bl = c; }
+    else if (h < 300) { r = x; g = 0; bl = c; }
+    else              { r = c; g = 0; bl = x; }
+    return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((bl + m) * 255)];
+  }
+  function hsbToCSS(h, s, b) {
+    const [r, g, bl] = hsbToRGBArray(h, s, b);
+    return 'rgb(' + r + ',' + g + ',' + bl + ')';
+  }
+  function rgbToHSB(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d > 0) {
+      if (max === r)      h = 60 * (((g - b) / d) % 6);
+      else if (max === g) h = 60 * ((b - r) / d + 2);
+      else                h = 60 * ((r - g) / d + 4);
+    }
+    if (h < 0) h += 360;
+    const s = max === 0 ? 0 : d / max;
+    return [h, s, max];
   }
 
-  function handleWheelDrag(mx, my) {
-    const dx = mx - wheelCX, dy = my - wheelCY;
-    const dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist <= wheelR) {
-      hue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
-      sat = Math.min(1, dist / wheelR);
-      draw();
+  // --- Layout ---
+  const sliderH = 10, thumbR = 8, sliderGap = 46;
+  const colTop = 56;
+
+  // HSB column: left
+  const hsbX = 38;
+  const hsbW = W * 0.30;
+
+  // RGB column: right
+  const rgbEndX = W - 18;
+  const rgbW = W * 0.30;
+  const rgbX = rgbEndX - rgbW;
+
+  // Color swatch centered between columns
+  const swX = W * 0.385, swY = colTop - 4, swW = W * 0.23, swSqH = 84;
+
+  // Slider Y positions
+  const hsbSliders = [
+    { label: 'H', y: colTop },
+    { label: 'S', y: colTop + sliderGap },
+    { label: 'B', y: colTop + sliderGap * 2 }
+  ];
+  const rgbSliders = [
+    { label: 'R', y: colTop, color: '#dc2626' },
+    { label: 'G', y: colTop + sliderGap, color: '#16a34a' },
+    { label: 'B', y: colTop + sliderGap * 2, color: '#2563eb' }
+  ];
+
+  // --- Hit-test ---
+  function hitSlider(mx, my, sx, sw, sy) {
+    return my >= sy - thumbR - 4 && my <= sy + sliderH + thumbR + 4 && mx >= sx - thumbR && mx <= sx + sw + thumbR;
+  }
+  function clampFrac(mx, sx, sw) {
+    return Math.max(0, Math.min(1, (mx - sx) / sw));
+  }
+
+  // --- Input handling ---
+  function handleDown(mx, my) {
+    for (let i = 0; i < 3; i++) {
+      if (hitSlider(mx, my, hsbX, hsbW, hsbSliders[i].y)) { dragging = 'hsb' + i; handleDrag(mx); return; }
     }
+    for (let i = 0; i < 3; i++) {
+      if (hitSlider(mx, my, rgbX, rgbW, rgbSliders[i].y)) { dragging = 'rgb' + i; handleDrag(mx); return; }
+    }
+  }
+  function handleDrag(mx) {
+    if (!dragging) return;
+    if (dragging === 'hsb0') { hue = clampFrac(mx, hsbX, hsbW) * 360; }
+    else if (dragging === 'hsb1') { sat = clampFrac(mx, hsbX, hsbW); }
+    else if (dragging === 'hsb2') { bri = clampFrac(mx, hsbX, hsbW); }
+    else if (dragging.startsWith('rgb')) {
+      const [r, g, b] = hsbToRGBArray(hue, sat, bri);
+      const idx = parseInt(dragging[3]);
+      const v = Math.round(clampFrac(mx, rgbX, rgbW) * 255);
+      const newRGB = [r, g, b]; newRGB[idx] = v;
+      const [nh, ns, nb] = rgbToHSB(newRGB[0], newRGB[1], newRGB[2]);
+      hue = nh; sat = ns; bri = nb;
+    }
+    draw();
   }
 
   canvas.addEventListener('mousedown', function(e) {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    const dx = mx - wheelCX, dy = my - wheelCY;
-    if (Math.sqrt(dx*dx + dy*dy) <= wheelR + 5) {
-      draggingWheel = true; handleWheelDrag(mx, my);
-    } else if (Math.abs(my - sliderY) < 15 && mx >= sliderX && mx <= sliderX + sliderW) {
-      draggingSlider = true;
-      val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
-      draw();
-    }
+    handleDown(e.clientX - rect.left, e.clientY - rect.top);
   });
   canvas.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    if (draggingWheel) handleWheelDrag(mx, my);
-    if (draggingSlider) { val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW)); draw(); }
+    handleDrag(e.clientX - rect.left);
   });
-  canvas.addEventListener('mouseup', function() { draggingWheel = false; draggingSlider = false; });
-  canvas.addEventListener('mouseleave', function() { draggingWheel = false; draggingSlider = false; });
+  canvas.addEventListener('mouseup', function() { dragging = null; });
+  canvas.addEventListener('mouseleave', function() { dragging = null; });
 
   canvas.addEventListener('touchstart', function(e) {
     e.preventDefault();
     const rect = canvas.getBoundingClientRect();
-    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
-    const dx = mx - wheelCX, dy = my - wheelCY;
-    if (Math.sqrt(dx*dx + dy*dy) <= wheelR + 10) {
-      draggingWheel = true; handleWheelDrag(mx, my);
-    } else if (Math.abs(my - sliderY) < 20 && mx >= sliderX - 10 && mx <= sliderX + sliderW + 10) {
-      draggingSlider = true;
-      val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
-      draw();
-    }
+    handleDown(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
   }, { passive: false });
   canvas.addEventListener('touchmove', function(e) {
     e.preventDefault();
+    if (!dragging) return;
     const rect = canvas.getBoundingClientRect();
-    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
-    if (draggingWheel) handleWheelDrag(mx, my);
-    if (draggingSlider) { val = Math.max(0, Math.min(1, (mx - sliderX) / sliderW)); draw(); }
+    handleDrag(e.touches[0].clientX - rect.left);
   }, { passive: false });
-  canvas.addEventListener('touchend', function() { draggingWheel = false; draggingSlider = false; });
+  canvas.addEventListener('touchend', function() { dragging = null; });
+
+  // --- Drawing ---
+  function drawSlider(sx, sw, sy, frac, gradFn, label, labelColor) {
+    // Track gradient
+    for (let i = 0; i <= sw; i++) {
+      ctx.fillStyle = gradFn(i / sw);
+      ctx.fillRect(sx + i, sy, 1, sliderH);
+    }
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(sx, sy, sw, sliderH);
+
+    // Thumb
+    const tx = sx + frac * sw, ty = sy + sliderH / 2;
+    ctx.beginPath(); ctx.arc(tx, ty, thumbR, 0, Math.PI * 2);
+    ctx.fillStyle = gradFn(frac); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+
+    // Label to the left of the slider
+    ctx.fillStyle = labelColor || WCOLORS.text;
+    ctx.font = 'bold 13px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, sx - 8, sy + sliderH / 2 + 5);
+  }
 
   function draw() {
     wClear(ctx, W, H);
+    const [r, g, b] = hsbToRGBArray(hue, sat, bri);
+    const currentCSS = 'rgb(' + r + ',' + g + ',' + b + ')';
 
-    // Draw HSV wheel
-    for (let angle = 0; angle < 360; angle += 1) {
-      for (let r = 0; r <= wheelR; r += 2) {
-        const s = r / wheelR;
-        ctx.fillStyle = hsvToRGB(angle, s, val);
-        const rad = angle * Math.PI / 180;
-        ctx.fillRect(wheelCX + Math.cos(rad) * r - 1, wheelCY + Math.sin(rad) * r - 1, 3, 3);
-      }
+    // Column headers
+    ctx.font = 'bold 11px system-ui'; ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'left';
+    ctx.fillText('HSB', hsbX, colTop - 16);
+    ctx.fillText('RGB', rgbX, colTop - 16);
+
+    // --- HSB sliders ---
+    drawSlider(hsbX, hsbW, hsbSliders[0].y, hue / 360, function(f) {
+      return hsbToCSS(f * 360, 1, 1);
+    }, 'H', WCOLORS.text);
+
+    drawSlider(hsbX, hsbW, hsbSliders[1].y, sat, function(f) {
+      return hsbToCSS(hue, f, bri);
+    }, 'S', WCOLORS.text);
+
+    drawSlider(hsbX, hsbW, hsbSliders[2].y, bri, function(f) {
+      return hsbToCSS(hue, sat, f);
+    }, 'B', WCOLORS.text);
+
+    // --- RGB sliders ---
+    drawSlider(rgbX, rgbW, rgbSliders[0].y, r / 255, function(f) {
+      return 'rgb(' + Math.round(f * 255) + ',' + g + ',' + b + ')';
+    }, 'R', '#dc2626');
+
+    drawSlider(rgbX, rgbW, rgbSliders[1].y, g / 255, function(f) {
+      return 'rgb(' + r + ',' + Math.round(f * 255) + ',' + b + ')';
+    }, 'G', '#16a34a');
+
+    drawSlider(rgbX, rgbW, rgbSliders[2].y, b / 255, function(f) {
+      return 'rgb(' + r + ',' + g + ',' + Math.round(f * 255) + ')';
+    }, 'B', '#2563eb');
+
+    // --- Numeric readouts next to sliders ---
+    ctx.font = '10px monospace'; ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'left';
+    ctx.fillText(Math.round(hue) + '\u00B0', hsbX + hsbW + 6, hsbSliders[0].y + sliderH / 2 + 4);
+    ctx.fillText(Math.round(sat * 100) + '%', hsbX + hsbW + 6, hsbSliders[1].y + sliderH / 2 + 4);
+    ctx.fillText(Math.round(bri * 100) + '%', hsbX + hsbW + 6, hsbSliders[2].y + sliderH / 2 + 4);
+
+    ctx.fillText(r.toString(), rgbX + rgbW + 6, rgbSliders[0].y + sliderH / 2 + 4);
+    ctx.fillText(g.toString(), rgbX + rgbW + 6, rgbSliders[1].y + sliderH / 2 + 4);
+    ctx.fillText(b.toString(), rgbX + rgbW + 6, rgbSliders[2].y + sliderH / 2 + 4);
+
+    // --- Color swatch (rounded rect) ---
+    const cr = 10;
+    ctx.beginPath();
+    ctx.moveTo(swX + cr, swY); ctx.lineTo(swX + swW - cr, swY);
+    ctx.quadraticCurveTo(swX + swW, swY, swX + swW, swY + cr);
+    ctx.lineTo(swX + swW, swY + swSqH - cr);
+    ctx.quadraticCurveTo(swX + swW, swY + swSqH, swX + swW - cr, swY + swSqH);
+    ctx.lineTo(swX + cr, swY + swSqH);
+    ctx.quadraticCurveTo(swX, swY + swSqH, swX, swY + swSqH - cr);
+    ctx.lineTo(swX, swY + cr);
+    ctx.quadraticCurveTo(swX, swY, swX + cr, swY);
+    ctx.closePath();
+    ctx.fillStyle = currentCSS; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Hex code below swatch
+    const hex = '#' + [r, g, b].map(function(c) { return c.toString(16).padStart(2, '0'); }).join('');
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 14px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(hex.toUpperCase(), swX + swW / 2, swY + swSqH + 20);
+
+    // --- Dashed connection lines from HSB to swatch and swatch to RGB ---
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = 'rgba(31,42,46,0.10)'; ctx.lineWidth = 1;
+    const swLeft = swX, swRight = swX + swW, swMidY = swY + swSqH / 2;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(hsbX + hsbW + thumbR + 2, hsbSliders[i].y + sliderH / 2);
+      ctx.lineTo(swLeft, swMidY);
+      ctx.stroke();
     }
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(swRight, swMidY);
+      ctx.lineTo(rgbX - thumbR - 2, rgbSliders[i].y + sliderH / 2);
+      ctx.stroke();
+    }
+    ctx.restore();
 
-    // Wheel border
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(wheelCX, wheelCY, wheelR, 0, Math.PI * 2); ctx.stroke();
+    // Hint text
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Drag any slider \u2014 both sides stay linked', W / 2, H - 8);
+  }
 
-    // Selection crosshair on wheel
-    const selRad = hue * Math.PI / 180;
+  draw();
+}
     const selR = sat * wheelR;
     const selX = wheelCX + Math.cos(selRad) * selR;
     const selY = wheelCY + Math.sin(selRad) * selR;

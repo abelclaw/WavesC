@@ -4087,9 +4087,9 @@ function sceneMarkup(type) {
     case "hsv-color-explorer":
       return `
         <div class="scene-label">HSV Color Explorer</div>
-        <p class="scene-caption">Click on the color wheel to select hue and saturation. Adjust the value slider for brightness.</p>
+        <p class="scene-caption">Drag the HSB sliders on the left or the RGB sliders on the right — they stay linked so you can see how both representations move together.</p>
         <div class="interactive-scene">
-          <canvas id="scene-hsv-color-explorer" width="600" height="300"></canvas>
+          <canvas id="scene-hsv-color-explorer" width="600" height="340"></canvas>
         </div>
       `;
     case "additive-subtractive-mixing":
@@ -4098,6 +4098,14 @@ function sceneMarkup(type) {
         <p class="scene-caption">Left: RGB additive mixing (light) produces white at center. Right: CMY subtractive mixing (pigments) produces black.</p>
         <div class="interactive-scene">
           <canvas id="scene-additive-subtractive-mixing" width="600" height="300"></canvas>
+        </div>
+      `;
+    case "eye-anatomy-diagram":
+      return `
+        <div class="scene-label">Anatomy of the Human Eye</div>
+        <p class="scene-caption">Cross-section showing the major structures: cornea, iris, pupil, lens, vitreous humor, retina, fovea, and optic nerve.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-eye-anatomy-diagram" width="600" height="380"></canvas>
         </div>
       `;
     case "rod-cone-sensitivity":
@@ -4198,9 +4206,9 @@ function sceneMarkup(type) {
     case "double-slit-photon-buildup":
       return `
         <div class="scene-label">Double-Slit Photon Buildup</div>
-        <p class="scene-caption">Individual photons arrive one at a time at random positions, gradually revealing the double-slit interference pattern.</p>
+        <p class="scene-caption">Individual photons are emitted from a laser, pass through two narrow slits, and land on the detector screen. Over time the interference pattern emerges — even though each photon arrives as a single dot.</p>
         <div class="interactive-scene">
-          <canvas id="scene-double-slit-photon-buildup" width="600" height="300"></canvas>
+          <canvas id="scene-double-slit-photon-buildup" width="600" height="400"></canvas>
         </div>
       `;
     case "hydrogen-energy-levels":
@@ -4208,7 +4216,7 @@ function sceneMarkup(type) {
         <div class="scene-label">Hydrogen Energy Levels</div>
         <p class="scene-caption">Energy levels at E<sub>n</sub> = &minus;13.6/n&sup2; eV. Select a spectral series to see transitions.</p>
         <div class="interactive-scene">
-          <canvas id="scene-hydrogen-energy-levels" width="600" height="300"></canvas>
+          <canvas id="scene-hydrogen-energy-levels" width="600" height="450"></canvas>
           <div class="scene-controls">
             <label>Series: <select id="hel-series"><option value="lyman">Lyman (n&rarr;1, UV)</option><option value="balmer" selected>Balmer (n&rarr;2, visible)</option><option value="paschen">Paschen (n&rarr;3, IR)</option><option value="brackett">Brackett (n&rarr;4, IR)</option></select></label>
           </div>
