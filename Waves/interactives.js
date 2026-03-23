@@ -8277,151 +8277,251 @@ function initMalusLaw() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let thetaSlider = document.getElementById('malus-theta');
-  if (!thetaSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML = '<label>Polarizer angle θ: <input type="range" id="malus-theta" min="0" max="90" step="1" value="0"><span class="scene-val" id="malus-theta-val">0°</span></label>';
-      parent.appendChild(controls);
-      thetaSlider = document.getElementById('malus-theta');
-    }
+  let thetaDeg = 30;
+  let dragging = false;
+  let t = 0;
+
+  const cy = H * 0.46;
+  const lightSourceX = 30;
+  const pol1X = W * 0.22;
+  const pol2X = W * 0.50;
+  const screenX = W * 0.78;
+  const polR = 48;
+
+  function getAngleFromMouse(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const dx = mx - pol2X, dy = my - cy;
+    let ang = Math.atan2(dx, -dy) * 180 / Math.PI;
+    if (ang < 0) ang += 360;
+    if (ang > 180) ang = 360 - ang;
+    if (ang > 90) ang = 180 - ang;
+    return Math.max(0, Math.min(90, ang));
   }
 
-  let t = 0;
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const dx = mx - pol2X, dy = my - cy;
+    if (Math.sqrt(dx * dx + dy * dy) < polR + 20) {
+      dragging = true;
+      thetaDeg = Math.round(getAngleFromMouse(e));
+    }
+  });
+  canvas.addEventListener('mousemove', (e) => {
+    if (dragging) thetaDeg = Math.round(getAngleFromMouse(e));
+  });
+  canvas.addEventListener('mouseup', () => { dragging = false; });
+  canvas.addEventListener('mouseleave', () => { dragging = false; });
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const mx = touch.clientX - rect.left, my = touch.clientY - rect.top;
+    const dx = mx - pol2X, dy = my - cy;
+    if (Math.sqrt(dx * dx + dy * dy) < polR + 30) {
+      dragging = true;
+      thetaDeg = Math.round(getAngleFromMouse(touch));
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (dragging) thetaDeg = Math.round(getAngleFromMouse(e.touches[0]));
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = false; });
 
   function tick() {
     if (!canvas.isConnected) return;
-    t += 0.03;
+    t += 0.04;
     wClear(ctx, W, H);
     draw();
     requestAnimationFrame(tick);
   }
 
-  function draw() {
-    const thetaDeg = parseFloat(thetaSlider?.value || 0);
-    const theta = thetaDeg * Math.PI / 180;
-    document.getElementById('malus-theta-val')?.replaceChildren(document.createTextNode(thetaDeg + '°'));
-
-    const I = Math.cos(theta) * Math.cos(theta);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText("Malus' law: I = I₀ cos²θ", W / 2, 16);
-
-    // --- Left: Polarizer diagram ---
-    const diagCx = W * 0.22, diagCy = H * 0.48;
-
-    // Incident light (vertical polarization)
-    const waveX = 30;
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-    for (let y = diagCy - 30; y <= diagCy + 30; y += 15) {
-      const osc = 8 * Math.sin(y * 0.2 - t * 3);
-      ctx.beginPath(); ctx.moveTo(waveX, y); ctx.lineTo(waveX + osc, y); ctx.stroke();
-    }
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('E₀ (vertical)', waveX + 5, diagCy - 40);
-
-    // Polarizer
-    const polX = diagCx;
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 3;
-    const polH = 55;
+  function drawPolaroidDisc(cx, cyy, r, axisAngleRad, label, highlight) {
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(polX + polH * Math.sin(theta), diagCy - polH * Math.cos(theta));
-    ctx.lineTo(polX - polH * Math.sin(theta), diagCy + polH * Math.cos(theta));
+    ctx.arc(cx, cyy, r, 0, 2 * Math.PI);
+    ctx.fillStyle = highlight ? 'rgba(100,120,140,0.18)' : 'rgba(100,120,140,0.12)';
+    ctx.fill();
+    ctx.strokeStyle = highlight ? WCOLORS.teal : WCOLORS.axis;
+    ctx.lineWidth = highlight ? 2.5 : 1.5;
     ctx.stroke();
 
     // Transmission axis
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.strokeStyle = highlight ? WCOLORS.teal : WCOLORS.amber;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
     ctx.beginPath();
-    ctx.moveTo(polX - polH * 0.8 * Math.sin(theta), diagCy + polH * 0.8 * Math.cos(theta));
-    ctx.lineTo(polX + polH * 0.8 * Math.sin(theta), diagCy - polH * 0.8 * Math.cos(theta));
+    ctx.moveTo(cx + r * 0.9 * Math.sin(axisAngleRad), cyy - r * 0.9 * Math.cos(axisAngleRad));
+    ctx.lineTo(cx - r * 0.9 * Math.sin(axisAngleRad), cyy + r * 0.9 * Math.cos(axisAngleRad));
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('axis', polX + polH * 0.8 * Math.sin(theta) + 4, diagCy - polH * 0.8 * Math.cos(theta));
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Polarizer', polX, diagCy + polH + 15);
-
-    // Transmitted light
-    const txX = polX + 40;
-    const txAmp = 8 * Math.cos(theta);
-    if (Math.abs(txAmp) > 0.5) {
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.globalAlpha = I;
-      for (let y = diagCy - 30; y <= diagCy + 30; y += 15) {
-        const osc = txAmp * Math.sin(y * 0.2 - t * 3);
-        ctx.beginPath(); ctx.moveTo(txX + 10, y); ctx.lineTo(txX + 10 + osc, y); ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
+    // Slit texture
+    ctx.strokeStyle = 'rgba(80,100,110,0.15)';
+    ctx.lineWidth = 1;
+    for (let off = -r * 0.7; off <= r * 0.7; off += 8) {
+      const perpX = Math.cos(axisAngleRad) * off;
+      const perpY = Math.sin(axisAngleRad) * off;
+      const halfLen = Math.sqrt(Math.max(0, r * r * 0.65 - off * off));
+      const dx = Math.sin(axisAngleRad) * halfLen;
+      const dy = -Math.cos(axisAngleRad) * halfLen;
+      ctx.beginPath();
+      ctx.moveTo(cx + perpX - dx, cyy + perpY - dy);
+      ctx.lineTo(cx + perpX + dx, cyy + perpY + dy);
+      ctx.stroke();
     }
 
-    // Intensity bar
-    const barL = W * 0.05, barR = W * 0.38, barY = H - 30, barH2 = 12;
-    ctx.fillStyle = WCOLORS.grid;
-    ctx.fillRect(barL, barY, barR - barL, barH2);
-    const iColor = `rgba(15, 118, 110, ${0.3 + 0.7 * I})`;
-    ctx.fillStyle = iColor;
-    ctx.fillRect(barL, barY, (barR - barL) * I, barH2);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
-    ctx.strokeRect(barL, barY, barR - barL, barH2);
+    ctx.fillStyle = WCOLORS.text;
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, cx, cyy + r + 16);
+    ctx.restore();
+  }
+
+  function draw() {
+    const theta = thetaDeg * Math.PI / 180;
+    const I = Math.cos(theta) * Math.cos(theta);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("Malus' Law: I = I₀ cos²θ", W / 2, 16);
+
+    // ---- Unpolarized light source ----
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(lightSourceX, cy, 10, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = '#d97706'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(lightSourceX, cy, 10, 0, 2 * Math.PI); ctx.stroke();
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)'; ctx.lineWidth = 1;
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 5) {
+      ctx.beginPath();
+      ctx.moveTo(lightSourceX + 12 * Math.cos(a), cy + 12 * Math.sin(a));
+      ctx.lineTo(lightSourceX + 18 * Math.cos(a), cy + 18 * Math.sin(a));
+      ctx.stroke();
+    }
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('I/I₀ = ' + I.toFixed(3), (barL + barR) / 2, barY - 4);
+    ctx.fillText('Unpolarized', lightSourceX, cy + 28);
+    ctx.fillText('light', lightSourceX, cy + 39);
 
-    // --- Right: I(θ) plot ---
-    const plotL = W * 0.52, plotR = W - 20, plotT = 35, plotB = H - 20;
-    const plotW = plotR - plotL, plotH2 = plotB - plotT;
-
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
-
-    // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('θ (degrees)', (plotL + plotR) / 2, plotB + 14);
-    ctx.save(); ctx.translate(plotL - 14, (plotT + plotB) / 2); ctx.rotate(-Math.PI / 2);
-    ctx.fillText('I / I₀', 0, 0); ctx.restore();
-
-    // Tick marks
-    for (let deg = 0; deg <= 90; deg += 30) {
-      const x = plotL + (deg / 90) * plotW;
-      ctx.beginPath(); ctx.moveTo(x, plotB); ctx.lineTo(x, plotB + 4); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-      ctx.fillText(deg + '°', x, plotB + 14);
+    // ---- Beam: source → polarizer 1 (unpolarized) ----
+    const seg1L = lightSourceX + 20, seg1R = pol1X - polR - 4;
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 6; i++) {
+      const frac = (i + 0.5) / 6;
+      const bx = seg1L + frac * (seg1R - seg1L);
+      const angle = (i * Math.PI / 6) + t * 0.5;
+      const amp = 8 * Math.sin(t * 3 - i * 1.2);
+      const dx = amp * Math.cos(angle);
+      const dy = amp * Math.sin(angle);
+      const hue = (i * 40 + 200) % 360;
+      ctx.strokeStyle = `hsla(${hue}, 60%, 50%, 0.6)`;
+      ctx.beginPath();
+      ctx.moveTo(bx - dx, cy - dy);
+      ctx.lineTo(bx + dx, cy + dy);
+      ctx.stroke();
     }
-    for (let iv = 0; iv <= 1; iv += 0.5) {
-      const y = plotB - iv * plotH2;
-      ctx.beginPath(); ctx.moveTo(plotL - 3, y); ctx.lineTo(plotL, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText(iv.toFixed(1), plotL - 5, y + 3);
-    }
-
-    // cos²θ curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let deg = 0; deg <= 90; deg += 1) {
-      const x = plotL + (deg / 90) * plotW;
-      const y = plotB - Math.cos(deg * Math.PI / 180) ** 2 * plotH2;
-      if (deg === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-
-    // Current point
-    const currX = plotL + (thetaDeg / 90) * plotW;
-    const currY = plotB - I * plotH2;
-    ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(currX, currY, 5, 0, 2 * Math.PI); ctx.fill();
-
-    // Dashed lines to point
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(currX, plotB); ctx.lineTo(currX, currY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, currY); ctx.lineTo(currX, currY); ctx.stroke();
+    ctx.strokeStyle = 'rgba(31,42,46,0.15)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath(); ctx.moveTo(seg1L, cy); ctx.lineTo(seg1R, cy); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('I = I₀cos²(' + thetaDeg + '°) = ' + I.toFixed(3) + ' I₀', plotL + 5, plotT + 12);
+    // ---- First polarizer (fixed vertical) ----
+    drawPolaroidDisc(pol1X, cy, polR, 0, 'Polarizer', false);
+
+    // ---- Beam: polarizer 1 → analyzer (vertically polarized) ----
+    const seg2L = pol1X + polR + 4, seg2R = pol2X - polR - 4;
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+    for (let i = 0; i < 5; i++) {
+      const frac = (i + 0.5) / 5;
+      const bx = seg2L + frac * (seg2R - seg2L);
+      const amp = 10 * Math.sin(t * 3 - i * 1.5);
+      ctx.beginPath();
+      ctx.moveTo(bx, cy - amp);
+      ctx.lineTo(bx, cy + amp);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(31,42,46,0.15)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath(); ctx.moveTo(seg2L, cy); ctx.lineTo(seg2R, cy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('I₀ (vertical)', (seg2L + seg2R) / 2, cy - 18);
+
+    // ---- Analyzer (rotatable) ----
+    drawPolaroidDisc(pol2X, cy, polR, theta, 'Analyzer (θ=' + thetaDeg + '°)', true);
+
+    // Angle arc
+    if (thetaDeg > 2) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(pol2X, cy, polR * 0.45, -Math.PI / 2, -Math.PI / 2 + theta);
+      ctx.stroke();
+      const midAng = -Math.PI / 2 + theta / 2;
+      ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('θ', pol2X + (polR * 0.55) * Math.cos(midAng), cy + (polR * 0.55) * Math.sin(midAng) + 4);
+    }
+
+    if (!dragging) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('drag to rotate', pol2X, cy + polR + 28);
+    }
+
+    // ---- Beam: analyzer → screen ----
+    const seg3L = pol2X + polR + 4, seg3R = screenX - 10;
+    if (I > 0.005) {
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        const frac = (i + 0.5) / 5;
+        const bx = seg3L + frac * (seg3R - seg3L);
+        const amp = 10 * Math.cos(theta) * Math.sin(t * 3 - i * 1.5);
+        const dx = amp * Math.sin(theta);
+        const dy = -amp * Math.cos(theta);
+        ctx.strokeStyle = `rgba(15,118,110,${0.3 + 0.7 * I})`;
+        ctx.beginPath();
+        ctx.moveTo(bx - dx, cy - dy);
+        ctx.lineTo(bx + dx, cy + dy);
+        ctx.stroke();
+      }
+    }
+    ctx.strokeStyle = 'rgba(31,42,46,0.15)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath(); ctx.moveTo(seg3L, cy); ctx.lineTo(seg3R, cy); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // ---- Detection screen ----
+    const scrW = 16, scrH = polR * 2 + 10;
+    if (I > 0.01) {
+      const glowR = 25 + 20 * I;
+      const grad = ctx.createRadialGradient(screenX + scrW / 2, cy, 2, screenX + scrW / 2, cy, glowR);
+      grad.addColorStop(0, `rgba(15,118,110,${0.4 * I})`);
+      grad.addColorStop(1, 'rgba(15,118,110,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(screenX - glowR + scrW / 2, cy - glowR, glowR * 2, glowR * 2);
+    }
+    const screenBright = Math.floor(230 + 25 * I);
+    ctx.fillStyle = `rgb(${screenBright},${screenBright},${screenBright})`;
+    ctx.fillRect(screenX, cy - scrH / 2, scrW, scrH);
+    ctx.fillStyle = `rgba(15,118,110,${0.35 * I})`;
+    ctx.fillRect(screenX, cy - scrH / 2, scrW, scrH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(screenX, cy - scrH / 2, scrW, scrH);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Screen', screenX + scrW / 2, cy + scrH / 2 + 14);
+
+    // ---- Intensity readout ----
+    const readoutY = H - 28;
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('I = I₀ cos²(' + thetaDeg + '°) = ' + I.toFixed(3) + ' I₀', W / 2, readoutY);
+
+    const barW2 = W * 0.5, barH2 = 10;
+    const barL2 = (W - barW2) / 2, barY2 = readoutY + 6;
+    ctx.fillStyle = WCOLORS.grid;
+    ctx.fillRect(barL2, barY2, barW2, barH2);
+    ctx.fillStyle = `rgba(15,118,110,${0.3 + 0.7 * I})`;
+    ctx.fillRect(barL2, barY2, barW2 * I, barH2);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.strokeRect(barL2, barY2, barW2, barH2);
   }
 
   tick();

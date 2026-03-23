@@ -4006,11 +4006,11 @@ function sceneMarkup(type) {
     case "thin-film-interference":
       return `
         <div class="scene-label">Thin Film Interference</div>
-        <p class="scene-caption">Adjust film thickness to see which wavelengths constructively or destructively interfere in the reflected light.</p>
+        <p class="scene-caption">White light enters the film. Adjust thickness to see which color is selectively reflected.</p>
         <div class="interactive-scene">
-          <canvas id="scene-thin-film-interference" width="600" height="320"></canvas>
+          <canvas id="scene-thin-film-interference" width="600" height="400"></canvas>
           <div class="scene-controls">
-            <label><span>Thickness (nm): </span><input type="range" id="thinfilm-thickness" min="50" max="800" step="10" value="300"><span class="scene-val" id="thinfilm-thickness-val">300</span></label>
+            <label><span>Thickness (nm): </span><input type="range" id="thinfilm-thickness" min="50" max="800" step="5" value="250"><span class="scene-val" id="thinfilm-thickness-val">250</span></label>
           </div>
         </div>
       `;
