@@ -7201,86 +7201,93 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (3D slinky) ---
-    // A proper slinky: helical coil viewed from the side. Each coil is an
-    // elliptical arc alternating front/back. Horizontal position of each
-    // node is displaced by the longitudinal wave, so coils bunch up
-    // (compression) and spread apart (rarefaction) naturally.
+    // --- Longitudinal (3D slinky — parametric helix) ---
+    // A helix viewed from the side: x advances along the axis (with
+    // longitudinal wave displacement), y = R·sin(θ), z = R·cos(θ).
+    // z controls depth → brightness, thickness, and color for 3D effect.
+    // We sample densely and draw short line segments, varying style per segment.
 
-    const coilCount = 24;               // number of full coils
-    const nodes = coilCount * 2 + 1;    // top and bottom crossing points
-    const slinkyLeft = 70, slinkyRight = W - 70;
+    const slinkyCoils = 18;
+    const slinkyLeft = 60, slinkyRight = W - 60;
     const slinkyLen = slinkyRight - slinkyLeft;
-    const nodeSpacing = slinkyLen / (nodes - 1);
-    const coilRadius = 20;              // half-height of the slinky
-    const slinkyAmp = nodeSpacing * 1.8; // longitudinal displacement amplitude
+    const R = 22;                                 // coil radius (vertical extent)
+    const slinkyAmp = 14;                         // longitudinal displacement amplitude
+    const samples = slinkyCoils * 40;             // total sample points (smooth)
+    const thetaPerSample = (slinkyCoils * 2 * Math.PI) / samples;
 
-    // Compute displaced x-position for each node
-    const nodeX = [];
-    for (let i = 0; i < nodes; i++) {
-      const eqX = slinkyLeft + i * nodeSpacing;
+    // Precompute all sample positions + depth
+    const pts = [];
+    for (let i = 0; i <= samples; i++) {
+      const theta = i * thetaPerSample;
+      // equilibrium x: linear along axis
+      const eqX = slinkyLeft + (i / samples) * slinkyLen;
+      // longitudinal wave displacement
       const dx = slinkyAmp * Math.sin(k * eqX - omega * t);
-      nodeX.push(eqX + dx);
+      const px = eqX + dx;
+      const py = longY + R * Math.sin(theta);
+      const z = Math.cos(theta);   // -1 = far back, +1 = near front
+      pts.push({ x: px, y: py, z });
     }
 
-    // Each pair of adjacent nodes forms one half-coil arc.
-    // Even arcs go top→bottom (front, drawn last), odd go bottom→top (back, drawn first).
-    // Back arcs first (dimmer, thinner) for depth.
+    // Draw in two passes: back half (z < 0) first, then front half (z >= 0)
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     for (let pass = 0; pass < 2; pass++) {
-      // pass 0 = back arcs, pass 1 = front arcs
-      for (let i = 0; i < nodes - 1; i++) {
-        const isBack = (i % 2 === 1);
-        if (pass === 0 && !isBack) continue;
-        if (pass === 1 && isBack) continue;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const p0 = pts[i], p1 = pts[i + 1];
+        const avgZ = (p0.z + p1.z) / 2;
 
-        const x0 = nodeX[i];
-        const x1 = nodeX[i + 1];
-        const midX = (x0 + x1) / 2;
-        const halfW = Math.abs(x1 - x0) / 2;
+        // pass 0: back segments (avgZ < 0), pass 1: front segments (avgZ >= 0)
+        if (pass === 0 && avgZ >= 0) continue;
+        if (pass === 1 && avgZ < 0) continue;
 
-        // Top node y or bottom node y
-        const y0 = (i % 2 === 0) ? longY - coilRadius : longY + coilRadius;
-        const y1 = (i % 2 === 0) ? longY + coilRadius : longY - coilRadius;
+        // Map z from [-1,1] to visual properties
+        // Depth factor: 0 (far back) → 1 (front)
+        const depthFactor = (avgZ + 1) / 2;
 
-        if (isBack) {
-          // Back arc: thinner, dimmer
-          ctx.strokeStyle = 'rgba(15,118,110,0.25)';
-          ctx.lineWidth = 2;
-        } else {
-          // Front arc: thick, vivid
-          ctx.strokeStyle = WCOLORS.teal;
-          ctx.lineWidth = 3.5;
+        // Line width: back=1.5, front=5
+        const lw = 1.5 + depthFactor * 3.5;
+
+        // Color: teal with varying lightness and alpha for depth
+        // Back: dim, desaturated. Front: bright, saturated.
+        const r = Math.round(15 + depthFactor * 20);
+        const g = Math.round(80 + depthFactor * 58);
+        const b = Math.round(75 + depthFactor * 50);
+        const a = 0.2 + depthFactor * 0.8;
+
+        // Specular highlight near the front-top of each coil
+        let sr = r, sg = g, sb = b;
+        if (depthFactor > 0.85) {
+          const spec = (depthFactor - 0.85) / 0.15;
+          sr = Math.round(r + (255 - r) * spec * 0.4);
+          sg = Math.round(g + (255 - g) * spec * 0.4);
+          sb = Math.round(b + (255 - b) * spec * 0.4);
         }
 
-        // Draw elliptical arc using bezier curve
-        const cpOffsetX = halfW * 0.55;
-        const cpY0 = y0;
-        const cpY1 = y1;
+        ctx.strokeStyle = `rgba(${sr},${sg},${sb},${a.toFixed(2)})`;
+        ctx.lineWidth = lw;
         ctx.beginPath();
-        ctx.moveTo(x0, y0);
-        ctx.bezierCurveTo(
-          x0 + (x1 > x0 ? cpOffsetX : -cpOffsetX), cpY0,
-          x1 - (x1 > x0 ? cpOffsetX : -cpOffsetX), cpY1,
-          x1, y1
-        );
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
         ctx.stroke();
       }
     }
 
-    // Highlight front arc shadows for 3D pop — subtle darker stroke underneath front arcs
-    // (already handled by back/front pass ordering)
-
-    // End mounting points (small filled circles where slinky attaches to walls)
-    ctx.fillStyle = WCOLORS.text;
-    ctx.beginPath(); ctx.arc(nodeX[0], longY - coilRadius, 4, 0, 2 * Math.PI); ctx.fill();
-    ctx.beginPath(); ctx.arc(nodeX[nodes - 1], (nodes - 1) % 2 === 0 ? longY - coilRadius : longY + coilRadius, 4, 0, 2 * Math.PI); ctx.fill();
+    // Subtle shadow on the ground beneath the slinky
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(W / 2, longY + R + 8, slinkyLen / 2 - 10, 4, 0, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
 
     ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
 
     // Propagation arrow
-    const propArrowY2 = longY + coilRadius + 18;
+    const propArrowY2 = longY + R + 18;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
