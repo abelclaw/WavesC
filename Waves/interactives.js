@@ -11176,13 +11176,13 @@ function initDecibelScale() {
     { name: 'Whisper',      dB: 30,  color: WCOLORS.teal },
     { name: 'Conversation', dB: 60,  color: WCOLORS.amber },
     { name: 'Traffic',      dB: 80,  color: WCOLORS.amber },
-    { name: 'Vacuum',       dB: 90,  color: WCOLORS.orange },
+    { name: 'Vacuum cleaner', dB: 90, color: WCOLORS.orange },
     { name: 'Concert',      dB: 120, color: WCOLORS.red },
     { name: 'Jet engine',   dB: 150, color: WCOLORS.red },
   ];
 
-  var selectedIdx = 3; // start with Traffic (80 dB)
-  var listenerDist = 1; // meters from source (1-64)
+  var selectedIdx = 5; // start with Concert (120 dB)
+  var listenerDist = 48; // meters from source (1-64)
   var dragging = false; // 'listener' or 'source' or false
   var maxDist = 64;
 
@@ -11216,8 +11216,6 @@ function initDecibelScale() {
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Decibel scale', 10, 16);
-    ctx.font = '10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
-    ctx.fillText('drag to select source & move listener', W - 10, 16);
 
     // Gradient bar
     var grad = ctx.createLinearGradient(barL, 0, barR, 0);
