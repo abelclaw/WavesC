@@ -3949,20 +3949,20 @@ function sceneMarkup(type) {
     case "linear-polarization":
       return `
         <div class="scene-label">Linear Polarization</div>
-        <p class="scene-caption">The electric field oscillates along a fixed direction. Adjust the polarization angle.</p>
+        <p class="scene-caption">E and B fields oscillate along fixed perpendicular directions. Adjust the polarization angle.</p>
         <div class="interactive-scene">
-          <canvas id="scene-linear-polarization" width="600" height="280"></canvas>
+          <canvas id="scene-linear-polarization" width="600" height="340"></canvas>
           <div class="scene-controls">
-            <label><span>Angle: </span><input type="range" id="linear-pol-angle" min="0" max="3.14" step="0.05" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
+            <label><span>Angle: </span><input type="range" id="linear-pol-angle" min="0" max="180" step="1" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
           </div>
         </div>
       `;
     case "circular-polarization":
       return `
         <div class="scene-label">Circular Polarization</div>
-        <p class="scene-caption">The E-field vector rotates as the wave propagates, tracing a helix. Toggle between right and left circular.</p>
+        <p class="scene-caption">E and B field vectors rotate as the wave propagates, always perpendicular. Toggle between right and left circular.</p>
         <div class="interactive-scene">
-          <canvas id="scene-circular-polarization" width="600" height="300"></canvas>
+          <canvas id="scene-circular-polarization" width="600" height="340"></canvas>
           <div class="scene-controls">
             <button id="circ-pol-toggle" class="scene-btn">Toggle RCP/LCP</button>
           </div>
@@ -3971,12 +3971,9 @@ function sceneMarkup(type) {
     case "malus-law":
       return `
         <div class="scene-label">Malus&rsquo; Law</div>
-        <p class="scene-caption">Transmitted intensity through a polarizer follows I = I<sub>0</sub>cos&sup2;&theta;. Rotate the polarizer to see.</p>
+        <p class="scene-caption">Unpolarized light passes through a vertical polarizer, then through a rotatable analyzer. Drag the analyzer to change &theta;.</p>
         <div class="interactive-scene">
-          <canvas id="scene-malus-law" width="600" height="300"></canvas>
-          <div class="scene-controls">
-            <label><span>&theta;: </span><input type="range" id="malus-theta" min="0" max="180" step="1" value="0"><span class="scene-val" id="malus-theta-val">0&deg;</span></label>
-          </div>
+          <canvas id="scene-malus-law" width="700" height="340"></canvas>
         </div>
       `;
 
