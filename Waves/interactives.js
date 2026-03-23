@@ -7201,93 +7201,127 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (3D slinky — parametric helix) ---
-    // A helix viewed from the side: x advances along the axis (with
-    // longitudinal wave displacement), y = R·sin(θ), z = R·cos(θ).
-    // z controls depth → brightness, thickness, and color for 3D effect.
-    // We sample densely and draw short line segments, varying style per segment.
+    // --- Longitudinal (bellows with rounded pleats) ---
+    // Accordion bellows: smooth puffy folds that compress and expand.
+    // Each pleat is a lens/lozenge shape between crease points. The
+    // crease positions are displaced by the longitudinal wave.
 
-    const slinkyCoils = 18;
-    const slinkyLeft = 60, slinkyRight = W - 60;
-    const slinkyLen = slinkyRight - slinkyLeft;
-    const R = 22;                                 // coil radius (vertical extent)
-    const slinkyAmp = 14;                         // longitudinal displacement amplitude
-    const samples = slinkyCoils * 40;             // total sample points (smooth)
-    const thetaPerSample = (slinkyCoils * 2 * Math.PI) / samples;
+    const nCreases = 26;  // number of crease (pinch) points
+    const bLeft = 60, bRight = W - 60;
+    const bLen = bRight - bLeft;
+    const creaseSpacing = bLen / (nCreases - 1);
+    const bHalf = 22;     // max half-height of each pleat bulge
+    const bAmp = creaseSpacing * 0.65;  // longitudinal displacement amplitude
 
-    // Precompute all sample positions + depth
-    const pts = [];
-    for (let i = 0; i <= samples; i++) {
-      const theta = i * thetaPerSample;
-      // equilibrium x: linear along axis
-      const eqX = slinkyLeft + (i / samples) * slinkyLen;
-      // longitudinal wave displacement
-      const dx = slinkyAmp * Math.sin(k * eqX - omega * t);
-      const px = eqX + dx;
-      const py = longY + R * Math.sin(theta);
-      const z = Math.cos(theta);   // -1 = far back, +1 = near front
-      pts.push({ x: px, y: py, z });
+    // Compute displaced x for each crease point
+    const cx = [];
+    for (let i = 0; i < nCreases; i++) {
+      const eqX = bLeft + i * creaseSpacing;
+      cx.push(eqX + bAmp * Math.sin(k * eqX - omega * t));
     }
 
-    // Draw in two passes: back half (z < 0) first, then front half (z >= 0)
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    // Draw each pleat (between consecutive creases) as a filled lens shape
+    // with gradient shading for 3D rounded look
+    for (let i = 0; i < nCreases - 1; i++) {
+      const x0 = cx[i], x1 = cx[i + 1];
+      const midX = (x0 + x1) / 2;
+      const span = Math.abs(x1 - x0);
 
-    for (let pass = 0; pass < 2; pass++) {
-      for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[i], p1 = pts[i + 1];
-        const avgZ = (p0.z + p1.z) / 2;
+      // Pleat bulge height proportional to how stretched it is
+      const bulge = Math.min(bHalf, Math.max(4, span * 0.45));
 
-        // pass 0: back segments (avgZ < 0), pass 1: front segments (avgZ >= 0)
-        if (pass === 0 && avgZ >= 0) continue;
-        if (pass === 1 && avgZ < 0) continue;
+      // --- Fill the pleat with a vertical gradient for roundedness ---
+      const grad = ctx.createLinearGradient(midX, longY - bulge, midX, longY + bulge);
+      // Light on top (highlight), rich teal in middle, darker at bottom (shadow)
+      grad.addColorStop(0, 'rgba(140,210,200,0.55)');
+      grad.addColorStop(0.3, 'rgba(15,118,110,0.45)');
+      grad.addColorStop(0.5, 'rgba(15,118,110,0.35)');
+      grad.addColorStop(0.7, 'rgba(15,118,110,0.45)');
+      grad.addColorStop(1, 'rgba(8,70,65,0.55)');
 
-        // Map z from [-1,1] to visual properties
-        // Depth factor: 0 (far back) → 1 (front)
-        const depthFactor = (avgZ + 1) / 2;
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      // Top arc: crease → bulge up at mid → next crease
+      ctx.moveTo(x0, longY);
+      ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
+      // Bottom arc: next crease → bulge down at mid → back to crease
+      ctx.quadraticCurveTo(midX, longY + bulge, x0, longY);
+      ctx.closePath();
+      ctx.fill();
 
-        // Line width: back=1.5, front=5
-        const lw = 1.5 + depthFactor * 3.5;
+      // Outline the pleat for definition
+      // Top arc
+      ctx.strokeStyle = 'rgba(15,118,110,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x0, longY);
+      ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
+      ctx.stroke();
+      // Bottom arc
+      ctx.strokeStyle = 'rgba(8,80,75,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(x0, longY);
+      ctx.quadraticCurveTo(midX, longY + bulge, x1, longY);
+      ctx.stroke();
 
-        // Color: teal with varying lightness and alpha for depth
-        // Back: dim, desaturated. Front: bright, saturated.
-        const r = Math.round(15 + depthFactor * 20);
-        const g = Math.round(80 + depthFactor * 58);
-        const b = Math.round(75 + depthFactor * 50);
-        const a = 0.2 + depthFactor * 0.8;
-
-        // Specular highlight near the front-top of each coil
-        let sr = r, sg = g, sb = b;
-        if (depthFactor > 0.85) {
-          const spec = (depthFactor - 0.85) / 0.15;
-          sr = Math.round(r + (255 - r) * spec * 0.4);
-          sg = Math.round(g + (255 - g) * spec * 0.4);
-          sb = Math.round(b + (255 - b) * spec * 0.4);
-        }
-
-        ctx.strokeStyle = `rgba(${sr},${sg},${sb},${a.toFixed(2)})`;
-        ctx.lineWidth = lw;
+      // Highlight arc on top of each pleat — specular gleam
+      if (bulge > 8) {
+        const highlightY = longY - bulge * 0.55;
+        const hlSpan = span * 0.3;
+        ctx.strokeStyle = 'rgba(200,240,235,0.5)';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
+        ctx.moveTo(midX - hlSpan, highlightY + 2);
+        ctx.quadraticCurveTo(midX, highlightY - 1, midX + hlSpan, highlightY + 2);
         ctx.stroke();
       }
     }
 
-    // Subtle shadow on the ground beneath the slinky
+    // Draw crease lines at pinch points (darker vertical ticks)
+    ctx.strokeStyle = 'rgba(15,118,110,0.9)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < nCreases; i++) {
+      // Crease height: how tall the adjacent pleats are at this point
+      let maxBulge = 6;
+      if (i > 0) {
+        const span = Math.abs(cx[i] - cx[i - 1]);
+        maxBulge = Math.max(maxBulge, Math.min(bHalf, span * 0.45));
+      }
+      if (i < nCreases - 1) {
+        const span = Math.abs(cx[i + 1] - cx[i]);
+        maxBulge = Math.max(maxBulge, Math.min(bHalf, span * 0.45));
+      }
+      // Small vertical tick at each crease
+      const tickH = Math.max(3, maxBulge * 0.3);
+      ctx.beginPath();
+      ctx.moveTo(cx[i], longY - tickH);
+      ctx.lineTo(cx[i], longY + tickH);
+      ctx.stroke();
+    }
+
+    // End plates — solid rounded rectangles at the bellows ends
+    const plateW = 6, plateH = bHalf + 4;
+    ctx.fillStyle = WCOLORS.teal;
+    // Left plate
+    ctx.beginPath();
+    ctx.roundRect(cx[0] - plateW, longY - plateH, plateW, plateH * 2, 2);
+    ctx.fill();
+    // Right plate
+    ctx.beginPath();
+    ctx.roundRect(cx[nCreases - 1], longY - plateH, plateW, plateH * 2, 2);
+    ctx.fill();
+
+    // Subtle ground shadow
     ctx.save();
-    ctx.globalAlpha = 0.06;
+    ctx.globalAlpha = 0.05;
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.ellipse(W / 2, longY + R + 8, slinkyLen / 2 - 10, 4, 0, 0, 2 * Math.PI);
+    ctx.ellipse(W / 2, longY + bHalf + 10, bLen / 2.5, 3, 0, 0, 2 * Math.PI);
     ctx.fill();
     ctx.restore();
 
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'miter';
-
     // Propagation arrow
-    const propArrowY2 = longY + R + 18;
+    const propArrowY2 = longY + bHalf + 18;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
