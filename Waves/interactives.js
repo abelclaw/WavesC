@@ -16533,135 +16533,309 @@ function initDoubleSlitPhotonBuildup() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let dots = [];
-  let speed = 5; // photons per frame
-  let draggingSlider = false;
-  const sliderX = 20, sliderW = W * 0.3, sliderY = H - 16;
-  const screenL = W * 0.15, screenR = W - 20, screenT = 25, screenB = H - 35;
-  const screenW2 = screenR - screenL, screenH2 = screenB - screenT;
+  // --- Layout geometry ---
+  const laserX = 30;
+  const barrierX = W * 0.28;
+  const screenX = W * 0.68;
+  const histX = screenX + 14;
+  const histW = W - histX - 10;
+  const regionT = 35, regionB = H - 50;
+  const regionH = regionB - regionT;
+  const midY = regionT + regionH / 2;
 
-  // Double slit pattern probability
-  const d = 5, a = 1.5; // slit separation, slit width (normalized)
-  function prob(y) {
-    const yNorm = (y - 0.5) * 20;
-    const sincArg = Math.PI * a * yNorm;
-    const cosArg = Math.PI * d * yNorm;
-    const env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
+  // Slit geometry (pixels)
+  const slitSep = regionH * 0.22;
+  const slitHalfW = regionH * 0.035;
+  const slit1Y = midY - slitSep / 2;
+  const slit2Y = midY + slitSep / 2;
+  const barrierW = 6;
+
+  // --- Double slit probability ---
+  const dParam = 5, aParam = 1.5;
+  function prob(yNorm) {
+    var t = (yNorm - 0.5) * 20;
+    var sincArg = Math.PI * aParam * t;
+    var cosArg = Math.PI * dParam * t;
+    var env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
     return env * Math.pow(Math.cos(cosArg), 2);
   }
 
-  // Build CDF for sampling
-  const nBins = 500;
-  const cdf = [0];
-  for (let i = 1; i <= nBins; i++) {
-    cdf.push(cdf[i-1] + prob(i / nBins));
-  }
-  const total = cdf[nBins];
-  for (let i = 0; i <= nBins; i++) cdf[i] /= total;
+  // Build CDF for importance sampling
+  var nBins = 500;
+  var cdf = [0];
+  for (var i = 1; i <= nBins; i++) cdf.push(cdf[i - 1] + prob(i / nBins));
+  var cdfTotal = cdf[nBins];
+  for (var i = 0; i <= nBins; i++) cdf[i] /= cdfTotal;
 
   function sampleY() {
-    const u = Math.random();
-    let lo = 0, hi = nBins;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (cdf[mid] < u) lo = mid + 1; else hi = mid;
-    }
+    var u = Math.random(), lo = 0, hi = nBins;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (cdf[m] < u) lo = m + 1; else hi = m; }
     return lo / nBins;
   }
 
+  // --- State ---
+  var detectedDots = [];
+  var flyingPhotons = [];
+  var speed = 3;
+  var frameCount = 0;
+  var draggingSlider = false;
+  var sliderX2 = 20, sliderW2 = W * 0.22, sliderY2 = H - 20;
+
+  function emitPhoton() {
+    var targetYNorm = sampleY();
+    var targetYpx = regionT + targetYNorm * regionH;
+    var d1 = Math.abs(targetYpx - slit1Y);
+    var d2 = Math.abs(targetYpx - slit2Y);
+    var goSlit1 = Math.random() < d2 / (d1 + d2 + 0.01);
+    var slitY = goSlit1 ? slit1Y : slit2Y;
+    var slitOffset = (Math.random() - 0.5) * slitHalfW * 1.6;
+    flyingPhotons.push({
+      x: laserX + 20, y: midY + (Math.random() - 0.5) * 2,
+      slitY: slitY + slitOffset, targetY: targetYpx,
+      targetYNorm: targetYNorm, stage: 0, life: 0,
+      glow: 0.7 + Math.random() * 0.3
+    });
+  }
+
+  function updatePhoton(p) {
+    p.life++;
+    var spd = 4.5;
+    if (p.stage === 0) {
+      var dx = barrierX - p.x, dy = p.slitY - p.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < spd + 1) { p.x = barrierX + barrierW / 2 + 1; p.y = p.slitY; p.stage = 1; }
+      else { p.x += (dx / dist) * spd; p.y += (dy / dist) * spd; }
+    } else if (p.stage === 1) {
+      var dx = screenX - p.x, dy = p.targetY - p.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < spd + 1) { p.stage = 2; detectedDots.push({ y: p.targetYNorm }); }
+      else { p.x += (dx / dist) * spd; p.y += (dy / dist) * spd; }
+    }
+  }
+
+  // --- Events ---
   canvas.addEventListener('mousedown', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (Math.abs(my - sliderY2) < 15 && mx >= sliderX2 && mx <= sliderX2 + sliderW2 + 10) {
+      draggingSlider = true; handleDrag(mx);
+    }
   });
-  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!draggingSlider) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
   canvas.addEventListener('mouseup', function() { draggingSlider = false; });
   canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
-  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); var rect = canvas.getBoundingClientRect();
+    var mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    if (Math.abs(my - sliderY2) < 20) { draggingSlider = true; handleDrag(mx); }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!draggingSlider) return; e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
   canvas.addEventListener('touchend', function() { draggingSlider = false; });
 
   function handleDrag(mx) {
-    speed = Math.round(1 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 29);
+    speed = Math.round(1 + Math.max(0, Math.min(1, (mx - sliderX2) / sliderW2)) * 14);
   }
 
-  // Reset button area
+  var resetBtnX = W - 68, resetBtnY = H - 36, resetBtnW = 60, resetBtnH = 22;
   canvas.addEventListener('click', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    if (mx > W - 65 && mx < W - 5 && my > H - 30 && my < H - 8) {
-      dots = [];
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    if (mx > resetBtnX && mx < resetBtnX + resetBtnW && my > resetBtnY && my < resetBtnY + resetBtnH) {
+      detectedDots = []; flyingPhotons = [];
     }
   });
 
-  function tick() {
-    if (!canvas.isConnected) return;
-    // Add new photons
-    for (let i = 0; i < speed; i++) {
-      const y = sampleY();
-      const x = 0.3 + Math.random() * 0.5; // spread in x for visual effect
-      dots.push({ x: x, y: y });
+  // --- Drawing ---
+
+  function drawLaser() {
+    var lx = laserX - 8, ly = midY - 14, lw = 30, lh = 28;
+    var grad = ctx.createLinearGradient(lx, ly, lx, ly + lh);
+    grad.addColorStop(0, '#555'); grad.addColorStop(0.5, '#888'); grad.addColorStop(1, '#444');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.roundRect(lx, ly, lw, lh, 3); ctx.fill();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#222'; ctx.fillRect(laserX + 18, midY - 6, 5, 12);
+    var glowGrad = ctx.createRadialGradient(laserX + 22, midY, 0, laserX + 22, midY, 12);
+    glowGrad.addColorStop(0, 'rgba(15,200,150,0.3)'); glowGrad.addColorStop(1, 'rgba(15,200,150,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath(); ctx.arc(laserX + 22, midY, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('LASER', laserX + 8, midY + 26);
+  }
+
+  function drawBarrier() {
+    ctx.fillStyle = '#2a2a2e';
+    ctx.fillRect(barrierX - barrierW / 2, regionT - 5, barrierW, slit1Y - slitHalfW - regionT + 5);
+    ctx.fillRect(barrierX - barrierW / 2, slit1Y + slitHalfW, barrierW, (slit2Y - slitHalfW) - (slit1Y + slitHalfW));
+    ctx.fillRect(barrierX - barrierW / 2, slit2Y + slitHalfW, barrierW, regionB + 5 - slit2Y - slitHalfW);
+    // 3D edges
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(barrierX - barrierW / 2, regionT - 5, 1, regionB - regionT + 10);
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.fillRect(barrierX + barrierW / 2 - 1, regionT - 5, 1, regionB - regionT + 10);
+    // Slit glow
+    for (var s = 0; s < 2; s++) {
+      var sy = s === 0 ? slit1Y : slit2Y;
+      var glowG = ctx.createRadialGradient(barrierX, sy, 0, barrierX, sy, slitHalfW * 3);
+      glowG.addColorStop(0, 'rgba(15,200,180,0.15)'); glowG.addColorStop(1, 'rgba(15,200,180,0)');
+      ctx.fillStyle = glowG;
+      ctx.fillRect(barrierX - barrierW * 2, sy - slitHalfW * 3, barrierW * 4, slitHalfW * 6);
+      ctx.fillStyle = 'rgba(200,240,230,0.5)';
+      ctx.fillRect(barrierX - barrierW / 2, sy - slitHalfW, barrierW, slitHalfW * 2);
     }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('BARRIER', barrierX, regionB + 18);
+  }
 
-    wClear(ctx, W, H);
+  function drawScreen() {
+    var sGrad = ctx.createLinearGradient(screenX - 3, 0, screenX + 3, 0);
+    sGrad.addColorStop(0, 'rgba(100,120,110,0.15)');
+    sGrad.addColorStop(0.5, 'rgba(200,220,210,0.1)');
+    sGrad.addColorStop(1, 'rgba(100,120,110,0.15)');
+    ctx.fillStyle = sGrad;
+    ctx.fillRect(screenX - 3, regionT - 2, 6, regionH + 4);
+    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(screenX - 3, regionT - 2); ctx.lineTo(screenX - 3, regionB + 2);
+    ctx.moveTo(screenX + 3, regionT - 2); ctx.lineTo(screenX + 3, regionB + 2);
+    ctx.stroke();
 
-    // Screen border
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(screenL, screenT, screenW2, screenH2);
-
-    // Draw dots
-    ctx.fillStyle = 'rgba(15,118,110,0.7)';
-    const maxDots = 15000;
-    if (dots.length > maxDots) dots = dots.slice(dots.length - maxDots);
-
-    for (let i = 0; i < dots.length; i++) {
-      const px = screenL + dots[i].x * screenW2;
-      const py = screenT + dots[i].y * screenH2;
-      ctx.fillRect(px, py, 1.5, 1.5);
+    var maxDots = 20000;
+    if (detectedDots.length > maxDots) detectedDots = detectedDots.slice(detectedDots.length - maxDots);
+    for (var i = 0; i < detectedDots.length; i++) {
+      var py = regionT + detectedDots[i].y * regionH;
+      var age = detectedDots.length - i;
+      var alpha = age < 10 ? 1.0 : 0.7;
+      var radius = age < 5 ? 2.0 : 1.2;
+      if (age < 5) {
+        ctx.fillStyle = 'rgba(15,220,180,' + (alpha * 0.5) + ')';
+        ctx.beginPath(); ctx.arc(screenX, py, radius + 2, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(15,118,110,' + alpha + ')';
+      ctx.beginPath(); ctx.arc(screenX, py, radius, 0, Math.PI * 2); ctx.fill();
     }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('DETECTOR', screenX, regionB + 18);
+  }
 
-    // Histogram on right edge
-    const histW = 40;
-    const bins = new Array(50).fill(0);
-    dots.forEach(function(d2) {
-      const bin = Math.min(49, Math.floor(d2.y * 50));
+  function drawHistogram() {
+    if (detectedDots.length === 0) return;
+    var nH = 80, bins = new Array(nH).fill(0);
+    for (var i = 0; i < detectedDots.length; i++) {
+      var bin = Math.min(nH - 1, Math.floor(detectedDots[i].y * nH));
       bins[bin]++;
-    });
-    const maxBin = Math.max(1, Math.max.apply(null, bins));
-    ctx.fillStyle = 'rgba(15,118,110,0.2)';
-    for (let i = 0; i < 50; i++) {
-      const bh = (bins[i] / maxBin) * histW;
-      const by = screenT + (i / 50) * screenH2;
-      ctx.fillRect(screenR + 3, by, bh, screenH2 / 50 - 1);
     }
+    var maxBin = Math.max(1, Math.max.apply(null, bins));
+    for (var i = 0; i < nH; i++) {
+      var bh = (bins[i] / maxBin) * histW;
+      var by = regionT + (i / nH) * regionH;
+      var binH = regionH / nH;
+      var intensity = bins[i] / maxBin;
+      var g = Math.round(118 + intensity * 100);
+      var b = Math.round(110 + intensity * 70);
+      ctx.fillStyle = 'rgba(15,' + g + ',' + b + ',' + (0.15 + intensity * 0.5) + ')';
+      ctx.fillRect(histX, by, bh, binH - 0.5);
+    }
+    // Theoretical envelope
+    ctx.strokeStyle = 'rgba(15,118,110,0.4)'; ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    for (var i = 0; i <= nH; i++) {
+      var yN = i / nH, p = prob(yN);
+      var px = histX + p * histW, py = regionT + yN * regionH;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
 
-    // Info
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Photons: ' + dots.length, screenL, screenT - 5);
+  function drawFlyingPhotons() {
+    for (var i = 0; i < flyingPhotons.length; i++) {
+      var p = flyingPhotons[i];
+      var glowR = 5 + p.glow * 3;
+      var glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+      glow.addColorStop(0, 'rgba(15,230,180,' + (0.6 * p.glow) + ')');
+      glow.addColorStop(0.4, 'rgba(15,180,150,' + (0.2 * p.glow) + ')');
+      glow.addColorStop(1, 'rgba(15,180,150,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(180,255,240,' + (0.9 * p.glow) + ')';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
 
-    // Slider
+  function drawBeamPath() {
+    var beamGrad = ctx.createLinearGradient(laserX + 22, 0, barrierX - barrierW / 2, 0);
+    beamGrad.addColorStop(0, 'rgba(15,200,170,0.08)'); beamGrad.addColorStop(1, 'rgba(15,200,170,0.02)');
+    ctx.fillStyle = beamGrad;
+    ctx.fillRect(laserX + 22, midY - 3, barrierX - barrierW / 2 - laserX - 22, 6);
+    for (var s = 0; s < 2; s++) {
+      var sy = s === 0 ? slit1Y : slit2Y;
+      ctx.fillStyle = 'rgba(15,200,170,0.015)';
+      ctx.beginPath();
+      ctx.moveTo(barrierX + barrierW / 2, sy - slitHalfW);
+      ctx.lineTo(barrierX + barrierW / 2, sy + slitHalfW);
+      ctx.lineTo(screenX, regionB); ctx.lineTo(screenX, regionT);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+
+  function drawLabels() {
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Double-Slit Experiment: Photon-by-Photon', 10, 18);
+    ctx.font = '11px system-ui'; ctx.fillStyle = WCOLORS.teal; ctx.textAlign = 'left';
+    ctx.fillText('Detected: ' + detectedDots.length, screenX - 40, regionT - 10);
+    // Slit separation annotation
+    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 0.5;
+    var annX2 = barrierX + barrierW / 2 + 8;
+    ctx.beginPath(); ctx.moveTo(annX2, slit1Y); ctx.lineTo(annX2, slit2Y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(annX2 - 2, slit1Y); ctx.lineTo(annX2 + 2, slit1Y);
+    ctx.moveTo(annX2 - 2, slit2Y); ctx.lineTo(annX2 + 2, slit2Y);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d', annX2 + 3, midY + 3);
+  }
+
+  function drawControls() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = (speed - 1) / 29;
-    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.moveTo(sliderX2, sliderY2); ctx.lineTo(sliderX2 + sliderW2, sliderY2); ctx.stroke();
+    var st = (speed - 1) / 14;
+    ctx.beginPath(); ctx.arc(sliderX2 + sliderW2 * st, sliderY2, 5, 0, Math.PI * 2);
     ctx.fillStyle = WCOLORS.teal; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Speed: ' + speed + '/frame', sliderX + sliderW + 10, sliderY + 4);
-
-    // Reset button
+    ctx.fillText('Rate: ' + speed + ' photons/frame', sliderX2 + sliderW2 + 10, sliderY2 + 4);
     ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.roundRect(W - 65, H - 30, 60, 22, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(resetBtnX, resetBtnY, resetBtnW, resetBtnH, 4); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Reset', W - 35, H - 15);
+    ctx.fillText('Reset', resetBtnX + resetBtnW / 2, resetBtnY + 15);
+  }
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Double Slit: Photon Buildup', 10, 18);
-
+  // --- Main loop ---
+  function tick() {
+    if (!canvas.isConnected) return;
+    frameCount++;
+    for (var i = 0; i < speed; i++) emitPhoton();
+    for (var i = flyingPhotons.length - 1; i >= 0; i--) {
+      updatePhoton(flyingPhotons[i]);
+      if (flyingPhotons[i].stage === 2) flyingPhotons.splice(i, 1);
+    }
+    if (flyingPhotons.length > 200) flyingPhotons = flyingPhotons.slice(flyingPhotons.length - 200);
+    wClear(ctx, W, H);
+    drawBeamPath(); drawLaser(); drawBarrier(); drawScreen();
+    drawHistogram(); drawFlyingPhotons(); drawLabels(); drawControls();
     requestAnimationFrame(tick);
   }
 
   tick();
 }
+
 
 // =========================================================================
 // 18. Hydrogen Energy Levels
