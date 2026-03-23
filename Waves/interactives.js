@@ -11217,7 +11217,7 @@ function initDecibelScale() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Decibel scale', 10, 16);
     ctx.font = '10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'right';
-    ctx.fillText('click a source, drag the listener', W - 10, 16);
+    ctx.fillText('drag to select source & move listener', W - 10, 16);
 
     // Gradient bar
     var grad = ctx.createLinearGradient(barL, 0, barR, 0);
@@ -11249,22 +11249,33 @@ function initDecibelScale() {
     ctx.fillStyle = WCOLORS.red; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('pain', painX, barY - 4);
 
-    // Source buttons along the bar
+    // Source buttons along the bar — stagger labels to avoid overlap
+    // First pass: unselected dots only
     for (var si = 0; si < sounds.length; si++) {
+      if (si === selectedIdx) continue;
       var s = sounds[si];
       var sx = barL + (s.dB / dbMax) * barW;
-      var isSelected = si === selectedIdx;
-      var r = isSelected ? 7 : 5;
-      ctx.strokeStyle = isSelected ? s.color : WCOLORS.grid; ctx.lineWidth = isSelected ? 1.5 : 0.5;
-      ctx.beginPath(); ctx.moveTo(sx, barY - 2); ctx.lineTo(sx, barY - 8 - r); ctx.stroke();
-      ctx.fillStyle = isSelected ? s.color : 'rgba(31,42,46,0.15)';
-      ctx.beginPath(); ctx.arc(sx, barY - 8 - r, r, 0, Math.PI * 2); ctx.fill();
-      if (isSelected) { ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke(); }
-      ctx.fillStyle = isSelected ? WCOLORS.text : WCOLORS.textDim;
-      ctx.font = isSelected ? 'bold 9px system-ui' : '8px system-ui';
-      ctx.textAlign = 'center';
-      ctx.fillText(s.name, sx, barY - 12 - 2 * r);
+      var r = 4;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(sx, barY - 2); ctx.lineTo(sx, barY - 12); ctx.stroke();
+      ctx.fillStyle = 'rgba(31,42,46,0.2)';
+      ctx.beginPath(); ctx.arc(sx, barY - 12 - r, r, 0, Math.PI * 2); ctx.fill();
+      // Stagger: even indices above, odd below (relative to dot)
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      var labelY = (si % 2 === 0) ? barY - 24 : barY - 26;
+      ctx.fillText(s.name, sx, labelY);
     }
+    // Second pass: selected dot (drawn on top, bigger)
+    var selS = sounds[selectedIdx];
+    var selX = barL + (selS.dB / dbMax) * barW;
+    var selR = 7;
+    ctx.strokeStyle = selS.color; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(selX, barY - 2); ctx.lineTo(selX, barY - 12 - selR); ctx.stroke();
+    ctx.fillStyle = selS.color;
+    ctx.beginPath(); ctx.arc(selX, barY - 12 - selR, selR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(selS.name, selX, barY - 16 - 2 * selR);
 
     // Heard-level indicator on bar (triangle pointing up into bar)
     var heardX = barL + (heardDb / dbMax) * barW;
@@ -11391,19 +11402,20 @@ function initDecibelScale() {
     requestAnimationFrame(draw);
   }
 
-  // Hit testing for source buttons
-  function hitSource(mx, my) {
-    var bL = 50, bR = W - 15, bY = 38;
-    var bW = bR - bL;
-    var dbM = 160;
+  // Find nearest source to an x position on the bar
+  function nearestSource(mx) {
+    var bL = 50, bR = W - 15, dbM = 160, bW = bR - bL;
+    var bestIdx = 0, bestDist = Infinity;
     for (var i = 0; i < sounds.length; i++) {
       var x = bL + (sounds[i].dB / dbM) * bW;
-      var r = i === selectedIdx ? 7 : 5;
-      var cy = bY - 8 - r;
-      if ((mx - x) * (mx - x) + (my - cy) * (my - cy) < (r + 4) * (r + 4)) return i;
+      var d = Math.abs(mx - x);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
     }
-    return -1;
+    return bestIdx;
   }
+
+  // Hit test: is click in the source bar area (top region)?
+  function inSourceArea(my) { return my < 65; }
 
   function getCanvasPos(e) {
     var rect = canvas.getBoundingClientRect();
@@ -11413,10 +11425,11 @@ function initDecibelScale() {
 
   function onDown(e) {
     var pos = getCanvasPos(e);
-    var srcHit = hitSource(pos.x, pos.y);
-    if (srcHit >= 0) { selectedIdx = srcHit; return; }
-    if (pos.y > 100 && pos.y < H) {
-      dragging = true;
+    if (inSourceArea(pos.y)) {
+      dragging = 'source';
+      selectedIdx = nearestSource(pos.x);
+    } else if (pos.y > 100 && pos.y < H) {
+      dragging = 'listener';
       updateListener(pos.x);
     }
   }
@@ -11424,7 +11437,12 @@ function initDecibelScale() {
   function onMove(e) {
     if (!dragging) return;
     e.preventDefault();
-    updateListener(getCanvasPos(e).x);
+    var pos = getCanvasPos(e);
+    if (dragging === 'source') {
+      selectedIdx = nearestSource(pos.x);
+    } else {
+      updateListener(pos.x);
+    }
   }
 
   function onUp() { dragging = false; }
