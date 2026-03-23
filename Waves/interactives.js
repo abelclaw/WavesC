@@ -7201,35 +7201,71 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal ---
+    // --- Longitudinal (slinky / accordion) ---
+    // Draw a thick coil that compresses and stretches to show longitudinal wave.
+    // Each coil ring is a vertical line; spacing between rings varies with the wave.
+    const coilN = 60; // number of coil rings
+    const coilLeft = 70, coilRight = W - 70;
+    const coilLen = coilRight - coilLeft;
+    const coilSpacing = coilLen / (coilN - 1);
+    const coilHalfH = 16; // half-height of the slinky
+    const coilAmp = coilSpacing * 0.6; // max displacement of each ring
+
+    // Draw top and bottom rails (faint guide)
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(60, longY); ctx.lineTo(W - 60, longY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(coilLeft, longY - coilHalfH); ctx.lineTo(coilRight, longY - coilHalfH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(coilLeft, longY + coilHalfH); ctx.lineTo(coilRight, longY + coilHalfH); ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = WCOLORS.teal;
-    for (let i = 0; i < N; i++) {
-      const eqX = 70 + i * spacing;
-      const dx = amp * 0.7 * Math.sin(k * eqX - omega * t);
+    // Draw coil rings — each displaced horizontally by the wave
+    for (let i = 0; i < coilN; i++) {
+      const eqX = coilLeft + i * coilSpacing;
+      const dx = coilAmp * Math.sin(k * eqX - omega * t);
       const px = eqX + dx;
-      ctx.beginPath(); ctx.arc(px, longY, 4, 0, 2 * Math.PI); ctx.fill();
-    }
 
-    // Displacement arrow (horizontal)
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(arrowX1 - 15, longY); ctx.lineTo(arrowX1 + 15, longY); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.beginPath(); ctx.moveTo(arrowX1 + 15, longY); ctx.lineTo(arrowX1 + 9, longY - 4); ctx.lineTo(arrowX1 + 9, longY + 4); ctx.closePath(); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(arrowX1 - 15, longY); ctx.lineTo(arrowX1 - 9, longY - 4); ctx.lineTo(arrowX1 - 9, longY + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('disp.', arrowX1, longY - 10);
+      // Density: derivative of displacement → how compressed the coil is locally
+      const density = 1 + coilAmp * k * Math.cos(k * eqX - omega * t) / coilSpacing;
+      // Thicker lines where compressed, thinner where stretched
+      const lw = Math.max(0.5, Math.min(4.5, 2 / Math.max(density, 0.3)));
+      const alpha = Math.max(0.25, Math.min(1.0, 1.2 / Math.max(density, 0.3)));
+
+      ctx.strokeStyle = WCOLORS.teal;
+      ctx.lineWidth = lw;
+      ctx.globalAlpha = alpha;
+      ctx.beginPath();
+      ctx.moveTo(px, longY - coilHalfH);
+      ctx.lineTo(px, longY + coilHalfH);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // End caps (solid vertical lines at slinky ends)
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(coilLeft, longY - coilHalfH); ctx.lineTo(coilLeft, longY + coilHalfH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(coilRight, longY - coilHalfH); ctx.lineTo(coilRight, longY + coilHalfH); ctx.stroke();
+
+    // "Compression" and "Rarefaction" labels that follow the wave
+    // Find a compression peak and a rarefaction peak
+    let compX = null, rareX = null;
+    let maxDens = -Infinity, minDens = Infinity;
+    for (let x = coilLeft; x <= coilRight; x += 2) {
+      const d = 1 + coilAmp * k * Math.cos(k * x - omega * t) / coilSpacing;
+      if (d > maxDens) { maxDens = d; compX = x + coilAmp * Math.sin(k * x - omega * t); }
+      if (d < minDens) { minDens = d; rareX = x + coilAmp * Math.sin(k * x - omega * t); }
+    }
+    ctx.font = '10px system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = WCOLORS.textDim;
+    if (compX > coilLeft + 30 && compX < coilRight - 30)
+      ctx.fillText('compressed', compX, longY + coilHalfH + 14);
+    if (rareX > coilLeft + 30 && rareX < coilRight - 30)
+      ctx.fillText('stretched', rareX, longY + coilHalfH + 14);
 
     // Propagation arrow
-    const propArrowY2 = longY + 25;
+    const propArrowY2 = longY + coilHalfH + 28;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY2); ctx.lineTo(W / 2 + 34, propArrowY2 - 4); ctx.lineTo(W / 2 + 34, propArrowY2 + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
+    ctx.font = '11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
 
   }
 
