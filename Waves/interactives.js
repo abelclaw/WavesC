@@ -10606,8 +10606,6 @@ function initComplexImpedance() {
   const gSlider = document.getElementById('ci-g');
   const kSlider = document.getElementById('ci-k');
 
-  let t = 0;
-
   // Layout regions
   const midX = W * 0.38;
   // Left: driven mass-spring
@@ -12553,10 +12551,59 @@ function initPhaseVelocityDemo() {
     }
     ctx.stroke();
 
-    // Mark the actual highest crest nearest the view centre
+    // Compute envelope via running-max of |sumVals|
     const omega0 = Math.sqrt(g * k0);
     const vp = omega0 / k0;
-    // Find all local maxima of the plotted waveform
+    const vg = 0.5 * Math.sqrt(g / k0); // dω/dk at k0 for deep water
+    const absVals = sumVals.map(v => Math.abs(v));
+    const lambdaPx = Math.round((2 * Math.PI / k0) / 20 * 400);
+    const halfWin = Math.max(Math.floor(lambdaPx / 2), 3);
+    const envVals = [];
+    for (let i = 0; i <= 400; i++) {
+      let mx = 0;
+      for (let j = Math.max(0, i - halfWin); j <= Math.min(400, i + halfWin); j++) {
+        if (absVals[j] > mx) mx = absVals[j];
+      }
+      envVals.push(mx);
+    }
+
+    // Draw envelope (dashed amber)
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY - (envVals[i] / Math.max(maxSum, 0.1)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 400; i++) {
+      const px = plotL + plotW * i / 400;
+      const py = midY + (envVals[i] / Math.max(maxSum, 0.1)) * amp;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Mark envelope peak (group velocity) — amber arrow above
+    let envPeakIdx = 0;
+    for (let i = 1; i <= 400; i++) {
+      if (envVals[i] > envVals[envPeakIdx]) envPeakIdx = i;
+    }
+    const envPx = plotL + plotW * envPeakIdx / 400;
+    const envPy = midY - (envVals[envPeakIdx] / Math.max(maxSum, 0.1)) * amp;
+    if (envPx > plotL + 10 && envPx < plotR - 10) {
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath();
+      ctx.moveTo(envPx, envPy - 3);
+      ctx.lineTo(envPx - 5, envPy - 14);
+      ctx.lineTo(envPx + 5, envPy - 14);
+      ctx.fill();
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('envelope (vg = ' + vg.toFixed(2) + ')', envPx, envPy - 17);
+    }
+
+    // Mark the actual crest nearest the envelope peak — red arrow below
     const peaks = [];
     for (let i = 1; i < sumVals.length - 1; i++) {
       if (sumVals[i] > sumVals[i - 1] && sumVals[i] >= sumVals[i + 1] && sumVals[i] > 0) {
@@ -12564,22 +12611,20 @@ function initPhaseVelocityDemo() {
       }
     }
     if (peaks.length > 0) {
-      // Pick the peak nearest the centre of the view
       let best = peaks[0];
       for (const p of peaks) {
-        if (Math.abs(p - 200) < Math.abs(best - 200)) best = p;
+        if (Math.abs(p - envPeakIdx) < Math.abs(best - envPeakIdx)) best = p;
       }
       const crestPx = plotL + plotW * best / 400;
       const crestPy = midY - (sumVals[best] / Math.max(maxSum, 0.1)) * amp;
-      // Downward-pointing arrow above the peak
       ctx.fillStyle = WCOLORS.red;
       ctx.beginPath();
-      ctx.moveTo(crestPx, crestPy - 3);              // tip just above peak
-      ctx.lineTo(crestPx - 5, crestPy - 14);
-      ctx.lineTo(crestPx + 5, crestPy - 14);
+      ctx.moveTo(crestPx, crestPy + 3);
+      ctx.lineTo(crestPx - 5, crestPy + 14);
+      ctx.lineTo(crestPx + 5, crestPy + 14);
       ctx.fill();
       ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('crest (vp = ' + vp.toFixed(2) + ')', crestPx, crestPy - 17);
+      ctx.fillText('crest (vp = ' + vp.toFixed(2) + ')', crestPx, crestPy + 26);
     }
 
     // Axis
@@ -12588,8 +12633,8 @@ function initPhaseVelocityDemo() {
 
     // Info
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Deep water waves: \u03C9 = \u221A(gk)  \u2192  vp = \u221A(g/k)', W / 2, H - 10);
-    ctx.fillText('Individual components (light) each travel at their own vp', W / 2, H - 25);
+    ctx.fillText('Deep water: \u03C9 = \u221A(gk)  \u2192  vp = \u221A(g/k),  vg = \u00BD vp', W / 2, H - 10);
+    ctx.fillText('Crests (red) overtake the envelope (amber) because vp > vg', W / 2, H - 25);
 
     requestAnimationFrame(tick);
   }
