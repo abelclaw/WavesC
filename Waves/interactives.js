@@ -15227,37 +15227,37 @@ function initEyeAnatomyDiagram() {
     ctx.globalAlpha = 1.0;
     ctx.restore();
 
-    // Retina
-    label('Retina', cx + R * 0.55, cy - R * 0.78, cx + R * 0.6, cy - R * 0.62, 'left');
+    // Retina — top right, well above other labels
+    label('Retina', cx + R * 0.75, cy - R * 1.05, cx + R * 0.6, cy - R * 0.62, 'left');
 
-    // Fovea
-    label('Fovea (all cones)', foveaX + 20, foveaY - 28, foveaX, foveaY, 'left');
-
-    // Macula
-    label('Macula', foveaX + 24, foveaY + 24, foveaX - 10, foveaY + 10, 'left');
-
-    // Optic nerve
-    label('Optic nerve', onX + R * 0.12, onY + R * 0.32, onX + R * 0.15, onY + R * 0.12, 'left');
-
-    // Blind spot
-    label('Blind spot', onX + 18, onY - 20, onX, onY, 'left');
-
-    // Ciliary body
-    label('Ciliary body', cx - R * 0.85, cy + R * 0.72, cx - R * 0.6, cy + R * 0.5, 'left');
-
-    // Aqueous humor
-    label('Aqueous humor', corneaX - corneaDepth - 10, cy + corneaExtent + 36, (aqL + aqR) / 2, cy + corneaExtent * 0.4, 'center');
-
-    // Rods — point at peak density (~20 deg above fovea on retina)
+    // Rods — upper-right, below retina label, pointing at peak-density region
     var rodLabelAngle = foveaAngle - 0.35;
     var rodPtX = cx + retinaR * Math.cos(rodLabelAngle);
     var rodPtY = cy + retinaR * Math.sin(rodLabelAngle);
-    label('Rods (~120M)', cx + R * 0.45, cy - R * 0.85, rodPtX, rodPtY, 'center');
+    label('Rods (~120M)', cx + R * 0.75, cy - R * 0.88, rodPtX, rodPtY, 'left');
 
-    // Cones — point at the fovea cone cluster
+    // Cones — right side, above fovea
     var conePtX = cx + retinaR * Math.cos(foveaAngle);
     var conePtY = cy + retinaR * Math.sin(foveaAngle);
-    label('Cones (~6M)', foveaX + 25, foveaY - 50, conePtX, conePtY, 'left');
+    label('Cones (~6M)', cx + R * 1.05, foveaY - 40, conePtX, conePtY, 'left');
+
+    // Fovea — right side, at fovea level
+    label('Fovea (all cones)', cx + R * 1.05, foveaY - 10, foveaX, foveaY, 'left');
+
+    // Macula — right side, below fovea
+    label('Macula', cx + R * 1.05, foveaY + 18, foveaX - 10, foveaY + 10, 'left');
+
+    // Blind spot — right side, below macula
+    label('Blind spot', cx + R * 1.05, onY + 5, onX, onY, 'left');
+
+    // Optic nerve — below blind spot
+    label('Optic nerve', cx + R * 1.05, onY + R * 0.35, onX + R * 0.15, onY + R * 0.12, 'left');
+
+    // Ciliary body — lower left
+    label('Ciliary body', cx - R * 0.85, cy + R * 0.72, cx - R * 0.6, cy + R * 0.5, 'left');
+
+    // Aqueous humor — bottom left
+    label('Aqueous humor', corneaX - corneaDepth - 10, cy + corneaExtent + 36, (aqL + aqR) / 2, cy + corneaExtent * 0.4, 'center');
 
     // Optical axis (dashed line)
     ctx.save();
