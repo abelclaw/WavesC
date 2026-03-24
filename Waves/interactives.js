@@ -7821,14 +7821,34 @@ function initPolarization() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let angleSlider = document.getElementById('linear-pol-angle');
-
+  // mode: 'linear', 'rcp', 'lcp'
+  let mode = 'linear';
   let t = 0;
+
+  const angleSlider = document.getElementById('pol-angle');
+  const angleWrap = document.getElementById('pol-angle-wrap');
+  const btnLinear = document.getElementById('pol-btn-linear');
+  const btnRCP = document.getElementById('pol-btn-rcp');
+  const btnLCP = document.getElementById('pol-btn-lcp');
+
+  function setActive(activeId) {
+    [btnLinear, btnRCP, btnLCP].forEach(b => {
+      if (!b) return;
+      b.style.background = b.id === activeId ? '#0f766e' : '';
+      b.style.color = b.id === activeId ? '#fff' : '';
+    });
+    if (angleWrap) angleWrap.style.display = (mode === 'linear') ? '' : 'none';
+  }
+
+  btnLinear?.addEventListener('click', () => { mode = 'linear'; setActive('pol-btn-linear'); });
+  btnRCP?.addEventListener('click', () => { mode = 'rcp'; setActive('pol-btn-rcp'); });
+  btnLCP?.addEventListener('click', () => { mode = 'lcp'; setActive('pol-btn-lcp'); });
+  setActive('pol-btn-linear');
 
   // 3D oblique projection parameters
   const cx = W * 0.38, cy = H / 2;
   const axisLen = W * 0.30;
-  const amp = 50;
+  const amp = 48;
   // projK: propagation direction (into screen, angled right-down)
   const projK = { x: 0.85, y: 0.30 };
   // projE: "up" direction on screen (electric field default vertical)
@@ -14237,34 +14257,20 @@ function initCieColorSpaceGamut() {
     }
     ctx.closePath();
 
-    // Fill with properly gamut-mapped colors
-    // Use offscreen canvas since putImageData ignores clip
+    // Fill horseshoe with gamut-mapped colors
     ctx.save();
     ctx.clip();
-    const fillL = Math.floor(plotL);
-    const fillT2 = Math.floor(plotT);
-    const fillW = Math.ceil(plotR + 20) - fillL;
-    const fillH = Math.ceil(plotB) - fillT2;
-    const offCanvas = document.createElement('canvas');
-    offCanvas.width = fillW; offCanvas.height = fillH;
-    const offCtx = offCanvas.getContext('2d');
-    const imgData = offCtx.createImageData(fillW, fillH);
-    const data = imgData.data;
-    for (let py = 0; py < fillH; py++) {
-      for (let px = 0; px < fillW; px++) {
-        const cx = (fillL + px - plotL) / (plotSize * 1.15);
-        const cy = (plotB - (fillT2 + py)) / (plotSize * 1.3);
+    const step = 2;
+    for (let px = plotL; px < plotR + 30; px += step) {
+      for (let py = plotT; py < plotB; py += step) {
+        const cx = (px - plotL) / (plotSize * 1.15);
+        const cy = (plotB - py) / (plotSize * 1.3);
         if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
         const rgb = xyToDisplayRGB(cx, cy);
-        const idx = (py * fillW + px) * 4;
-        data[idx]     = Math.round(rgb[0] * 255);
-        data[idx + 1] = Math.round(rgb[1] * 255);
-        data[idx + 2] = Math.round(rgb[2] * 255);
-        data[idx + 3] = 255;
+        ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
+        ctx.fillRect(px, py, step, step);
       }
     }
-    offCtx.putImageData(imgData, 0, 0);
-    ctx.drawImage(offCanvas, fillL, fillT2);
     ctx.restore();
 
     // Spectral locus outline
