@@ -4205,8 +4205,8 @@ function sceneMarkup(type) {
       `;
     case "double-slit-photon-buildup":
       return `
-        <div class="scene-label">Double-Slit Photon Buildup</div>
-        <p class="scene-caption">Watch individual photons travel from the source, through the slits, to the detector. Drag the red blocker onto a slit to see the pattern change from interference to single-slit diffraction. Adjust slit separation and width.</p>
+        <div class="scene-label">Double-Slit Electron Buildup</div>
+        <p class="scene-caption">Each electron travels as a particle to the barrier, but where it lands on the detector is governed by wave interference. One at a time, the pattern emerges. Drag the red blocker onto a slit to switch to single-slit diffraction.</p>
         <div class="interactive-scene">
           <canvas id="scene-double-slit-photon-buildup" width="600" height="460"></canvas>
         </div>

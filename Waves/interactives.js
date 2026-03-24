@@ -16608,7 +16608,7 @@ function initPhotoelectricEffectDemo() {
 }
 
 // =========================================================================
-// 17. Double Slit Photon Buildup
+// 17. Double Slit Electron Buildup
 // =========================================================================
 function initDoubleSlitPhotonBuildup() {
   const canvas = document.getElementById('scene-double-slit-photon-buildup');
@@ -16617,71 +16617,68 @@ function initDoubleSlitPhotonBuildup() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // --- Layout geometry ---
-  var laserX = 30;
-  var barrierX = W * 0.28;
+  // --- Layout ---
+  var gunX = 28;
+  var barrierX = W * 0.30;
   var screenX = W * 0.68;
   var histX = screenX + 14;
   var histW = W - histX - 10;
-  var regionT = 40, regionB = H - 80;
+  var regionT = 42, regionB = H - 80;
   var regionH = regionB - regionT;
   var midY = regionT + regionH / 2;
-  var barrierW = 6;
+  var barrierW = 7;
 
   // --- Adjustable parameters ---
-  var slitSepNorm = 0.5;   // 0..1 normalized slit separation
-  var slitWidthNorm = 0.4;  // 0..1 normalized slit width
+  var slitSepNorm = 0.5;
+  var slitWidthNorm = 0.4;
 
-  function getSlitSep() { return regionH * (0.08 + slitSepNorm * 0.40); }
-  function getSlitHalfW() { return regionH * (0.01 + slitWidthNorm * 0.06); }
+  function getSlitSep() { return regionH * (0.10 + slitSepNorm * 0.38); }
+  function getSlitHalfW() { return regionH * (0.012 + slitWidthNorm * 0.055); }
   function getSlit1Y() { return midY - getSlitSep() / 2; }
   function getSlit2Y() { return midY + getSlitSep() / 2; }
 
-  // --- Blocker state ---
-  // blocker: 0 = no block, 1 = block slit 1 (top), 2 = block slit 2 (bottom)
+  // --- Blocker: 0=none, 1=block top slit, 2=block bottom slit ---
   var blockerState = 0;
-  var blockerY = regionT - 25; // parked position (off to side)
-  var draggingBlocker = false;
-  var blockerW = 18, blockerH = 0; // blockerH computed dynamically
+  var blockerDragY = 0;
+  var dragging = null; // 'rate'|'sep'|'width'|'blocker'
+  var blockerW = 20;
 
-  function getBlockerRestY() { return regionT - 30; }
+  function getBlockerParkY() { return regionT - 28; }
 
-  // --- Double slit probability with blocker support ---
+  // --- Probability distribution ---
   function prob(yNorm, dP, aP, block) {
     var t = (yNorm - 0.5) * 20;
     var sincArg = Math.PI * aP * t;
     var env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
     if (block === 1 || block === 2) {
-      // Single slit: just the envelope, shifted
-      var shift = (block === 1) ? dP / 2 : -dP / 2;
-      var sincShifted = Math.PI * aP * (t + shift * 0.3);
-      var envShifted = Math.abs(sincShifted) < 1e-6 ? 1 : Math.pow(Math.sin(sincShifted) / sincShifted, 2);
-      return envShifted;
+      // Single slit diffraction only — centered on the open slit
+      var slitOff = (block === 1) ? 0.5 * dP : -0.5 * dP;
+      var tShift = t - slitOff * 0.15;
+      var sa2 = Math.PI * aP * tShift;
+      return Math.abs(sa2) < 1e-6 ? 1 : Math.pow(Math.sin(sa2) / sa2, 2);
     }
     var cosArg = Math.PI * dP * t;
     return env * Math.pow(Math.cos(cosArg), 2);
   }
 
-  // Rebuild CDF whenever params change
-  var nBins = 500;
-  var cdf = [];
-  var lastDParam = -1, lastAParam = -1, lastBlock = -1;
+  var nBins = 500, cdf = [];
+  var lastDP = -1, lastAP = -1, lastBK = -1;
 
   function rebuildCDF() {
     var dP = 2 + slitSepNorm * 8;
     var aP = 0.5 + slitWidthNorm * 3;
-    if (dP === lastDParam && aP === lastAParam && blockerState === lastBlock) return;
-    lastDParam = dP; lastAParam = aP; lastBlock = blockerState;
+    if (dP === lastDP && aP === lastAP && blockerState === lastBK) return;
+    lastDP = dP; lastAP = aP; lastBK = blockerState;
     cdf = [0];
-    for (var i = 1; i <= nBins; i++) cdf.push(cdf[i - 1] + prob(i / nBins, dP, aP, blockerState));
-    var total = cdf[nBins];
-    for (var i = 0; i <= nBins; i++) cdf[i] /= total;
+    for (var i = 1; i <= nBins; i++) cdf.push(cdf[i-1] + prob(i/nBins, dP, aP, blockerState));
+    var tot = cdf[nBins];
+    for (var i = 0; i <= nBins; i++) cdf[i] /= tot;
   }
 
   function sampleY() {
     rebuildCDF();
     var u = Math.random(), lo = 0, hi = nBins;
-    while (lo < hi) { var m = (lo + hi) >> 1; if (cdf[m] < u) lo = m + 1; else hi = m; }
+    while (lo < hi) { var m = (lo+hi)>>1; if (cdf[m]<u) lo=m+1; else hi=m; }
     return lo / nBins;
   }
 
@@ -16691,91 +16688,51 @@ function initDoubleSlitPhotonBuildup() {
     return prob(yNorm, dP, aP, blockerState);
   }
 
-  // --- State ---
+  // --- Electron state ---
+  // An electron has stages:
+  //   0 = traveling right from gun to barrier (straight horizontal at midY)
+  //   1 = "passing through slits" — brief glow at open slit(s)
+  //   2 = detected — dot appears on screen
   var detectedDots = [];
-  var flyingPhotons = [];
-  var emitRate = 1;  // photons per frame — start slow
-  var emitCounter = 0;
-  var emitInterval = 8; // frames between emissions at rate=1
+  var electron = null; // current in-flight electron, or null
+  var slitGlowTimer = 0;
+  var slitGlowTarget = -1; // yNorm where it will be detected
+  var flashTimer = 0;
+  var flashY = 0;
+
+  var emitRate = 1; // 1-10: controls delay between electrons
+  var emitDelay = 0;
   var frameCount = 0;
 
-  // --- Dragging state ---
-  var dragging = null; // 'rate' | 'sep' | 'width' | 'blocker'
-
-  // --- Controls layout (bottom area) ---
-  var ctrlY1 = H - 68;  // first row of sliders
-  var ctrlY2 = H - 48;  // second row
-  var ctrlY3 = H - 28;  // third row
+  // Controls layout
+  var ctrlY1 = H - 68, ctrlY2 = H - 48, ctrlY3 = H - 28;
   var sldrL = 90, sldrW = W * 0.30;
 
-  // --- Photon flight ---
-  function emitPhoton() {
-    var targetYNorm = sampleY();
-    var targetYpx = regionT + targetYNorm * regionH;
-    var s1y = getSlit1Y(), s2y = getSlit2Y(), shw = getSlitHalfW();
-
-    // Decide which slit
-    var useSlit;
-    if (blockerState === 1) useSlit = 2;
-    else if (blockerState === 2) useSlit = 1;
-    else {
-      var d1 = Math.abs(targetYpx - s1y);
-      var d2 = Math.abs(targetYpx - s2y);
-      useSlit = (Math.random() < d2 / (d1 + d2 + 0.01)) ? 1 : 2;
-    }
-    var slitY = useSlit === 1 ? s1y : s2y;
-    var slitOffset = (Math.random() - 0.5) * shw * 1.6;
-
-    flyingPhotons.push({
-      x: laserX + 20, y: midY + (Math.random() - 0.5) * 2,
-      slitY: slitY + slitOffset, targetY: targetYpx,
-      targetYNorm: targetYNorm, stage: 0, life: 0,
-      glow: 0.7 + Math.random() * 0.3
-    });
-  }
-
-  function updatePhoton(p) {
-    p.life++;
-    var spd = 2.0; // MUCH slower so you can watch
-    if (p.stage === 0) {
-      var dx = barrierX - p.x, dy = p.slitY - p.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < spd + 1) { p.x = barrierX + barrierW / 2 + 1; p.y = p.slitY; p.stage = 1; }
-      else { p.x += (dx / dist) * spd; p.y += (dy / dist) * spd; }
-    } else if (p.stage === 1) {
-      var dx = screenX - p.x, dy = p.targetY - p.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < spd + 1) { p.stage = 2; detectedDots.push({ y: p.targetYNorm }); }
-      else { p.x += (dx / dist) * spd; p.y += (dy / dist) * spd; }
-    }
+  function emitElectron() {
+    electron = { x: gunX + 22, y: midY, glow: 0.7 + Math.random() * 0.3 };
   }
 
   // --- Events ---
-  function getMousePos(e) {
+  function getPos(e) {
     var rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  }
-  function getTouchPos(e) {
-    var rect = canvas.getBoundingClientRect();
-    return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+    var src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
   }
 
-  function hitSlider(mx, my, sliderY) {
-    return Math.abs(my - sliderY) < 12 && mx >= sldrL && mx <= sldrL + sldrW + 10;
+  function hitSlider(mx, my, sy) {
+    return Math.abs(my - sy) < 12 && mx >= sldrL - 5 && mx <= sldrL + sldrW + 10;
   }
 
   function hitBlocker(mx, my) {
     var bx = barrierX - blockerW / 2;
-    var by, bh2;
-    if (blockerState === 0) {
-      by = getBlockerRestY();
-      bh2 = 20;
-    } else {
+    var by, bh;
+    if (blockerState === 0) { by = getBlockerParkY(); bh = 18; }
+    else {
       var sy = blockerState === 1 ? getSlit1Y() : getSlit2Y();
-      by = sy - getSlitHalfW() - 4;
-      bh2 = getSlitHalfW() * 2 + 8;
+      var shw = getSlitHalfW();
+      by = sy - shw - 5; bh = shw * 2 + 10;
     }
-    return mx > bx - 5 && mx < bx + blockerW + 5 && my > by - 5 && my < by + bh2 + 5;
+    return mx > bx - 8 && mx < bx + blockerW + 8 && my > by - 8 && my < by + bh + 8;
   }
 
   function hitReset(mx, my) {
@@ -16783,199 +16740,206 @@ function initDoubleSlitPhotonBuildup() {
   }
 
   function handleDown(mx, my) {
-    // Check blocker first
-    if (hitBlocker(mx, my)) {
-      dragging = 'blocker';
-      return;
-    }
-    if (hitSlider(mx, my, ctrlY1)) { dragging = 'rate'; handleSliderDrag('rate', mx); return; }
-    if (hitSlider(mx, my, ctrlY2)) { dragging = 'sep'; handleSliderDrag('sep', mx); return; }
-    if (hitSlider(mx, my, ctrlY3)) { dragging = 'width'; handleSliderDrag('width', mx); return; }
+    if (hitBlocker(mx, my)) { dragging = 'blocker'; blockerDragY = my; return; }
+    if (hitSlider(mx, my, ctrlY1)) { dragging = 'rate'; doSlider('rate', mx); return; }
+    if (hitSlider(mx, my, ctrlY2)) { dragging = 'sep'; doSlider('sep', mx); return; }
+    if (hitSlider(mx, my, ctrlY3)) { dragging = 'width'; doSlider('width', mx); return; }
   }
 
   function handleMove(mx, my) {
     if (!dragging) return;
-    if (dragging === 'blocker') {
-      handleBlockerDrag(mx, my);
-      return;
-    }
-    var sliderY = dragging === 'rate' ? ctrlY1 : dragging === 'sep' ? ctrlY2 : ctrlY3;
-    handleSliderDrag(dragging, mx);
+    if (dragging === 'blocker') { blockerDragY = my; return; }
+    doSlider(dragging, mx);
   }
 
   function handleUp() {
-    if (dragging === 'blocker') {
-      snapBlocker();
-    }
+    if (dragging === 'blocker') snapBlocker();
     dragging = null;
   }
 
-  function handleSliderDrag(which, mx) {
+  function doSlider(which, mx) {
     var t = Math.max(0, Math.min(1, (mx - sldrL) / sldrW));
-    if (which === 'rate') {
-      emitRate = Math.round(1 + t * 9);
-      emitInterval = Math.round(12 / emitRate);
-    }
-    else if (which === 'sep') { slitSepNorm = t; lastDParam = -1; }
-    else if (which === 'width') { slitWidthNorm = t; lastAParam = -1; }
-  }
-
-  function handleBlockerDrag(mx, my) {
-    blockerY = my;
+    if (which === 'rate') emitRate = Math.round(1 + t * 9);
+    else if (which === 'sep') { slitSepNorm = t; lastDP = -1; }
+    else if (which === 'width') { slitWidthNorm = t; lastAP = -1; }
   }
 
   function snapBlocker() {
-    // Determine closest slit or parked position
-    var s1y = getSlit1Y(), s2y = getSlit2Y();
-    var distRest = Math.abs(blockerY - getBlockerRestY());
-    var dist1 = Math.abs(blockerY - s1y);
-    var dist2 = Math.abs(blockerY - s2y);
-    var shw = getSlitHalfW();
-    var snapThresh = shw * 3 + 15;
-
-    if (dist1 < snapThresh && dist1 < dist2) {
-      blockerState = 1;
-    } else if (dist2 < snapThresh) {
-      blockerState = 2;
-    } else {
-      blockerState = 0;
-    }
-    // Force CDF rebuild
-    lastBlock = -1;
+    var s1 = getSlit1Y(), s2 = getSlit2Y();
+    var d1 = Math.abs(blockerDragY - s1);
+    var d2 = Math.abs(blockerDragY - s2);
+    var thresh = getSlitHalfW() * 3 + 20;
+    if (d1 < thresh && d1 < d2) blockerState = 1;
+    else if (d2 < thresh) blockerState = 2;
+    else blockerState = 0;
+    lastBK = -1;
   }
 
   canvas.addEventListener('mousedown', function(e) {
-    var p = getMousePos(e);
-    if (hitReset(p.x, p.y)) { detectedDots = []; flyingPhotons = []; return; }
+    var p = getPos(e);
+    if (hitReset(p.x, p.y)) { detectedDots = []; electron = null; slitGlowTimer = 0; flashTimer = 0; return; }
     handleDown(p.x, p.y);
   });
-  canvas.addEventListener('mousemove', function(e) { var p = getMousePos(e); handleMove(p.x, p.y); });
-  canvas.addEventListener('mouseup', function() { handleUp(); });
-  canvas.addEventListener('mouseleave', function() { handleUp(); });
+  canvas.addEventListener('mousemove', function(e) { var p = getPos(e); handleMove(p.x, p.y); });
+  canvas.addEventListener('mouseup', handleUp);
+  canvas.addEventListener('mouseleave', handleUp);
   canvas.addEventListener('touchstart', function(e) {
-    e.preventDefault(); var p = getTouchPos(e);
-    if (hitReset(p.x, p.y)) { detectedDots = []; flyingPhotons = []; return; }
+    e.preventDefault(); var p = getPos(e);
+    if (hitReset(p.x, p.y)) { detectedDots = []; electron = null; slitGlowTimer = 0; flashTimer = 0; return; }
     handleDown(p.x, p.y);
   }, { passive: false });
   canvas.addEventListener('touchmove', function(e) {
-    if (!dragging) return; e.preventDefault();
-    var p = getTouchPos(e); handleMove(p.x, p.y);
+    if (!dragging) return; e.preventDefault(); var p = getPos(e); handleMove(p.x, p.y);
   }, { passive: false });
-  canvas.addEventListener('touchend', function() { handleUp(); });
+  canvas.addEventListener('touchend', handleUp);
 
   // --- Drawing ---
 
-  function drawLaser() {
-    var lx = laserX - 8, ly = midY - 14, lw = 30, lh = 28;
-    var grad = ctx.createLinearGradient(lx, ly, lx, ly + lh);
-    grad.addColorStop(0, '#555'); grad.addColorStop(0.5, '#888'); grad.addColorStop(1, '#444');
+  function drawGun() {
+    // Electron gun body
+    var gx = gunX - 10, gy = midY - 16, gw = 34, gh = 32;
+    var grad = ctx.createLinearGradient(gx, gy, gx, gy + gh);
+    grad.addColorStop(0, '#4a5568'); grad.addColorStop(0.3, '#718096');
+    grad.addColorStop(0.7, '#718096'); grad.addColorStop(1, '#4a5568');
     ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.roundRect(lx, ly, lw, lh, 3); ctx.fill();
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = '#222'; ctx.fillRect(laserX + 18, midY - 6, 5, 12);
-    var glowGrad = ctx.createRadialGradient(laserX + 22, midY, 0, laserX + 22, midY, 12);
-    glowGrad.addColorStop(0, 'rgba(15,200,150,0.3)'); glowGrad.addColorStop(1, 'rgba(15,200,150,0)');
-    ctx.fillStyle = glowGrad;
-    ctx.beginPath(); ctx.arc(laserX + 22, midY, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(gx, gy, gw, gh, 4); ctx.fill();
+    ctx.strokeStyle = '#2d3748'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Nozzle
+    ctx.fillStyle = '#2d3748';
+    ctx.fillRect(gunX + 20, midY - 5, 6, 10);
+
+    // Cathode glow
+    var cg = ctx.createRadialGradient(gunX + 25, midY, 0, gunX + 25, midY, 10);
+    cg.addColorStop(0, 'rgba(37,99,235,0.35)'); cg.addColorStop(1, 'rgba(37,99,235,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath(); ctx.arc(gunX + 25, midY, 10, 0, Math.PI * 2); ctx.fill();
+
+    // "e⁻" symbol on gun
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('e\u207B', gunX + 7, midY + 4);
+
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('SOURCE', laserX + 8, midY + 26);
+    ctx.fillText('ELECTRON', gunX + 7, midY + 28);
+    ctx.fillText('GUN', gunX + 7, midY + 37);
   }
 
   function drawBarrier() {
-    var s1y = getSlit1Y(), s2y = getSlit2Y(), shw = getSlitHalfW();
+    var s1 = getSlit1Y(), s2 = getSlit2Y(), shw = getSlitHalfW();
+    // Solid barrier sections
     ctx.fillStyle = '#2a2a2e';
-    ctx.fillRect(barrierX - barrierW / 2, regionT - 5, barrierW, s1y - shw - regionT + 5);
-    ctx.fillRect(barrierX - barrierW / 2, s1y + shw, barrierW, (s2y - shw) - (s1y + shw));
-    ctx.fillRect(barrierX - barrierW / 2, s2y + shw, barrierW, regionB + 5 - s2y - shw);
+    ctx.fillRect(barrierX - barrierW/2, regionT - 5, barrierW, s1 - shw - regionT + 5);
+    ctx.fillRect(barrierX - barrierW/2, s1 + shw, barrierW, (s2 - shw) - (s1 + shw));
+    ctx.fillRect(barrierX - barrierW/2, s2 + shw, barrierW, regionB + 5 - s2 - shw);
     // 3D edges
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(barrierX - barrierW / 2, regionT - 5, 1, regionB - regionT + 10);
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.fillRect(barrierX + barrierW / 2 - 1, regionT - 5, 1, regionB - regionT + 10);
-    // Slit glow (only for open slits)
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(barrierX - barrierW/2, regionT - 5, 1, regionB - regionT + 10);
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(barrierX + barrierW/2 - 1, regionT - 5, 1, regionB - regionT + 10);
+    // Slit openings (only draw glow for unblocked slits)
     for (var s = 0; s < 2; s++) {
-      if (blockerState === s + 1) continue; // blocked
-      var sy = s === 0 ? s1y : s2y;
-      var glowG = ctx.createRadialGradient(barrierX, sy, 0, barrierX, sy, shw * 3);
-      glowG.addColorStop(0, 'rgba(15,200,180,0.15)'); glowG.addColorStop(1, 'rgba(15,200,180,0)');
-      ctx.fillStyle = glowG;
-      ctx.fillRect(barrierX - barrierW * 2, sy - shw * 3, barrierW * 4, shw * 6);
-      ctx.fillStyle = 'rgba(200,240,230,0.5)';
-      ctx.fillRect(barrierX - barrierW / 2, sy - shw, barrierW, shw * 2);
+      if (blockerState === s + 1) continue;
+      var sy = s === 0 ? s1 : s2;
+      ctx.fillStyle = 'rgba(200,230,225,0.35)';
+      ctx.fillRect(barrierX - barrierW/2, sy - shw, barrierW, shw * 2);
     }
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('BARRIER', barrierX, regionB + 18);
   }
 
   function drawBlocker() {
-    var s1y = getSlit1Y(), s2y = getSlit2Y(), shw = getSlitHalfW();
+    var s1 = getSlit1Y(), s2 = getSlit2Y(), shw = getSlitHalfW();
     var bx = barrierX - blockerW / 2;
-    var by, bh2;
+    var by, bh;
 
     if (dragging === 'blocker') {
-      // Free-dragging — draw at mouse Y
-      by = blockerY - 12;
-      bh2 = shw * 2 + 8;
+      by = blockerDragY - 12; bh = shw * 2 + 10;
     } else if (blockerState === 0) {
-      // Parked above
-      by = getBlockerRestY();
-      bh2 = 18;
+      by = getBlockerParkY(); bh = 16;
     } else {
-      var sy = blockerState === 1 ? s1y : s2y;
-      by = sy - shw - 4;
-      bh2 = shw * 2 + 8;
+      var sy = blockerState === 1 ? s1 : s2;
+      by = sy - shw - 5; bh = shw * 2 + 10;
     }
 
-    // Blocker body
-    var grad = ctx.createLinearGradient(bx, by, bx + blockerW, by);
-    grad.addColorStop(0, '#c53030'); grad.addColorStop(0.5, '#e53e3e'); grad.addColorStop(1, '#c53030');
-    ctx.fillStyle = grad;
-    ctx.beginPath(); ctx.roundRect(bx, by, blockerW, bh2, 3); ctx.fill();
+    // Body
+    var gr = ctx.createLinearGradient(bx, by, bx + blockerW, by);
+    gr.addColorStop(0, '#c53030'); gr.addColorStop(0.5, '#e53e3e'); gr.addColorStop(1, '#c53030');
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.roundRect(bx, by, blockerW, bh, 3); ctx.fill();
     ctx.strokeStyle = '#9b2c2c'; ctx.lineWidth = 1; ctx.stroke();
 
     // Grip lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 0.5;
-    var cx = barrierX, gripY = by + bh2 / 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 0.5;
+    var cy = by + bh / 2;
     ctx.beginPath();
-    ctx.moveTo(cx - 4, gripY - 2); ctx.lineTo(cx + 4, gripY - 2);
-    ctx.moveTo(cx - 4, gripY);     ctx.lineTo(cx + 4, gripY);
-    ctx.moveTo(cx - 4, gripY + 2); ctx.lineTo(cx + 4, gripY + 2);
+    for (var i = -2; i <= 2; i += 2) {
+      ctx.moveTo(barrierX - 4, cy + i); ctx.lineTo(barrierX + 4, cy + i);
+    }
     ctx.stroke();
 
-    // Label when parked
+    // Label
     if (blockerState === 0 && dragging !== 'blocker') {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('BLOCKER', barrierX, by - 3);
-      ctx.fillText('(drag to slit)', barrierX, by + bh2 + 10);
+      ctx.fillStyle = '#c53030'; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u2195 drag to slit', barrierX, by + bh + 11);
     }
   }
 
+  function drawSlitGlow() {
+    // Brief glow at both open slits when electron "passes through"
+    if (slitGlowTimer <= 0) return;
+    var alpha = slitGlowTimer / 18;
+    var s1 = getSlit1Y(), s2 = getSlit2Y(), shw = getSlitHalfW();
+    for (var s = 0; s < 2; s++) {
+      if (blockerState === s + 1) continue;
+      var sy = s === 0 ? s1 : s2;
+      var g = ctx.createRadialGradient(barrierX, sy, 0, barrierX, sy, shw * 4);
+      g.addColorStop(0, 'rgba(37,99,235,' + (0.5 * alpha) + ')');
+      g.addColorStop(0.5, 'rgba(37,99,235,' + (0.15 * alpha) + ')');
+      g.addColorStop(1, 'rgba(37,99,235,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(barrierX, sy, shw * 4, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function drawDetectionFlash() {
+    if (flashTimer <= 0) return;
+    var alpha = flashTimer / 12;
+    var py = regionT + flashY * regionH;
+    var g = ctx.createRadialGradient(screenX, py, 0, screenX, py, 10);
+    g.addColorStop(0, 'rgba(37,99,235,' + (0.7 * alpha) + ')');
+    g.addColorStop(0.5, 'rgba(37,99,235,' + (0.2 * alpha) + ')');
+    g.addColorStop(1, 'rgba(37,99,235,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(screenX, py, 10, 0, Math.PI * 2); ctx.fill();
+  }
+
   function drawScreen() {
-    var sGrad = ctx.createLinearGradient(screenX - 3, 0, screenX + 3, 0);
-    sGrad.addColorStop(0, 'rgba(100,120,110,0.15)');
-    sGrad.addColorStop(0.5, 'rgba(200,220,210,0.1)');
-    sGrad.addColorStop(1, 'rgba(100,120,110,0.15)');
-    ctx.fillStyle = sGrad;
-    ctx.fillRect(screenX - 3, regionT - 2, 6, regionH + 4);
-    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1;
+    // Phosphor screen background
+    var sg = ctx.createLinearGradient(screenX - 4, 0, screenX + 4, 0);
+    sg.addColorStop(0, 'rgba(80,100,90,0.12)');
+    sg.addColorStop(0.5, 'rgba(150,170,160,0.08)');
+    sg.addColorStop(1, 'rgba(80,100,90,0.12)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(screenX - 4, regionT - 2, 8, regionH + 4);
+    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(screenX - 3, regionT - 2); ctx.lineTo(screenX - 3, regionB + 2);
-    ctx.moveTo(screenX + 3, regionT - 2); ctx.lineTo(screenX + 3, regionB + 2);
+    ctx.moveTo(screenX - 4, regionT - 2); ctx.lineTo(screenX - 4, regionB + 2);
+    ctx.moveTo(screenX + 4, regionT - 2); ctx.lineTo(screenX + 4, regionB + 2);
     ctx.stroke();
 
+    // Detected dots
     var maxDots = 20000;
     if (detectedDots.length > maxDots) detectedDots = detectedDots.slice(detectedDots.length - maxDots);
     for (var i = 0; i < detectedDots.length; i++) {
       var py = regionT + detectedDots[i].y * regionH;
       var age = detectedDots.length - i;
-      var alpha = age < 10 ? 1.0 : 0.7;
-      var radius = age < 5 ? 2.0 : 1.2;
-      if (age < 5) {
-        ctx.fillStyle = 'rgba(15,220,180,' + (alpha * 0.5) + ')';
-        ctx.beginPath(); ctx.arc(screenX, py, radius + 2, 0, Math.PI * 2); ctx.fill();
+      if (age < 3) {
+        ctx.fillStyle = 'rgba(37,99,235,0.8)';
+        ctx.beginPath(); ctx.arc(screenX, py, 2.2, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(37,99,235,0.55)';
+        ctx.beginPath(); ctx.arc(screenX, py, 1.3, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.fillStyle = 'rgba(15,118,110,' + alpha + ')';
-      ctx.beginPath(); ctx.arc(screenX, py, radius, 0, Math.PI * 2); ctx.fill();
     }
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('DETECTOR', screenX, regionB + 18);
@@ -16994,13 +16958,11 @@ function initDoubleSlitPhotonBuildup() {
       var by = regionT + (i / nH) * regionH;
       var binH = regionH / nH;
       var intensity = bins[i] / maxBin;
-      var g = Math.round(118 + intensity * 100);
-      var b = Math.round(110 + intensity * 70);
-      ctx.fillStyle = 'rgba(15,' + g + ',' + b + ',' + (0.15 + intensity * 0.5) + ')';
+      ctx.fillStyle = 'rgba(37,99,235,' + (0.1 + intensity * 0.55) + ')';
       ctx.fillRect(histX, by, bh, binH - 0.5);
     }
-    // Theoretical envelope
-    ctx.strokeStyle = 'rgba(15,118,110,0.4)'; ctx.lineWidth = 1;
+    // Theoretical curve
+    ctx.strokeStyle = 'rgba(37,99,235,0.35)'; ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     for (var i = 0; i <= nH; i++) {
@@ -17011,95 +16973,80 @@ function initDoubleSlitPhotonBuildup() {
     ctx.stroke(); ctx.setLineDash([]);
   }
 
-  function drawFlyingPhotons() {
-    for (var i = 0; i < flyingPhotons.length; i++) {
-      var p = flyingPhotons[i];
-      var glowR = 5 + p.glow * 3;
-      var glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
-      glow.addColorStop(0, 'rgba(15,230,180,' + (0.6 * p.glow) + ')');
-      glow.addColorStop(0.4, 'rgba(15,180,150,' + (0.2 * p.glow) + ')');
-      glow.addColorStop(1, 'rgba(15,180,150,0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(p.x, p.y, glowR, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = 'rgba(180,255,240,' + (0.9 * p.glow) + ')';
-      ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-
-  function drawBeamPath() {
-    var beamGrad = ctx.createLinearGradient(laserX + 22, 0, barrierX - barrierW / 2, 0);
-    beamGrad.addColorStop(0, 'rgba(15,200,170,0.08)'); beamGrad.addColorStop(1, 'rgba(15,200,170,0.02)');
-    ctx.fillStyle = beamGrad;
-    ctx.fillRect(laserX + 22, midY - 3, barrierX - barrierW / 2 - laserX - 22, 6);
-    var shw = getSlitHalfW();
-    for (var s = 0; s < 2; s++) {
-      if (blockerState === s + 1) continue;
-      var sy = s === 0 ? getSlit1Y() : getSlit2Y();
-      ctx.fillStyle = 'rgba(15,200,170,0.015)';
-      ctx.beginPath();
-      ctx.moveTo(barrierX + barrierW / 2, sy - shw);
-      ctx.lineTo(barrierX + barrierW / 2, sy + shw);
-      ctx.lineTo(screenX, regionB); ctx.lineTo(screenX, regionT);
-      ctx.closePath(); ctx.fill();
-    }
+  function drawElectron() {
+    if (!electron) return;
+    var p = electron;
+    var r = 6 + p.glow * 2;
+    // Outer glow (blue for electron)
+    var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    g.addColorStop(0, 'rgba(37,99,235,' + (0.55 * p.glow) + ')');
+    g.addColorStop(0.4, 'rgba(37,99,235,' + (0.18 * p.glow) + ')');
+    g.addColorStop(1, 'rgba(37,99,235,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    // Core
+    ctx.fillStyle = 'rgba(147,197,253,' + (0.9 * p.glow) + ')';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
   }
 
   function drawLabels() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Double-Slit Experiment: Photon-by-Photon', 10, 18);
+    ctx.fillText('Double-Slit Experiment: Electron-by-Electron', 10, 18);
 
-    // Mode indicator
-    var modeText = blockerState === 0 ? 'Both slits open' :
-                   blockerState === 1 ? 'Top slit blocked (single slit)' :
-                   'Bottom slit blocked (single slit)';
+    var modeText = blockerState === 0 ? 'Both slits open \u2014 interference' :
+                   blockerState === 1 ? 'Top slit blocked \u2014 single-slit diffraction' :
+                   'Bottom slit blocked \u2014 single-slit diffraction';
     ctx.font = '10px system-ui';
     ctx.fillStyle = blockerState === 0 ? WCOLORS.teal : WCOLORS.red;
-    ctx.textAlign = 'left';
-    ctx.fillText(modeText, 10, 30);
+    ctx.fillText(modeText, 10, 32);
 
-    // Count
-    ctx.font = '11px system-ui'; ctx.fillStyle = WCOLORS.teal; ctx.textAlign = 'left';
+    ctx.font = '11px system-ui'; ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'left';
     ctx.fillText('Detected: ' + detectedDots.length, screenX - 40, regionT - 10);
 
-    // Slit separation annotation
-    var s1y = getSlit1Y(), s2y = getSlit2Y();
-    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 0.5;
-    var annX2 = barrierX + barrierW / 2 + 22;
-    ctx.beginPath(); ctx.moveTo(annX2, s1y); ctx.lineTo(annX2, s2y); ctx.stroke();
+    // Slit separation dimension
+    var s1 = getSlit1Y(), s2 = getSlit2Y();
+    ctx.strokeStyle = 'rgba(31,42,46,0.2)'; ctx.lineWidth = 0.5;
+    var ax = barrierX + barrierW/2 + 24;
+    ctx.beginPath(); ctx.moveTo(ax, s1); ctx.lineTo(ax, s2); ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(annX2 - 2, s1y); ctx.lineTo(annX2 + 2, s1y);
-    ctx.moveTo(annX2 - 2, s2y); ctx.lineTo(annX2 + 2, s2y);
+    ctx.moveTo(ax - 2, s1); ctx.lineTo(ax + 2, s1);
+    ctx.moveTo(ax - 2, s2); ctx.lineTo(ax + 2, s2);
     ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('d', annX2 + 3, midY + 3);
+    ctx.fillText('d', ax + 3, midY + 3);
+
+    // "Which path?" question mark between barrier and screen when both slits open
+    if (blockerState === 0 && !electron && slitGlowTimer > 5) {
+      var qx = (barrierX + screenX) / 2;
+      ctx.fillStyle = 'rgba(37,99,235,' + (slitGlowTimer / 18 * 0.4) + ')';
+      ctx.font = 'italic 14px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('?', qx, midY + 5);
+    }
   }
 
-  function drawSlider(label, y, val, maxVal) {
+  function drawSlider(label, y, val01) {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText(label, sldrL - 6, y + 4);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sldrL, y); ctx.lineTo(sldrL + sldrW, y); ctx.stroke();
-    var t = val / maxVal;
-    ctx.beginPath(); ctx.arc(sldrL + sldrW * t, y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.beginPath(); ctx.arc(sldrL + sldrW * val01, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = WCOLORS.blue; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
   }
 
   function drawControls() {
-    // Rate slider
-    drawSlider('Rate', ctrlY1, (emitRate - 1) / 9, 1);
+    drawSlider('Rate', ctrlY1, (emitRate - 1) / 9);
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText(emitRate + ' photon' + (emitRate > 1 ? 's' : '') + '/burst', sldrL + sldrW + 10, ctrlY1 + 4);
+    var rateLabel = emitRate === 1 ? '1 (one at a time)' : emitRate + ' e\u207B/burst';
+    ctx.fillText(rateLabel, sldrL + sldrW + 10, ctrlY1 + 4);
 
-    // Slit separation slider
-    drawSlider('Slit sep.', ctrlY2, slitSepNorm, 1);
-    ctx.fillText((getSlitSep() / regionH * 100).toFixed(0) + '%', sldrL + sldrW + 10, ctrlY2 + 4);
+    drawSlider('Slit sep.', ctrlY2, slitSepNorm);
+    ctx.fillText('d = ' + (getSlitSep()).toFixed(0) + 'px', sldrL + sldrW + 10, ctrlY2 + 4);
 
-    // Slit width slider
-    drawSlider('Slit width', ctrlY3, slitWidthNorm, 1);
-    ctx.fillText((getSlitHalfW() * 2 / regionH * 100).toFixed(1) + '%', sldrL + sldrW + 10, ctrlY3 + 4);
+    drawSlider('Slit width', ctrlY3, slitWidthNorm);
+    ctx.fillText('a = ' + (getSlitHalfW() * 2).toFixed(1) + 'px', sldrL + sldrW + 10, ctrlY3 + 4);
 
-    // Reset button
+    // Reset
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.roundRect(W - 68, ctrlY3 - 10, 60, 22, 4); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -17111,25 +17058,54 @@ function initDoubleSlitPhotonBuildup() {
     if (!canvas.isConnected) return;
     frameCount++;
 
-    // Emit at controlled rate — slow by default
-    emitCounter++;
-    var interval = Math.max(1, Math.round(10 / emitRate));
-    if (emitCounter >= interval) {
-      emitCounter = 0;
-      emitPhoton();
+    // --- Electron lifecycle ---
+    // Stage 0: traveling to barrier
+    if (electron) {
+      var spd = 1.5;
+      electron.x += spd;
+      if (electron.x >= barrierX) {
+        // Reached barrier: start slit glow, remove particle
+        slitGlowTimer = 18;
+        slitGlowTarget = sampleY();
+        electron = null;
+      }
     }
 
-    // Update flying photons
-    for (var i = flyingPhotons.length - 1; i >= 0; i--) {
-      updatePhoton(flyingPhotons[i]);
-      if (flyingPhotons[i].stage === 2) flyingPhotons.splice(i, 1);
+    // Stage 1: slit glow countdown, then detect
+    if (slitGlowTimer > 0) {
+      slitGlowTimer--;
+      if (slitGlowTimer === 0) {
+        // Detection!
+        detectedDots.push({ y: slitGlowTarget });
+        flashY = slitGlowTarget;
+        flashTimer = 12;
+      }
     }
-    if (flyingPhotons.length > 300) flyingPhotons = flyingPhotons.slice(flyingPhotons.length - 300);
 
-    // Draw
+    // Flash countdown
+    if (flashTimer > 0) flashTimer--;
+
+    // Emit new electron when idle
+    if (!electron && slitGlowTimer <= 0 && flashTimer <= 0) {
+      emitDelay++;
+      var interval = Math.max(1, Math.round(18 / emitRate));
+      if (emitDelay >= interval) {
+        emitDelay = 0;
+        emitElectron();
+      }
+    }
+
+    // --- Draw ---
     wClear(ctx, W, H);
-    drawBeamPath(); drawLaser(); drawBarrier(); drawBlocker(); drawScreen();
-    drawHistogram(); drawFlyingPhotons(); drawLabels(); drawControls();
+    // Faint beam path
+    var bg = ctx.createLinearGradient(gunX + 25, 0, barrierX, 0);
+    bg.addColorStop(0, 'rgba(37,99,235,0.04)'); bg.addColorStop(1, 'rgba(37,99,235,0.01)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(gunX + 25, midY - 2, barrierX - gunX - 25, 4);
+
+    drawGun(); drawBarrier(); drawBlocker(); drawSlitGlow();
+    drawScreen(); drawDetectionFlash(); drawHistogram();
+    drawElectron(); drawLabels(); drawControls();
     requestAnimationFrame(tick);
   }
 
