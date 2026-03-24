@@ -15030,25 +15030,46 @@ function initEyeAnatomyDiagram() {
 
     ctx.save();
 
-    // --- RODS: clusters at upper and lower periphery ---
-    // Upper retina (angle ~ -1.2 to -0.7 rad, i.e. above center on the back)
-    var rodAnglesTop = [-1.3, -1.15, -1.0, -0.85, -0.7, -0.55];
-    rodAnglesTop.forEach(function(a) {
-      drawRod(a, -4); drawRod(a, 4);
-    });
-    // Lower retina (angle ~ 0.7 to 1.3 rad)
-    var rodAnglesBot = [0.65, 0.8, 0.95, 1.1, 1.25, 1.4];
-    rodAnglesBot.forEach(function(a) {
-      drawRod(a, -4); drawRod(a, 4);
-    });
-    // A few rods on the far back near the top and bottom of the optic nerve
-    var rodAnglesFar = [Math.PI * 2 - 0.85, Math.PI * 2 - 1.0, Math.PI + 1.1, Math.PI + 0.95];
-    rodAnglesFar.forEach(function(a) {
-      drawRod(a, -3); drawRod(a, 3);
-    });
+    // Retina arc spans ~0.55 to 2pi-0.55 (matching the retina stroke).
+    // Rods cover the entire retina except the fovea center and blind spot.
+    // Rod density peaks at ~18-20 deg eccentricity from fovea (Curcio 1990),
+    // which maps to ~0.35 rad in our arc coordinates.
+    var retArcStart = 0.55;
+    var retArcEnd = Math.PI * 2 - 0.55;
+    var foveaHalfSpan = 0.06;       // rod-free zone (~1.25 deg)
+    var bsAngle = onAngle;           // blind spot at ~0.35 rad
+    var bsHalfSpan = 0.07;
 
-    // --- CONES: dense cluster at fovea ---
-    var fCa = foveaAngle; // center angle of fovea
+    function rodDensity(angle) {
+      // Eccentricity from fovea (handles wrap-around)
+      var ecc = Math.abs(angle - foveaAngle);
+      if (ecc > Math.PI) ecc = Math.PI * 2 - ecc;
+      if (ecc < foveaHalfSpan) return 0;
+      // Peak at ~0.35 rad, Gaussian falloff
+      return Math.exp(-0.5 * Math.pow((ecc - 0.35) / 0.5, 2));
+    }
+
+    // Place rods along the full retina arc
+    for (var a = retArcStart; a <= retArcEnd; a += 0.045) {
+      // Skip blind spot
+      if (Math.abs(a - bsAngle) < bsHalfSpan) continue;
+      // Skip fovea
+      var ecc = Math.abs(a - foveaAngle);
+      if (ecc > Math.PI) ecc = Math.PI * 2 - ecc;
+      if (ecc < foveaHalfSpan) continue;
+
+      var d = rodDensity(a);
+      if (d < 0.15) continue;
+
+      drawRod(a, 0);
+      if (d > 0.5) {
+        drawRod(a, -5);
+        drawRod(a, 5);
+      }
+    }
+
+    // --- CONES: dense cluster at fovea (+ sparse outside) ---
+    var fCa = foveaAngle;
     var coneColors = ['#dc2626', '#16a34a', '#2563eb', '#dc2626', '#16a34a',
                       '#dc2626', '#16a34a', '#dc2626', '#2563eb', '#16a34a',
                       '#dc2626', '#16a34a'];
@@ -15167,11 +15188,11 @@ function initEyeAnatomyDiagram() {
     // Aqueous humor
     label('Aqueous humor', corneaX - corneaDepth - 10, cy + corneaExtent + 36, (aqL + aqR) / 2, cy + corneaExtent * 0.4, 'center');
 
-    // Rods — point at the upper-periphery rod cluster
-    var rodLabelAngle = -1.0;
+    // Rods — point at peak density (~20 deg above fovea on retina)
+    var rodLabelAngle = foveaAngle - 0.35;
     var rodPtX = cx + retinaR * Math.cos(rodLabelAngle);
     var rodPtY = cy + retinaR * Math.sin(rodLabelAngle);
-    label('Rods (~120M)', cx + R * 0.15, cy - R * 0.95, rodPtX, rodPtY, 'center');
+    label('Rods (~120M)', cx + R * 0.45, cy - R * 0.85, rodPtX, rodPtY, 'center');
 
     // Cones — point at the fovea cone cluster
     var conePtX = cx + retinaR * Math.cos(foveaAngle);
