@@ -8921,26 +8921,25 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('white light', inStartX - 12, inStartY - 2);
 
-    // --- 2. R1 and R2: full rainbow, then merge into interference beam ---
+    // --- 2. R1 and R2 angle toward each other, meet, then merged beam continues ---
 
-    // Midpoints: R1 and R2 each go halfway, then merge into one combined beam
-    const r1MidX = (Ax + r1EndX) / 2;
-    const r1MidY = (Ay + r1EndY) / 2;
-    const r2MidX = (Cx + r2EndX) / 2;
-    const r2MidY = (Cy + r2EndY) / 2;
+    // Merge point: halfway up in Y, centered in X between R1 and R2 paths
+    const mergeY = (Ay + r1EndY) / 2;
+    const mergeX = (Ax + Cx) / 2 + (mergeY - Ay) / (r1EndY - Ay) * ((r1EndX + r2EndX) / 2 - (Ax + Cx) / 2);
 
-    // R1 lower half: uniform rainbow from film surface to midpoint
-    drawRainbowBeam(Ax, Ay, r1MidX, r1MidY, beamW * 0.7, function() { return 0.5; });
-    // R2 lower half: uniform rainbow from film surface to midpoint
-    drawRainbowBeam(Cx, Cy, r2MidX, r2MidY, beamW * 0.7, function() { return 0.5; });
+    // R1: rainbow from A angling toward merge point
+    drawRainbowBeam(Ax, Ay, mergeX, mergeY, beamW * 0.7, function() { return 0.5; });
+    // R2: rainbow from C angling toward merge point
+    drawRainbowBeam(Cx, Cy, mergeX, mergeY, beamW * 0.7, function() { return 0.5; });
 
-    // Labels at the origin of each reflected beam
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    const labelOff = 14;
-    // R1 label near A
-    ctx.fillText('R\u2081 (\u03c0 shift)', (Ax + r1MidX) / 2 - labelOff, (Ay + r1MidY) / 2);
-    // R2 label near C
-    ctx.fillText('R\u2082 (no shift)', (Cx + r2MidX) / 2 + labelOff + 10, (Cy + r2MidY) / 2);
+    // Labels along each incoming arm
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    const r1qX = (Ax + mergeX) / 2, r1qY = (Ay + mergeY) / 2;
+    const r2qX = (Cx + mergeX) / 2, r2qY = (Cy + mergeY) / 2;
+    ctx.textAlign = 'right';
+    ctx.fillText('R\u2081 (\u03c0 shift)', r1qX - 8, r1qY);
+    ctx.textAlign = 'left';
+    ctx.fillText('R\u2082 (no shift)', r2qX + 8, r2qY);
 
     // --- 3. Internal rays: all colors pass through the film ---
     drawRainbowBeam(Ax, Ay, Bx, By, beamW * 0.55, null);
@@ -8952,21 +8951,10 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.arc(Bx, By, 3, 0, 2 * Math.PI); ctx.fill();
     ctx.beginPath(); ctx.arc(Cx, Cy, 3, 0, 2 * Math.PI); ctx.fill();
 
-    // --- 4. Merge zone: R1 and R2 converge to a single combined beam ---
-    // The two midpoints converge toward a merge point, then a single
-    // interference-modulated rainbow continues upward
-
-    const mergeX = (r1MidX + r2MidX) / 2;
-    const mergeY = (r1MidY + r2MidY) / 2;
-
-    // Converging segments from each midpoint to the merge point
-    drawRainbowBeam(r1MidX, r1MidY, mergeX, mergeY, beamW * 0.6, function() { return 0.4; });
-    drawRainbowBeam(r2MidX, r2MidY, mergeX, mergeY, beamW * 0.6, function() { return 0.4; });
-
-    // Combined interference beam from merge point upward to top
+    // --- 4. Combined interference beam from merge point upward ---
     // Each color dimmed by its reflectance — suppressed colors vanish
-    const combEndX = mergeX + (mergeY - 4) * Math.tan(thetaI);
     const combEndY = 4;
+    const combEndX = mergeX + (mergeY - combEndY) * Math.tan(thetaI);
     drawRainbowBeam(mergeX, mergeY, combEndX, combEndY, beamW * 0.8,
       function(wl) { return reflectance(wl, d); });
 
@@ -8997,11 +8985,6 @@ function initThinFilmInterference() {
     ctx.fillText('interference', combEndX + 5, combEndY + 8);
     ctx.font = '10px system-ui';
     ctx.fillText(Math.round(bestWL) + ' nm peak', combEndX + 5, combEndY + 20);
-
-    // Small merge indicator
-    ctx.fillStyle = 'rgba(255,255,255,0.5)';
-    ctx.beginPath(); ctx.arc(mergeX, mergeY, 4, 0, 2 * Math.PI); ctx.fill();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
 
         // --- 6. Transmitted beam: all colors, each dimmed by (1 - reflectance) ---
     const transEndY = Math.min(filmB + 55, H - 14);
