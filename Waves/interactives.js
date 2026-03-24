@@ -15165,88 +15165,83 @@ function initEyeAnatomyDiagram() {
     ctx.restore();
 
     // --- Rods and Cones along the retina ---
-    // Cones (triangles, colored) dense at fovea; Rods (rectangles, gray) across periphery.
-    var retinaR = R * 0.86;
-    var retStartAngle = 0.60;
-    var retEndAngle = Math.PI * 2 - 0.60;
-    var foveaCenterAngle = foveaAngle;
-    var foveaHalfSpan = 0.18;
-    var blindSpotAngle = onAngle;
-    var blindSpotHalfSpan = 0.08;
+    // Draw visible clusters of photoreceptors at key locations.
+    // Each receptor points inward (toward center of eye).
+    var retinaR = R * 0.88;
 
-    ctx.save();
-    // Collect receptor positions: dense near fovea, sparser elsewhere
-    var receptorAngles = [];
-    for (var a = retStartAngle; a <= retEndAngle; a += 0.04) receptorAngles.push(a);
-    for (var a = foveaCenterAngle - foveaHalfSpan; a <= foveaCenterAngle + foveaHalfSpan; a += 0.015) receptorAngles.push(a);
-
-    // Simple seeded random for deterministic layout
-    var seed = 12345;
-    function srand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
-
-    receptorAngles.forEach(function(angle) {
-      if (Math.abs(angle - blindSpotAngle) < blindSpotHalfSpan) return;
-      if (angle < retStartAngle || angle > retEndAngle) return;
-
-      var rx = cx + retinaR * Math.cos(angle);
-      var ry = cy + retinaR * Math.sin(angle);
+    // Helper: draw a single rod (rounded rectangle pointing inward)
+    function drawRod(angle, offset) {
+      var rx = cx + retinaR * Math.cos(angle) + (offset || 0) * Math.sin(angle);
+      var ry = cy + retinaR * Math.sin(angle) - (offset || 0) * Math.cos(angle);
       var dx = -Math.cos(angle), dy = -Math.sin(angle);
       var px = -dy, py = dx;
+      var rodLen = 14, rodW = 2;
+      ctx.beginPath();
+      ctx.moveTo(rx + px * rodW, ry + py * rodW);
+      ctx.lineTo(rx - px * rodW, ry - py * rodW);
+      ctx.lineTo(rx - px * rodW + dx * rodLen, ry - py * rodW + dy * rodLen);
+      ctx.lineTo(rx + px * rodW + dx * rodLen, ry + py * rodW + dy * rodLen);
+      ctx.closePath();
+      ctx.fillStyle = '#777';
+      ctx.fill();
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
 
-      var inFovea = Math.abs(angle - foveaCenterAngle) < foveaHalfSpan;
-      var nearFovea = Math.abs(angle - foveaCenterAngle) < foveaHalfSpan * 2.5;
+    // Helper: draw a single cone (triangle pointing inward)
+    function drawCone(angle, offset, color) {
+      var rx = cx + retinaR * Math.cos(angle) + (offset || 0) * Math.sin(angle);
+      var ry = cy + retinaR * Math.sin(angle) - (offset || 0) * Math.cos(angle);
+      var dx = -Math.cos(angle), dy = -Math.sin(angle);
+      var px = -dy, py = dx;
+      var coneLen = 14, coneW = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(rx + px * coneW, ry + py * coneW);
+      ctx.lineTo(rx - px * coneW, ry - py * coneW);
+      ctx.lineTo(rx + dx * coneLen, ry + dy * coneLen);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
 
-      if (inFovea) {
-        // CONES — colored triangles, realistic S/M/L proportions
-        var coneLen = 8 + srand() * 3;
-        var coneW = 2.2;
-        var r = srand();
-        var col = r < 0.12 ? '#2563eb' : (r < 0.55 ? '#16a34a' : '#dc2626');
-        ctx.beginPath();
-        ctx.moveTo(rx + px * coneW, ry + py * coneW);
-        ctx.lineTo(rx - px * coneW, ry - py * coneW);
-        ctx.lineTo(rx + dx * coneLen, ry + dy * coneLen);
-        ctx.closePath();
-        ctx.fillStyle = col;
-        ctx.globalAlpha = 0.75;
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-      } else {
-        // RODS — thin gray rectangles
-        var edgeDist = Math.min(angle - retStartAngle, retEndAngle - angle);
-        if (edgeDist < 0.15 && srand() > edgeDist / 0.15) return;
+    ctx.save();
 
-        var rodLen = 10 + srand() * 3;
-        var rodW = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(rx + px * rodW, ry + py * rodW);
-        ctx.lineTo(rx - px * rodW, ry - py * rodW);
-        ctx.lineTo(rx - px * rodW + dx * rodLen, ry - py * rodW + dy * rodLen);
-        ctx.lineTo(rx + px * rodW + dx * rodLen, ry + py * rodW + dy * rodLen);
-        ctx.closePath();
-        ctx.fillStyle = '#888';
-        ctx.globalAlpha = 0.55;
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-
-        // Sparse cones mixed in near fovea
-        if (nearFovea && srand() < 0.3) {
-          var offX = px * 3.5, offY = py * 3.5;
-          var coneLen2 = 7, coneW2 = 1.8;
-          var r2 = srand();
-          var col2 = r2 < 0.12 ? '#2563eb' : (r2 < 0.55 ? '#16a34a' : '#dc2626');
-          ctx.beginPath();
-          ctx.moveTo(rx + offX + px * coneW2, ry + offY + py * coneW2);
-          ctx.lineTo(rx + offX - px * coneW2, ry + offY - py * coneW2);
-          ctx.lineTo(rx + offX + dx * coneLen2, ry + offY + dy * coneLen2);
-          ctx.closePath();
-          ctx.fillStyle = col2;
-          ctx.globalAlpha = 0.6;
-          ctx.fill();
-          ctx.globalAlpha = 1.0;
-        }
-      }
+    // --- RODS: clusters at upper and lower periphery ---
+    // Upper retina (angle ~ -1.2 to -0.7 rad, i.e. above center on the back)
+    var rodAnglesTop = [-1.3, -1.15, -1.0, -0.85, -0.7, -0.55];
+    rodAnglesTop.forEach(function(a) {
+      drawRod(a, -4); drawRod(a, 4);
     });
+    // Lower retina (angle ~ 0.7 to 1.3 rad)
+    var rodAnglesBot = [0.65, 0.8, 0.95, 1.1, 1.25, 1.4];
+    rodAnglesBot.forEach(function(a) {
+      drawRod(a, -4); drawRod(a, 4);
+    });
+    // A few rods on the far back near the top and bottom of the optic nerve
+    var rodAnglesFar = [Math.PI * 2 - 0.85, Math.PI * 2 - 1.0, Math.PI + 1.1, Math.PI + 0.95];
+    rodAnglesFar.forEach(function(a) {
+      drawRod(a, -3); drawRod(a, 3);
+    });
+
+    // --- CONES: dense cluster at fovea ---
+    var fCa = foveaAngle; // center angle of fovea
+    var coneColors = ['#dc2626', '#16a34a', '#2563eb', '#dc2626', '#16a34a',
+                      '#dc2626', '#16a34a', '#dc2626', '#2563eb', '#16a34a',
+                      '#dc2626', '#16a34a'];
+    var coneOffsets = [
+      [0, -7], [0, 0], [0, 7],
+      [0.035, -10], [0.035, -3.5], [0.035, 3.5], [0.035, 10],
+      [-0.035, -10], [-0.035, -3.5], [-0.035, 3.5], [-0.035, 10],
+      [0.07, 0]
+    ];
+    coneOffsets.forEach(function(off, i) {
+      drawCone(fCa + off[0], off[1], coneColors[i % coneColors.length]);
+    });
+
     ctx.restore();
 
     // --- Light rays entering the eye ---
@@ -15352,6 +15347,17 @@ function initEyeAnatomyDiagram() {
     // Aqueous humor
     label('Aqueous humor', corneaX - corneaDepth - 10, cy + corneaExtent + 36, (aqL + aqR) / 2, cy + corneaExtent * 0.4, 'center');
 
+    // Rods — point at the upper-periphery rod cluster
+    var rodLabelAngle = -1.0;
+    var rodPtX = cx + retinaR * Math.cos(rodLabelAngle);
+    var rodPtY = cy + retinaR * Math.sin(rodLabelAngle);
+    label('Rods (~120M)', cx + R * 0.15, cy - R * 0.95, rodPtX, rodPtY, 'center');
+
+    // Cones — point at the fovea cone cluster
+    var conePtX = cx + retinaR * Math.cos(foveaAngle);
+    var conePtY = cy + retinaR * Math.sin(foveaAngle);
+    label('Cones (~6M)', foveaX + 25, foveaY - 50, conePtX, conePtY, 'left');
+
     // Optical axis (dashed line)
     ctx.save();
     ctx.beginPath();
@@ -15369,33 +15375,6 @@ function initEyeAnatomyDiagram() {
     ctx.font = 'bold 12px system-ui';
     ctx.textAlign = 'left';
     ctx.fillText('Cross-Section of the Human Eye', 10, 18);
-
-    // --- Legend: Rods & Cones ---
-    var legX = W - 145, legY = H - 58;
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.04)';
-    ctx.fillRect(legX - 8, legY - 12, 150, 54);
-    ctx.font = 'bold 10px system-ui';
-    ctx.fillStyle = WCOLORS.text;
-    ctx.textAlign = 'left';
-    ctx.fillText('Photoreceptors', legX, legY);
-    // Rod sample
-    ctx.fillStyle = '#888';
-    ctx.fillRect(legX, legY + 7, 3, 12);
-    ctx.font = '10px system-ui';
-    ctx.fillStyle = WCOLORS.text;
-    ctx.fillText('Rods (periphery, ~120M)', legX + 8, legY + 17);
-    // Cone samples
-    var cY = legY + 25;
-    ctx.beginPath(); ctx.moveTo(legX, cY + 10); ctx.lineTo(legX + 3, cY + 10); ctx.lineTo(legX + 1.5, cY); ctx.closePath();
-    ctx.fillStyle = '#2563eb'; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(legX + 6, cY + 10); ctx.lineTo(legX + 9, cY + 10); ctx.lineTo(legX + 7.5, cY); ctx.closePath();
-    ctx.fillStyle = '#16a34a'; ctx.fill();
-    ctx.beginPath(); ctx.moveTo(legX + 12, cY + 10); ctx.lineTo(legX + 15, cY + 10); ctx.lineTo(legX + 13.5, cY); ctx.closePath();
-    ctx.fillStyle = '#dc2626'; ctx.fill();
-    ctx.fillStyle = WCOLORS.text;
-    ctx.fillText('Cones S M L (fovea, ~6M)', legX + 20, cY + 10);
-    ctx.restore();
   }
 
   draw();
