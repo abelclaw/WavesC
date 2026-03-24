@@ -4227,7 +4227,7 @@ function sceneMarkup(type) {
     case "quantum-wavepacket-dispersion":
       return `
         <div class="scene-label">Quantum Wavepacket Spreading</div>
-        <p class="scene-caption">A narrow wavepacket has a wide momentum distribution and spreads fast. A wide wavepacket has a narrow momentum distribution and is stable. This is the uncertainty principle in action: &sigma;<sub>x</sub>&sigma;<sub>k</sub> &ge; &frac12;.</p>
+        <p class="scene-caption">For a free particle, the momentum distribution |&psi;&#x0303;(k)|&sup2; never changes &mdash; each k-component just picks up a phase. But different momenta travel at different speeds, so the position-space packet spreads. Narrower &sigma;<sub>x</sub> means wider &sigma;<sub>k</sub> (uncertainty principle), so more spread in velocities and faster broadening.</p>
         <div class="interactive-scene">
           <canvas id="scene-quantum-wavepacket-dispersion" width="600" height="350"></canvas>
         </div>
