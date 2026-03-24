@@ -17147,11 +17147,6 @@ function initHydrogenEnergyLevels() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // Layout: energy diagram left, vertical spectrum strip right
-  const plotL = 80, plotR = W * 0.62, plotT = 45, plotB = H - 55;
-  const pH = plotB - plotT;
-  const specL = W * 0.70, specR = W - 20, specT = plotT, specB = plotB;
-
   function energy(n) { return -13.6 / (n * n); }
 
   function wavelengthFromTransition(nFrom, nTo) {
@@ -17172,155 +17167,167 @@ function initHydrogenEnergyLevels() {
     const key = seriesSelect ? seriesSelect.value : 'balmer';
     const s = seriesData[key];
     const trans = [];
-    for (let i = 0; i < 4; i++) {
-      const from = s.to + 1 + i;
+    for (var i = 0; i < 4; i++) {
+      var from = s.to + 1 + i;
       if (from > 7) break;
-      trans.push({ from, to: s.to, name: s.names[i], wl: wavelengthFromTransition(from, s.to) });
+      trans.push({ from: from, to: s.to, name: s.names[i], wl: wavelengthFromTransition(from, s.to) });
     }
-    return { transitions: trans, series: s, key };
+    return { transitions: trans, series: s, key: key };
   }
 
-  // Sqrt-compressed scale so upper levels (n=2..7) aren't jammed together
-  function energyToY(E) {
-    var t = (E + 13.6) / 13.6; // 0 at ground, 1 at ionization
-    t = Math.sqrt(t);
-    return plotB - t * pH;
-  }
+  // Fixed y-positions per level (textbook style, not energy-proportional)
+  // so every level has readable spacing regardless of 1/n^2 bunching
+  var levelTop = 50;
+  var levelBot = H - 30;
+  var totalH = levelBot - levelTop;
+
+  var levelYMap = {};
+  levelYMap[1] = levelBot;
+  levelYMap[2] = levelBot - totalH * 0.45;
+  levelYMap[3] = levelBot - totalH * 0.62;
+  levelYMap[4] = levelBot - totalH * 0.74;
+  levelYMap[5] = levelBot - totalH * 0.82;
+  levelYMap[6] = levelBot - totalH * 0.88;
+  levelYMap[7] = levelBot - totalH * 0.92;
+  var yInf = levelTop;
+
+  // Left panel: energy levels + arrows
+  var lvlL = 70;
+  var lvlR = W * 0.48;
+
+  // Right panel: spectrum strip
+  var specL = W * 0.60, specR = W * 0.72;
+  var specT = levelTop, specB = levelBot;
+
+  // Info column
+  var infoL = W * 0.76;
 
   function draw() {
     wClear(ctx, W, H);
-    const { transitions, series } = getTransitions();
+    var data = getTransitions();
+    var transitions = data.transitions;
+    var series = data.series;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Hydrogen Energy Levels \u2014 ' + series.label + ' Series', 15, 28);
+    ctx.fillText(series.label + ' Series', 10, 22);
+    ctx.font = '12px system-ui'; ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('Transitions to n = ' + series.to + ' (' + series.region + ')', 10, 38);
 
-    // Energy axis line
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL - 5, plotT - 5); ctx.lineTo(plotL - 5, plotB + 5); ctx.stroke();
+    // Draw energy levels
+    var maxN = Math.max(5, transitions.length > 0 ? transitions[transitions.length - 1].from : 5);
+    var nMax = Math.min(maxN, 7);
 
-    // Rotated axis label
-    ctx.save();
-    ctx.translate(14, (plotT + plotB) / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Energy (eV)', 0, 0);
-    ctx.restore();
-
-    // Grid ticks
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    [-14, -12, -10, -8, -6, -4, -2, 0].forEach(function(e) {
-      var y = energyToY(e);
-      ctx.fillText(e + '', plotL - 12, y + 4);
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.4;
-      ctx.beginPath(); ctx.moveTo(plotL - 5, y); ctx.lineTo(plotR, y); ctx.stroke();
-    });
-
-    // Energy levels n=1..7
-    var maxN = Math.max(5, transitions[transitions.length - 1].from);
-    for (var n = 1; n <= Math.min(maxN, 7); n++) {
+    for (var n = 1; n <= nMax; n++) {
+      var y = levelYMap[n];
       var E = energy(n);
-      var y = energyToY(E);
 
       ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(plotL, y); ctx.lineTo(plotR, y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(lvlL, y); ctx.lineTo(lvlR, y); ctx.stroke();
 
-      ctx.fillStyle = WCOLORS.text; ctx.font = '13px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText('n = ' + n, plotL - 12, y - 7);
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('n = ' + n, lvlL - 8, y + 5);
 
       ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(E.toFixed(2) + ' eV', plotR + 6, y + 4);
+      ctx.fillText(E.toFixed(2) + ' eV', lvlR + 8, y + 5);
     }
 
-    // Ionization level
-    var yInf = energyToY(0);
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
-    ctx.beginPath(); ctx.moveTo(plotL, yInf); ctx.lineTo(plotR, yInf); ctx.stroke();
+    // Ionization level (dashed)
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([6, 4]);
+    ctx.beginPath(); ctx.moveTo(lvlL, yInf); ctx.lineTo(lvlR, yInf); ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('n = \u221E  (0 eV)', plotR + 6, yInf + 4);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '12px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText('n = \u221E', lvlL - 8, yInf + 5);
+    ctx.textAlign = 'left';
+    ctx.fillText('0 eV', lvlR + 8, yInf + 5);
 
     // Transition arrows
-    var arrowZone = plotR - plotL;
-    var arrowStart = plotL + arrowZone * 0.25;
-    var arrowSpacing = arrowZone * 0.14;
+    var arrowCount = transitions.length;
+    var arrowRegionL = lvlL + 20;
+    var arrowRegionR = lvlR - 20;
+    var arrowSpacing = arrowCount > 1 ? (arrowRegionR - arrowRegionL) / (arrowCount - 1) : 0;
+    var arrowStartX = arrowCount > 1 ? arrowRegionL : (arrowRegionL + arrowRegionR) / 2;
 
     transitions.forEach(function(trans, i) {
-      var yFrom = energyToY(energy(trans.from));
-      var yTo = energyToY(energy(trans.to));
-      var x = arrowStart + i * arrowSpacing;
-      var color = (trans.wl >= 380 && trans.wl <= 780) ? wavelengthToCSS(trans.wl) : WCOLORS.textDim;
+      var yFrom = levelYMap[trans.from];
+      var yTo = levelYMap[trans.to];
+      var x = arrowStartX + i * arrowSpacing;
+      var color = (trans.wl >= 380 && trans.wl <= 780) ? wavelengthToCSS(trans.wl) : WCOLORS.teal;
 
-      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(x, yFrom); ctx.lineTo(x, yTo + 8); ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.moveTo(x, yFrom - 2); ctx.lineTo(x, yTo + 14); ctx.stroke();
+      ctx.globalAlpha = 1.0;
 
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.moveTo(x, yTo);
-      ctx.lineTo(x - 5, yTo + 12);
-      ctx.lineTo(x + 5, yTo + 12);
+      ctx.moveTo(x, yTo + 2);
+      ctx.lineTo(x - 6, yTo + 14);
+      ctx.lineTo(x + 6, yTo + 14);
       ctx.closePath(); ctx.fill();
 
       ctx.fillStyle = color; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(trans.name, x, yFrom - 8);
-      ctx.font = '11px system-ui';
-      ctx.fillText(trans.wl + ' nm', x, yFrom - 22);
+      ctx.fillText(trans.name, x, yFrom - 10);
     });
 
-    // Vertical spectrum strip on right
+    // Visible spectrum strip
     var specW = specR - specL;
     var specH = specB - specT;
 
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#111';
     ctx.fillRect(specL, specT, specW, specH);
 
-    // Faint continuous spectrum background
     for (var py = 0; py < specH; py++) {
       var wl = 380 + (py / specH) * 400;
       ctx.fillStyle = wavelengthToCSS(wl);
-      ctx.globalAlpha = 0.15;
+      ctx.globalAlpha = 0.12;
       ctx.fillRect(specL, specT + py, specW, 1);
     }
     ctx.globalAlpha = 1.0;
 
-    // Bright emission lines
+    // Emission lines with glow
     transitions.forEach(function(trans) {
       if (trans.wl >= 380 && trans.wl <= 780) {
         var py2 = ((trans.wl - 380) / 400) * specH;
-        var lineColor = wavelengthToCSS(trans.wl);
-        ctx.shadowColor = lineColor; ctx.shadowBlur = 8;
-        ctx.fillStyle = lineColor;
-        ctx.fillRect(specL + 2, specT + py2 - 1.5, specW - 4, 3);
+        var lc = wavelengthToCSS(trans.wl);
+        ctx.shadowColor = lc; ctx.shadowBlur = 12;
+        ctx.fillStyle = lc;
+        ctx.fillRect(specL + 1, specT + py2 - 2, specW - 2, 4);
         ctx.shadowBlur = 0;
-        ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-        ctx.fillText(trans.name + ' ' + trans.wl + ' nm', specL - 4, specT + py2 + 4);
       }
     });
 
-    // Spectrum wavelength labels
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+    ctx.strokeRect(specL, specT, specW, specH);
+
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('380 nm', (specL + specR) / 2, specT - 5);
-    ctx.fillText('780 nm', (specL + specR) / 2, specB + 13);
+    ctx.fillText('380', (specL + specR) / 2, specT - 4);
+    ctx.fillText('780 nm', (specL + specR) / 2, specB + 12);
 
-    // Rotated spectrum title
-    ctx.save();
-    ctx.translate(specR + 14, (specT + specB) / 2);
-    ctx.rotate(Math.PI / 2);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(series.region === 'visible' ? 'Emission Spectrum' : series.label + ' (' + series.region + ')', 0, 0);
-    ctx.restore();
+    // Info panel: transition details
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Transitions', infoL, specT + 14);
 
-    // Note for non-visible series
-    if (series.region !== 'visible') {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('Lines outside', (specL + specR) / 2, specB + 26);
-      ctx.fillText('visible range', (specL + specR) / 2, specB + 39);
-    }
+    transitions.forEach(function(trans, i) {
+      var ty = specT + 40 + i * 52;
+      var color = (trans.wl >= 380 && trans.wl <= 780) ? wavelengthToCSS(trans.wl) : WCOLORS.teal;
+
+      ctx.fillStyle = color;
+      ctx.fillRect(infoL, ty - 8, 14, 14);
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(trans.name, infoL + 20, ty + 4);
+
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
+      ctx.fillText(trans.from + ' \u2192 ' + trans.to, infoL + 20, ty + 19);
+      ctx.fillText(trans.wl + ' nm', infoL + 20, ty + 33);
+    });
   }
 
   if (seriesSelect) seriesSelect.addEventListener('change', draw);
   draw();
 }
+
 
 // =========================================================================
 // 19. Quantum Wavepacket Dispersion
