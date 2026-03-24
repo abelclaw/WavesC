@@ -16873,16 +16873,6 @@ function initDoubleSlitPhotonBuildup() {
       ctx.fillStyle = 'rgba(37,99,235,' + (0.1 + intensity * 0.55) + ')';
       ctx.fillRect(histX, by, bh, binH - 0.5);
     }
-    // Theoretical curve
-    ctx.strokeStyle = 'rgba(37,99,235,0.35)'; ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    for (var i = 0; i <= nH; i++) {
-      var yN = i / nH, p = currentProb(yN);
-      var px = histX + p * histW, py = regionT + yN * regionH;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    }
-    ctx.stroke(); ctx.setLineDash([]);
   }
 
   function drawFlyingElectrons() {
