@@ -270,6 +270,7 @@ function initSceneInteractives() {
   initBlackbodyPlanckianLocus();
   initHsvColorExplorer();
   initAdditiveSubtractiveMixing();
+  initEyeAnatomyDiagram();
   initRodConeSensitivity();
   // Chapter 18 - Antennas
   initMonopoleRadiationPattern();
@@ -8875,19 +8876,17 @@ function initThinFilmInterference() {
     const d = parseFloat(thickSlider?.value || 250);
     document.getElementById('thinfilm-thickness-val')?.replaceChildren(document.createTextNode(d.toFixed(0)));
 
-    const midX = W * 0.48;
+    const midX = W * 0.52;
 
-    // Film height scales with thickness: 12px at 50nm, 140px at 800nm
-    const filmMinH = 12, filmMaxH = 140;
+    // Film height scales with thickness: 20px at 50nm, 160px at 800nm
+    const filmMinH = 20, filmMaxH = 160;
     const filmH = filmMinH + (filmMaxH - filmMinH) * (d - 50) / (800 - 50);
     const filmCenterY = H * 0.52;
     const filmT = filmCenterY - filmH / 2;
     const filmB = filmCenterY + filmH / 2;
-    const filmL = 18, filmR = midX - 20;
+    const filmL = 10, filmR = midX - 10;
     const filmW = filmR - filmL;
 
-    const beamX = filmL + filmW * 0.35;
-    const beamWidth = 14;
     const [avgR, avgG, avgB] = getReflectedColor(d);
     const reflColor = `rgb(${avgR},${avgG},${avgB})`;
 
@@ -8907,9 +8906,9 @@ function initThinFilmInterference() {
 
     // --- Film (height scales with d) ---
     const filmGrad = ctx.createLinearGradient(0, filmT, 0, filmB);
-    filmGrad.addColorStop(0, 'rgba(15, 118, 110, 0.25)');
-    filmGrad.addColorStop(0.5, 'rgba(15, 118, 110, 0.10)');
-    filmGrad.addColorStop(1, 'rgba(15, 118, 110, 0.25)');
+    filmGrad.addColorStop(0, 'rgba(15, 118, 110, 0.22)');
+    filmGrad.addColorStop(0.5, 'rgba(15, 118, 110, 0.08)');
+    filmGrad.addColorStop(1, 'rgba(15, 118, 110, 0.22)');
     ctx.fillStyle = filmGrad;
     ctx.fillRect(filmL, filmT, filmW, filmH);
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
@@ -8920,12 +8919,12 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('n = 1.0 (air)', filmL + 2, filmT - 8);
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui';
-    if (filmH > 28) {
+    if (filmH > 30) {
       ctx.textAlign = 'center';
-      ctx.fillText('n = ' + nFilm.toFixed(1), (filmL + filmR) / 2, filmCenterY + 4);
+      ctx.fillText('n = ' + nFilm.toFixed(1) + ' (film)', (filmL + filmR) / 2, filmCenterY + 4);
     } else {
-      ctx.textAlign = 'left';
-      ctx.fillText('n = ' + nFilm.toFixed(1), filmR + 16, filmCenterY + 4);
+      ctx.textAlign = 'right';
+      ctx.fillText('n=' + nFilm.toFixed(1), filmR - 4, filmCenterY + 4);
     }
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('n = 1.5 (glass)', filmL + 2, Math.min(filmB + 16, H - 12));
@@ -8939,103 +8938,171 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('d=' + d.toFixed(0) + 'nm', dimX + 4, filmCenterY + 4);
 
-    // --- Incoming white light beam (rainbow stripes) ---
-    const inTopY = 16;
-    const hitY = filmT;
+    // ===================== RAY GEOMETRY =====================
+    // Angle of incidence
+    const thetaI = 0.45; // ~26 degrees
+    const thetaR = Math.asin(Math.sin(thetaI) / nFilm); // Snell refracted angle
+
+    // Point A: incident ray hits top surface
+    const Ax = filmL + filmW * 0.30;
+    const Ay = filmT;
+
+    // Point B: refracted ray hits bottom surface
+    const Bx = Ax + filmH * Math.tan(thetaR);
+    const By = filmB;
+
+    // Point C: reflected ray returns to top surface
+    const Cx = Bx + filmH * Math.tan(thetaR);
+    const Cy = filmT;
+
+    // Incoming ray extends above film
+    const inLen = filmT - 16;
+    const inStartX = Ax - inLen * Math.tan(thetaI);
+    const inStartY = 16;
+
+    // R1 goes up-right from A at reflection angle
+    const r1EndX = Ax + inLen * Math.tan(thetaI);
+    const r1EndY = 16;
+
+    // R2 exits from C, parallel to R1
+    const r2EndX = Cx + inLen * Math.tan(thetaI);
+    const r2EndY = 16;
+
+    // --- Draw incoming white light beam ---
+    const beamWidth = 16;
     const rainbowWLs = [650, 600, 570, 530, 490, 460, 420];
     const nStripes = rainbowWLs.length;
+    // Perpendicular to ray direction for stripe offsets
+    const inDx = Ax - inStartX, inDy = Ay - inStartY;
+    const inL = Math.sqrt(inDx * inDx + inDy * inDy);
+    const inNx = -inDy / inL, inNy = inDx / inL;
     for (let i = 0; i < nStripes; i++) {
-      const frac = (i + 0.5) / nStripes;
-      const sx = beamX - beamWidth / 2 + beamWidth * frac;
+      const off = ((i + 0.5) / nStripes - 0.5) * beamWidth;
       const [cr, cg, cb] = wavelengthToRGB(rainbowWLs[i]);
-      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.55)`;
+      ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.5)`;
       ctx.lineWidth = beamWidth / nStripes + 0.5;
-      ctx.beginPath(); ctx.moveTo(sx - 6, inTopY); ctx.lineTo(sx, hitY); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(inStartX + inNx * off, inStartY + inNy * off);
+      ctx.lineTo(Ax + inNx * off, Ay + inNy * off);
+      ctx.stroke();
     }
     // White glow
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = beamWidth * 0.4;
-    ctx.beginPath(); ctx.moveTo(beamX - 3, inTopY); ctx.lineTo(beamX, hitY); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = beamWidth * 0.3;
+    ctx.beginPath(); ctx.moveTo(inStartX, inStartY); ctx.lineTo(Ax, Ay); ctx.stroke();
 
     // Animated wave fronts in incoming beam
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(beamX - beamWidth / 2 - 8, inTopY);
-    ctx.lineTo(beamX - beamWidth / 2, hitY);
-    ctx.lineTo(beamX + beamWidth / 2, hitY);
-    ctx.lineTo(beamX + beamWidth / 2 + 2, inTopY);
+    ctx.moveTo(inStartX + inNx * beamWidth * 0.7, inStartY + inNy * beamWidth * 0.7);
+    ctx.lineTo(Ax + inNx * beamWidth * 0.7, Ay + inNy * beamWidth * 0.7);
+    ctx.lineTo(Ax - inNx * beamWidth * 0.7, Ay - inNy * beamWidth * 0.7);
+    ctx.lineTo(inStartX - inNx * beamWidth * 0.7, inStartY - inNy * beamWidth * 0.7);
     ctx.closePath(); ctx.clip();
-    const wfSpacing = 12;
-    const beamLen = hitY - inTopY;
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
-    for (let yy = (t * 40) % wfSpacing; yy < beamLen; yy += wfSpacing) {
-      const fy = inTopY + yy;
-      const frac2 = yy / beamLen;
-      const cx = beamX - 3 * (1 - frac2);
-      ctx.beginPath(); ctx.moveTo(cx - beamWidth * 0.6, fy); ctx.lineTo(cx + beamWidth * 0.6, fy); ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('white light', beamX - 3, inTopY - 2);
-
-    // --- Reflected beam (colored) ---
-    const reflEndX = beamX + 55;
-    const reflTopY = 16;
-    ctx.strokeStyle = reflColor; ctx.lineWidth = beamWidth * 0.65; ctx.globalAlpha = 0.75;
-    ctx.beginPath(); ctx.moveTo(beamX, hitY); ctx.lineTo(reflEndX, reflTopY); ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Animated wave fronts in reflected beam
-    ctx.save();
-    const rDx = reflEndX - beamX, rDy = reflTopY - hitY;
-    const rLen = Math.sqrt(rDx * rDx + rDy * rDy);
-    const rnx = -rDy / rLen, rny = rDx / rLen;
-    ctx.beginPath();
-    ctx.moveTo(beamX - 12, hitY - 12); ctx.lineTo(reflEndX - 12, reflTopY - 12);
-    ctx.lineTo(reflEndX + 15, reflTopY + 8); ctx.lineTo(beamX + 15, hitY + 8);
-    ctx.closePath(); ctx.clip();
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-    for (let s = (t * 40) % 10; s < rLen; s += 10) {
-      const f3 = s / rLen;
-      const px = beamX + rDx * f3, py = hitY + rDy * f3;
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+    for (let s = (t * 40) % 12; s < inL; s += 12) {
+      const frac = s / inL;
+      const px = inStartX + inDx * frac, py = inStartY + inDy * frac;
       ctx.beginPath();
-      ctx.moveTo(px + rnx * beamWidth * 0.45, py + rny * beamWidth * 0.45);
-      ctx.lineTo(px - rnx * beamWidth * 0.45, py - rny * beamWidth * 0.45);
+      ctx.moveTo(px + inNx * beamWidth * 0.6, py + inNy * beamWidth * 0.6);
+      ctx.lineTo(px - inNx * beamWidth * 0.6, py - inNy * beamWidth * 0.6);
       ctx.stroke();
     }
     ctx.restore();
 
-    ctx.fillStyle = reflColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('reflected', reflEndX + 4, reflTopY + 10);
-    ctx.font = '10px system-ui';
-    ctx.fillText(Math.round(bestWL) + ' nm', reflEndX + 4, reflTopY + 23);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('white light', inStartX - 10, inStartY - 2);
 
-    // Ray paths inside film (dashed)
-    const ray2X = beamX + 8 * (filmH / 50);
-    ctx.strokeStyle = 'rgba(15,118,110,0.3)'; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(beamX, filmT); ctx.lineTo(ray2X, filmB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(ray2X, filmB); ctx.lineTo(beamX + 16 * (filmH / 50), filmT); ctx.stroke();
+    // --- R1: reflection from top surface (red) ---
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(Ax, Ay); ctx.lineTo(r1EndX, r1EndY); ctx.stroke();
+    // Arrowhead on R1
+    const r1ux = (r1EndX - Ax) / inL, r1uy = (r1EndY - Ay) / inL;
+    const ar1X = Ax + (r1EndX - Ax) * 0.55, ar1Y = Ay + (r1EndY - Ay) * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(ar1X, ar1Y);
+    ctx.lineTo(ar1X - 6 * r1ux + 4 * r1uy, ar1Y - 6 * r1uy - 4 * r1ux);
+    ctx.moveTo(ar1X, ar1Y);
+    ctx.lineTo(ar1X - 6 * r1ux - 4 * r1uy, ar1Y - 6 * r1uy + 4 * r1ux);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('R\u2081', r1EndX + 3, r1EndY + 14);
+    ctx.font = '9px system-ui';
+    ctx.fillText('(\u03c0 shift)', r1EndX + 3, r1EndY + 26);
+
+    // --- Refracted ray inside film: A -> B ---
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.moveTo(Ax, Ay); ctx.lineTo(Bx, By); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // --- Reflection at bottom: B -> C ---
+    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.moveTo(Bx, By); ctx.lineTo(Cx, Cy); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Dots at reflection points
+    ctx.fillStyle = WCOLORS.blue;
+    ctx.beginPath(); ctx.arc(Ax, Ay, 3, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(Bx, By, 3, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(Cx, Cy, 3, 0, 2 * Math.PI); ctx.fill();
+
+    // --- R2: exits from C, parallel to R1 (amber) ---
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(Cx, Cy); ctx.lineTo(r2EndX, r2EndY); ctx.stroke();
+    // Arrowhead on R2
+    const r2ux = (r2EndX - Cx) / inL, r2uy = (r2EndY - Cy) / inL;
+    const ar2X = Cx + (r2EndX - Cx) * 0.55, ar2Y = Cy + (r2EndY - Cy) * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(ar2X, ar2Y);
+    ctx.lineTo(ar2X - 6 * r2ux + 4 * r2uy, ar2Y - 6 * r2uy - 4 * r2ux);
+    ctx.moveTo(ar2X, ar2Y);
+    ctx.lineTo(ar2X - 6 * r2ux - 4 * r2uy, ar2Y - 6 * r2uy + 4 * r2ux);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('R\u2082', r2EndX + 3, r2EndY + 14);
+    ctx.font = '9px system-ui';
+    ctx.fillText('(no shift)', r2EndX + 3, r2EndY + 26);
+
+    // --- Convergence: R1 and R2 meet at eye ---
+    const eyeX = (r1EndX + r2EndX) / 2;
+    const eyeY = 6;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = reflColor; ctx.lineWidth = 3;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(r1EndX, r1EndY); ctx.lineTo(eyeX, eyeY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(r2EndX, r2EndY); ctx.lineTo(eyeX, eyeY); ctx.stroke();
     ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.restore();
 
-    // Transmitted beam (dim)
-    ctx.strokeStyle = 'rgba(180,180,180,0.3)'; ctx.lineWidth = beamWidth * 0.4;
-    ctx.beginPath(); ctx.moveTo(ray2X, filmB); ctx.lineTo(ray2X + 4, H - 8); ctx.stroke();
+    // Color circle at convergence showing interference result
+    ctx.fillStyle = reflColor;
+    ctx.beginPath(); ctx.arc(eyeX, eyeY, 14, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round(bestWL) + 'nm', eyeX, eyeY + 25);
+
+    // --- Transmitted beam (dim) ---
+    const transEndY = Math.min(filmB + 50, H - 14);
+    ctx.strokeStyle = 'rgba(180,180,180,0.3)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(Bx, By); ctx.lineTo(Bx + (transEndY - By) * Math.tan(thetaI), transEndY); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('transmitted', ray2X + 8, H - 12);
+    ctx.fillText('transmitted', Bx + (transEndY - By) * Math.tan(thetaI) + 6, transEndY);
 
-    // Path difference annotation
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('2nd = ' + (2 * nFilm * d).toFixed(0) + ' nm  (+λ/2 shift)', filmL, H - 5);
+    // --- Path difference annotation ---
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Path diff \u2248 2nd = ' + (2 * nFilm * d).toFixed(0) + ' nm', filmL, H - 18);
+    ctx.fillText('R\u2081 gets \u03c0 phase shift (n\u2081 < n\u2082)', filmL, H - 4);
 
     // ===================== Right half: spectrum =====================
-    const specL = midX + 8, specR = W - 10;
+    const specL = midX + 14, specR = W - 10;
     const specW2 = specR - specL;
     const wlMin = 380, wlMax = 780;
 
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Reflected spectrum', (specL + specR) / 2, 28);
 
-    // Input spectrum (all wavelengths)
+    // Input spectrum
     const barY1 = 38;
     for (let i = 0; i < specW2; i++) {
       const wl = wlMin + (wlMax - wlMin) * i / specW2;
@@ -9072,7 +9139,7 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('eye sees', specL - 4, swY + 15);
 
-    // Reflectance curve R(lambda)
+    // Reflectance curve
     const plotT2 = swY + 34;
     const plotB2 = H - 16;
     const plotH2 = plotB2 - plotT2;
@@ -9082,11 +9149,10 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.moveTo(specL, plotB2); ctx.lineTo(specR, plotB2); ctx.stroke();
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('λ (nm)', (specL + specR) / 2, plotB2 + 13);
+    ctx.fillText('\u03bb (nm)', (specL + specR) / 2, plotB2 + 13);
     ctx.save(); ctx.translate(specL - 8, (plotT2 + plotB2) / 2); ctx.rotate(-Math.PI / 2);
     ctx.fillText('R', 0, 0); ctx.restore();
 
-    // Grid + color background
     for (let wl = 400; wl <= 750; wl += 50) {
       const x = specL + (wl - wlMin) / (wlMax - wlMin) * specW2;
       ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
@@ -9101,7 +9167,6 @@ function initThinFilmInterference() {
       ctx.fillRect(specL + i, plotT2, 1, plotH2);
     }
 
-    // Reflectance curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= specW2; i++) {
@@ -9113,7 +9178,7 @@ function initThinFilmInterference() {
     }
     ctx.stroke();
 
-    // Constructive peak markers
+    // Peak markers
     ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     for (let m = 1; m <= 10; m++) {
       const wlPeak = 2 * nFilm * d / m;
