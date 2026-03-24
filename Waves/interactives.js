@@ -16832,16 +16832,10 @@ function initDoubleSlitPhotonBuildup() {
   }
 
   function drawScreen() {
-    var sg = ctx.createLinearGradient(screenX - 4, 0, screenX + 4, 0);
-    sg.addColorStop(0, 'rgba(80,100,90,0.12)');
-    sg.addColorStop(0.5, 'rgba(150,170,160,0.08)');
-    sg.addColorStop(1, 'rgba(80,100,90,0.12)');
-    ctx.fillStyle = sg;
-    ctx.fillRect(screenX - 4, regionT - 2, 8, regionH + 4);
-    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 1;
+    // Thin detector line
+    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(screenX - 4, regionT - 2); ctx.lineTo(screenX - 4, regionB + 2);
-    ctx.moveTo(screenX + 4, regionT - 2); ctx.lineTo(screenX + 4, regionB + 2);
+    ctx.moveTo(screenX, regionT - 2); ctx.lineTo(screenX, regionB + 2);
     ctx.stroke();
 
     // Detected dots
@@ -16996,10 +16990,10 @@ function initDoubleSlitPhotonBuildup() {
     ctx.fillText(rateLabel, sldrL + sldrW + 10, ctrlY1 + 4);
 
     drawSlider('Slit sep. (d)', ctrlY2, slitSepNorm);
-    ctx.fillText(getDParam().toFixed(1), sldrL + sldrW + 10, ctrlY2 + 4);
+    ctx.fillText(getDParam().toFixed(1), sldrL + sldrW + 20, ctrlY2 + 4);
 
     drawSlider('Slit width (a)', ctrlY3, slitWidthNorm);
-    ctx.fillText(getAParam().toFixed(1), sldrL + sldrW + 10, ctrlY3 + 4);
+    ctx.fillText(getAParam().toFixed(1), sldrL + sldrW + 20, ctrlY3 + 4);
 
     // Reset
     ctx.fillStyle = WCOLORS.red;
