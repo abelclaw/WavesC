@@ -7850,32 +7850,40 @@ function initPolarization() {
   const axisLen = W * 0.30;
   const amp = 48;
 
-  // View angles (radians) - azimuth rotates around vertical, elevation tilts up/down
-  let azimuth = -0.55;   // initial view angle
-  let elevation = 0.35;
+  // View angles (radians)
+  let azimuth = -0.55;   // orbit left/right
+  let elevation = 0.35;  // tilt up/down
+  let roll = 0;          // rotate around propagation axis (shift-drag)
 
   // Mouse drag state
-  let dragging = false, dragX = 0, dragY = 0, dragAz = 0, dragEl = 0;
+  let dragging = false, shiftDrag = false;
+  let dragX = 0, dragY = 0, dragAz = 0, dragEl = 0, dragRoll = 0;
 
   canvas.addEventListener('mousedown', (e) => {
     dragging = true;
+    shiftDrag = e.shiftKey;
     dragX = e.clientX; dragY = e.clientY;
-    dragAz = azimuth; dragEl = elevation;
+    dragAz = azimuth; dragEl = elevation; dragRoll = roll;
     canvas.style.cursor = 'grabbing';
   });
   window.addEventListener('mousemove', (e) => {
     if (!dragging) return;
-    azimuth = dragAz + (e.clientX - dragX) * 0.008;
-    elevation = Math.max(-1.2, Math.min(1.2, dragEl - (e.clientY - dragY) * 0.008));
+    if (shiftDrag) {
+      roll = dragRoll + (e.clientX - dragX) * 0.008;
+      elevation = Math.max(-1.2, Math.min(1.2, dragEl - (e.clientY - dragY) * 0.008));
+    } else {
+      azimuth = dragAz + (e.clientX - dragX) * 0.008;
+      elevation = Math.max(-1.2, Math.min(1.2, dragEl - (e.clientY - dragY) * 0.008));
+    }
   });
   window.addEventListener('mouseup', () => {
     if (dragging) { dragging = false; canvas.style.cursor = 'grab'; }
   });
 
-  // Touch support
+  // Touch: one finger = orbit, two fingers = tilt/roll
   canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length !== 1) return;
-    dragging = true;
+    dragging = true; shiftDrag = false;
     dragX = e.touches[0].clientX; dragY = e.touches[0].clientY;
     dragAz = azimuth; dragEl = elevation;
     e.preventDefault();
@@ -7889,20 +7897,37 @@ function initPolarization() {
   canvas.addEventListener('touchend', () => { dragging = false; });
   canvas.style.cursor = 'grab';
 
-  // Compute projection vectors from view angles
-  // 3D axes: k = propagation (z), E-up (y), B-side (x)
+  // Proper 3D projection from azimuth, elevation, roll
+  // 3D world: k along z, E along y, B along x
+  // We apply: roll around z, then elevation around x, then azimuth around y
   function getProjection() {
     const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
     const ce = Math.cos(elevation), se = Math.sin(elevation);
-    // Camera looks along -z_cam. We rotate the 3D axes and project onto screen (x_screen, y_screen).
-    // k-axis (z): projects to (ca*ce, sa*ce) roughly
-    // E-axis (y): projects to (-sa*se_partial, ce) roughly
-    // B-axis (x): perpendicular
-    return {
-      kx: ca,          ky: sa * se,
-      ex: sa * 0.05,   ey: -ce,
-      bx: -sa * ce,    by: -se * 0.6 + ca * 0.15
-    };
+    const cr = Math.cos(roll), sr = Math.sin(roll);
+
+    // Build rotation matrix R = Ry(az) * Rx(el) * Rz(roll)
+    // Then project 3D -> 2D by taking (x_screen, y_screen) components
+    // x_screen = first row, y_screen = second row of the composed rotation
+
+    // Column for k-axis (world z): Ry(az)*Rx(el)*[0,0,1]
+    const kx = ca * ce;
+    const ky = se;
+
+    // Column for E-axis (world y): Ry(az)*Rx(el)*Rz(roll)*[0,1,0]
+    // Rz(roll)*[0,1,0] = [-sr, cr, 0]
+    // Rx(el)*[-sr, cr, 0] = [-sr, cr*ce, cr*se]
+    // Ry(az)*[-sr, cr*ce, cr*se] = [-sr*ca + cr*se*sa, cr*ce, ...]
+    const ex = -sr * ca + cr * se * sa;
+    const ey = -cr * ce;
+
+    // Column for B-axis (world x): Ry(az)*Rx(el)*Rz(roll)*[1,0,0]
+    // Rz(roll)*[1,0,0] = [cr, sr, 0]
+    // Rx(el)*[cr, sr, 0] = [cr, sr*ce, sr*se]
+    // Ry(az)*[cr, sr*ce, sr*se] = [cr*ca + sr*se*sa, sr*ce, ...]
+    const bx = -cr * ca - sr * se * sa;
+    const by = -sr * ce;
+
+    return { kx, ky, ex, ey, bx, by };
   }
 
   function to2D(kk, e, b) {

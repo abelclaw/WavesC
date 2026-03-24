@@ -3959,7 +3959,7 @@ function sceneMarkup(type) {
     case "em-polarization":
       return `
         <div class="scene-label">Polarization</div>
-        <p class="scene-caption">E and B fields propagating as a plane wave. Switch between linear and circular polarization.</p>
+        <p class="scene-caption">E and B fields propagating as a plane wave. Switch between linear and circular polarization. Drag to rotate; shift-drag to tilt.</p>
         <div class="interactive-scene">
           <canvas id="scene-em-polarization" width="600" height="340"></canvas>
           <div class="scene-controls">
