@@ -4206,9 +4206,9 @@ function sceneMarkup(type) {
     case "double-slit-photon-buildup":
       return `
         <div class="scene-label">Double-Slit Photon Buildup</div>
-        <p class="scene-caption">Individual photons are emitted from a laser, pass through two narrow slits, and land on the detector screen. Over time the interference pattern emerges — even though each photon arrives as a single dot.</p>
+        <p class="scene-caption">Watch individual photons travel from the source, through the slits, to the detector. Drag the red blocker onto a slit to see the pattern change from interference to single-slit diffraction. Adjust slit separation and width.</p>
         <div class="interactive-scene">
-          <canvas id="scene-double-slit-photon-buildup" width="600" height="400"></canvas>
+          <canvas id="scene-double-slit-photon-buildup" width="600" height="460"></canvas>
         </div>
       `;
     case "hydrogen-energy-levels":
