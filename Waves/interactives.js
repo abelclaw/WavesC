@@ -7633,33 +7633,67 @@ function initPhononPolarizations() {
 
   // 3D cubic lattice: nx along propagation (k), ny into screen, nz up
   const nx = 8, ny = 4, nz = 4;
-  const spacing = 38; // lattice constant in projected pixels
+  const spacing = 38;
   const amp = spacing * 0.30;
-  const kWave = 2 * Math.PI / (spacing * 3.2); // wavevector along x
+  const kWave = 2 * Math.PI / (spacing * 3.2);
   const omega = 2.0;
   const atomR = 4.5;
 
-  // Isometric projection: 3D (x right, y into screen, z up) -> 2D screen
-  // x-axis projects right-and-slightly-down, y-axis projects left-and-down, z-axis projects straight up
-  const iso = {
-    xx: 0.82, xy: -0.32,   // x-axis -> screen
-    yx: -0.48, yy: -0.22,  // y-axis -> screen (into screen = left and down)
-    zx: 0.0, zy: -0.85     // z-axis -> screen (up)
-  };
+  // Camera rotation angles (azimuth and elevation)
+  let azimuth = -0.55;   // rotation around z-axis (horizontal drag)
+  let elevation = 0.45;  // rotation around x-axis (vertical drag)
 
-  // Center of projection
-  const cx = W * 0.52, cy = H * 0.55;
+  // Mouse drag state
+  let dragging = false;
+  let lastMX = 0, lastMY = 0;
 
-  function project(x3, y3, z3) {
-    return {
-      x: cx + x3 * iso.xx + y3 * iso.yx + z3 * iso.zx,
-      y: cy + x3 * iso.xy + y3 * iso.yy + z3 * iso.zy
-    };
-  }
+  canvas.style.cursor = 'grab';
+  canvas.addEventListener('mousedown', (e) => {
+    dragging = true; lastMX = e.clientX; lastMY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastMX, dy = e.clientY - lastMY;
+    azimuth += dx * 0.007;
+    elevation = Math.max(-1.2, Math.min(1.2, elevation - dy * 0.007));
+    lastMX = e.clientX; lastMY = e.clientY;
+  });
+  window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
 
-  // Depth for sorting (higher = farther from viewer)
-  function depth(x3, y3, z3) {
-    return -x3 * 0.3 + y3 * 0.9 - z3 * 0.2;
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      dragging = true;
+      lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+      e.preventDefault();
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!dragging || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - lastMX, dy = e.touches[0].clientY - lastMY;
+    azimuth += dx * 0.007;
+    elevation = Math.max(-1.2, Math.min(1.2, elevation - dy * 0.007));
+    lastMX = e.touches[0].clientX; lastMY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = false; });
+
+  const cx = W * 0.52, cy = H * 0.50;
+
+  // Rotate a 3D point by azimuth (around z) then elevation (around x')
+  // Returns { sx, sy, depth } for screen coords and sorting
+  function rotate(x3, y3, z3) {
+    const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
+    const ce = Math.cos(elevation), se = Math.sin(elevation);
+    // Rotate around z-axis (azimuth)
+    const rx = x3 * ca - y3 * sa;
+    const ry = x3 * sa + y3 * ca;
+    const rz = z3;
+    // Rotate around x-axis (elevation)
+    const fy = ry * ce - rz * se;
+    const fz = ry * se + rz * ce;
+    return { sx: cx + rx, sy: cy - fz, depth: fy };
   }
 
   function tick() {
@@ -7703,10 +7737,9 @@ function initPhononPolarizations() {
           }
 
           const x3 = bx + dx, y3 = by + dy, z3 = bz + dz;
-          const p = project(x3, y3, z3);
-          const d = depth(x3, y3, z3);
+          const r = rotate(x3, y3, z3);
 
-          atoms.push({ ix, iy, iz, bx, by, bz, x3, y3, z3, sx: p.x, sy: p.y, depth: d, disp: Math.sin(phase) });
+          atoms.push({ ix, iy, iz, bx, by, bz, x3, y3, z3, sx: r.sx, sy: r.sy, depth: r.depth, disp: Math.sin(phase) });
         }
       }
     }
@@ -7770,39 +7803,32 @@ function initPhononPolarizations() {
     }
     ctx.globalAlpha = 1;
 
-    // Draw k-arrow along propagation direction
-    const kStart = project(-(nx / 2 + 1) * spacing, 0, 0);
-    const kEnd = project((nx / 2 + 1.5) * spacing, 0, 0);
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
-    // Arrowhead
-    const aLen = 7, aAng = 0.35;
-    const dx = kEnd.x - kStart.x, dy = kEnd.y - kStart.y;
-    const ang = Math.atan2(dy, dx);
-    ctx.beginPath();
-    ctx.moveTo(kEnd.x, kEnd.y);
-    ctx.lineTo(kEnd.x - aLen * Math.cos(ang - aAng), kEnd.y - aLen * Math.sin(ang - aAng));
-    ctx.moveTo(kEnd.x, kEnd.y);
-    ctx.lineTo(kEnd.x - aLen * Math.cos(ang + aAng), kEnd.y - aLen * Math.sin(ang + aAng));
-    ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('k', kEnd.x + 4, kEnd.y + 4);
+    // Draw axes using rotate()
+    function drawArrow(from3, to3, label, color, bold) {
+      const a = rotate(from3[0], from3[1], from3[2]);
+      const b = rotate(to3[0], to3[1], to3[2]);
+      ctx.strokeStyle = color; ctx.lineWidth = bold ? 1.2 : 0.8;
+      if (!bold) ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
+      ctx.setLineDash([]);
+      // Arrowhead
+      const adx = b.sx - a.sx, ady = b.sy - a.sy;
+      const ang = Math.atan2(ady, adx);
+      ctx.beginPath();
+      ctx.moveTo(b.sx, b.sy);
+      ctx.lineTo(b.sx - 7 * Math.cos(ang - 0.35), b.sy - 7 * Math.sin(ang - 0.35));
+      ctx.moveTo(b.sx, b.sy);
+      ctx.lineTo(b.sx - 7 * Math.cos(ang + 0.35), b.sy - 7 * Math.sin(ang + 0.35));
+      ctx.stroke();
+      ctx.fillStyle = color; ctx.font = bold ? 'bold 11px system-ui' : '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(label, b.sx + 10 * Math.cos(ang), b.sy + 10 * Math.sin(ang));
+    }
 
-    // Draw axis labels for the two transverse directions
-    const yEnd = project(0, -(ny / 2 + 1.5) * spacing, 0);
-    const zEnd = project(0, 0, (nz / 2 + 1.5) * spacing);
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3]);
-    // y-axis
-    const yStart = project(0, (ny / 2 + 0.5) * spacing, 0);
-    ctx.beginPath(); ctx.moveTo(yStart.x, yStart.y); ctx.lineTo(yEnd.x, yEnd.y); ctx.stroke();
-    // z-axis
-    const zStart = project(0, 0, -(nz / 2 + 0.5) * spacing);
-    ctx.beginPath(); ctx.moveTo(zStart.x, zStart.y); ctx.lineTo(zEnd.x, zEnd.y); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('y', yEnd.x - 8, yEnd.y - 2);
-    ctx.fillText('z', zEnd.x + 8, zEnd.y + 2);
+    const axLen = (nx / 2 + 1.5) * spacing;
+    const axShort = (ny / 2 + 1.5) * spacing;
+    drawArrow([-(nx/2+1)*spacing,0,0], [axLen,0,0], 'k', WCOLORS.text, true);
+    drawArrow([0,0,0], [0, -axShort, 0], 'y', WCOLORS.textDim, false);
+    drawArrow([0,0,0], [0, 0, axShort], 'z', WCOLORS.textDim, false);
   }
 
   tick();
