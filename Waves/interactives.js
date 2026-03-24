@@ -15119,6 +15119,91 @@ function initEyeAnatomyDiagram() {
     ctx.fill();
     ctx.restore();
 
+    // --- Rods and Cones along the retina ---
+    // Cones (triangles, colored) dense at fovea; Rods (rectangles, gray) across periphery.
+    var retinaR = R * 0.86;
+    var retStartAngle = 0.60;
+    var retEndAngle = Math.PI * 2 - 0.60;
+    var foveaCenterAngle = foveaAngle;
+    var foveaHalfSpan = 0.18;
+    var blindSpotAngle = onAngle;
+    var blindSpotHalfSpan = 0.08;
+
+    ctx.save();
+    // Collect receptor positions: dense near fovea, sparser elsewhere
+    var receptorAngles = [];
+    for (var a = retStartAngle; a <= retEndAngle; a += 0.04) receptorAngles.push(a);
+    for (var a = foveaCenterAngle - foveaHalfSpan; a <= foveaCenterAngle + foveaHalfSpan; a += 0.015) receptorAngles.push(a);
+
+    // Simple seeded random for deterministic layout
+    var seed = 12345;
+    function srand() { seed = (seed * 16807 + 0) % 2147483647; return (seed - 1) / 2147483646; }
+
+    receptorAngles.forEach(function(angle) {
+      if (Math.abs(angle - blindSpotAngle) < blindSpotHalfSpan) return;
+      if (angle < retStartAngle || angle > retEndAngle) return;
+
+      var rx = cx + retinaR * Math.cos(angle);
+      var ry = cy + retinaR * Math.sin(angle);
+      var dx = -Math.cos(angle), dy = -Math.sin(angle);
+      var px = -dy, py = dx;
+
+      var inFovea = Math.abs(angle - foveaCenterAngle) < foveaHalfSpan;
+      var nearFovea = Math.abs(angle - foveaCenterAngle) < foveaHalfSpan * 2.5;
+
+      if (inFovea) {
+        // CONES — colored triangles, realistic S/M/L proportions
+        var coneLen = 8 + srand() * 3;
+        var coneW = 2.2;
+        var r = srand();
+        var col = r < 0.12 ? '#2563eb' : (r < 0.55 ? '#16a34a' : '#dc2626');
+        ctx.beginPath();
+        ctx.moveTo(rx + px * coneW, ry + py * coneW);
+        ctx.lineTo(rx - px * coneW, ry - py * coneW);
+        ctx.lineTo(rx + dx * coneLen, ry + dy * coneLen);
+        ctx.closePath();
+        ctx.fillStyle = col;
+        ctx.globalAlpha = 0.75;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      } else {
+        // RODS — thin gray rectangles
+        var edgeDist = Math.min(angle - retStartAngle, retEndAngle - angle);
+        if (edgeDist < 0.15 && srand() > edgeDist / 0.15) return;
+
+        var rodLen = 10 + srand() * 3;
+        var rodW = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(rx + px * rodW, ry + py * rodW);
+        ctx.lineTo(rx - px * rodW, ry - py * rodW);
+        ctx.lineTo(rx - px * rodW + dx * rodLen, ry - py * rodW + dy * rodLen);
+        ctx.lineTo(rx + px * rodW + dx * rodLen, ry + py * rodW + dy * rodLen);
+        ctx.closePath();
+        ctx.fillStyle = '#888';
+        ctx.globalAlpha = 0.55;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Sparse cones mixed in near fovea
+        if (nearFovea && srand() < 0.3) {
+          var offX = px * 3.5, offY = py * 3.5;
+          var coneLen2 = 7, coneW2 = 1.8;
+          var r2 = srand();
+          var col2 = r2 < 0.12 ? '#2563eb' : (r2 < 0.55 ? '#16a34a' : '#dc2626');
+          ctx.beginPath();
+          ctx.moveTo(rx + offX + px * coneW2, ry + offY + py * coneW2);
+          ctx.lineTo(rx + offX - px * coneW2, ry + offY - py * coneW2);
+          ctx.lineTo(rx + offX + dx * coneLen2, ry + offY + dy * coneLen2);
+          ctx.closePath();
+          ctx.fillStyle = col2;
+          ctx.globalAlpha = 0.6;
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+      }
+    });
+    ctx.restore();
+
     // --- Light rays entering the eye ---
     ctx.save();
     ctx.strokeStyle = 'rgba(255, 200, 50, 0.5)';
@@ -15205,7 +15290,7 @@ function initEyeAnatomyDiagram() {
     label('Retina', cx + R * 0.55, cy - R * 0.78, cx + R * 0.6, cy - R * 0.62, 'left');
 
     // Fovea
-    label('Fovea', foveaX + 20, foveaY - 28, foveaX, foveaY, 'left');
+    label('Fovea (all cones)', foveaX + 20, foveaY - 28, foveaX, foveaY, 'left');
 
     // Macula
     label('Macula', foveaX + 24, foveaY + 24, foveaX - 10, foveaY + 10, 'left');
@@ -15239,6 +15324,33 @@ function initEyeAnatomyDiagram() {
     ctx.font = 'bold 12px system-ui';
     ctx.textAlign = 'left';
     ctx.fillText('Cross-Section of the Human Eye', 10, 18);
+
+    // --- Legend: Rods & Cones ---
+    var legX = W - 145, legY = H - 58;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.04)';
+    ctx.fillRect(legX - 8, legY - 12, 150, 54);
+    ctx.font = 'bold 10px system-ui';
+    ctx.fillStyle = WCOLORS.text;
+    ctx.textAlign = 'left';
+    ctx.fillText('Photoreceptors', legX, legY);
+    // Rod sample
+    ctx.fillStyle = '#888';
+    ctx.fillRect(legX, legY + 7, 3, 12);
+    ctx.font = '10px system-ui';
+    ctx.fillStyle = WCOLORS.text;
+    ctx.fillText('Rods (periphery, ~120M)', legX + 8, legY + 17);
+    // Cone samples
+    var cY = legY + 25;
+    ctx.beginPath(); ctx.moveTo(legX, cY + 10); ctx.lineTo(legX + 3, cY + 10); ctx.lineTo(legX + 1.5, cY); ctx.closePath();
+    ctx.fillStyle = '#2563eb'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(legX + 6, cY + 10); ctx.lineTo(legX + 9, cY + 10); ctx.lineTo(legX + 7.5, cY); ctx.closePath();
+    ctx.fillStyle = '#16a34a'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(legX + 12, cY + 10); ctx.lineTo(legX + 15, cY + 10); ctx.lineTo(legX + 13.5, cY); ctx.closePath();
+    ctx.fillStyle = '#dc2626'; ctx.fill();
+    ctx.fillStyle = WCOLORS.text;
+    ctx.fillText('Cones S M L (fovea, ~6M)', legX + 20, cY + 10);
+    ctx.restore();
   }
 
   draw();
