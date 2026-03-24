@@ -8926,21 +8926,23 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('white light', inStartX - 12, inStartY - 2);
 
-    // --- 2. R1 and R2 angle toward each other, meet, then merged beam continues ---
+    // --- 2. R1 and R2 exit at correct reflection angle (parallel beams) ---
 
-    // Merge point: halfway up in Y, centered in X between R1 and R2 paths
-    const mergeY = (Ay + r1EndY) / 2;
-    const mergeX = (Ax + Cx) / 2 + (mergeY - Ay) / (r1EndY - Ay) * ((r1EndX + r2EndX) / 2 - (Ax + Cx) / 2);
+    // Both reflected beams go up-right at the same angle as incident beam
+    // R1 from A, R2 from C — they are parallel
+    const squiggleY = filmT * 0.45; // Y level where squiggly interference line is drawn
+    const r1SquigX = Ax + (Ay - squiggleY) * Math.tan(thetaI);
+    const r2SquigX = Cx + (Cy - squiggleY) * Math.tan(thetaI);
 
-    // R1: rainbow from A angling toward merge point
-    drawRainbowBeam(Ax, Ay, mergeX, mergeY, beamW * 0.7, function() { return 0.5; });
-    // R2: rainbow from C angling toward merge point
-    drawRainbowBeam(Cx, Cy, mergeX, mergeY, beamW * 0.7, function() { return 0.5; });
+    // R1: rainbow from A upward at reflection angle
+    drawRainbowBeam(Ax, Ay, r1SquigX, squiggleY, beamW * 0.7, function() { return 0.5; });
+    // R2: rainbow from C upward at reflection angle
+    drawRainbowBeam(Cx, Cy, r2SquigX, squiggleY, beamW * 0.7, function() { return 0.5; });
 
-    // Labels along each incoming arm
+    // Labels along each reflected arm
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-    const r1qX = (Ax + mergeX) / 2, r1qY = (Ay + mergeY) / 2;
-    const r2qX = (Cx + mergeX) / 2, r2qY = (Cy + mergeY) / 2;
+    const r1qX = (Ax + r1SquigX) / 2, r1qY = (Ay + squiggleY) / 2;
+    const r2qX = (Cx + r2SquigX) / 2, r2qY = (Cy + squiggleY) / 2;
     ctx.textAlign = 'right';
     ctx.fillText('R\u2081 (\u03c0 shift)', r1qX - 8, r1qY);
     ctx.textAlign = 'left';
@@ -8956,28 +8958,47 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.arc(Bx, By, 3, 0, 2 * Math.PI); ctx.fill();
     ctx.beginPath(); ctx.arc(Cx, Cy, 3, 0, 2 * Math.PI); ctx.fill();
 
-    // --- 4. Combined interference beam from merge point upward ---
-    // Each color dimmed by its reflectance — suppressed colors vanish
+    // --- 4. Squiggly interference line across both beams ---
+    const squigCenterX = (r1SquigX + r2SquigX) / 2;
+    const squigSpan = (r2SquigX - r1SquigX) / 2 + beamW * 1.2;
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    const squigSteps = 40;
+    const squigLeft = squigCenterX - squigSpan;
+    const squigRight = squigCenterX + squigSpan;
+    for (let i = 0; i <= squigSteps; i++) {
+      const frac = i / squigSteps;
+      const sx = squigLeft + (squigRight - squigLeft) * frac;
+      const sy = squiggleY + Math.sin(frac * Math.PI * 8) * 3.5;
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('interference', squigCenterX, squiggleY - 8);
+
+    // --- 5. Combined interference beam from above squiggly line upward ---
+    const combStartY = squiggleY - 2;
+    const combStartX = squigCenterX;
     const combEndY = 4;
-    const combEndX = mergeX + (mergeY - combEndY) * Math.tan(thetaI);
-    drawRainbowBeam(mergeX, mergeY, combEndX, combEndY, beamW * 0.8,
+    const combEndX = combStartX + (combStartY - combEndY) * Math.tan(thetaI);
+    drawRainbowBeam(combStartX, combStartY, combEndX, combEndY, beamW * 0.8,
       function(wl) { return reflectance(wl, d); });
 
     // Animated wave fronts in the combined beam
     ctx.save();
-    const cDx = combEndX - mergeX, cDy = combEndY - mergeY;
+    const cDx = combEndX - combStartX, cDy = combEndY - combStartY;
     const cLen = Math.sqrt(cDx * cDx + cDy * cDy);
     const cNx = -cDy / cLen, cNy = cDx / cLen;
     ctx.beginPath();
-    ctx.moveTo(mergeX + cNx * beamW * 0.6, mergeY + cNy * beamW * 0.6);
+    ctx.moveTo(combStartX + cNx * beamW * 0.6, combStartY + cNy * beamW * 0.6);
     ctx.lineTo(combEndX + cNx * beamW * 0.6, combEndY + cNy * beamW * 0.6);
     ctx.lineTo(combEndX - cNx * beamW * 0.6, combEndY - cNy * beamW * 0.6);
-    ctx.lineTo(mergeX - cNx * beamW * 0.6, mergeY - cNy * beamW * 0.6);
+    ctx.lineTo(combStartX - cNx * beamW * 0.6, combStartY - cNy * beamW * 0.6);
     ctx.closePath(); ctx.clip();
     ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
     for (let s = (t * 40) % 10; s < cLen; s += 10) {
       const frac = s / cLen;
-      const px = mergeX + cDx * frac, py = mergeY + cDy * frac;
+      const px = combStartX + cDx * frac, py = combStartY + cDy * frac;
       ctx.beginPath();
       ctx.moveTo(px + cNx * beamW * 0.5, py + cNy * beamW * 0.5);
       ctx.lineTo(px - cNx * beamW * 0.5, py - cNy * beamW * 0.5);
@@ -8985,11 +9006,9 @@ function initThinFilmInterference() {
     }
     ctx.restore();
 
-    // Label the combined beam
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('interference', combEndX + 5, combEndY + 8);
-    ctx.font = '10px system-ui';
-    ctx.fillText(Math.round(bestWL) + ' nm peak', combEndX + 5, combEndY + 20);
+    // Label the peak wavelength
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(Math.round(bestWL) + ' nm peak', combEndX + 5, combEndY + 12);
 
         // --- 6. Transmitted beam: full white rainbow passes straight through ---
     const transEndY = Math.min(filmB + 55, H - 14);
