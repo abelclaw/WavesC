@@ -14135,6 +14135,7 @@ function initCieColorSpaceGamut() {
     ctx.save();
     ctx.clip();
     const step = 2;
+    let filledCount = 0;
     for (let px = plotL; px < plotR + 30; px += step) {
       for (let py = plotT; py < plotB; py += step) {
         const cx = (px - plotL) / (plotSize * 1.15);
@@ -14143,9 +14144,14 @@ function initCieColorSpaceGamut() {
         const rgb = xyToDisplayRGB(cx, cy);
         ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
         ctx.fillRect(px, py, step, step);
+        filledCount++;
       }
     }
     ctx.restore();
+    console.log('[CIE] filled', filledCount, 'pixels, plotSize=', plotSize, 'plotL=', plotL, 'plotR=', plotR, 'W=', W, 'H=', H);
+    console.log('[CIE] spectral locus x range:', Math.min.apply(null, spectralX.filter(function(v){return v>0})).toFixed(3), '-', Math.max.apply(null, spectralX).toFixed(3));
+    console.log('[CIE] spectral locus y range:', Math.min.apply(null, spectralY.filter(function(v){return v>0})).toFixed(3), '-', Math.max.apply(null, spectralY).toFixed(3));
+    console.log('[CIE] test red (0.6,0.3):', xyToDisplayRGB(0.6, 0.3).map(function(v){return Math.round(v*255)}));
 
     // Spectral locus outline
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
