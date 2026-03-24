@@ -14134,30 +14134,39 @@ function initCieColorSpaceGamut() {
       ctx.fillText(v.toFixed(1), plotL - 5, p2.y + 3);
     }
 
-    // Fill horseshoe with gamut-mapped colors
-    ctx.save();
-    ctx.beginPath();
-    let started = false;
+    // Build polygon from spectral locus for point-in-polygon test
+    const polyX = [], polyY = [];
     for (let i = 0; i < spectralX.length; i++) {
       if (spectralX[i] === 0 && spectralY[i] === 0) continue;
-      const p = toScreen(spectralX[i], spectralY[i]);
-      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-      else ctx.lineTo(p.x, p.y);
+      polyX.push(spectralX[i]);
+      polyY.push(spectralY[i]);
     }
-    ctx.closePath();
-    ctx.clip();
+
+    // Ray-casting point-in-polygon test (in chromaticity xy space)
+    function insideHorseshoe(tx, ty) {
+      var inside = false;
+      for (var i = 0, j = polyX.length - 1; i < polyX.length; j = i++) {
+        var xi = polyX[i], yi = polyY[i], xj = polyX[j], yj = polyY[j];
+        if ((yi > ty) !== (yj > ty) && tx < (xj - xi) * (ty - yi) / (yj - yi) + xi) {
+          inside = !inside;
+        }
+      }
+      return inside;
+    }
+
+    // Fill horseshoe with gamut-mapped colors
     const step = 2;
     for (let px = plotL; px < plotR + 30; px += step) {
       for (let py = plotT; py < plotB; py += step) {
         const cx = (px - plotL) / (plotSize * 1.15);
         const cy = (plotB - py) / (plotSize * 1.3);
         if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
+        if (!insideHorseshoe(cx, cy)) continue;
         const rgb = xyToDisplayRGB(cx, cy);
         ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
         ctx.fillRect(px, py, step, step);
       }
     }
-    ctx.restore();
 
     // Spectral locus outline
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
