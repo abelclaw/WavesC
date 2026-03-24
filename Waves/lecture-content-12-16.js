@@ -171,8 +171,8 @@ window.LECTURE_CONTENT_12_16 = {
   {
     heading: "Circular Polarization",
     body: "<p>What if the components of the electric field are not in phase? Suppose they have the same magnitude but are a quarter wavelength out of phase, so $\\phi_{x} - \\phi_{y} = \\pi$/2. Then $E_{0}$ = ($E_{0}$, i$E_{0}$, 0) and:</p><p style='text-align:center;'>$$Re[E] = (E_0 \\cos(kz - \\omega t), -E_0 \\sin(kz - \\omega t), 0)$$</p><p>This is called <strong>left-handed circularly polarized light</strong>. At t = z = 0, the field points in the x-direction. A quarter wavelength farther along, it points in the -y direction. It rotates clockwise in the x-y plane as we move along z.</p><p>Taking $\\phi_{x} - \\phi_{y}$ = -$\\pi$/2 gives $E_{0}$ = ($E_{0}$, -i$E_{0}$, 0), which is <strong>right-handed circularly polarized light</strong>, rotating counterclockwise.</p><p>Adding left and right-handed polarizations gives (2$E_{0}$, 0, 0) -- linear polarization in x. Subtracting gives linear in y. Any polarization can be written as a linear combination of left- and right-handed circular polarizations.</p><p>A single circularly polarized photon carries angular momentum J = $\\pm(\\hbar)\\hat{k}$. Photons have <strong>spin</strong> -- they are particles of spin 1. The two signs correspond to the two <strong>helicities</strong>.</p><p>When $E_{x} \\neq E_{y}$ and $\\phi \\neq$ 0, the polarization traces an ellipse: <strong>elliptical polarization</strong>.</p>",
-    interactive: "em-polarization",
-    interactiveCaption: "Circularly polarized light: E and B field vectors rotate as the wave propagates. Toggle between right and left circular.",
+    interactive: null,
+    interactiveCaption: null,
     mathLinks: []
   },
   {
