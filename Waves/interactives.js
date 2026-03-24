@@ -7262,30 +7262,25 @@ function initTransverseLongitudinalDemo() {
       ctx.beginPath(); ctx.arc(bx + carW - 4, by + carH, 2.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // "jam" and "open" labels — find tightest cluster and widest gap
-    // by looking at actual displaced car positions
-    const carPositions = [];
-    for (let i = 0; i < nCars; i++) {
-      const eqX2 = roadLeft + i * carSpacing;
-      carPositions.push(eqX2 + carAmp * Math.sin(kC * eqX2 - omegaC * t));
-    }
-    let minGap = Infinity, maxGap = -Infinity;
-    let jamIdx = 0, openIdx = 0;
-    for (let i = 0; i < nCars - 1; i++) {
-      const gap = carPositions[i + 1] - carPositions[i];
-      if (gap < minGap) { minGap = gap; jamIdx = i; }
-      if (gap > maxGap) { maxGap = gap; openIdx = i; }
-    }
-    const jamLabelX = (carPositions[jamIdx] + carPositions[jamIdx + 1]) / 2;
-    const openLabelX = (carPositions[openIdx] + carPositions[openIdx + 1]) / 2;
+    // "jam" and "open" labels — move analytically at the wave phase velocity.
+    // Max compression (jam) is where cos(kC*x - omegaC*t) = +1, i.e. kC*x - omegaC*t = 2nπ.
+    // Max rarefaction (open) is half a wavelength away (phase offset π).
+    const waveLen = 2 * Math.PI / kC;
+    const phaseX = (omegaC * t / kC) % waveLen;  // x where phase = 0 (mod wavelength)
+
     ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    if (jamLabelX > roadLeft + 30 && jamLabelX < roadRight - 30) {
-      ctx.fillStyle = WCOLORS.red;
-      ctx.fillText('jam', jamLabelX, roadTop - 5);
-    }
-    if (openLabelX > roadLeft + 30 && openLabelX < roadRight - 30) {
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.fillText('open', openLabelX, roadTop - 5);
+    // Draw all jam/open labels that fall within the visible road
+    for (let n = -1; n <= Math.ceil(roadLen / waveLen) + 1; n++) {
+      const jamLabelX = roadLeft + phaseX + n * waveLen;
+      const openLabelX = jamLabelX + waveLen / 2;
+      if (jamLabelX > roadLeft + 25 && jamLabelX < roadRight - 25) {
+        ctx.fillStyle = WCOLORS.red;
+        ctx.fillText('jam', jamLabelX, roadTop - 5);
+      }
+      if (openLabelX > roadLeft + 25 && openLabelX < roadRight - 25) {
+        ctx.fillStyle = WCOLORS.teal;
+        ctx.fillText('open', openLabelX, roadTop - 5);
+      }
     }
 
     // Propagation arrow
