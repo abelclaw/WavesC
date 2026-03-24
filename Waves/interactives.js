@@ -14537,8 +14537,9 @@ function initBlackbodyPlanckianLocus() {
 }
 
 
+
 // =========================================================================
-// 5. HSV Color Explorer — color wheel + dual HSB / RGB sliders
+// 5. HSV Color Explorer — color wheel + dual HSV / RGB sliders
 // =========================================================================
 function initHsvColorExplorer() {
   const canvas = document.getElementById('scene-hsv-color-explorer');
@@ -14547,13 +14548,13 @@ function initHsvColorExplorer() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // State: HSB is the source of truth
-  let hue = 0, sat = 1.0, bri = 1.0;
-  let dragging = null; // 'wheel', 'hsb0'..'hsb2', 'rgb0'..'rgb2'
+  // State: HSV is the source of truth
+  let hue = 0, sat = 1.0, val = 1.0;
+  let dragging = null; // 'wheel', 'hsv0'..'hsv2', 'rgb0'..'rgb2'
 
   // --- Conversion helpers ---
-  function hsbToRGBArray(h, s, b) {
-    const c = b * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = b - c;
+  function hsvToRGBArray(h, s, v) {
+    const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
     let r, g, bl;
     if (h < 60)       { r = c; g = x; bl = 0; }
     else if (h < 120) { r = x; g = c; bl = 0; }
@@ -14563,11 +14564,11 @@ function initHsvColorExplorer() {
     else              { r = c; g = 0; bl = x; }
     return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((bl + m) * 255)];
   }
-  function hsbToCSS(h, s, b) {
-    const [r, g, bl] = hsbToRGBArray(h, s, b);
+  function hsvToCSS(h, s, v) {
+    const [r, g, bl] = hsvToRGBArray(h, s, v);
     return 'rgb(' + r + ',' + g + ',' + bl + ')';
   }
-  function rgbToHSB(r, g, b) {
+  function rgbToHSV(r, g, b) {
     r /= 255; g /= 255; b /= 255;
     const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
     let h = 0;
@@ -14590,28 +14591,28 @@ function initHsvColorExplorer() {
   const sliderH = 10, thumbR = 7, sliderGap = 40;
   const sliderTop = H * 0.08;
 
-  // HSB column: left of wheel
-  const hsbW = W * 0.22;
-  const hsbX = 32;
+  // HSV column: left of wheel
+  const hsvW = W * 0.22;
+  const hsvX = 32;
 
   // RGB column: right of wheel
   const rgbW = W * 0.22;
   const rgbX = W - 18 - rgbW;
 
-  const hsbSliders = [
+  const hsvSliders = [
     { label: 'H', y: sliderTop },
     { label: 'S', y: sliderTop + sliderGap },
-    { label: 'B', y: sliderTop + sliderGap * 2 }
+    { label: 'V', y: sliderTop + sliderGap * 2 }
   ];
   const rgbSliders = [
-    { label: 'R', y: sliderTop, color: '#dc2626' },
-    { label: 'G', y: sliderTop + sliderGap, color: '#16a34a' },
-    { label: 'B', y: sliderTop + sliderGap * 2, color: '#2563eb' }
+    { label: 'R', y: sliderTop },
+    { label: 'G', y: sliderTop + sliderGap },
+    { label: 'B', y: sliderTop + sliderGap * 2 }
   ];
 
   // Swatch + readouts below wheel
   const swatchY = wheelCY + wheelR + 14;
-  const swatchW = 60, swatchH = 36;
+  const swatchW = 60, swatchHt = 36;
   const swatchX = wheelCX - swatchW / 2;
 
   // --- Hit-test helpers ---
@@ -14631,9 +14632,9 @@ function initHsvColorExplorer() {
       handleWheelDrag(mx, my);
       return;
     }
-    // HSB sliders
+    // HSV sliders
     for (let i = 0; i < 3; i++) {
-      if (hitSlider(mx, my, hsbX, hsbW, hsbSliders[i].y)) { dragging = 'hsb' + i; handleSliderDrag(mx); return; }
+      if (hitSlider(mx, my, hsvX, hsvW, hsvSliders[i].y)) { dragging = 'hsv' + i; handleSliderDrag(mx); return; }
     }
     // RGB sliders
     for (let i = 0; i < 3; i++) {
@@ -14653,16 +14654,16 @@ function initHsvColorExplorer() {
 
   function handleSliderDrag(mx) {
     if (!dragging || dragging === 'wheel') return;
-    if (dragging === 'hsb0') { hue = clampFrac(mx, hsbX, hsbW) * 360; }
-    else if (dragging === 'hsb1') { sat = clampFrac(mx, hsbX, hsbW); }
-    else if (dragging === 'hsb2') { bri = clampFrac(mx, hsbX, hsbW); }
+    if (dragging === 'hsv0') { hue = clampFrac(mx, hsvX, hsvW) * 360; }
+    else if (dragging === 'hsv1') { sat = clampFrac(mx, hsvX, hsvW); }
+    else if (dragging === 'hsv2') { val = clampFrac(mx, hsvX, hsvW); }
     else if (dragging.startsWith('rgb')) {
-      const [r, g, b] = hsbToRGBArray(hue, sat, bri);
+      const [r, g, b] = hsvToRGBArray(hue, sat, val);
       const idx = parseInt(dragging[3]);
       const v = Math.round(clampFrac(mx, rgbX, rgbW) * 255);
       const newRGB = [r, g, b]; newRGB[idx] = v;
-      const [nh, ns, nb] = rgbToHSB(newRGB[0], newRGB[1], newRGB[2]);
-      hue = nh; sat = ns; bri = nb;
+      const [nh, ns, nv] = rgbToHSV(newRGB[0], newRGB[1], newRGB[2]);
+      hue = nh; sat = ns; val = nv;
     }
     draw();
   }
@@ -14699,7 +14700,21 @@ function initHsvColorExplorer() {
   canvas.addEventListener('touchend', function() { dragging = null; });
 
   // --- Drawing ---
-  function drawSlider(sx, sw, sy, frac, gradFn, label, labelColor) {
+  // Fixed slider gradients — these never change with the current color
+  // H: full rainbow spectrum
+  function hueGrad(f) { return hsvToCSS(f * 360, 1, 1); }
+  // S: white to medium gray
+  function satGrad(f) { var v = Math.round(255 - f * 128); return 'rgb(' + v + ',' + v + ',' + v + ')'; }
+  // V: black to white
+  function valGrad(f) { var v = Math.round(f * 255); return 'rgb(' + v + ',' + v + ',' + v + ')'; }
+  // R: black to red
+  function redGrad(f) { return 'rgb(' + Math.round(f * 255) + ',0,0)'; }
+  // G: black to green
+  function greenGrad(f) { return 'rgb(0,' + Math.round(f * 255) + ',0)'; }
+  // B: black to blue
+  function blueGrad(f) { return 'rgb(0,0,' + Math.round(f * 255) + ')'; }
+
+  function drawSlider(sx, sw, sy, frac, gradFn, label, labelColor, thumbColor) {
     // Track gradient
     for (let i = 0; i <= sw; i++) {
       ctx.fillStyle = gradFn(i / sw);
@@ -14708,12 +14723,14 @@ function initHsvColorExplorer() {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(sx, sy, sw, sliderH);
 
-    // Thumb
+    // Thumb — white circle with dark border, small colored dot inside
     const tx = sx + frac * sw, ty = sy + sliderH / 2;
     ctx.beginPath(); ctx.arc(tx, ty, thumbR, 0, Math.PI * 2);
-    ctx.fillStyle = gradFn(frac); ctx.fill();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5; ctx.stroke();
+    // Colored dot inside thumb
+    ctx.beginPath(); ctx.arc(tx, ty, thumbR - 3, 0, Math.PI * 2);
+    ctx.fillStyle = thumbColor; ctx.fill();
 
     // Label
     ctx.fillStyle = labelColor || WCOLORS.text;
@@ -14724,14 +14741,14 @@ function initHsvColorExplorer() {
 
   function draw() {
     wClear(ctx, W, H);
-    const [r, g, b] = hsbToRGBArray(hue, sat, bri);
+    const [r, g, b] = hsvToRGBArray(hue, sat, val);
     const currentCSS = 'rgb(' + r + ',' + g + ',' + b + ')';
 
     // --- Color wheel (center) ---
     for (let angle = 0; angle < 360; angle += 1) {
       for (let rd = 0; rd <= wheelR; rd += 2) {
         const s = rd / wheelR;
-        ctx.fillStyle = hsbToCSS(angle, s, bri);
+        ctx.fillStyle = hsvToCSS(angle, s, val);
         const rad = angle * Math.PI / 180;
         ctx.fillRect(wheelCX + Math.cos(rad) * rd - 1, wheelCY + Math.sin(rad) * rd - 1, 3, 3);
       }
@@ -14742,47 +14759,35 @@ function initHsvColorExplorer() {
 
     // Selection dot on wheel
     const selRad = hue * Math.PI / 180;
-    const selR = sat * wheelR;
-    const selX = wheelCX + Math.cos(selRad) * selR;
-    const selY = wheelCY + Math.sin(selRad) * selR;
+    const selDist = sat * wheelR;
+    const selX = wheelCX + Math.cos(selRad) * selDist;
+    const selY = wheelCY + Math.sin(selRad) * selDist;
     ctx.beginPath(); ctx.arc(selX, selY, 6, 0, Math.PI * 2);
     ctx.fillStyle = currentCSS; ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
 
-    // --- HSB sliders (left) ---
+    // --- HSV sliders (left) ---
     ctx.font = 'bold 10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
-    ctx.fillText('HSB', hsbX, sliderTop - 12);
+    ctx.fillText('HSV', hsvX, sliderTop - 12);
 
-    drawSlider(hsbX, hsbW, hsbSliders[0].y, hue / 360, function(f) {
-      return hsbToCSS(f * 360, 1, 1);
-    }, 'H', WCOLORS.text);
-    drawSlider(hsbX, hsbW, hsbSliders[1].y, sat, function(f) {
-      return hsbToCSS(hue, f, bri);
-    }, 'S', WCOLORS.text);
-    drawSlider(hsbX, hsbW, hsbSliders[2].y, bri, function(f) {
-      return hsbToCSS(hue, sat, f);
-    }, 'B', WCOLORS.text);
+    drawSlider(hsvX, hsvW, hsvSliders[0].y, hue / 360, hueGrad, 'H', WCOLORS.text, hsvToCSS(hue, 1, 1));
+    drawSlider(hsvX, hsvW, hsvSliders[1].y, sat, satGrad, 'S', WCOLORS.text, satGrad(sat));
+    drawSlider(hsvX, hsvW, hsvSliders[2].y, val, valGrad, 'V', WCOLORS.text, valGrad(val));
 
-    // HSB readouts
+    // HSV readouts
     ctx.font = '10px monospace'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
-    ctx.fillText(Math.round(hue) + '\u00B0', hsbX + hsbW + 5, hsbSliders[0].y + sliderH / 2 + 4);
-    ctx.fillText(Math.round(sat * 100) + '%', hsbX + hsbW + 5, hsbSliders[1].y + sliderH / 2 + 4);
-    ctx.fillText(Math.round(bri * 100) + '%', hsbX + hsbW + 5, hsbSliders[2].y + sliderH / 2 + 4);
+    ctx.fillText(Math.round(hue) + '\u00B0', hsvX + hsvW + 5, hsvSliders[0].y + sliderH / 2 + 4);
+    ctx.fillText(Math.round(sat * 100) + '%', hsvX + hsvW + 5, hsvSliders[1].y + sliderH / 2 + 4);
+    ctx.fillText(Math.round(val * 100) + '%', hsvX + hsvW + 5, hsvSliders[2].y + sliderH / 2 + 4);
 
     // --- RGB sliders (right) ---
     ctx.font = 'bold 10px system-ui'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
     ctx.fillText('RGB', rgbX, sliderTop - 12);
 
-    drawSlider(rgbX, rgbW, rgbSliders[0].y, r / 255, function(f) {
-      return 'rgb(' + Math.round(f * 255) + ',' + g + ',' + b + ')';
-    }, 'R', '#dc2626');
-    drawSlider(rgbX, rgbW, rgbSliders[1].y, g / 255, function(f) {
-      return 'rgb(' + r + ',' + Math.round(f * 255) + ',' + b + ')';
-    }, 'G', '#16a34a');
-    drawSlider(rgbX, rgbW, rgbSliders[2].y, b / 255, function(f) {
-      return 'rgb(' + r + ',' + g + ',' + Math.round(f * 255) + ')';
-    }, 'B', '#2563eb');
+    drawSlider(rgbX, rgbW, rgbSliders[0].y, r / 255, redGrad, 'R', '#dc2626', 'rgb(' + r + ',0,0)');
+    drawSlider(rgbX, rgbW, rgbSliders[1].y, g / 255, greenGrad, 'G', '#16a34a', 'rgb(0,' + g + ',0)');
+    drawSlider(rgbX, rgbW, rgbSliders[2].y, b / 255, blueGrad, 'B', '#2563eb', 'rgb(0,0,' + b + ')');
 
     // RGB readouts
     ctx.font = '10px monospace'; ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
@@ -14795,10 +14800,10 @@ function initHsvColorExplorer() {
     ctx.beginPath();
     ctx.moveTo(swatchX + cr, swatchY); ctx.lineTo(swatchX + swatchW - cr, swatchY);
     ctx.quadraticCurveTo(swatchX + swatchW, swatchY, swatchX + swatchW, swatchY + cr);
-    ctx.lineTo(swatchX + swatchW, swatchY + swatchH - cr);
-    ctx.quadraticCurveTo(swatchX + swatchW, swatchY + swatchH, swatchX + swatchW - cr, swatchY + swatchH);
-    ctx.lineTo(swatchX + cr, swatchY + swatchH);
-    ctx.quadraticCurveTo(swatchX, swatchY + swatchH, swatchX, swatchY + swatchH - cr);
+    ctx.lineTo(swatchX + swatchW, swatchY + swatchHt - cr);
+    ctx.quadraticCurveTo(swatchX + swatchW, swatchY + swatchHt, swatchX + swatchW - cr, swatchY + swatchHt);
+    ctx.lineTo(swatchX + cr, swatchY + swatchHt);
+    ctx.quadraticCurveTo(swatchX, swatchY + swatchHt, swatchX, swatchY + swatchHt - cr);
     ctx.lineTo(swatchX, swatchY + cr);
     ctx.quadraticCurveTo(swatchX, swatchY, swatchX + cr, swatchY);
     ctx.closePath();
@@ -14808,7 +14813,7 @@ function initHsvColorExplorer() {
     // Hex
     const hex = '#' + [r, g, b].map(function(c) { return c.toString(16).padStart(2, '0'); }).join('');
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
-    ctx.fillText(hex.toUpperCase(), wheelCX, swatchY + swatchH + 16);
+    ctx.fillText(hex.toUpperCase(), wheelCX, swatchY + swatchHt + 16);
 
     // Hint
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -14817,6 +14822,7 @@ function initHsvColorExplorer() {
 
   draw();
 }
+
 // =========================================================================
 // 6. Additive vs Subtractive Mixing
 // =========================================================================
