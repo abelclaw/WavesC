@@ -7159,7 +7159,7 @@ function initTransverseLongitudinalDemo() {
     // Section labels
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Transverse wave (e.g. rope)', 20, 18);
-    ctx.fillText('Longitudinal wave (e.g. sound)', 20, H / 2 + 18);
+    ctx.fillText('Longitudinal wave (e.g. sound in air, traffic on a highway)', 20, H / 2 + 18);
 
     // --- Transverse ---
     // Equilibrium line
@@ -7203,129 +7203,90 @@ function initTransverseLongitudinalDemo() {
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY); ctx.lineTo(W / 2 + 34, propArrowY - 4); ctx.lineTo(W / 2 + 34, propArrowY + 4); ctx.closePath(); ctx.fill();
     ctx.font = '11px system-ui'; ctx.fillText('propagation →', W / 2, propArrowY + 13);
 
-    // --- Longitudinal (large accordion bellows) ---
-    // Big, dramatic bellows with few folds and its OWN wave number so
-    // only ~1.5 wavelengths are visible. This makes the compression
-    // zone clearly propagate instead of everything shaking.
+    // --- Longitudinal (traffic jam) ---
+    // A row of cars on a road. Each car's x-position is displaced by
+    // a longitudinal wave. Where cars bunch up = traffic jam (compression).
+    // Where they spread out = open road (rarefaction). The jam propagates
+    // even though each car barely moves — exactly how sound works.
 
-    const nCreases = 14;
-    const bLeft = 50, bRight = W - 50;
-    const bLen = bRight - bLeft;
-    const creaseSpacing = bLen / (nCreases - 1);
-    const bMaxH = 34;       // max half-height of pleat bulge
-    const bMinH = 3;        // min half-height when fully compressed
-    // Use a separate wave number: ~1.5 wavelengths across the bellows
-    const kB = 1.5 * 2 * Math.PI / bLen;
-    const bAmp = creaseSpacing * 0.9;  // large displacement
+    const nCars = 20;
+    const roadLeft = 40, roadRight = W - 40;
+    const roadLen = roadRight - roadLeft;
+    const carSpacing = roadLen / (nCars - 1);
+    // Own wave number: ~1.5 wavelengths visible
+    const kC = 1.5 * 2 * Math.PI / roadLen;
+    const carAmp = carSpacing * 0.8;
 
-    // Compute displaced x for each crease point
-    const cx = [];
-    for (let i = 0; i < nCreases; i++) {
-      const eqX = bLeft + i * creaseSpacing;
-      cx.push(eqX + bAmp * Math.sin(kB * eqX - omega * t));
-    }
+    // Road surface
+    const roadTop = longY - 16, roadBot = longY + 16;
+    ctx.fillStyle = '#e8e0d4';
+    ctx.fillRect(roadLeft - 10, roadTop, roadLen + 20, roadBot - roadTop);
+    // Road center dashes
+    ctx.strokeStyle = 'rgba(31,42,46,0.15)'; ctx.lineWidth = 1;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath(); ctx.moveTo(roadLeft - 10, longY); ctx.lineTo(roadRight + 10, longY); ctx.stroke();
+    ctx.setLineDash([]);
+    // Road edges
+    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(roadLeft - 10, roadTop); ctx.lineTo(roadRight + 10, roadTop); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(roadLeft - 10, roadBot); ctx.lineTo(roadRight + 10, roadBot); ctx.stroke();
 
-    // Draw each pleat as a big puffy lens shape
-    for (let i = 0; i < nCreases - 1; i++) {
-      const x0 = cx[i], x1 = cx[i + 1];
-      const midX = (x0 + x1) / 2;
-      const span = Math.abs(x1 - x0);
+    // Draw each car
+    const carW = 22, carH = 10;
+    const colors = ['#2563eb', '#dc2626', '#0f766e', '#7c3aed', '#b45309',
+                    '#059669', '#d946ef', '#0284c7', '#ea580c', '#4f46e5'];
+    for (let i = 0; i < nCars; i++) {
+      const eqX = roadLeft + i * carSpacing;
+      const dx = carAmp * Math.sin(kC * eqX - omega * t);
+      const cx = eqX + dx;
+      const cy = longY;
+      const col = colors[i % colors.length];
 
-      // Bulge height: big when stretched, flat when compressed
-      const eqSpan = creaseSpacing;
-      const stretchRatio = span / eqSpan;
-      const bulge = Math.max(bMinH, Math.min(bMaxH, bMaxH * stretchRatio * 0.6));
-
-      // --- Gradient fill for 3D rounded volume ---
-      const grad = ctx.createLinearGradient(midX, longY - bulge, midX, longY + bulge);
-      grad.addColorStop(0,   'rgba(160,225,215,0.7)');   // bright highlight top
-      grad.addColorStop(0.2, 'rgba(40,160,148,0.6)');
-      grad.addColorStop(0.45,'rgba(15,118,110,0.5)');
-      grad.addColorStop(0.55,'rgba(15,118,110,0.5)');
-      grad.addColorStop(0.8, 'rgba(10,90,82,0.6)');
-      grad.addColorStop(1,   'rgba(5,55,50,0.7)');       // dark shadow bottom
-
-      ctx.fillStyle = grad;
+      // Car body (rounded rectangle)
+      const bx = cx - carW / 2, by = cy - carH / 2;
+      ctx.fillStyle = col;
       ctx.beginPath();
-      ctx.moveTo(x0, longY);
-      ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
-      ctx.quadraticCurveTo(midX, longY + bulge, x0, longY);
-      ctx.closePath();
+      ctx.roundRect(bx, by, carW, carH, 2);
       ctx.fill();
 
-      // Top outline — lighter
-      ctx.strokeStyle = 'rgba(80,190,175,0.8)';
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(x0, longY);
-      ctx.quadraticCurveTo(midX, longY - bulge, x1, longY);
-      ctx.stroke();
+      // Roof / windshield (smaller rect on top half)
+      const roofW = carW * 0.5, roofH = carH * 0.45;
+      const roofX = cx - roofW / 2 + 2, roofY = by + 1;
+      ctx.fillStyle = 'rgba(200,230,255,0.7)';
+      ctx.fillRect(roofX, roofY, roofW, roofH);
 
-      // Bottom outline — darker
-      ctx.strokeStyle = 'rgba(8,70,65,0.8)';
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(x0, longY);
-      ctx.quadraticCurveTo(midX, longY + bulge, x1, longY);
-      ctx.stroke();
-
-      // Specular highlight arc across the top of each pleat
-      if (bulge > 10) {
-        const hlY = longY - bulge * 0.5;
-        const hlW = span * 0.35;
-        ctx.strokeStyle = 'rgba(220,250,245,0.6)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(midX - hlW, hlY + 1);
-        ctx.quadraticCurveTo(midX, hlY - 2, midX + hlW, hlY + 1);
-        ctx.stroke();
-      }
+      // Wheels (two small dark circles)
+      ctx.fillStyle = '#1f2a2e';
+      ctx.beginPath(); ctx.arc(bx + 4, by + carH, 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(bx + carW - 4, by + carH, 2.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Crease lines at each pinch point
-    for (let i = 0; i < nCreases; i++) {
-      // Height of crease tick matches adjacent pleat edges
-      let h = 5;
-      if (i > 0) {
-        const s = Math.abs(cx[i] - cx[i - 1]);
-        const r = s / creaseSpacing;
-        h = Math.max(h, bMaxH * r * 0.6);
-      }
-      if (i < nCreases - 1) {
-        const s = Math.abs(cx[i + 1] - cx[i]);
-        const r = s / creaseSpacing;
-        h = Math.max(h, bMaxH * r * 0.6);
-      }
-      h = Math.min(h, bMaxH);
-      ctx.strokeStyle = 'rgba(15,118,110,0.9)';
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.moveTo(cx[i], longY - h);
-      ctx.lineTo(cx[i], longY + h);
-      ctx.stroke();
+    // "Traffic jam" and "Open road" labels that track the wave
+    let jamX = null, openX = null;
+    let maxDens = -Infinity, minDens = Infinity;
+    for (let x = roadLeft + 30; x <= roadRight - 30; x += 3) {
+      // density ~ 1 + d(displacement)/dx
+      const d = 1 + carAmp * kC * Math.cos(kC * x - omega * t) / carSpacing;
+      if (d > maxDens) { maxDens = d; jamX = x + carAmp * Math.sin(kC * x - omega * t); }
+      if (d < minDens) { minDens = d; openX = x + carAmp * Math.sin(kC * x - omega * t); }
     }
-
-    // End plates — thick solid bars
-    const plateW = 8, plateH = bMaxH + 6;
-    ctx.fillStyle = '#0d6b63';
-    ctx.beginPath();
-    ctx.roundRect(cx[0] - plateW - 1, longY - plateH, plateW, plateH * 2, 3);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.roundRect(cx[nCreases - 1] + 1, longY - plateH, plateW, plateH * 2, 3);
-    ctx.fill();
-    // Plate highlights
-    ctx.fillStyle = 'rgba(160,225,215,0.3)';
-    ctx.fillRect(cx[0] - plateW, longY - plateH + 2, plateW - 2, 4);
-    ctx.fillRect(cx[nCreases - 1] + 2, longY - plateH + 2, plateW - 2, 4);
+    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    if (jamX > roadLeft + 40 && jamX < roadRight - 40) {
+      ctx.fillStyle = WCOLORS.red;
+      ctx.fillText('jam', jamX, roadTop - 5);
+    }
+    if (openX > roadLeft + 40 && openX < roadRight - 40) {
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillText('open', openX, roadTop - 5);
+    }
 
     // Propagation arrow
-    const propArrowY2 = longY + bMaxH + 16;
+    const propArrowY2 = roadBot + 14;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(W / 2 - 40, propArrowY2); ctx.lineTo(W / 2 + 40, propArrowY2); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.moveTo(W / 2 + 40, propArrowY2); ctx.lineTo(W / 2 + 34, propArrowY2 - 4); ctx.lineTo(W / 2 + 34, propArrowY2 + 4); ctx.closePath(); ctx.fill();
-    ctx.font = '11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('propagation →', W / 2, propArrowY2 + 13);
+    ctx.font = '11px system-ui'; ctx.textAlign = 'center'; ctx.fillText('jam propagates →', W / 2, propArrowY2 + 13);
 
   }
 
