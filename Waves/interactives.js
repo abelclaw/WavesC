@@ -7851,7 +7851,7 @@ function initPolarization() {
   const amp = 48;
 
   // View angles (radians)
-  let azimuth = -0.55;   // orbit left/right
+  let azimuth = 2.15;    // orbit left/right (0 = head-on along k)
   let elevation = 0.35;  // tilt up/down
   let roll = 0;          // rotate around propagation axis (shift-drag)
 
@@ -7897,35 +7897,38 @@ function initPolarization() {
   canvas.addEventListener('touchend', () => { dragging = false; });
   canvas.style.cursor = 'grab';
 
-  // Proper 3D projection from azimuth, elevation, roll
-  // 3D world: k along z, E along y, B along x
-  // We apply: roll around z, then elevation around x, then azimuth around y
+  // 3D projection with camera on a sphere looking at origin
+  // World: k=z (propagation), E=y (up), B=x (sideways)
+  // Roll rotates E,B around k before camera projection
   function getProjection() {
     const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
     const ce = Math.cos(elevation), se = Math.sin(elevation);
     const cr = Math.cos(roll), sr = Math.sin(roll);
 
-    // Build rotation matrix R = Ry(az) * Rx(el) * Rz(roll)
-    // Then project 3D -> 2D by taking (x_screen, y_screen) components
-    // x_screen = first row, y_screen = second row of the composed rotation
+    // Camera position: spherical coords (az, el) looking at origin
+    // cam_z (into screen) = (sa, -se*ca, ce*ca)  -- from camera toward origin
+    // cam_x (screen right) = (ca, se*sa, -ce*sa)  -- derived as right vector
+    // cam_y (screen up)    = (0, ce, se)           -- derived as up vector
 
-    // Column for k-axis (world z): Ry(az)*Rx(el)*[0,0,1]
-    const kx = ca * ce;
-    const ky = se;
+    // To project world point p onto screen: sx = dot(p, cam_x), sy = -dot(p, cam_y)
+    // (negate y because screen y goes down)
 
-    // Column for E-axis (world y): Ry(az)*Rx(el)*Rz(roll)*[0,1,0]
-    // Rz(roll)*[0,1,0] = [-sr, cr, 0]
-    // Rx(el)*[-sr, cr, 0] = [-sr, cr*ce, cr*se]
-    // Ry(az)*[-sr, cr*ce, cr*se] = [-sr*ca + cr*se*sa, cr*ce, ...]
+    // Apply roll: rotate B,E around k-axis in world space
+    // B' = cr*(1,0,0) + sr*(0,1,0) = (cr, sr, 0)
+    // E' = -sr*(1,0,0) + cr*(0,1,0) = (-sr, cr, 0)
+    // k  = (0, 0, 1)
+
+    // k projected: sx = dot((0,0,1), cam_x) = -ce*sa, sy = -dot((0,0,1), cam_y) = -se
+    const kx = -ce * sa;
+    const ky = -se;
+
+    // E' projected: sx = dot((-sr,cr,0), cam_x), sy = -dot((-sr,cr,0), cam_y)
     const ex = -sr * ca + cr * se * sa;
-    const ey = -cr * ce;
+    const ey = -(cr * ce);
 
-    // Column for B-axis (world x): Ry(az)*Rx(el)*Rz(roll)*[1,0,0]
-    // Rz(roll)*[1,0,0] = [cr, sr, 0]
-    // Rx(el)*[cr, sr, 0] = [cr, sr*ce, sr*se]
-    // Ry(az)*[cr, sr*ce, sr*se] = [cr*ca + sr*se*sa, sr*ce, ...]
-    const bx = -cr * ca - sr * se * sa;
-    const by = -sr * ce;
+    // B' projected: sx = dot((cr,sr,0), cam_x), sy = -dot((cr,sr,0), cam_y)
+    const bx = cr * ca + sr * se * sa;
+    const by = -(sr * ce);
 
     return { kx, ky, ex, ey, bx, by };
   }
@@ -14134,11 +14137,8 @@ function initCieColorSpaceGamut() {
     }
     ctx.closePath();
 
-    // Fill horseshoe with gamut-mapped colors
-    ctx.save();
-    ctx.clip();
+    // Fill entire plot with gamut-mapped colors (NO clip - debug)
     const step = 2;
-    let filledCount = 0;
     for (let px = plotL; px < plotR + 30; px += step) {
       for (let py = plotT; py < plotB; py += step) {
         const cx = (px - plotL) / (plotSize * 1.15);
@@ -14147,22 +14147,8 @@ function initCieColorSpaceGamut() {
         const rgb = xyToDisplayRGB(cx, cy);
         ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
         ctx.fillRect(px, py, step, step);
-        filledCount++;
       }
     }
-    ctx.restore();
-
-    // DEBUG: draw test red square at chromaticity (0.55, 0.35) - should be orange area
-    var testP = toScreen(0.55, 0.35);
-    ctx.fillStyle = 'rgb(255,0,0)';
-    ctx.fillRect(testP.x - 10, testP.y - 10, 20, 20);
-    // And sample what color was actually drawn at a red-region pixel
-    var sampleP = toScreen(0.5, 0.4);
-    var sampleData = ctx.getImageData(Math.round(sampleP.x), Math.round(sampleP.y), 1, 1).data;
-    console.log('[CIE] pixel at (0.5,0.4) screen=(' + Math.round(sampleP.x) + ',' + Math.round(sampleP.y) + '): rgba(' + sampleData[0] + ',' + sampleData[1] + ',' + sampleData[2] + ',' + sampleData[3] + ')');
-    var sampleP2 = toScreen(0.3, 0.5);
-    var sampleData2 = ctx.getImageData(Math.round(sampleP2.x), Math.round(sampleP2.y), 1, 1).data;
-    console.log('[CIE] pixel at (0.3,0.5) screen=(' + Math.round(sampleP2.x) + ',' + Math.round(sampleP2.y) + '): rgba(' + sampleData2[0] + ',' + sampleData2[1] + ',' + sampleData2[2] + ',' + sampleData2[3] + ')');
 
     // Spectral locus outline
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
