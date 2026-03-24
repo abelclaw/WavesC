@@ -7262,27 +7262,6 @@ function initTransverseLongitudinalDemo() {
       ctx.beginPath(); ctx.arc(bx + carW - 4, by + carH, 2.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // "jam" and "open" labels — move analytically at the wave phase velocity.
-    // Max compression (jam) is where cos(kC*x - omegaC*t) = +1, i.e. kC*x - omegaC*t = 2nπ.
-    // Max rarefaction (open) is half a wavelength away (phase offset π).
-    const waveLen = 2 * Math.PI / kC;
-    const phaseX = (omegaC * t / kC) % waveLen;  // x where phase = 0 (mod wavelength)
-
-    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    // Draw all jam/open labels that fall within the visible road
-    for (let n = -1; n <= Math.ceil(roadLen / waveLen) + 1; n++) {
-      const jamLabelX = roadLeft + phaseX + n * waveLen;
-      const openLabelX = jamLabelX + waveLen / 2;
-      if (jamLabelX > roadLeft + 25 && jamLabelX < roadRight - 25) {
-        ctx.fillStyle = WCOLORS.red;
-        ctx.fillText('jam', jamLabelX, roadTop - 5);
-      }
-      if (openLabelX > roadLeft + 25 && openLabelX < roadRight - 25) {
-        ctx.fillStyle = WCOLORS.teal;
-        ctx.fillText('open', openLabelX, roadTop - 5);
-      }
-    }
-
     // Propagation arrow
     const propArrowY2 = roadBot + 14;
     ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
