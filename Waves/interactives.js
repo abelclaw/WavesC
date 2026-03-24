@@ -17704,43 +17704,47 @@ function initDopplerAngle() {
 
   let time = 0;
   let sourceSpeed = 0.5; // fraction of wave speed
-  const observerX = W * 0.5, observerY = H * 0.25;
-  let freqHistory = [];
+
+  // Scene layout: source path in upper portion, f-vs-θ plot below
+  const sceneTop = 28, sceneBot = H * 0.52;
+  const sceneCY = (sceneTop + sceneBot) / 2 + 8;
+  const observerX = W * 0.5, observerY = sceneTop + 18;
 
   const speedSlider = document.getElementById('da-speed');
   const speedVal = document.getElementById('da-speed-val');
   function onDaInput() {
     sourceSpeed = parseFloat(speedSlider.value);
     speedVal.textContent = sourceSpeed.toFixed(2);
-    freqHistory = [];
     time = 0;
   }
   if (speedSlider) speedSlider.addEventListener('input', onDaInput);
 
   function tick() {
     if (!canvas.isConnected) return;
-    time += 0.03;
+    time += 0.025;
     wClear(ctx, W, H);
 
     // Source moves along horizontal line
-    const sourceY = H * 0.55;
+    const sourceY = sceneCY;
     const travelRange = W * 0.8;
-    const sourceX = W * 0.1 + ((time * 40) % travelRange);
+    const sourceX = W * 0.1 + ((time * 35) % travelRange);
 
-    // Angle from source to observer
+    // θ = angle between velocity direction (+x) and source-to-observer direction
     const dx = observerX - sourceX;
     const dy = observerY - sourceY;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const cosTheta = -dx / dist; // negative because source moves in +x
-    const fReceived = 1 / (1 + sourceSpeed * cosTheta);
+    const theta = Math.atan2(-dy, dx); // angle from +x axis to observer (measured from source)
+    // cosTheta: cos of angle between velocity (+x) and direction to observer
+    const cosTheta = dx / dist;
+    const fReceived = 1 / (1 - sourceSpeed * cosTheta);
 
-    freqHistory.push({ t: time, f: fReceived, sx: sourceX });
-    if (freqHistory.length > 300) freqHistory.shift();
+    // --- SCENE: top half ---
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Doppler: Angle Dependence', W - 10, 18);
 
-    // Draw scene
     // Source path
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(W * 0.1, sourceY); ctx.lineTo(W * 0.9, sourceY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W * 0.05, sourceY); ctx.lineTo(W * 0.95, sourceY); ctx.stroke();
 
     // Observer
     ctx.fillStyle = WCOLORS.blue;
@@ -17748,64 +17752,126 @@ function initDopplerAngle() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Observer', observerX, observerY - 10);
 
-    // Line from source to observer
+    // Dashed line from source to observer
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(observerX, observerY); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Source
+    // Draw angle arc at the source to show θ
+    const arcR = 28;
+    const angleToObs = Math.atan2(observerY - sourceY, observerX - sourceX);
+    // Draw arc from 0 (velocity direction = +x) to angleToObs
+    const startAngle = Math.min(0, angleToObs);
+    const endAngle = Math.max(0, angleToObs);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(sourceX, sourceY, arcR, startAngle, endAngle);
+    ctx.stroke();
+    // θ label near the arc
+    const labelAngle = (startAngle + endAngle) / 2;
+    const labelR = arcR + 10;
+    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03B8', sourceX + labelR * Math.cos(labelAngle), sourceY + labelR * Math.sin(labelAngle) + 3);
+
+    // Source dot
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.arc(sourceX, sourceY, 7, 0, Math.PI * 2); ctx.fill();
-    // Arrow
+
+    // Velocity arrow
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sourceX + 10, sourceY); ctx.lineTo(sourceX + 30, sourceY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sourceX + 10, sourceY); ctx.lineTo(sourceX + 32, sourceY); ctx.stroke();
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath();
-    ctx.moveTo(sourceX + 30, sourceY);
-    ctx.lineTo(sourceX + 25, sourceY - 4);
-    ctx.lineTo(sourceX + 25, sourceY + 4);
+    ctx.moveTo(sourceX + 32, sourceY);
+    ctx.lineTo(sourceX + 27, sourceY - 4);
+    ctx.lineTo(sourceX + 27, sourceY + 4);
     ctx.closePath(); ctx.fill();
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('v', sourceX + 34, sourceY - 2);
 
-    // Color code the received frequency
+    // Current frequency readout
+    const thetaDeg = Math.acos(Math.max(-1, Math.min(1, cosTheta))) * 180 / Math.PI;
     const fColor = fReceived > 1.05 ? WCOLORS.blue : (fReceived < 0.95 ? WCOLORS.red : WCOLORS.text);
     ctx.fillStyle = fColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('f/f\u2080 = ' + fReceived.toFixed(3), W * 0.05, 20);
+    ctx.fillText('f/f\u2080 = ' + fReceived.toFixed(3) + '   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
 
-    // f vs time plot
-    const plotL2 = W * 0.1, plotR2 = W - 15, plotT2 = H * 0.68, plotB2 = H - 10;
-    const pW = plotR2 - plotL2, pH2 = plotB2 - plotT2;
+    // --- PLOT: f/f₀ vs θ (bottom half) ---
+    const plotL = W * 0.12, plotR = W - 15, plotT = H * 0.6, plotB = H - 14;
+    const pW = plotR - plotL, pH = plotB - plotT;
 
+    // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
-    // f=f0 reference
-    const f0Y = plotB2 - 0.5 * pH2;
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(plotL2, f0Y); ctx.lineTo(plotR2, f0Y); ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('f\u2080', plotL2 - 3, f0Y + 3);
+    // Compute f range for current speed to scale the plot
+    var fMax = 1 / (1 - sourceSpeed); // θ=0 (approaching head-on)
+    var fMin = 1 / (1 + sourceSpeed); // θ=180° (receding)
+    // Add a bit of padding
+    var fPlotMax = fMax + 0.1 * (fMax - fMin);
+    var fPlotMin = fMin - 0.1 * (fMax - fMin);
 
+    // f=f₀ reference line
+    var f0Frac = (1 - fPlotMin) / (fPlotMax - fPlotMin);
+    var f0Y = plotB - f0Frac * pH;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(plotL, f0Y); ctx.lineTo(plotR, f0Y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('f\u2080', plotL - 4, f0Y + 3);
+
+    // Axis labels
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('time', (plotL2 + plotR2) / 2, plotB2 + 10);
-    ctx.textAlign = 'right';
-    ctx.fillText('f', plotL2 - 3, plotT2 + 5);
-
-    // Plot frequency history
-    if (freqHistory.length > 1) {
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.beginPath();
-      const tRange = freqHistory[freqHistory.length - 1].t - freqHistory[0].t;
-      for (let i = 0; i < freqHistory.length; i++) {
-        const px = plotL2 + ((freqHistory[i].t - freqHistory[0].t) / Math.max(tRange, 1)) * pW;
-        const py = plotB2 - ((freqHistory[i].f - 0.5) / 1.0) * pH2;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.stroke();
+    ctx.fillText('\u03B8', (plotL + plotR) / 2, plotB + 13);
+    // Tick marks at 0°, 90°, 180°
+    var ticks = [0, 90, 180];
+    for (var ti = 0; ti < ticks.length; ti++) {
+      var tx = plotL + (ticks[ti] / 180) * pW;
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(tx, plotB); ctx.lineTo(tx, plotB + 4); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(ticks[ti] + '\u00B0', tx, plotB + 13);
     }
+    ctx.save(); ctx.translate(plotL - 10, (plotT + plotB) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('f / f\u2080', 0, 0);
+    ctx.restore();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('Doppler: Source Passing Observer', W - 10, 18);
+    // Draw the f vs θ curve
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    var nPts = 200;
+    for (var i = 0; i <= nPts; i++) {
+      var angleDeg = (i / nPts) * 180;
+      var cosA = Math.cos(angleDeg * Math.PI / 180);
+      var fVal = 1 / (1 - sourceSpeed * cosA);
+      var px = plotL + (angleDeg / 180) * pW;
+      var py = plotB - ((fVal - fPlotMin) / (fPlotMax - fPlotMin)) * pH;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Blue/red shading labels
+    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('approaching', plotL + 4, plotT + 10);
+    ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'right';
+    ctx.fillText('receding', plotR - 4, plotB - 6);
+
+    // Moving dot on the curve showing current angle
+    var currentThetaDeg = thetaDeg;
+    var dotCosA = Math.cos(currentThetaDeg * Math.PI / 180);
+    var dotF = 1 / (1 - sourceSpeed * dotCosA);
+    var dotX = plotL + (currentThetaDeg / 180) * pW;
+    var dotY = plotB - ((dotF - fPlotMin) / (fPlotMax - fPlotMin)) * pH;
+    // Vertical guide line
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(dotX, plotT); ctx.lineTo(dotX, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+    // Dot
+    ctx.fillStyle = fColor;
+    ctx.beginPath(); ctx.arc(dotX, dotY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
 
     requestAnimationFrame(tick);
   }
