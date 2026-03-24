@@ -7607,7 +7607,7 @@ function initPhononPolarizations() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let mode = 'longitudinal'; // 'longitudinal', 'transverse-x', 'transverse-y'
+  let mode = 'longitudinal';
   let t = 0;
 
   // Create buttons
@@ -7618,9 +7618,9 @@ function initPhononPolarizations() {
     controls.className = 'scene-controls';
     controls.id = 'phonon-pol-controls';
     controls.innerHTML =
-      '<button id="phonon-btn-long" class="phonon-pol-btn phonon-pol-btn-active" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Longitudinal</button>' +
-      '<button id="phonon-btn-tx" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Transverse (x)</button>' +
-      '<button id="phonon-btn-ty" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;">Transverse (y)</button>';
+      '<button id="phonon-btn-long" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Longitudinal</button>' +
+      '<button id="phonon-btn-tx" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;margin-right:6px;">Transverse (horizontal)</button>' +
+      '<button id="phonon-btn-ty" class="phonon-pol-btn" style="padding:3px 12px;font-size:11px;cursor:pointer;">Transverse (vertical)</button>';
     parent.appendChild(controls);
   }
 
@@ -7637,20 +7637,36 @@ function initPhononPolarizations() {
   document.getElementById('phonon-btn-ty')?.addEventListener('click', () => { mode = 'transverse-y'; setActive('phonon-btn-ty'); });
   setActive('phonon-btn-long');
 
-  // Lattice parameters
-  const nRows = 7;
-  const nCols = 9;
-  const spacingX = W / (nCols + 1);
-  const spacingY = H / (nRows + 2);
-  const amp = spacingX * 0.28;
-  const k = 2 * Math.PI / (spacingX * 3.5);
-  const omega = 2.2;
-  const atomR = Math.min(spacingX, spacingY) * 0.16;
+  // 3D cubic lattice: nx along propagation (k), ny into screen, nz up
+  const nx = 8, ny = 4, nz = 4;
+  const spacing = 38; // lattice constant in projected pixels
+  const amp = spacing * 0.30;
+  const kWave = 2 * Math.PI / (spacing * 3.2); // wavevector along x
+  const omega = 2.0;
+  const atomR = 4.5;
 
-  // 3D isometric projection for depth effect
-  // "into screen" (y-axis in physics) is rendered as slight diagonal offset
-  const depthX = 0.35;
-  const depthY = 0.25;
+  // Isometric projection: 3D (x right, y into screen, z up) -> 2D screen
+  // x-axis projects right-and-slightly-down, y-axis projects left-and-down, z-axis projects straight up
+  const iso = {
+    xx: 0.82, xy: -0.32,   // x-axis -> screen
+    yx: -0.48, yy: -0.22,  // y-axis -> screen (into screen = left and down)
+    zx: 0.0, zy: -0.85     // z-axis -> screen (up)
+  };
+
+  // Center of projection
+  const cx = W * 0.52, cy = H * 0.55;
+
+  function project(x3, y3, z3) {
+    return {
+      x: cx + x3 * iso.xx + y3 * iso.yx + z3 * iso.zx,
+      y: cy + x3 * iso.xy + y3 * iso.yy + z3 * iso.zy
+    };
+  }
+
+  // Depth for sorting (higher = farther from viewer)
+  function depth(x3, y3, z3) {
+    return -x3 * 0.3 + y3 * 0.9 - z3 * 0.2;
+  }
 
   function tick() {
     if (!canvas.isConnected) return;
@@ -7662,147 +7678,137 @@ function initPhononPolarizations() {
 
   function draw() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    const labels = { 'longitudinal': 'Longitudinal phonon (displacement ∥ k)', 'transverse-x': 'Transverse phonon (displacement ⊥ k, horizontal)', 'transverse-y': 'Transverse phonon (displacement ⊥ k, vertical)' };
+    const labels = {
+      'longitudinal': 'Longitudinal phonon (displacement ∥ k)',
+      'transverse-x': 'Transverse phonon (displacement ⊥ k, horizontal)',
+      'transverse-y': 'Transverse phonon (displacement ⊥ k, vertical)'
+    };
     ctx.fillText(labels[mode], W / 2, 16);
 
-    // Propagation arrow
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('k →', W - 50, H - 10);
+    // Build atom list with 3D positions and displacements
+    const atoms = [];
+    for (let ix = 0; ix < nx; ix++) {
+      for (let iy = 0; iy < ny; iy++) {
+        for (let iz = 0; iz < nz; iz++) {
+          // Centered lattice coordinates
+          const bx = (ix - (nx - 1) / 2) * spacing;
+          const by = (iy - (ny - 1) / 2) * spacing;
+          const bz = (iz - (nz - 1) / 2) * spacing;
 
-    // Draw bonds and atoms
-    const positions = [];
-    for (let row = 0; row < nRows; row++) {
-      positions[row] = [];
-      for (let col = 0; col < nCols; col++) {
-        const baseX = spacingX * (col + 1);
-        const baseY = spacingY * (row + 1.5);
-        const phase = k * baseX - omega * t;
-        const disp = amp * Math.sin(phase);
+          // Wave propagates along x
+          const phase = kWave * bx - omega * t;
+          const disp = amp * Math.sin(phase);
 
-        let dx = 0, dy = 0;
-        if (mode === 'longitudinal') {
-          dx = disp; // displacement along propagation (z mapped to screen-x)
-        } else if (mode === 'transverse-x') {
-          // horizontal transverse: displacement perpendicular in screen plane
-          // show as "into/out of screen" with size+opacity change
-          const d = disp;
-          dx = d * depthX;
-          dy = d * depthY;
-        } else {
-          dy = disp; // vertical transverse
+          let dx = 0, dy = 0, dz = 0;
+          if (mode === 'longitudinal') {
+            dx = disp; // along propagation
+          } else if (mode === 'transverse-x') {
+            dy = disp; // perpendicular horizontal (into/out of screen)
+          } else {
+            dz = disp; // perpendicular vertical (up/down)
+          }
+
+          const x3 = bx + dx, y3 = by + dy, z3 = bz + dz;
+          const p = project(x3, y3, z3);
+          const d = depth(x3, y3, z3);
+
+          atoms.push({ ix, iy, iz, bx, by, bz, x3, y3, z3, sx: p.x, sy: p.y, depth: d, disp: Math.sin(phase) });
         }
-
-        positions[row][col] = { x: baseX + dx, y: baseY + dy };
       }
     }
 
-    // Draw horizontal bonds
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    for (let row = 0; row < nRows; row++) {
-      for (let col = 0; col < nCols - 1; col++) {
-        const a = positions[row][col], b = positions[row][col + 1];
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    // Sort back-to-front for painter's algorithm
+    atoms.sort((a, b) => b.depth - a.depth);
+
+    // Build a lookup for projected positions
+    const posMap = {};
+    for (const a of atoms) {
+      posMap[`${a.ix},${a.iy},${a.iz}`] = a;
+    }
+
+    // Draw bonds first (back-to-front by midpoint depth)
+    const bonds = [];
+    for (const a of atoms) {
+      const { ix, iy, iz } = a;
+      // bonds to +x, +y, +z neighbors
+      for (const [dix, diy, diz] of [[1,0,0],[0,1,0],[0,0,1]]) {
+        const ni = ix + dix, nj = iy + diy, nk = iz + diz;
+        const nb = posMap[`${ni},${nj},${nk}`];
+        if (nb) {
+          bonds.push({ a, b: nb, depth: (a.depth + nb.depth) / 2 });
+        }
       }
     }
-    // Draw vertical bonds
-    for (let row = 0; row < nRows - 1; row++) {
-      for (let col = 0; col < nCols; col++) {
-        const a = positions[row][col], b = positions[row + 1][col];
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      }
+    bonds.sort((a, b) => b.depth - a.depth);
+
+    // Draw bonds
+    for (const bond of bonds) {
+      const { a, b } = bond;
+      // Fade bonds that are deeper (farther from viewer)
+      const depthFade = 0.12 + 0.35 * (1 - (bond.depth - bonds[bonds.length-1].depth) / (bonds[0].depth - bonds[bonds.length-1].depth + 0.01));
+      ctx.strokeStyle = WCOLORS.axis;
+      ctx.globalAlpha = depthFade;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
     }
     ctx.globalAlpha = 1;
 
-    // Draw atoms
-    for (let row = 0; row < nRows; row++) {
-      for (let col = 0; col < nCols; col++) {
-        const p = positions[row][col];
-        const baseX = spacingX * (col + 1);
-        const phase = k * baseX - omega * t;
-        const disp = Math.sin(phase);
+    // Draw atoms back-to-front
+    for (const a of atoms) {
+      // Depth-based size and opacity
+      const depthRange = atoms[0].depth - atoms[atoms.length - 1].depth + 0.01;
+      const depthNorm = (a.depth - atoms[atoms.length - 1].depth) / depthRange; // 0=front, 1=back
+      const r = atomR * (1.3 - 0.5 * depthNorm);
+      const alpha = 0.45 + 0.55 * (1 - depthNorm);
 
-        // Color atoms by displacement for visual clarity
-        let r, g, b;
-        if (mode === 'longitudinal') {
-          // Teal for positive displacement, amber for negative
-          const f = (disp + 1) / 2; // 0 to 1
-          r = Math.round(15 + f * (217 - 15));
-          g = Math.round(118 + f * (119 - 118));
-          b = Math.round(110 + f * (6 - 110));
-        } else if (mode === 'transverse-x') {
-          // Blue-ish for into screen, red-ish for out
-          const f = (disp + 1) / 2;
-          r = Math.round(37 + f * (220 - 37));
-          g = Math.round(99 + f * (38 - 99));
-          b = Math.round(235 + f * (38 - 235));
-        } else {
-          const f = (disp + 1) / 2;
-          r = Math.round(15 + f * (217 - 15));
-          g = Math.round(118 + f * (119 - 118));
-          b = Math.round(110 + f * (6 - 110));
-        }
+      // Color by displacement
+      const f = (a.disp + 1) / 2; // 0 to 1
+      const cr = Math.round(15 + f * (217 - 15));
+      const cg = Math.round(118 + f * (119 - 118));
+      const cb = Math.round(110 + f * (6 - 110));
 
-        // Size variation for transverse-x to suggest depth
-        let drawR = atomR;
-        if (mode === 'transverse-x') {
-          drawR = atomR * (1 + 0.25 * disp);
-        }
-
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, drawR, 0, 2 * Math.PI); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = `rgb(${cr},${cg},${cb})`;
+      ctx.beginPath(); ctx.arc(a.sx, a.sy, r, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
     }
+    ctx.globalAlpha = 1;
 
-    // Draw displacement arrows on a few atoms in the middle row
-    const midRow = Math.floor(nRows / 2);
-    const arrowCols = [2, 4, 6];
-    for (const col of arrowCols) {
-      const baseX = spacingX * (col + 1);
-      const baseY = spacingY * (midRow + 1.5);
-      const phase = k * baseX - omega * t;
-      const disp = amp * Math.sin(phase);
-      const p = positions[midRow][col];
+    // Draw k-arrow along propagation direction
+    const kStart = project(-(nx / 2 + 1) * spacing, 0, 0);
+    const kEnd = project((nx / 2 + 1.5) * spacing, 0, 0);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
+    // Arrowhead
+    const aLen = 7, aAng = 0.35;
+    const dx = kEnd.x - kStart.x, dy = kEnd.y - kStart.y;
+    const ang = Math.atan2(dy, dx);
+    ctx.beginPath();
+    ctx.moveTo(kEnd.x, kEnd.y);
+    ctx.lineTo(kEnd.x - aLen * Math.cos(ang - aAng), kEnd.y - aLen * Math.sin(ang - aAng));
+    ctx.moveTo(kEnd.x, kEnd.y);
+    ctx.lineTo(kEnd.x - aLen * Math.cos(ang + aAng), kEnd.y - aLen * Math.sin(ang + aAng));
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('k', kEnd.x + 4, kEnd.y + 4);
 
-      if (Math.abs(disp) > amp * 0.15) {
-        ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        if (mode === 'longitudinal') {
-          ctx.moveTo(baseX, baseY - atomR - 3);
-          ctx.lineTo(baseX + disp, baseY - atomR - 3);
-          // arrowhead
-          const sign = disp > 0 ? 1 : -1;
-          ctx.lineTo(baseX + disp - sign * 4, baseY - atomR - 7);
-          ctx.moveTo(baseX + disp, baseY - atomR - 3);
-          ctx.lineTo(baseX + disp - sign * 4, baseY - atomR + 1);
-        } else if (mode === 'transverse-y') {
-          ctx.moveTo(baseX + atomR + 3, baseY);
-          ctx.lineTo(baseX + atomR + 3, baseY + disp);
-          const sign = disp > 0 ? 1 : -1;
-          ctx.lineTo(baseX + atomR - 1, baseY + disp - sign * 4);
-          ctx.moveTo(baseX + atomR + 3, baseY + disp);
-          ctx.lineTo(baseX + atomR + 7, baseY + disp - sign * 4);
-        } else {
-          // transverse-x: draw a circle+dot or circle+cross for into/out of screen
-          const cx = baseX - atomR - 8;
-          const cy = baseY;
-          const cr = 5;
-          ctx.beginPath(); ctx.arc(cx, cy, cr, 0, 2 * Math.PI); ctx.stroke();
-          if (disp > 0) {
-            // out of screen: dot
-            ctx.fillStyle = WCOLORS.red;
-            ctx.beginPath(); ctx.arc(cx, cy, 1.5, 0, 2 * Math.PI); ctx.fill();
-          } else {
-            // into screen: cross
-            ctx.beginPath(); ctx.moveTo(cx - 3, cy - 3); ctx.lineTo(cx + 3, cy + 3); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(cx + 3, cy - 3); ctx.lineTo(cx - 3, cy + 3); ctx.stroke();
-          }
-        }
-        ctx.stroke();
-      }
-    }
+    // Draw axis labels for the two transverse directions
+    const yEnd = project(0, -(ny / 2 + 1.5) * spacing, 0);
+    const zEnd = project(0, 0, (nz / 2 + 1.5) * spacing);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.8; ctx.setLineDash([3, 3]);
+    // y-axis
+    const yStart = project(0, (ny / 2 + 0.5) * spacing, 0);
+    ctx.beginPath(); ctx.moveTo(yStart.x, yStart.y); ctx.lineTo(yEnd.x, yEnd.y); ctx.stroke();
+    // z-axis
+    const zStart = project(0, 0, -(nz / 2 + 0.5) * spacing);
+    ctx.beginPath(); ctx.moveTo(zStart.x, zStart.y); ctx.lineTo(zEnd.x, zEnd.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('y', yEnd.x - 8, yEnd.y - 2);
+    ctx.fillText('z', zEnd.x + 8, zEnd.y + 2);
   }
 
   tick();
