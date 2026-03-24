@@ -3946,6 +3946,14 @@ function sceneMarkup(type) {
     // =====================================================================
     // CHAPTER 14: POLARIZATION
     // =====================================================================
+    case "phonon-polarizations":
+      return `
+        <div class="scene-label">Phonon Polarizations</div>
+        <p class="scene-caption">A crystal lattice vibrating in three polarization modes. Click each button to switch between longitudinal and two transverse directions.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-phonon-polarizations" width="600" height="340"></canvas>
+        </div>
+      `;
     case "linear-polarization":
       return `
         <div class="scene-label">Linear Polarization</div>
