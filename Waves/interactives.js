@@ -16651,7 +16651,7 @@ function initDoubleSlitPhotonBuildup() {
 
   // --- Probability distribution ---
   function prob(yNorm, dP, aP, block) {
-    var t = (yNorm - 0.5) * 10; // spread pattern across screen
+    var t = (yNorm - 0.5) * 5; // wide fringes, zoomed in
     var sincArg = Math.PI * aP * t;
     var env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
     if (block === 3) return 0; // both closed
@@ -16824,8 +16824,6 @@ function initDoubleSlitPhotonBuildup() {
         ctx.fillRect(barrierX - barrierW/2, sy - shw, barrierW, shw * 2);
       }
     }
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('BARRIER', barrierX, regionB + 18);
   }
 
   function drawDoors() {
@@ -16907,35 +16905,33 @@ function initDoubleSlitPhotonBuildup() {
   }
 
   function drawExpectedDistribution() {
-    // Smooth filled background of expected pattern, fades in as dots accumulate
-    var n = detectedDots.length;
-    if (n < 5 && getBlockState() !== 3) return; // need a few dots first
-    var fillAlpha = Math.min(0.18, n * 0.00015); // slowly ramps up
-    if (getBlockState() === 3) fillAlpha = 0;
+    var bk = getBlockState();
+    if (bk === 3) return;
 
-    var nSteps = 200;
-    // Draw as filled shape: screenX on left edge, distribution extends right
+    var nSteps = 400; // high resolution for smoothness
+    var distW = 50;   // max width of filled region
+
+    // Filled shape
     ctx.beginPath();
     ctx.moveTo(screenX, regionT);
     for (var i = 0; i <= nSteps; i++) {
       var yN = i / nSteps;
       var p = currentProb(yN);
-      var px = screenX + p * 45; // max 45px wide filled region
-      var py = regionT + yN * regionH;
-      ctx.lineTo(px, py);
+      ctx.lineTo(screenX + p * distW, regionT + yN * regionH);
     }
     ctx.lineTo(screenX, regionB);
     ctx.closePath();
-    ctx.fillStyle = 'rgba(37,99,235,' + fillAlpha + ')';
+    ctx.fillStyle = 'rgba(37,99,235,0.08)';
     ctx.fill();
-    // Outline
-    ctx.strokeStyle = 'rgba(37,99,235,' + Math.min(0.3, fillAlpha * 2) + ')';
-    ctx.lineWidth = 1;
+
+    // Crisp outline
+    ctx.strokeStyle = 'rgba(37,99,235,0.3)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     for (var i = 0; i <= nSteps; i++) {
       var yN = i / nSteps;
       var p = currentProb(yN);
-      var px = screenX + p * 45;
+      var px = screenX + p * distW;
       var py = regionT + yN * regionH;
       if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
     }
@@ -17048,10 +17044,10 @@ function initDoubleSlitPhotonBuildup() {
     ctx.fillText(rateLabel, sldrL + sldrW + 10, ctrlY1 + 4);
 
     drawSlider('Slit sep. (d)', ctrlY2, slitSepNorm);
-    ctx.fillText((getSlitSep()).toFixed(0) + ' px', sldrL + sldrW + 10, ctrlY2 + 4);
+    ctx.fillText(getDParam().toFixed(1), sldrL + sldrW + 10, ctrlY2 + 4);
 
     drawSlider('Slit width (a)', ctrlY3, slitWidthNorm);
-    ctx.fillText((getSlitHalfW() * 2).toFixed(1) + ' px', sldrL + sldrW + 10, ctrlY3 + 4);
+    ctx.fillText(getAParam().toFixed(1), sldrL + sldrW + 10, ctrlY3 + 4);
 
     // Reset
     ctx.fillStyle = WCOLORS.red;
