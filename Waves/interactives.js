@@ -14151,10 +14151,18 @@ function initCieColorSpaceGamut() {
       }
     }
     ctx.restore();
-    console.log('[CIE] filled', filledCount, 'pixels, plotSize=', plotSize, 'plotL=', plotL, 'plotR=', plotR, 'W=', W, 'H=', H);
-    console.log('[CIE] spectral locus x range:', Math.min.apply(null, spectralX.filter(function(v){return v>0})).toFixed(3), '-', Math.max.apply(null, spectralX).toFixed(3));
-    console.log('[CIE] spectral locus y range:', Math.min.apply(null, spectralY.filter(function(v){return v>0})).toFixed(3), '-', Math.max.apply(null, spectralY).toFixed(3));
-    console.log('[CIE] test red (0.6,0.3):', xyToDisplayRGB(0.6, 0.3).map(function(v){return Math.round(v*255)}));
+
+    // DEBUG: draw test red square at chromaticity (0.55, 0.35) - should be orange area
+    var testP = toScreen(0.55, 0.35);
+    ctx.fillStyle = 'rgb(255,0,0)';
+    ctx.fillRect(testP.x - 10, testP.y - 10, 20, 20);
+    // And sample what color was actually drawn at a red-region pixel
+    var sampleP = toScreen(0.5, 0.4);
+    var sampleData = ctx.getImageData(Math.round(sampleP.x), Math.round(sampleP.y), 1, 1).data;
+    console.log('[CIE] pixel at (0.5,0.4) screen=(' + Math.round(sampleP.x) + ',' + Math.round(sampleP.y) + '): rgba(' + sampleData[0] + ',' + sampleData[1] + ',' + sampleData[2] + ',' + sampleData[3] + ')');
+    var sampleP2 = toScreen(0.3, 0.5);
+    var sampleData2 = ctx.getImageData(Math.round(sampleP2.x), Math.round(sampleP2.y), 1, 1).data;
+    console.log('[CIE] pixel at (0.3,0.5) screen=(' + Math.round(sampleP2.x) + ',' + Math.round(sampleP2.y) + '): rgba(' + sampleData2[0] + ',' + sampleData2[1] + ',' + sampleData2[2] + ',' + sampleData2[3] + ')');
 
     // Spectral locus outline
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
