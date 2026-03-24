@@ -14089,15 +14089,6 @@ function initCieColorSpaceGamut() {
     return { x: plotL + cx * plotSize * 1.15, y: plotB - cy * plotSize * 1.3 };
   }
 
-  // XYZ to linear sRGB
-  function xyzToLinearRGB(X, Y, Z) {
-    return [
-       3.2406 * X - 1.5372 * Y - 0.4986 * Z,
-      -0.9689 * X + 1.8758 * Y + 0.0415 * Z,
-       0.0557 * X - 0.2040 * Y + 1.0570 * Z
-    ];
-  }
-
   function gammaCorrect(c) {
     return c > 0.0031308 ? 1.055 * Math.pow(c, 1/2.4) - 0.055 : 12.92 * c;
   }
@@ -14143,7 +14134,8 @@ function initCieColorSpaceGamut() {
       ctx.fillText(v.toFixed(1), plotL - 5, p2.y + 3);
     }
 
-    // Build spectral locus clipping path
+    // Fill horseshoe with gamut-mapped colors
+    ctx.save();
     ctx.beginPath();
     let started = false;
     for (let i = 0; i < spectralX.length; i++) {
@@ -14153,28 +14145,19 @@ function initCieColorSpaceGamut() {
       else ctx.lineTo(p.x, p.y);
     }
     ctx.closePath();
-
-    // Fill entire plot with gamut-mapped colors (NO clip - debug)
+    ctx.clip();
     const step = 2;
-    let logged = false;
     for (let px = plotL; px < plotR + 30; px += step) {
       for (let py = plotT; py < plotB; py += step) {
         const cx = (px - plotL) / (plotSize * 1.15);
         const cy = (plotB - py) / (plotSize * 1.3);
         if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
         const rgb = xyToDisplayRGB(cx, cy);
-        // DEBUG: log what happens at the red region
-        if (!logged && cx > 0.49 && cx < 0.51 && cy > 0.29 && cy < 0.31) {
-          console.log('[CIE-FILL] at cx=' + cx.toFixed(3) + ' cy=' + cy.toFixed(3) + ' px=' + px + ' py=' + py + ' rgb=' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255));
-          // Force paint a bright magenta to be unmissable
-          ctx.fillStyle = 'rgb(255,0,255)';
-          ctx.fillRect(px, py, 10, 10);
-          logged = true;
-        }
         ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
         ctx.fillRect(px, py, step, step);
       }
     }
+    ctx.restore();
 
     // Spectral locus outline
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
