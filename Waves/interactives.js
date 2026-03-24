@@ -7851,8 +7851,8 @@ function initPolarization() {
   const amp = 48;
 
   // View angles (radians)
-  let azimuth = 2.15;    // orbit left/right (0 = head-on along k)
-  let elevation = 0.35;  // tilt up/down
+  let azimuth = 2.1;     // orbit angle (default gives oblique view matching original)
+  let elevation = 0.3;   // tilt up/down
   let roll = 0;          // rotate around propagation axis (shift-drag)
 
   // Mouse drag state
@@ -7897,40 +7897,38 @@ function initPolarization() {
   canvas.addEventListener('touchend', () => { dragging = false; });
   canvas.style.cursor = 'grab';
 
-  // 3D projection with camera on a sphere looking at origin
-  // World: k=z (propagation), E=y (up), B=x (sideways)
-  // Roll rotates E,B around k before camera projection
-  function getProjection() {
-    const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
-    const ce = Math.cos(elevation), se = Math.sin(elevation);
+  // 3D → 2D oblique projection
+  // World axes: B=x, E=y, k=z
+  // We project a 3D point (x,y,z) to screen coords (sx, sy).
+  // The projection is: first apply roll around z, then two view rotations.
+  // Screen x = right, screen y = down.
+  function project3D(wx, wy, wz) {
+    // Apply roll: rotate x,y around z
     const cr = Math.cos(roll), sr = Math.sin(roll);
+    const rx = cr * wx - sr * wy;
+    const ry = sr * wx + cr * wy;
+    const rz = wz;
 
-    // Camera position: spherical coords (az, el) looking at origin
-    // cam_z (into screen) = (sa, -se*ca, ce*ca)  -- from camera toward origin
-    // cam_x (screen right) = (ca, se*sa, -ce*sa)  -- derived as right vector
-    // cam_y (screen up)    = (0, ce, se)           -- derived as up vector
+    // Apply elevation: rotate around x (tilt camera up/down)
+    const ce = Math.cos(elevation), se = Math.sin(elevation);
+    const ey = ce * ry - se * rz;
+    const ez = se * ry + ce * rz;
 
-    // To project world point p onto screen: sx = dot(p, cam_x), sy = -dot(p, cam_y)
-    // (negate y because screen y goes down)
+    // Apply azimuth: rotate around y (orbit camera left/right)
+    const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
+    const sx = ca * rx + sa * ez;
+    const sy = ey;
+    // sz = -sa * rx + ca * ez;  // depth, not needed
 
-    // Apply roll: rotate B,E around k-axis in world space
-    // B' = cr*(1,0,0) + sr*(0,1,0) = (cr, sr, 0)
-    // E' = -sr*(1,0,0) + cr*(0,1,0) = (-sr, cr, 0)
-    // k  = (0, 0, 1)
+    return { x: sx, y: -sy }; // negate y: world up → screen up (canvas y goes down)
+  }
 
-    // k projected: sx = dot((0,0,1), cam_x) = -ce*sa, sy = -dot((0,0,1), cam_y) = -se
-    const kx = -ce * sa;
-    const ky = -se;
-
-    // E' projected: sx = dot((-sr,cr,0), cam_x), sy = -dot((-sr,cr,0), cam_y)
-    const ex = -sr * ca + cr * se * sa;
-    const ey = -(cr * ce);
-
-    // B' projected: sx = dot((cr,sr,0), cam_x), sy = -dot((cr,sr,0), cam_y)
-    const bx = cr * ca + sr * se * sa;
-    const by = -(sr * ce);
-
-    return { kx, ky, ex, ey, bx, by };
+  function getProjection() {
+    // Project unit vectors for each world axis
+    const k = project3D(0, 0, 1);  // k-axis (z)
+    const e = project3D(0, 1, 0);  // E-axis (y)
+    const b = project3D(1, 0, 0);  // B-axis (x)
+    return { kx: k.x, ky: k.y, ex: e.x, ey: e.y, bx: b.x, by: b.y };
   }
 
   function to2D(kk, e, b) {
