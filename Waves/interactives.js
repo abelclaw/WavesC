@@ -7886,252 +7886,42 @@ function initPolarization() {
     requestAnimationFrame(tick);
   }
 
-  function draw() {
-    const theta = parseFloat(angleSlider?.value || 0) * Math.PI / 180;
-    const valEl = document.getElementById('linear-pol-angle-val');
-    if (valEl) valEl.textContent = Math.round(theta * 180 / Math.PI) + '°';
-
-    const cosT = Math.cos(theta), sinT = Math.sin(theta);
-    const nWave = 1.5; // number of wavelengths visible
-
-    // --- Draw propagation (k) axis ---
-    const kStart = to2D(-1.15, 0, 0);
-    const kEnd = to2D(1.25, 0, 0);
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('k', kEnd.x + 5, kEnd.y);
-
-    // --- E-field (teal): oscillates in the plane defined by theta ---
-    // E direction in 3D: cosT * "up" + sinT * "sideways"
-    const nPts = 200;
-    const nArrows = 22;
-
-    // E-field envelope curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i <= nPts; i++) {
-      const kk = -1 + 2 * i / nPts;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
+  // Returns E and B transverse components for a given phase
+  function fieldComponents(phase) {
+    if (mode === 'linear') {
+      const theta = parseFloat(angleSlider?.value || 0) * Math.PI / 180;
+      const cosT = Math.cos(theta), sinT = Math.sin(theta);
       const val = Math.sin(phase);
-      const eComp = val * cosT; // vertical component
-      const bComp = val * sinT; // sideways component (for rotated E)
-      const p = to2D(kk, eComp * 0.85, bComp * 0.85);
-      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+      return { eUp: val * cosT, eSide: val * sinT, bUp: -val * sinT, bSide: val * cosT };
     }
-    ctx.stroke();
-
-    // E-field arrows
-    for (let i = 0; i <= nArrows; i++) {
-      const kk = -1 + 2 * i / nArrows;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const val = Math.sin(phase);
-      const eComp = val * cosT;
-      const bComp = val * sinT;
-      const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, eComp * 0.85, bComp * 0.85);
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
-      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
-    // --- B-field (amber): perpendicular to E and k ---
-    // B is rotated 90° from E in the transverse plane: -sinT * "up" + cosT * "sideways"
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i <= nPts; i++) {
-      const kk = -1 + 2 * i / nPts;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const val = Math.sin(phase);
-      const eComp = -val * sinT; // vertical component of B
-      const bComp = val * cosT;  // sideways component of B
-      const p = to2D(kk, eComp * 0.55, bComp * 0.55);
-      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
-    }
-    ctx.stroke();
-
-    // B-field arrows
-    for (let i = 0; i <= nArrows; i++) {
-      const kk = -1 + 2 * i / nArrows;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const val = Math.sin(phase);
-      const eComp = -val * sinT;
-      const bComp = val * cosT;
-      const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, eComp * 0.55, bComp * 0.55);
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
-      ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
-    // --- Snapshot arrows at k=0 with arrowheads ---
-    const phase0 = -t * 2;
-    const val0 = Math.sin(phase0);
-    // E arrow
-    const eBase = to2D(0, 0, 0);
-    const eTip = to2D(0, val0 * cosT * 0.85, val0 * sinT * 0.85);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(eTip.x, eTip.y); ctx.stroke();
-    drawArrowhead(eBase.x, eBase.y, eTip.x, eTip.y, WCOLORS.teal, 7);
-    // B arrow
-    const bTip = to2D(0, -val0 * sinT * 0.55, val0 * cosT * 0.55);
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(bTip.x, bTip.y); ctx.stroke();
-    drawArrowhead(eBase.x, eBase.y, bTip.x, bTip.y, WCOLORS.amber, 7);
-
-    // --- Legend ---
-    const lgX = W * 0.78, lgY = H * 0.30;
-    ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('E', lgX + 18, lgY);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(lgX - 8, lgY - 4); ctx.lineTo(lgX + 12, lgY - 4); ctx.stroke();
-
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('B/c', lgX + 18, lgY + 22);
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(lgX - 8, lgY + 18); ctx.lineTo(lgX + 12, lgY + 18); ctx.stroke();
-
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('θ = ' + Math.round(theta * 180 / Math.PI) + '°', lgX - 8, lgY + 44);
-
-    // --- Cross-section view (right side) ---
-    const cxR = W * 0.82, cyR = H * 0.68;
-    const radius = 38;
-
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(cxR, cyR, radius, 0, 2 * Math.PI); ctx.stroke();
-
-    // Axes
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(cxR - radius - 6, cyR); ctx.lineTo(cxR + radius + 6, cyR); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cxR, cyR - radius - 6); ctx.lineTo(cxR, cyR + radius + 6); ctx.stroke();
-
-    // E direction line (dashed)
-    const eAng = -theta + Math.PI / 2; // angle from horizontal
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(cxR - (radius + 4) * Math.cos(eAng), cyR - (radius + 4) * Math.sin(eAng));
-    ctx.lineTo(cxR + (radius + 4) * Math.cos(eAng), cyR + (radius + 4) * Math.sin(eAng));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // B direction line (dashed) - perpendicular to E
-    const bAng = eAng + Math.PI / 2;
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(cxR - (radius + 4) * Math.cos(bAng), cyR - (radius + 4) * Math.sin(bAng));
-    ctx.lineTo(cxR + (radius + 4) * Math.cos(bAng), cyR + (radius + 4) * Math.sin(bAng));
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Current E vector
-    const eNow = Math.sin(phase0);
-    const eTipX = cxR + eNow * radius * 0.8 * Math.cos(eAng);
-    const eTipY = cyR + eNow * radius * 0.8 * Math.sin(eAng);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(eTipX, eTipY); ctx.stroke();
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.arc(eTipX, eTipY, 3, 0, 2 * Math.PI); ctx.fill();
-
-    // Current B vector
-    const bTipX = cxR + eNow * radius * 0.8 * Math.cos(bAng);
-    const bTipY = cyR + eNow * radius * 0.8 * Math.sin(bAng);
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(bTipX, bTipY); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.beginPath(); ctx.arc(bTipX, bTipY, 3, 0, 2 * Math.PI); ctx.fill();
-
-    // Labels
-    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('E', eTipX + (eNow >= 0 ? 10 : -10), eTipY - 6);
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('B', bTipX + (eNow >= 0 ? 10 : -10), bTipY - 6);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('End-on view', cxR, cyR + radius + 18);
-  }
-
-  tick();
-}
-
-// =========================================================================
-function initCircularPolarization() {
-  const canvas = document.getElementById('scene-circular-polarization');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
-
-  let handedness = 1; // 1 = RCP, -1 = LCP
-  let t = 0;
-
-  let toggleBtn = document.getElementById('circ-pol-toggle');
-  toggleBtn?.addEventListener('click', () => {
-    handedness *= -1;
-    toggleBtn.textContent = handedness > 0 ? 'RCP (right-circular)' : 'LCP (left-circular)';
-  });
-
-  // 3D oblique projection
-  const cx = W * 0.38, cy = H / 2;
-  const axisLen = W * 0.30;
-  const amp = 45;
-  const projK = { x: 0.85, y: 0.30 };
-  const projE = { x: 0, y: -1 };
-  const projB = { x: -0.45, y: 0.20 };
-
-  function to2D(kk, e, b) {
-    return {
-      x: cx + kk * projK.x * axisLen + e * projE.x * amp + b * projB.x * amp,
-      y: cy + kk * projK.y * axisLen + e * projE.y * amp + b * projB.y * amp
-    };
-  }
-
-  function drawArrowhead(fx, fy, tx, ty, color, size) {
-    const dx = tx - fx, dy = ty - fy;
-    const len = Math.sqrt(dx * dx + dy * dy);
-    if (len < 2) return;
-    const ux = dx / len, uy = dy / len;
-    const px = -uy, py = ux;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(tx, ty);
-    ctx.lineTo(tx - ux * size + px * size * 0.4, ty - uy * size + py * size * 0.4);
-    ctx.lineTo(tx - ux * size - px * size * 0.4, ty - uy * size - py * size * 0.4);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function tick() {
-    if (!canvas.isConnected) return;
-    t += 0.03;
-    wClear(ctx, W, H);
-    draw();
-    requestAnimationFrame(tick);
+    const h = mode === 'rcp' ? 1 : -1;
+    return { eUp: Math.cos(phase), eSide: h * Math.sin(phase), bUp: -h * Math.sin(phase), bSide: Math.cos(phase) };
   }
 
   function draw() {
-    const nWave = 1.5;
-    const nPts = 200;
-    const nArrows = 22;
+    if (mode === 'linear') {
+      const theta = parseFloat(angleSlider?.value || 0);
+      const valEl = document.getElementById('pol-angle-val');
+      if (valEl) valEl.textContent = Math.round(theta) + '°';
+    }
+
+    const nWave = 1.5, nPts = 200, nArrows = 22;
+    const eScale = 0.82, bScale = 0.52;
 
     // k axis
-    const kStart = to2D(-1.15, 0, 0);
-    const kEnd = to2D(1.25, 0, 0);
+    const kStart = to2D(-1.15, 0, 0), kEnd = to2D(1.25, 0, 0);
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(kStart.x, kStart.y); ctx.lineTo(kEnd.x, kEnd.y); ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('k', kEnd.x + 5, kEnd.y);
 
-    // --- E-field helix (teal) ---
+    // E-field curve (teal)
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const kk = -1 + 2 * i / nPts;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const eUp = Math.cos(phase);
-      const eSide = handedness * Math.sin(phase);
-      const p = to2D(kk, eUp * 0.8, eSide * 0.8);
+      const f = fieldComponents(2 * Math.PI * kk * nWave - t * 2);
+      const p = to2D(kk, f.eUp * eScale, f.eSide * eScale);
       if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
@@ -8139,25 +7929,20 @@ function initCircularPolarization() {
     // E arrows
     for (let i = 0; i <= nArrows; i++) {
       const kk = -1 + 2 * i / nArrows;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const eUp = Math.cos(phase);
-      const eSide = handedness * Math.sin(phase);
-      const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, eUp * 0.8, eSide * 0.8);
+      const f = fieldComponents(2 * Math.PI * kk * nWave - t * 2);
+      const base = to2D(kk, 0, 0), tip = to2D(kk, f.eUp * eScale, f.eSide * eScale);
       ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.35;
       ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
-    // --- B-field helix (amber) - perpendicular to E ---
+    // B-field curve (amber)
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= nPts; i++) {
       const kk = -1 + 2 * i / nPts;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const bUp = -handedness * Math.sin(phase);
-      const bSide = Math.cos(phase);
-      const p = to2D(kk, bUp * 0.5, bSide * 0.5);
+      const f = fieldComponents(2 * Math.PI * kk * nWave - t * 2);
+      const p = to2D(kk, f.bUp * bScale, f.bSide * bScale);
       if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
@@ -8165,34 +7950,30 @@ function initCircularPolarization() {
     // B arrows
     for (let i = 0; i <= nArrows; i++) {
       const kk = -1 + 2 * i / nArrows;
-      const phase = 2 * Math.PI * kk * nWave - t * 2;
-      const bUp = -handedness * Math.sin(phase);
-      const bSide = Math.cos(phase);
-      const base = to2D(kk, 0, 0);
-      const tip = to2D(kk, bUp * 0.5, bSide * 0.5);
+      const f = fieldComponents(2 * Math.PI * kk * nWave - t * 2);
+      const base = to2D(kk, 0, 0), tip = to2D(kk, f.bUp * bScale, f.bSide * bScale);
       ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.globalAlpha = 0.25;
       ctx.beginPath(); ctx.moveTo(base.x, base.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
-    // --- Snapshot arrows at k=0 ---
+    // Snapshot arrows at k=0
     const phase0 = -t * 2;
-    const eBase = to2D(0, 0, 0);
+    const f0 = fieldComponents(phase0);
+    const origin = to2D(0, 0, 0);
 
-    // E arrow
-    const eTip = to2D(0, Math.cos(phase0) * 0.8, handedness * Math.sin(phase0) * 0.8);
+    const eTip = to2D(0, f0.eUp * eScale, f0.eSide * eScale);
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(eTip.x, eTip.y); ctx.stroke();
-    drawArrowhead(eBase.x, eBase.y, eTip.x, eTip.y, WCOLORS.teal, 7);
+    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(eTip.x, eTip.y); ctx.stroke();
+    drawArrowhead(origin.x, origin.y, eTip.x, eTip.y, WCOLORS.teal, 7);
 
-    // B arrow
-    const bTip = to2D(0, -handedness * Math.sin(phase0) * 0.5, Math.cos(phase0) * 0.5);
+    const bTip = to2D(0, f0.bUp * bScale, f0.bSide * bScale);
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(eBase.x, eBase.y); ctx.lineTo(bTip.x, bTip.y); ctx.stroke();
-    drawArrowhead(eBase.x, eBase.y, bTip.x, bTip.y, WCOLORS.amber, 7);
+    ctx.beginPath(); ctx.moveTo(origin.x, origin.y); ctx.lineTo(bTip.x, bTip.y); ctx.stroke();
+    drawArrowhead(origin.x, origin.y, bTip.x, bTip.y, WCOLORS.amber, 7);
 
-    // --- Legend ---
-    const lgX = W * 0.78, lgY = H * 0.22;
+    // Legend
+    const lgX = W * 0.78, lgY = H * 0.25;
     ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
     ctx.fillStyle = WCOLORS.teal;
     ctx.fillText('E', lgX + 18, lgY);
@@ -8205,65 +7986,104 @@ function initCircularPolarization() {
     ctx.beginPath(); ctx.moveTo(lgX - 8, lgY + 16); ctx.lineTo(lgX + 12, lgY + 16); ctx.stroke();
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText(handedness > 0 ? 'Right-circular' : 'Left-circular', lgX - 8, lgY + 40);
+    if (mode === 'linear') {
+      ctx.fillText('θ = ' + Math.round(parseFloat(angleSlider?.value || 0)) + '°', lgX - 8, lgY + 40);
+    } else {
+      ctx.fillText(mode === 'rcp' ? 'Right-circular' : 'Left-circular', lgX - 8, lgY + 40);
+    }
 
-    // --- Cross-section circle (right side) ---
-    const cxR = W * 0.82, cyR = H * 0.68;
-    const radius = 38;
-
+    // Cross-section view
+    const cxR = W * 0.82, cyR = H * 0.68, radius = 38;
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(cxR, cyR, radius, 0, 2 * Math.PI); ctx.stroke();
 
-    // Axes
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(cxR - radius - 6, cyR); ctx.lineTo(cxR + radius + 6, cyR); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cxR, cyR - radius - 6); ctx.lineTo(cxR, cyR + radius + 6); ctx.stroke();
 
-    // E trail (circle)
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.2;
-    ctx.beginPath(); ctx.arc(cxR, cyR, radius * 0.75, 0, 2 * Math.PI); ctx.stroke();
-    ctx.globalAlpha = 1;
+    if (mode === 'linear') {
+      const theta = parseFloat(angleSlider?.value || 0) * Math.PI / 180;
+      const eAng = -theta + Math.PI / 2;
+      const bAng = eAng + Math.PI / 2;
 
-    // B trail (smaller circle)
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.15;
-    ctx.beginPath(); ctx.arc(cxR, cyR, radius * 0.48, 0, 2 * Math.PI); ctx.stroke();
-    ctx.globalAlpha = 1;
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cxR - (radius + 4) * Math.cos(eAng), cyR - (radius + 4) * Math.sin(eAng));
+      ctx.lineTo(cxR + (radius + 4) * Math.cos(eAng), cyR + (radius + 4) * Math.sin(eAng));
+      ctx.stroke(); ctx.setLineDash([]);
 
-    // Current E vector in cross section
-    const csEx = radius * 0.75 * Math.cos(phase0);
-    const csEy = radius * 0.75 * handedness * Math.sin(phase0);
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(cxR + csEx, cyR - csEy); ctx.stroke();
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.arc(cxR + csEx, cyR - csEy, 3, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cxR - (radius + 4) * Math.cos(bAng), cyR - (radius + 4) * Math.sin(bAng));
+      ctx.lineTo(cxR + (radius + 4) * Math.cos(bAng), cyR + (radius + 4) * Math.sin(bAng));
+      ctx.stroke(); ctx.setLineDash([]);
 
-    // Current B vector in cross section (perpendicular to E)
-    const csBx = radius * 0.48 * (-handedness * Math.sin(phase0));
-    const csBy = radius * 0.48 * Math.cos(phase0);
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(cxR + csBx, cyR - csBy); ctx.stroke();
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.beginPath(); ctx.arc(cxR + csBx, cyR - csBy, 3, 0, 2 * Math.PI); ctx.fill();
+      const eNow = Math.sin(phase0);
+      const eTipX = cxR + eNow * radius * 0.8 * Math.cos(eAng);
+      const eTipY = cyR + eNow * radius * 0.8 * Math.sin(eAng);
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(eTipX, eTipY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(eTipX, eTipY, 3, 0, 2 * Math.PI); ctx.fill();
 
-    // Rotation arrow
-    const arrPhase = phase0 + 0.4 * handedness;
-    const arrX = cxR + radius * 0.35 * Math.cos(arrPhase);
-    const arrY = cyR - radius * 0.35 * handedness * Math.sin(arrPhase);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '14px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(handedness > 0 ? '↻' : '↺', arrX, arrY);
+      const bTipX = cxR + eNow * radius * 0.8 * Math.cos(bAng);
+      const bTipY = cyR + eNow * radius * 0.8 * Math.sin(bAng);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(bTipX, bTipY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.arc(bTipX, bTipY, 3, 0, 2 * Math.PI); ctx.fill();
 
-    // Labels
-    ctx.font = 'bold 11px system-ui';
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('E', cxR + csEx + 10, cyR - csEy - 4);
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('B', cxR + csBx + 10, cyR - csBy - 4);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+      ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillText('E', eTipX + (eNow >= 0 ? 10 : -10), eTipY - 6);
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('B', bTipX + (eNow >= 0 ? 10 : -10), bTipY - 6);
+    } else {
+      const h = mode === 'rcp' ? 1 : -1;
+
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.2;
+      ctx.beginPath(); ctx.arc(cxR, cyR, radius * 0.75, 0, 2 * Math.PI); ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.15;
+      ctx.beginPath(); ctx.arc(cxR, cyR, radius * 0.48, 0, 2 * Math.PI); ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      const csEx = radius * 0.75 * Math.cos(phase0);
+      const csEy = radius * 0.75 * h * Math.sin(phase0);
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(cxR + csEx, cyR - csEy); ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(cxR + csEx, cyR - csEy, 3, 0, 2 * Math.PI); ctx.fill();
+
+      const csBx = radius * 0.48 * (-h * Math.sin(phase0));
+      const csBy = radius * 0.48 * Math.cos(phase0);
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(cxR, cyR); ctx.lineTo(cxR + csBx, cyR - csBy); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.arc(cxR + csBx, cyR - csBy, 3, 0, 2 * Math.PI); ctx.fill();
+
+      const arrPhase = phase0 + 0.4 * h;
+      const arrX = cxR + radius * 0.35 * Math.cos(arrPhase);
+      const arrY = cyR - radius * 0.35 * h * Math.sin(arrPhase);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '14px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(h > 0 ? '↻' : '↺', arrX, arrY);
+
+      ctx.font = 'bold 11px system-ui';
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillText('E', cxR + csEx + 10, cyR - csEy - 4);
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.fillText('B', cxR + csBx + 10, cyR - csBy - 4);
+    }
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('End-on view', cxR, cyR + radius + 18);
   }
 
   tick();
 }
+function initLinearPolarization() { initPolarization(); }
+function initCircularPolarization() { /* handled by initPolarization */ }
 
 // =========================================================================
 function initMalusLaw() {

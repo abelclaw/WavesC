@@ -164,15 +164,15 @@ window.LECTURE_CONTENT_12_16 = {
   {
     heading: "Linear Polarization",
     body: "<p>A plane wave is <strong>linearly polarized</strong> if there is no phase difference between $E_{x}$ and $E_{y}$. If $E_{y}$ = 0 but $E_{x} \\neq$ 0:</p><p style='text-align:center;'>$$E = E_0 \\hat{x} e^{i(kz - \\omega t)},  \\;  B = (E_0/c) \\hat{y} e^{i(kz - \\omega t)}$$</p><p>This is <strong>linear polarization in the x direction</strong>. The magnetic field is given by rotating the electric field 90$^\\circ$ counterclockwise in the x-y plane and dividing by c.</p><p>Taking the real part, the actual fields are:</p><p style='text-align:center;'>$$Re[E] = (E_0 \\cos(kz - \\omega t), 0, 0),  \\;  Re[B] = (0, E_0/c \\cos(kz - \\omega t), 0)$$</p><p>There is no x or y dependence -- the fields are completely uniform in the plane perpendicular to k. The electric field points in the x-direction with the same magnitude at each point of the plane, varying only in z and t.</p>",
-    interactive: "linear-polarization",
-    interactiveCaption: "A linearly polarized plane wave. The electric field always oscillates along a fixed direction while propagating forward.",
+    interactive: "polarization",
+    interactiveCaption: "A polarized plane wave showing both E and B fields. Switch between linear and circular polarization modes.",
     mathLinks: []
   },
   {
     heading: "Circular Polarization",
     body: "<p>What if the components of the electric field are not in phase? Suppose they have the same magnitude but are a quarter wavelength out of phase, so $\\phi_{x} - \\phi_{y} = \\pi$/2. Then $E_{0}$ = ($E_{0}$, i$E_{0}$, 0) and:</p><p style='text-align:center;'>$$Re[E] = (E_0 \\cos(kz - \\omega t), -E_0 \\sin(kz - \\omega t), 0)$$</p><p>This is called <strong>left-handed circularly polarized light</strong>. At t = z = 0, the field points in the x-direction. A quarter wavelength farther along, it points in the -y direction. It rotates clockwise in the x-y plane as we move along z.</p><p>Taking $\\phi_{x} - \\phi_{y}$ = -$\\pi$/2 gives $E_{0}$ = ($E_{0}$, -i$E_{0}$, 0), which is <strong>right-handed circularly polarized light</strong>, rotating counterclockwise.</p><p>Adding left and right-handed polarizations gives (2$E_{0}$, 0, 0) -- linear polarization in x. Subtracting gives linear in y. Any polarization can be written as a linear combination of left- and right-handed circular polarizations.</p><p>A single circularly polarized photon carries angular momentum J = $\\pm(\\hbar)\\hat{k}$. Photons have <strong>spin</strong> -- they are particles of spin 1. The two signs correspond to the two <strong>helicities</strong>.</p><p>When $E_{x} \\neq E_{y}$ and $\\phi \\neq$ 0, the polarization traces an ellipse: <strong>elliptical polarization</strong>.</p>",
-    interactive: "circular-polarization",
-    interactiveCaption: "Circularly polarized light: the electric field vector rotates as the wave propagates. Toggle between left-handed and right-handed.",
+    interactive: "polarization",
+    interactiveCaption: "Circularly polarized light: E and B field vectors rotate as the wave propagates. Toggle between right and left circular.",
     mathLinks: []
   },
   {

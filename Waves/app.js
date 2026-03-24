@@ -3955,24 +3955,18 @@ function sceneMarkup(type) {
         </div>
       `;
     case "linear-polarization":
-      return `
-        <div class="scene-label">Linear Polarization</div>
-        <p class="scene-caption">E and B fields oscillate along fixed perpendicular directions. Adjust the polarization angle.</p>
-        <div class="interactive-scene">
-          <canvas id="scene-linear-polarization" width="600" height="340"></canvas>
-          <div class="scene-controls">
-            <label><span>Angle: </span><input type="range" id="linear-pol-angle" min="0" max="180" step="1" value="0"><span class="scene-val" id="linear-pol-angle-val">0&deg;</span></label>
-          </div>
-        </div>
-      `;
     case "circular-polarization":
+    case "polarization":
       return `
-        <div class="scene-label">Circular Polarization</div>
-        <p class="scene-caption">E and B field vectors rotate as the wave propagates, always perpendicular. Toggle between right and left circular.</p>
+        <div class="scene-label">Polarization</div>
+        <p class="scene-caption">E and B fields propagating as a plane wave. Switch between linear and circular polarization.</p>
         <div class="interactive-scene">
-          <canvas id="scene-circular-polarization" width="600" height="340"></canvas>
+          <canvas id="scene-polarization" width="600" height="340"></canvas>
           <div class="scene-controls">
-            <button id="circ-pol-toggle" class="scene-btn">Toggle RCP/LCP</button>
+            <button id="pol-btn-linear" class="scene-btn" style="background:#0f766e;color:#fff;">Linear</button>
+            <button id="pol-btn-rcp" class="scene-btn">RCP</button>
+            <button id="pol-btn-lcp" class="scene-btn">LCP</button>
+            <label id="pol-angle-wrap" style="margin-left:12px;"><span>Angle: </span><input type="range" id="pol-angle" min="0" max="180" step="1" value="0"><span class="scene-val" id="pol-angle-val">0&deg;</span></label>
           </div>
         </div>
       `;
