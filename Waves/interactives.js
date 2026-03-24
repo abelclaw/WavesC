@@ -8990,12 +8990,11 @@ function initThinFilmInterference() {
     ctx.font = '10px system-ui';
     ctx.fillText(Math.round(bestWL) + ' nm peak', combEndX + 5, combEndY + 20);
 
-        // --- 6. Transmitted beam: all colors, each dimmed by (1 - reflectance) ---
+        // --- 6. Transmitted beam: full white rainbow passes straight through ---
     const transEndY = Math.min(filmB + 55, H - 14);
     const transDx = (transEndY - By) * Math.tan(thetaI);
     const transEndX = Bx + transDx;
-    drawRainbowBeam(Bx, By, transEndX, transEndY, beamW * 0.6,
-      function(wl) { return 1 - reflectance(wl, d); });
+    drawRainbowBeam(Bx, By, transEndX, transEndY, beamW * 0.6, null);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('transmitted', transEndX + 6, transEndY);
 
