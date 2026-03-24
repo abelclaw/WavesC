@@ -7216,6 +7216,8 @@ function initTransverseLongitudinalDemo() {
     // Own wave number: ~1.5 wavelengths visible
     const kC = 1.5 * 2 * Math.PI / roadLen;
     const carAmp = carSpacing * 0.8;
+    // Slow the traffic wave down relative to the transverse wave
+    const omegaC = omega * 0.35;
 
     // Road surface
     const roadTop = longY - 16, roadBot = longY + 16;
@@ -7237,7 +7239,7 @@ function initTransverseLongitudinalDemo() {
                     '#059669', '#d946ef', '#0284c7', '#ea580c', '#4f46e5'];
     for (let i = 0; i < nCars; i++) {
       const eqX = roadLeft + i * carSpacing;
-      const dx = carAmp * Math.sin(kC * eqX - omega * t);
+      const dx = carAmp * Math.sin(kC * eqX - omegaC * t);
       const cx = eqX + dx;
       const cy = longY;
       const col = colors[i % colors.length];
@@ -7261,23 +7263,30 @@ function initTransverseLongitudinalDemo() {
       ctx.beginPath(); ctx.arc(bx + carW - 4, by + carH, 2.5, 0, Math.PI * 2); ctx.fill();
     }
 
-    // "Traffic jam" and "Open road" labels that track the wave
-    let jamX = null, openX = null;
-    let maxDens = -Infinity, minDens = Infinity;
-    for (let x = roadLeft + 30; x <= roadRight - 30; x += 3) {
-      // density ~ 1 + d(displacement)/dx
-      const d = 1 + carAmp * kC * Math.cos(kC * x - omega * t) / carSpacing;
-      if (d > maxDens) { maxDens = d; jamX = x + carAmp * Math.sin(kC * x - omega * t); }
-      if (d < minDens) { minDens = d; openX = x + carAmp * Math.sin(kC * x - omega * t); }
+    // "jam" and "open" labels — find tightest cluster and widest gap
+    // by looking at actual displaced car positions
+    const carPositions = [];
+    for (let i = 0; i < nCars; i++) {
+      const eqX2 = roadLeft + i * carSpacing;
+      carPositions.push(eqX2 + carAmp * Math.sin(kC * eqX2 - omegaC * t));
     }
-    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    if (jamX > roadLeft + 40 && jamX < roadRight - 40) {
+    let minGap = Infinity, maxGap = -Infinity;
+    let jamIdx = 0, openIdx = 0;
+    for (let i = 0; i < nCars - 1; i++) {
+      const gap = carPositions[i + 1] - carPositions[i];
+      if (gap < minGap) { minGap = gap; jamIdx = i; }
+      if (gap > maxGap) { maxGap = gap; openIdx = i; }
+    }
+    const jamLabelX = (carPositions[jamIdx] + carPositions[jamIdx + 1]) / 2;
+    const openLabelX = (carPositions[openIdx] + carPositions[openIdx + 1]) / 2;
+    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    if (jamLabelX > roadLeft + 30 && jamLabelX < roadRight - 30) {
       ctx.fillStyle = WCOLORS.red;
-      ctx.fillText('jam', jamX, roadTop - 5);
+      ctx.fillText('jam', jamLabelX, roadTop - 5);
     }
-    if (openX > roadLeft + 40 && openX < roadRight - 40) {
+    if (openLabelX > roadLeft + 30 && openLabelX < roadRight - 30) {
       ctx.fillStyle = WCOLORS.teal;
-      ctx.fillText('open', openX, roadTop - 5);
+      ctx.fillText('open', openLabelX, roadTop - 5);
     }
 
     // Propagation arrow
