@@ -15230,18 +15230,15 @@ function initEyeAnatomyDiagram() {
     ctx.globalAlpha = 1.0;
     ctx.restore();
 
-    // Retina — leader points at the retina arc (brown layer at R*0.88), upper back
-    var retinaLabelAngle = -0.6;
-    label('Retina', cx + R * 0.75, cy - R * 1.05, cx + R * 0.91 * Math.cos(retinaLabelAngle), cy + R * 0.91 * Math.sin(retinaLabelAngle), 'left');
+    // Retina — point at the brown retina layer on the LOWER back of the eye
+    var retinaLabelAngle = 0.9;
+    label('Retina', cx + R * 0.6, cy + R * 1.05, cx + R * 0.91 * Math.cos(retinaLabelAngle), cy + R * 0.91 * Math.sin(retinaLabelAngle), 'left');
 
-    // Rods — point at a visible rod in the upper-back retina
-    // Rods are drawn at angles from retArcStart(0.55) stepping by 0.045.
-    // Upper retina wraps around: 2pi-0.55 down to large angles.
-    // Pick angle ~5.78 (= 2pi - 0.50), which is the upper-back retina.
-    var rodPtAngle = Math.PI * 2 - 0.50;
+    // Rods — point at a visible rod cluster on the UPPER back of the eye
+    var rodPtAngle = Math.PI * 2 - 0.55;
     var rodPtX = cx + retinaR * Math.cos(rodPtAngle);
     var rodPtY = cy + retinaR * Math.sin(rodPtAngle);
-    label('Rods (~120M)', cx + R * 0.75, cy - R * 0.88, rodPtX, rodPtY, 'left');
+    label('Rods (~120M)', cx + R * 0.75, cy - R * 1.05, rodPtX, rodPtY, 'left');
 
     // Cones — right side, above fovea
     var conePtX = cx + retinaR * Math.cos(foveaAngle);
