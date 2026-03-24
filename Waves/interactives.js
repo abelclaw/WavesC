@@ -16700,7 +16700,7 @@ function initDoubleSlitPhotonBuildup() {
   var flashTimer = 0;
   var flashY = 0;
 
-  var emitRate = 1; // 1-10: controls delay between electrons
+  var emitRate = 1; // 1-100: controls electrons per frame
   var emitDelay = 0;
   var frameCount = 0;
 
@@ -16759,7 +16759,7 @@ function initDoubleSlitPhotonBuildup() {
 
   function doSlider(which, mx) {
     var t = Math.max(0, Math.min(1, (mx - sldrL) / sldrW));
-    if (which === 'rate') emitRate = Math.round(1 + t * 9);
+    if (which === 'rate') emitRate = Math.round(1 + t * 99);
     else if (which === 'sep') { slitSepNorm = t; lastDP = -1; }
     else if (which === 'width') { slitWidthNorm = t; lastAP = -1; }
   }
@@ -17003,17 +17003,19 @@ function initDoubleSlitPhotonBuildup() {
     ctx.font = '11px system-ui'; ctx.fillStyle = WCOLORS.blue; ctx.textAlign = 'left';
     ctx.fillText('Detected: ' + detectedDots.length, screenX - 40, regionT - 10);
 
-    // Slit separation dimension
+    // Slit separation dimension line
     var s1 = getSlit1Y(), s2 = getSlit2Y();
-    ctx.strokeStyle = 'rgba(31,42,46,0.2)'; ctx.lineWidth = 0.5;
-    var ax = barrierX + barrierW/2 + 24;
-    ctx.beginPath(); ctx.moveTo(ax, s1); ctx.lineTo(ax, s2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(31,42,46,0.25)'; ctx.lineWidth = 0.5;
+    var dimX = barrierX + barrierW/2 + 20;
+    ctx.beginPath(); ctx.moveTo(dimX, s1); ctx.lineTo(dimX, s2); ctx.stroke();
+    // Arrowhead ticks
     ctx.beginPath();
-    ctx.moveTo(ax - 2, s1); ctx.lineTo(ax + 2, s1);
-    ctx.moveTo(ax - 2, s2); ctx.lineTo(ax + 2, s2);
+    ctx.moveTo(dimX - 3, s1 + 3); ctx.lineTo(dimX, s1); ctx.lineTo(dimX + 3, s1 + 3);
+    ctx.moveTo(dimX - 3, s2 - 3); ctx.lineTo(dimX, s2); ctx.lineTo(dimX + 3, s2 - 3);
     ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('d', ax + 3, midY + 3);
+    // Label well to the right of the line
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = 'italic 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('d', dimX + 6, midY + 4);
 
     // "Which path?" question mark between barrier and screen when both slits open
     if (blockerState === 0 && !electron && slitGlowTimer > 5) {
@@ -17035,16 +17037,16 @@ function initDoubleSlitPhotonBuildup() {
   }
 
   function drawControls() {
-    drawSlider('Rate', ctrlY1, (emitRate - 1) / 9);
+    drawSlider('Rate', ctrlY1, (emitRate - 1) / 99);
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    var rateLabel = emitRate === 1 ? '1 (one at a time)' : emitRate + ' e\u207B/burst';
+    var rateLabel = emitRate <= 5 ? emitRate + ' (one at a time)' : emitRate + ' e\u207B/frame';
     ctx.fillText(rateLabel, sldrL + sldrW + 10, ctrlY1 + 4);
 
-    drawSlider('Slit sep.', ctrlY2, slitSepNorm);
-    ctx.fillText('d = ' + (getSlitSep()).toFixed(0) + 'px', sldrL + sldrW + 10, ctrlY2 + 4);
+    drawSlider('Slit sep. (d)', ctrlY2, slitSepNorm);
+    ctx.fillText((getSlitSep()).toFixed(0) + ' px', sldrL + sldrW + 10, ctrlY2 + 4);
 
-    drawSlider('Slit width', ctrlY3, slitWidthNorm);
-    ctx.fillText('a = ' + (getSlitHalfW() * 2).toFixed(1) + 'px', sldrL + sldrW + 10, ctrlY3 + 4);
+    drawSlider('Slit width (a)', ctrlY3, slitWidthNorm);
+    ctx.fillText((getSlitHalfW() * 2).toFixed(1) + ' px', sldrL + sldrW + 10, ctrlY3 + 4);
 
     // Reset
     ctx.fillStyle = WCOLORS.red;
@@ -17085,14 +17087,24 @@ function initDoubleSlitPhotonBuildup() {
     // Flash countdown
     if (flashTimer > 0) flashTimer--;
 
-    // Emit new electron when idle
-    if (!electron && slitGlowTimer <= 0 && flashTimer <= 0) {
-      emitDelay++;
-      var interval = Math.max(1, Math.round(18 / emitRate));
-      if (emitDelay >= interval) {
-        emitDelay = 0;
-        emitElectron();
+    // Emit electrons
+    if (emitRate <= 5) {
+      // Slow mode: one at a time, watch the animation
+      if (!electron && slitGlowTimer <= 0 && flashTimer <= 0) {
+        emitDelay++;
+        var interval = Math.max(1, Math.round(18 / emitRate));
+        if (emitDelay >= interval) {
+          emitDelay = 0;
+          emitElectron();
+        }
       }
+    } else {
+      // Fast mode: skip flight animation, deposit dots directly
+      var perFrame = Math.round(emitRate / 3);
+      for (var i = 0; i < perFrame; i++) {
+        detectedDots.push({ y: sampleY() });
+      }
+      electron = null; slitGlowTimer = 0; flashTimer = 0;
     }
 
     // --- Draw ---
