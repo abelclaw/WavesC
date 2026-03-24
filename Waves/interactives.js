@@ -16651,12 +16651,11 @@ function initDoubleSlitPhotonBuildup() {
 
   // --- Probability distribution ---
   function prob(yNorm, dP, aP, block) {
-    var t = (yNorm - 0.5) * 20;
+    var t = (yNorm - 0.5) * 10; // spread pattern across screen
     var sincArg = Math.PI * aP * t;
     var env = Math.abs(sincArg) < 1e-6 ? 1 : Math.pow(Math.sin(sincArg) / sincArg, 2);
     if (block === 3) return 0; // both closed
     if (block === 1 || block === 2) {
-      // Single slit: diffraction centered on the open slit
       var slitOff = (block === 1) ? 0.5 * dP : -0.5 * dP;
       var tShift = t - slitOff * 0.15;
       var sa2 = Math.PI * aP * tShift;
@@ -16669,8 +16668,8 @@ function initDoubleSlitPhotonBuildup() {
   var nBins = 500, cdf = [];
   var lastDP = -1, lastAP = -1, lastBK = -1;
 
-  function getDParam() { return 2 + slitSepNorm * 8; }
-  function getAParam() { return 0.5 + slitWidthNorm * 3; }
+  function getDParam() { return 1.5 + slitSepNorm * 5; }
+  function getAParam() { return 0.3 + slitWidthNorm * 1.5; }
 
   function rebuildCDF() {
     var dP = getDParam(), aP = getAParam(), bk = getBlockState();
@@ -16921,7 +16920,7 @@ function initDoubleSlitPhotonBuildup() {
     for (var i = 0; i <= nSteps; i++) {
       var yN = i / nSteps;
       var p = currentProb(yN);
-      var px = screenX + p * 30; // max 30px wide filled region
+      var px = screenX + p * 45; // max 45px wide filled region
       var py = regionT + yN * regionH;
       ctx.lineTo(px, py);
     }
@@ -16936,7 +16935,7 @@ function initDoubleSlitPhotonBuildup() {
     for (var i = 0; i <= nSteps; i++) {
       var yN = i / nSteps;
       var p = currentProb(yN);
-      var px = screenX + p * 30;
+      var px = screenX + p * 45;
       var py = regionT + yN * regionH;
       if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
     }
