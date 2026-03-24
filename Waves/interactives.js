@@ -8288,46 +8288,33 @@ function initMalusLaw() {
   const screenX = W * 0.78;
   const polR = 48;
 
-  function getAngleFromMouse(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const dx = mx - pol2X, dy = my - cy;
-    let ang = Math.atan2(dx, -dy) * 180 / Math.PI;
-    if (ang < 0) ang += 360;
-    if (ang > 180) ang = 360 - ang;
-    if (ang > 90) ang = 180 - ang;
-    return Math.max(0, Math.min(90, ang));
-  }
+  let dragStartX = 0;
+  let dragStartTheta = 0;
 
   canvas.addEventListener('mousedown', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    const dx = mx - pol2X, dy = my - cy;
-    if (Math.sqrt(dx * dx + dy * dy) < polR + 20) {
-      dragging = true;
-      thetaDeg = Math.round(getAngleFromMouse(e));
-    }
+    dragging = true;
+    dragStartX = e.clientX;
+    dragStartTheta = thetaDeg;
+    canvas.style.cursor = 'ew-resize';
   });
   canvas.addEventListener('mousemove', (e) => {
-    if (dragging) thetaDeg = Math.round(getAngleFromMouse(e));
+    if (!dragging) return;
+    const dx = e.clientX - dragStartX;
+    thetaDeg = Math.round(Math.max(0, Math.min(90, dragStartTheta + dx * 0.5)));
   });
-  canvas.addEventListener('mouseup', () => { dragging = false; });
-  canvas.addEventListener('mouseleave', () => { dragging = false; });
+  canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = ''; });
+  canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = ''; });
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const mx = touch.clientX - rect.left, my = touch.clientY - rect.top;
-    const dx = mx - pol2X, dy = my - cy;
-    if (Math.sqrt(dx * dx + dy * dy) < polR + 30) {
-      dragging = true;
-      thetaDeg = Math.round(getAngleFromMouse(touch));
-    }
+    dragging = true;
+    dragStartX = e.touches[0].clientX;
+    dragStartTheta = thetaDeg;
   }, { passive: false });
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
-    if (dragging) thetaDeg = Math.round(getAngleFromMouse(e.touches[0]));
+    if (!dragging) return;
+    const dx = e.touches[0].clientX - dragStartX;
+    thetaDeg = Math.round(Math.max(0, Math.min(90, dragStartTheta + dx * 0.5)));
   }, { passive: false });
   canvas.addEventListener('touchend', () => { dragging = false; });
 
@@ -8464,7 +8451,7 @@ function initMalusLaw() {
 
     if (!dragging) {
       ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText('drag to rotate', pol2X, cy + polR + 28);
+      ctx.fillText('drag left / right to rotate analyzer', pol2X, cy + polR + 28);
     }
 
     // ---- Beam: analyzer → screen ----
