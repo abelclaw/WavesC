@@ -4087,9 +4087,9 @@ function sceneMarkup(type) {
     case "hsv-color-explorer":
       return `
         <div class="scene-label">HSV Color Explorer</div>
-        <p class="scene-caption">Drag the HSB sliders on the left or the RGB sliders on the right — they stay linked so you can see how both representations move together.</p>
+        <p class="scene-caption">Click the color wheel to pick hue &amp; saturation, or drag any of the six sliders — HSB on the left, RGB on the right. Everything stays linked.</p>
         <div class="interactive-scene">
-          <canvas id="scene-hsv-color-explorer" width="600" height="340"></canvas>
+          <canvas id="scene-hsv-color-explorer" width="600" height="400"></canvas>
         </div>
       `;
     case "additive-subtractive-mixing":
