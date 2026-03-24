@@ -7836,7 +7836,7 @@ function initPhononPolarizations() {
 
 // =========================================================================
 function initPolarization() {
-  const canvas = document.getElementById('scene-polarization');
+  const canvas = document.getElementById('scene-em-polarization');
   if (!canvas) return;
   const setup = wSetupCanvas(canvas);
   if (!setup) return;
@@ -7866,21 +7866,71 @@ function initPolarization() {
   btnLCP?.addEventListener('click', () => { mode = 'lcp'; setActive('pol-btn-lcp'); });
   setActive('pol-btn-linear');
 
-  // 3D oblique projection parameters
-  const cx = W * 0.38, cy = H / 2;
+  // 3D projection with mouse rotation
+  const cx = W * 0.42, cy = H / 2;
   const axisLen = W * 0.30;
   const amp = 48;
-  // projK: propagation direction (into screen, angled right-down)
-  const projK = { x: 0.85, y: 0.30 };
-  // projE: "up" direction on screen (electric field default vertical)
-  const projE = { x: 0, y: -1 };
-  // projB: "sideways" direction (magnetic field, into screen perspective)
-  const projB = { x: -0.45, y: 0.20 };
+
+  // View angles (radians) - azimuth rotates around vertical, elevation tilts up/down
+  let azimuth = -0.55;   // initial view angle
+  let elevation = 0.35;
+
+  // Mouse drag state
+  let dragging = false, dragX = 0, dragY = 0, dragAz = 0, dragEl = 0;
+
+  canvas.addEventListener('mousedown', (e) => {
+    dragging = true;
+    dragX = e.clientX; dragY = e.clientY;
+    dragAz = azimuth; dragEl = elevation;
+    canvas.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    azimuth = dragAz + (e.clientX - dragX) * 0.008;
+    elevation = Math.max(-1.2, Math.min(1.2, dragEl - (e.clientY - dragY) * 0.008));
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; canvas.style.cursor = 'grab'; }
+  });
+
+  // Touch support
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    dragging = true;
+    dragX = e.touches[0].clientX; dragY = e.touches[0].clientY;
+    dragAz = azimuth; dragEl = elevation;
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    if (!dragging || e.touches.length !== 1) return;
+    azimuth = dragAz + (e.touches[0].clientX - dragX) * 0.008;
+    elevation = Math.max(-1.2, Math.min(1.2, dragEl - (e.touches[0].clientY - dragY) * 0.008));
+    e.preventDefault();
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { dragging = false; });
+  canvas.style.cursor = 'grab';
+
+  // Compute projection vectors from view angles
+  // 3D axes: k = propagation (z), E-up (y), B-side (x)
+  function getProjection() {
+    const ca = Math.cos(azimuth), sa = Math.sin(azimuth);
+    const ce = Math.cos(elevation), se = Math.sin(elevation);
+    // Camera looks along -z_cam. We rotate the 3D axes and project onto screen (x_screen, y_screen).
+    // k-axis (z): projects to (ca*ce, sa*ce) roughly
+    // E-axis (y): projects to (-sa*se_partial, ce) roughly
+    // B-axis (x): perpendicular
+    return {
+      kx: ca,          ky: sa * se,
+      ex: sa * 0.05,   ey: -ce,
+      bx: -sa * ce,    by: -se * 0.6 + ca * 0.15
+    };
+  }
 
   function to2D(kk, e, b) {
+    const p = getProjection();
     return {
-      x: cx + kk * projK.x * axisLen + e * projE.x * amp + b * projB.x * amp,
-      y: cy + kk * projK.y * axisLen + e * projE.y * amp + b * projB.y * amp
+      x: cx + kk * p.kx * axisLen + e * p.ex * amp + b * p.bx * amp,
+      y: cy + kk * p.ky * axisLen + e * p.ey * amp + b * p.by * amp
     };
   }
 
