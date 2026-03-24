@@ -14156,12 +14156,21 @@ function initCieColorSpaceGamut() {
 
     // Fill entire plot with gamut-mapped colors (NO clip - debug)
     const step = 2;
+    let logged = false;
     for (let px = plotL; px < plotR + 30; px += step) {
       for (let py = plotT; py < plotB; py += step) {
         const cx = (px - plotL) / (plotSize * 1.15);
         const cy = (plotB - py) / (plotSize * 1.3);
         if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
         const rgb = xyToDisplayRGB(cx, cy);
+        // DEBUG: log what happens at the red region
+        if (!logged && cx > 0.49 && cx < 0.51 && cy > 0.29 && cy < 0.31) {
+          console.log('[CIE-FILL] at cx=' + cx.toFixed(3) + ' cy=' + cy.toFixed(3) + ' px=' + px + ' py=' + py + ' rgb=' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255));
+          // Force paint a bright magenta to be unmissable
+          ctx.fillStyle = 'rgb(255,0,255)';
+          ctx.fillRect(px, py, 10, 10);
+          logged = true;
+        }
         ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
         ctx.fillRect(px, py, step, step);
       }
