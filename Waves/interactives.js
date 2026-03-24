@@ -301,8 +301,7 @@ function initSceneInteractives() {
   initEmPlaneWave();
   // Chapter 14 - Polarization
   initPhononPolarizations();
-  initLinearPolarization();
-  initCircularPolarization();
+  initPolarization();
   initMalusLaw();
   // Chapter 15 - Refraction
   initSnellsLawDemo();
@@ -7815,8 +7814,8 @@ function initPhononPolarizations() {
 }
 
 // =========================================================================
-function initLinearPolarization() {
-  const canvas = document.getElementById('scene-linear-polarization');
+function initPolarization() {
+  const canvas = document.getElementById('scene-polarization');
   if (!canvas) return;
   const setup = wSetupCanvas(canvas);
   if (!setup) return;
@@ -9011,11 +9010,26 @@ function initThinFilmInterference() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('white light', inStartX - 12, inStartY - 2);
 
-    // --- 2. R1: all colors reflect from top surface (uniform ~4% Fresnel) ---
-    // All colors present, just dimmer
-    drawRainbowBeam(Ax, Ay, r1EndX, r1EndY, beamW * 0.7, function() { return 0.5; });
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('R\u2081 (\u03c0 shift)', r1EndX + 3, r1EndY + 14);
+    // --- 2. R1 and R2: full rainbow, then merge into interference beam ---
+
+    // Midpoints: R1 and R2 each go halfway, then merge into one combined beam
+    const r1MidX = (Ax + r1EndX) / 2;
+    const r1MidY = (Ay + r1EndY) / 2;
+    const r2MidX = (Cx + r2EndX) / 2;
+    const r2MidY = (Cy + r2EndY) / 2;
+
+    // R1 lower half: uniform rainbow from film surface to midpoint
+    drawRainbowBeam(Ax, Ay, r1MidX, r1MidY, beamW * 0.7, function() { return 0.5; });
+    // R2 lower half: uniform rainbow from film surface to midpoint
+    drawRainbowBeam(Cx, Cy, r2MidX, r2MidY, beamW * 0.7, function() { return 0.5; });
+
+    // Labels at the origin of each reflected beam
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    const labelOff = 14;
+    // R1 label near A
+    ctx.fillText('R\u2081 (\u03c0 shift)', (Ax + r1MidX) / 2 - labelOff, (Ay + r1MidY) / 2);
+    // R2 label near C
+    ctx.fillText('R\u2082 (no shift)', (Cx + r2MidX) / 2 + labelOff + 10, (Cy + r2MidY) / 2);
 
     // --- 3. Internal rays: all colors pass through the film ---
     drawRainbowBeam(Ax, Ay, Bx, By, beamW * 0.55, null);
@@ -9027,48 +9041,58 @@ function initThinFilmInterference() {
     ctx.beginPath(); ctx.arc(Bx, By, 3, 0, 2 * Math.PI); ctx.fill();
     ctx.beginPath(); ctx.arc(Cx, Cy, 3, 0, 2 * Math.PI); ctx.fill();
 
-    // --- 4. R2: all colors exit from top surface (uniform brightness) ---
-    drawRainbowBeam(Cx, Cy, r2EndX, r2EndY, beamW * 0.7, function() { return 0.5; });
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('R\u2082 (no shift)', r2EndX + 3, r2EndY + 14);
+    // --- 4. Merge zone: R1 and R2 converge to a single combined beam ---
+    // The two midpoints converge toward a merge point, then a single
+    // interference-modulated rainbow continues upward
 
-    // --- 5. Convergence: R1 + R2 interfere. Each color dimmed by reflectance ---
-    // Show both converging to a point, then a combined beam with per-color modulation
-    const eyeX = (r1EndX + r2EndX) / 2;
-    const eyeY = 4;
-    // Dashed convergence lines
+    const mergeX = (r1MidX + r2MidX) / 2;
+    const mergeY = (r1MidY + r2MidY) / 2;
+
+    // Converging segments from each midpoint to the merge point
+    drawRainbowBeam(r1MidX, r1MidY, mergeX, mergeY, beamW * 0.6, function() { return 0.4; });
+    drawRainbowBeam(r2MidX, r2MidY, mergeX, mergeY, beamW * 0.6, function() { return 0.4; });
+
+    // Combined interference beam from merge point upward to top
+    // Each color dimmed by its reflectance — suppressed colors vanish
+    const combEndX = mergeX + (mergeY - 4) * Math.tan(thetaI);
+    const combEndY = 4;
+    drawRainbowBeam(mergeX, mergeY, combEndX, combEndY, beamW * 0.8,
+      function(wl) { return reflectance(wl, d); });
+
+    // Animated wave fronts in the combined beam
     ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(r1EndX, r1EndY); ctx.lineTo(eyeX, eyeY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(r2EndX, r2EndY); ctx.lineTo(eyeX, eyeY); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
+    const cDx = combEndX - mergeX, cDy = combEndY - mergeY;
+    const cLen = Math.sqrt(cDx * cDx + cDy * cDy);
+    const cNx = -cDy / cLen, cNy = cDx / cLen;
+    ctx.beginPath();
+    ctx.moveTo(mergeX + cNx * beamW * 0.6, mergeY + cNy * beamW * 0.6);
+    ctx.lineTo(combEndX + cNx * beamW * 0.6, combEndY + cNy * beamW * 0.6);
+    ctx.lineTo(combEndX - cNx * beamW * 0.6, combEndY - cNy * beamW * 0.6);
+    ctx.lineTo(mergeX - cNx * beamW * 0.6, mergeY - cNy * beamW * 0.6);
+    ctx.closePath(); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+    for (let s = (t * 40) % 10; s < cLen; s += 10) {
+      const frac = s / cLen;
+      const px = mergeX + cDx * frac, py = mergeY + cDy * frac;
+      ctx.beginPath();
+      ctx.moveTo(px + cNx * beamW * 0.5, py + cNy * beamW * 0.5);
+      ctx.lineTo(px - cNx * beamW * 0.5, py - cNy * beamW * 0.5);
+      ctx.stroke();
+    }
     ctx.restore();
 
-    // Interference result circle: shows the color the eye sees
-    ctx.fillStyle = reflColor;
-    ctx.beginPath(); ctx.arc(eyeX, eyeY + 2, 12, 0, 2 * Math.PI); ctx.fill();
+    // Label the combined beam
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('interference', combEndX + 5, combEndY + 8);
+    ctx.font = '10px system-ui';
+    ctx.fillText(Math.round(bestWL) + ' nm peak', combEndX + 5, combEndY + 20);
+
+    // Small merge indicator
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.arc(mergeX, mergeY, 4, 0, 2 * Math.PI); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
 
-    // Draw a small fan of colored stripes inside the circle showing which survive
-    for (let i = 0; i < specWLs.length; i++) {
-      const wl = specWLs[i];
-      const refl = reflectance(wl, d);
-      const [cr, cg, cb] = wavelengthToRGB(wl);
-      const a = Math.max(0.05, refl);
-      ctx.fillStyle = `rgba(${cr},${cg},${cb},${a.toFixed(2)})`;
-      const sx = eyeX - 10 + 20 * i / (specWLs.length - 1);
-      ctx.fillRect(sx, eyeY - 4, 3, 12);
-    }
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(Math.round(bestWL) + 'nm', eyeX, eyeY + 24);
-    ctx.font = '9px system-ui'; ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('R\u2081 + R\u2082 interfere', eyeX, eyeY + 35);
-
-    // --- 6. Transmitted beam: all colors, each dimmed by (1 - reflectance) ---
+        // --- 6. Transmitted beam: all colors, each dimmed by (1 - reflectance) ---
     const transEndY = Math.min(filmB + 55, H - 14);
     const transDx = (transEndY - By) * Math.tan(thetaI);
     const transEndX = Bx + transDx;
