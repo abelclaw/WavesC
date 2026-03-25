@@ -3520,11 +3520,12 @@ function sceneMarkup(type) {
     case "beats-demo":
       return `
         <div class="scene-label">Beats</div>
-        <p class="scene-caption">Two waves of slightly different frequencies produce a slowly varying beat pattern. Adjust &Delta;f to change the beat rate.</p>
+        <p class="scene-caption">Two waves of slightly different frequencies produce a slowly varying beat pattern. Adjust f&#8321; and f&#8322; to change the beat rate.</p>
         <div class="interactive-scene">
-          <canvas id="scene-beats-demo" width="600" height="300"></canvas>
+          <canvas id="scene-beats-demo" width="600" height="420"></canvas>
           <div class="scene-controls">
-            <label><span>&Delta;f (Hz): </span><input type="range" id="bd-df" min="0" max="30" step="0.5" value="5"><span class="scene-val" id="bd-df-val">5.0</span></label>
+            <label><span>f&#8321; (Hz): </span><input type="range" id="bd-f1" min="20" max="80" step="0.5" value="40"><span class="scene-val" id="bd-f1-val">40.0</span></label>
+            <label><span>f&#8322; (Hz): </span><input type="range" id="bd-f2" min="20" max="80" step="0.5" value="43"><span class="scene-val" id="bd-f2-val">43.0</span></label>
           </div>
         </div>
       `;
