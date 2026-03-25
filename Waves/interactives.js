@@ -14060,59 +14060,98 @@ function initCieTristimulusCurves() {
 // 3. CIE Color Space with Gamut
 // =========================================================================
 function initCieColorSpaceGamut() {
-  const canvas = document.getElementById('scene-cie-color-space-gamut');
+  var canvas = document.getElementById('scene-cie-color-space-gamut');
   if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
+  var setup = wSetupCanvas(canvas);
   if (!setup) return;
-  const { ctx, W, H } = setup;
+  var ctx = setup.ctx, W = setup.W, H = setup.H;
 
-  const cie = getCIEData();
-  // Compute chromaticity coords for spectral locus
-  const spectralX = [], spectralY = [];
-  for (let i = 0; i < cie.wavelengths.length; i++) {
-    const X = cie.xbar[i], Y = cie.ybar[i], Z = cie.zbar[i];
-    const sum = X + Y + Z;
-    if (sum > 0.001) {
-      spectralX.push(X / sum);
-      spectralY.push(Y / sum);
-    } else {
-      spectralX.push(0);
-      spectralY.push(0);
-    }
-  }
+  // Reuse the same tabulated spectral locus as the Planckian Locus diagram
+  var spectralLocus = [
+    {x:0.1741,y:0.0050},{x:0.1740,y:0.0050},{x:0.1738,y:0.0049},
+    {x:0.1736,y:0.0049},{x:0.1733,y:0.0048},{x:0.1730,y:0.0048},
+    {x:0.1726,y:0.0048},{x:0.1721,y:0.0048},{x:0.1714,y:0.0051},
+    {x:0.1703,y:0.0058},{x:0.1689,y:0.0069},{x:0.1669,y:0.0086},
+    {x:0.1644,y:0.0109},{x:0.1611,y:0.0138},{x:0.1566,y:0.0177},
+    {x:0.1510,y:0.0227},{x:0.1440,y:0.0297},{x:0.1355,y:0.0399},
+    {x:0.1241,y:0.0578},{x:0.1096,y:0.0868},{x:0.0913,y:0.1327},
+    {x:0.0687,y:0.2007},{x:0.0454,y:0.2950},{x:0.0235,y:0.4127},
+    {x:0.0082,y:0.5384},{x:0.0039,y:0.6548},{x:0.0139,y:0.7502},
+    {x:0.0389,y:0.8120},{x:0.0743,y:0.8338},{x:0.1142,y:0.8262},
+    {x:0.1547,y:0.8059},{x:0.1929,y:0.7816},{x:0.2296,y:0.7543},
+    {x:0.2658,y:0.7243},{x:0.3016,y:0.6923},{x:0.3373,y:0.6589},
+    {x:0.3731,y:0.6245},{x:0.4087,y:0.5896},{x:0.4441,y:0.5547},
+    {x:0.4788,y:0.5202},{x:0.5125,y:0.4866},{x:0.5448,y:0.4544},
+    {x:0.5752,y:0.4242},{x:0.6029,y:0.3965},{x:0.6270,y:0.3725},
+    {x:0.6482,y:0.3514},{x:0.6658,y:0.3340},{x:0.6801,y:0.3197},
+    {x:0.6915,y:0.3083},{x:0.7006,y:0.2993},{x:0.7079,y:0.2920},
+    {x:0.7140,y:0.2859},{x:0.7190,y:0.2809},{x:0.7230,y:0.2770},
+    {x:0.7260,y:0.2740},{x:0.7283,y:0.2717},{x:0.7300,y:0.2700},
+    {x:0.7311,y:0.2689},{x:0.7320,y:0.2680},{x:0.7327,y:0.2673},
+    {x:0.7334,y:0.2666},{x:0.7340,y:0.2660},{x:0.7344,y:0.2656},
+    {x:0.7346,y:0.2654},{x:0.7347,y:0.2653}
+  ];
 
-  const plotL = 55, plotB = H - 35, plotT = 20;
-  const plotSize = Math.min(W - 80, H - 60);
-  const plotR = plotL + plotSize;
+  var plotL = 55, plotB = H - 35, plotT = 20;
+  var plotSize = Math.min(W - 80, H - 60);
+  var plotR = plotL + plotSize;
 
   function toScreen(cx, cy) {
     return { x: plotL + cx * plotSize * 1.15, y: plotB - cy * plotSize * 1.3 };
   }
 
-  function gammaCorrect(c) {
-    return c > 0.0031308 ? 1.055 * Math.pow(c, 1/2.4) - 0.055 : 12.92 * c;
+  function xyToRGB(cx, cy) {
+    var Y2 = 1.0, X2 = (Y2 / cy) * cx, Z2 = (Y2 / cy) * (1 - cx - cy);
+    var r2 = 3.2406*X2 - 1.5372*Y2 - 0.4986*Z2;
+    var g2 = -0.9689*X2 + 1.8758*Y2 + 0.0415*Z2;
+    var b2 = 0.0557*X2 - 0.2040*Y2 + 1.0570*Z2;
+    function gm(v){return v<=0.0031308?12.92*v:1.055*Math.pow(v,1/2.4)-0.055;}
+    r2=gm(Math.max(0,r2));g2=gm(Math.max(0,g2));b2=gm(Math.max(0,b2));
+    var mx2=Math.max(r2,g2,b2,1);
+    return 'rgb('+Math.round(255*r2/mx2)+','+Math.round(255*g2/mx2)+','+Math.round(255*b2/mx2)+')';
   }
 
-  // Convert xy chromaticity to displayable RGB
-  function xyToDisplayRGB(cx, cy) {
-    if (cy < 0.001) return [0, 0, 0];
-    var X = cx / cy, Y = 1, Z = (1 - cx - cy) / cy;
-    var r =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
-    var g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
-    var b =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
-    // Out-of-gamut: lift negatives by adding white light, then normalize
-    var m = Math.min(r, g, b);
-    if (m < 0) { r -= m; g -= m; b -= m; }
-    var mx = Math.max(r, g, b);
-    if (mx <= 0) return [0, 0, 0];
-    r /= mx; g /= mx; b /= mx;
-    return [gammaCorrect(r), gammaCorrect(g), gammaCorrect(b)];
+  function isInsideLocus(px, py) {
+    var pts = spectralLocus, inside = false;
+    for (var i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      var xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+      if ((yi>py)!==(yj>py) && px<(xj-xi)*(py-yi)/(yj-yi)+xi) inside=!inside;
+    }
+    return inside;
+  }
+
+  // Pre-render horseshoe colors to offscreen canvas (same approach as Planckian Locus)
+  var offscreen = document.createElement('canvas');
+  offscreen.width = W; offscreen.height = H;
+  var offCtx = offscreen.getContext('2d');
+  for (var px = 0; px < W; px += 2) {
+    for (var py = plotT; py < plotB; py += 2) {
+      var cx2 = (px - plotL) / (plotSize * 1.15);
+      var cy2 = (plotB - py) / (plotSize * 1.3);
+      if (cx2>=0 && cx2<=0.8 && cy2>0.005 && cy2<=0.9 && isInsideLocus(cx2, cy2)) {
+        offCtx.fillStyle = xyToRGB(cx2, cy2);
+        offCtx.fillRect(px, py, 2, 2);
+      }
+    }
   }
 
   function draw() {
     wClear(ctx, W, H);
 
-    // Draw axes
+    // Draw pre-rendered horseshoe
+    ctx.drawImage(offscreen, 0, 0);
+
+    // Spectral locus outline
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var i = 0; i < spectralLocus.length; i++) {
+      var p = toScreen(spectralLocus[i].x, spectralLocus[i].y);
+      if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR + 20, plotB); ctx.stroke();
@@ -14125,101 +14164,60 @@ function initCieColorSpaceGamut() {
     ctx.restore();
 
     // Axis tick labels
-    for (let v = 0; v <= 0.8; v += 0.2) {
-      const p = toScreen(v, 0);
+    for (var v = 0; v <= 0.8; v += 0.2) {
+      var p = toScreen(v, 0);
       ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(v.toFixed(1), p.x, plotB + 13);
-      const p2 = toScreen(0, v);
+      var p2 = toScreen(0, v);
       ctx.textAlign = 'right';
       ctx.fillText(v.toFixed(1), plotL - 5, p2.y + 3);
     }
 
-    // Build polygon from spectral locus for point-in-polygon test
-    const polyX = [], polyY = [];
-    for (let i = 0; i < spectralX.length; i++) {
-      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
-      polyX.push(spectralX[i]);
-      polyY.push(spectralY[i]);
-    }
-
-    // Ray-casting point-in-polygon test (in chromaticity xy space)
-    function insideHorseshoe(tx, ty) {
-      var inside = false;
-      for (var i = 0, j = polyX.length - 1; i < polyX.length; j = i++) {
-        var xi = polyX[i], yi = polyY[i], xj = polyX[j], yj = polyY[j];
-        if ((yi > ty) !== (yj > ty) && tx < (xj - xi) * (ty - yi) / (yj - yi) + xi) {
-          inside = !inside;
-        }
-      }
-      return inside;
-    }
-
-    // Fill horseshoe with gamut-mapped colors
-    const step = 2;
-    for (let px = plotL; px < plotR + 30; px += step) {
-      for (let py = plotT; py < plotB; py += step) {
-        const cx = (px - plotL) / (plotSize * 1.15);
-        const cy = (plotB - py) / (plotSize * 1.3);
-        if (cx < 0 || cy < 0.005 || cx > 0.85 || cy > 0.9) continue;
-        if (!insideHorseshoe(cx, cy)) continue;
-        const rgb = xyToDisplayRGB(cx, cy);
-        ctx.fillStyle = 'rgb(' + Math.round(rgb[0]*255) + ',' + Math.round(rgb[1]*255) + ',' + Math.round(rgb[2]*255) + ')';
-        ctx.fillRect(px, py, step, step);
-      }
-    }
-
-    // Spectral locus outline
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    started = false;
-    for (let i = 0; i < spectralX.length; i++) {
-      if (spectralX[i] === 0 && spectralY[i] === 0) continue;
-      const p = toScreen(spectralX[i], spectralY[i]);
-      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-
     // Wavelength labels on spectral locus
-    const labelWLs = [460, 480, 500, 520, 540, 560, 580, 600, 700];
+    var labelWLs = [
+      {nm:460,idx:16},{nm:480,idx:20},{nm:500,idx:24},{nm:520,idx:28},
+      {nm:540,idx:32},{nm:560,idx:36},{nm:580,idx:40},{nm:600,idx:44},{nm:700,idx:64}
+    ];
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui';
-    for (let k = 0; k < labelWLs.length; k++) {
-      const idx = Math.round((labelWLs[k] - 380) / 5);
-      if (idx >= 0 && idx < spectralX.length && (spectralX[idx] > 0 || spectralY[idx] > 0)) {
-        const p = toScreen(spectralX[idx], spectralY[idx]);
-        const cx = 0.33, cy = 0.33;
-        const dx = spectralX[idx] - cx, dy = spectralY[idx] - cy;
-        const len = Math.sqrt(dx*dx + dy*dy);
+    for (var k = 0; k < labelWLs.length; k++) {
+      var idx = labelWLs[k].idx;
+      if (idx < spectralLocus.length) {
+        var lp = toScreen(spectralLocus[idx].x, spectralLocus[idx].y);
+        var dx = spectralLocus[idx].x - 0.33, dy = spectralLocus[idx].y - 0.33;
+        var len = Math.sqrt(dx*dx + dy*dy);
         ctx.textAlign = 'center';
-        ctx.fillText(labelWLs[k], p.x + (dx/len)*18, p.y - (dy/len)*12);
+        ctx.fillText(labelWLs[k].nm, lp.x + (dx/len)*18, lp.y - (dy/len)*12);
       }
     }
 
-    // sRGB gamut triangle
-    const srgbR = toScreen(0.64, 0.33);
-    const srgbG = toScreen(0.30, 0.60);
-    const srgbB = toScreen(0.15, 0.06);
+    // Film gamut triangle (DCI-P3 — close to optimal monochromatic primaries)
+    var filmR = toScreen(0.680, 0.320);
+    var filmG = toScreen(0.265, 0.690);
+    var filmB = toScreen(0.150, 0.060);
+    ctx.setLineDash([6, 3]);
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(filmR.x, filmR.y); ctx.lineTo(filmG.x, filmG.y);
+    ctx.lineTo(filmB.x, filmB.y); ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Film', filmG.x + 8, filmG.y + 14);
+
+    // sRGB gamut triangle (computer monitors)
+    var srgbR = toScreen(0.64, 0.33);
+    var srgbG = toScreen(0.30, 0.60);
+    var srgbB = toScreen(0.15, 0.06);
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(srgbR.x, srgbR.y);
-    ctx.lineTo(srgbG.x, srgbG.y);
-    ctx.lineTo(srgbB.x, srgbB.y);
-    ctx.closePath();
+    ctx.moveTo(srgbR.x, srgbR.y); ctx.lineTo(srgbG.x, srgbG.y);
+    ctx.lineTo(srgbB.x, srgbB.y); ctx.closePath();
     ctx.stroke();
-
-    // Label gamut vertices
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText('R', srgbR.x + 12, srgbR.y + 4);
-    ctx.fillText('G', srgbG.x, srgbG.y - 8);
-    ctx.fillText('B', srgbB.x - 10, srgbB.y + 4);
-
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('sRGB gamut', srgbR.x + 5, srgbR.y + 18);
+    ctx.fillText('Monitor (sRGB)', srgbR.x + 5, srgbR.y + 16);
 
     // White point D65
-    const wp = toScreen(0.3127, 0.3290);
+    var wp = toScreen(0.3127, 0.3290);
     ctx.beginPath(); ctx.arc(wp.x, wp.y, 3, 0, Math.PI * 2);
     ctx.fillStyle = '#fff'; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
