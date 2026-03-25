@@ -367,7 +367,8 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>This kind of curve is called a <strong>Lorentzian</strong>. Its maximum is at $\\omega_0$ and its width is $\\gamma$. The Lorentzian shape appears throughout physics -- from the spectral lines of atoms to the response curves of electrical circuits. The sharpness of the peak is directly related to the Q-factor: a high-Q oscillator has a very narrow, tall resonance peak, meaning it responds strongly only to driving frequencies very close to its natural frequency. A low-Q oscillator has a broad peak and responds to a wider range of frequencies.</p>
 
-<p>Resonance is everywhere in physics and engineering. It explains why a wine glass shatters when a singer hits the right note, why a bridge can collapse if soldiers march across it in step, and why your car radio can pick out a single station from the electromagnetic spectrum. In every case, the system absorbs maximum energy when driven at its natural frequency.</p>`,
+<p>Resonance is everywhere in physics and engineering. It explains why a wine glass shatters when a singer hits the right note, why a bridge can collapse if soldiers march across it in step, and why your car radio can pick out a single station from the electromagnetic spectrum. In every case, the system absorbs maximum energy when driven at its natural frequency.</p>
+<figure style="text-align:center;margin:1.2em 0"><img src="images/tacoma-narrows.jpg" alt="Tacoma Narrows Bridge twisting before collapse" style="max-width:400px;width:100%;border-radius:6px"><figcaption style="font-size:0.85em;color:#666">The Tacoma Narrows Bridge twisting violently before its collapse in 1940 — a dramatic example of resonance driven by wind. (Public domain)</figcaption></figure>`,
       interactive: "resonance-curve",
       interactiveCaption: "The Lorentzian resonance curve. The peak is at the natural frequency and the width at half-maximum equals the damping coefficient.",
       mathLinks: []
