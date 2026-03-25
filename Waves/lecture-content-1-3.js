@@ -510,7 +510,7 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>This matrix approach is completely general. It works for any number of masses, any arrangement of springs, and even for different masses. The normal modes are the eigenvectors, and the normal mode frequencies are determined by the eigenvalues. This is the bridge from a handful of coupled oscillators to the wave equation -- when we take the number of oscillators to infinity.</p>`,
       interactive: "eigenvalue-solver",
-      interactiveCaption: "Solving the eigenvalue problem for coupled oscillators. The eigenvalues give the normal mode frequencies, and the eigenvectors give the mode shapes.",
+      interactiveCaption: "In the original coordinates x\u2081, x\u2082, each mass's motion is a complicated mix of two frequencies. Changing to the eigenbasis \u03BE_s, \u03BE_a diagonalizes the matrix, and each normal coordinate oscillates at a single clean frequency. Try the different initial conditions to see this.",
       mathLinks: ["eigenvalues", "linear-algebra"]
     },
     {

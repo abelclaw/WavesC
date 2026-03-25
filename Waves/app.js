@@ -3313,12 +3313,16 @@ function sceneMarkup(type) {
       `;
     case "eigenvalue-solver":
       return `
-        <div class="scene-label">Eigenvalue Problem</div>
-        <p class="scene-caption">Dots oscillate along eigenvector directions at the mode frequency. The symmetric mode (teal) has fixed &omega;; increasing &kappa; speeds up the antisymmetric mode (red).</p>
+        <div class="scene-label">Diagonalization: Why Eigenvectors Matter</div>
+        <p class="scene-caption">In the original basis x&#x2081;, x&#x2082; (left), each mass's motion is a messy mix of two frequencies. In the eigenbasis &xi;<sub>s</sub>, &xi;<sub>a</sub> (right), each coordinate oscillates at a single clean frequency. That's what diagonalization does.</p>
         <div class="interactive-scene">
-          <canvas id="scene-eigenvalue-solver" width="600" height="300"></canvas>
+          <canvas id="scene-eigenvalue-solver" width="700" height="340"></canvas>
           <div class="scene-controls">
             <label><span>&kappa;/k: </span><input type="range" id="eigen-kappa" min="0.05" max="2" step="0.05" value="0.5"><span class="scene-val" id="eigen-kappa-val">0.50</span></label>
+            <button id="eigen-ic-sym" class="scene-btn" title="Pure symmetric mode">Sym only</button>
+            <button id="eigen-ic-anti" class="scene-btn" title="Pure antisymmetric mode">Anti only</button>
+            <button id="eigen-ic-mix" class="scene-btn scene-btn-active" title="Equal mix of both modes">Mix</button>
+            <button id="eigen-ic-asym" class="scene-btn" title="Only mass 1 displaced">x&#x2081; only</button>
           </div>
         </div>
       `;

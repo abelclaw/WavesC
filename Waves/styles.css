@@ -4616,6 +4616,11 @@ a {
   opacity: 0.85;
 }
 
+.scene-btn-active {
+  background: var(--heading);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
 .w-play-btn {
   transition: background 0.15s;
 }

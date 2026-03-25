@@ -3456,6 +3456,26 @@ function initEigenvalueSolver() {
   const kappaSlider = document.getElementById('eigen-kappa');
   let t = 0;
 
+  // Initial condition amplitudes in normal mode basis: As * cos(ωs t), Aa * cos(ωa t)
+  let As = 1, Aa = 1; // "mix" preset
+
+  // IC buttons
+  const btnSym = document.getElementById('eigen-ic-sym');
+  const btnAnti = document.getElementById('eigen-ic-anti');
+  const btnMix = document.getElementById('eigen-ic-mix');
+  const btnAsym = document.getElementById('eigen-ic-asym');
+  const allBtns = [btnSym, btnAnti, btnMix, btnAsym];
+
+  function setIC(as, aa) {
+    As = as; Aa = aa; t = 0;
+    allBtns.forEach(b => { if (b) b.classList.remove('scene-btn-active'); });
+  }
+  btnSym?.addEventListener('click', () => { setIC(1, 0); btnSym.classList.add('scene-btn-active'); });
+  btnAnti?.addEventListener('click', () => { setIC(0, 1); btnAnti.classList.add('scene-btn-active'); });
+  btnMix?.addEventListener('click', () => { setIC(1, 1); btnMix.classList.add('scene-btn-active'); });
+  btnAsym?.addEventListener('click', () => { setIC(1, 1); btnAsym.classList.add('scene-btn-active'); });
+  // "x1 only" means x1(0)=1, x2(0)=0 → ξs = ξa = 1/√2, but we normalize to 1 for display
+
   function drawSpringHE(x1, x2, y, coils, coilH) {
     const len = x2 - x1;
     if (Math.abs(len) < 2) return;
@@ -3474,237 +3494,183 @@ function initEigenvalueSolver() {
     ctx.stroke();
   }
 
-  // Draw a mode shape: wall-spring-mass-spring-mass-spring-wall
-  function drawModeShape(cx, cy, d1, d2, color, label, freqStr) {
-    const modeW = 160, massR = 7;
-    const wallL = cx - modeW / 2, wallR = cx + modeW / 2;
-    const eq1 = wallL + modeW * 0.33, eq2 = wallL + modeW * 0.67;
-    const m1x = eq1 + d1 * 16, m2x = eq2 + d2 * 16;
+  // Draw a waveform in a plot box
+  function drawWaveform(plotX, plotY, plotW, plotH, fn, tMax, tNow, color, label) {
+    // Background box
+    ctx.fillStyle = '#f0ebe2';
+    ctx.fillRect(plotX, plotY, plotW, plotH);
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.strokeRect(plotX, plotY, plotW, plotH);
 
-    // Walls
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(wallL, cy - 10); ctx.lineTo(wallL, cy + 10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(wallR, cy - 10); ctx.lineTo(wallR, cy + 10); ctx.stroke();
+    // Zero line
+    const midY = plotY + plotH / 2;
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotX, midY); ctx.lineTo(plotX + plotW, midY); ctx.stroke();
 
-    // Springs
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    drawSpringHE(wallL + 2, m1x - massR, cy, 5, 4);
-    drawSpringHE(m1x + massR, m2x - massR, cy, 4, 4);
-    drawSpringHE(m2x + massR, wallR - 2, cy, 5, 4);
+    // Draw waveform
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    const amp = plotH * 0.4;
+    let first = true;
+    for (let px = 0; px <= plotW; px += 1) {
+      const tVal = (px / plotW) * tMax;
+      const val = fn(tVal);
+      const py = midY - val * amp;
+      if (first) { ctx.moveTo(plotX + px, py); first = false; }
+      else ctx.lineTo(plotX + px, py);
+    }
+    ctx.stroke();
 
-    // Masses
+    // Time marker
+    const markerX = plotX + (tNow / tMax) * plotW;
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1; ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.moveTo(markerX, plotY); ctx.lineTo(markerX, plotY + plotH); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Dot at current value
+    const nowVal = fn(tNow);
     ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(m1x, cy, massR, 0, 2 * Math.PI); ctx.fill();
-    ctx.beginPath(); ctx.arc(m2x, cy, massR, 0, 2 * Math.PI); ctx.fill();
-
-    // Displacement arrows
-    const drawArrow = (eqX, disp) => {
-      if (Math.abs(disp) < 0.05) return;
-      const arrowY = cy - massR - 5;
-      const arrowLen = disp * 12;
-      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(eqX, arrowY); ctx.lineTo(eqX + arrowLen, arrowY); ctx.stroke();
-      const s = disp > 0 ? 1 : -1;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.moveTo(eqX + arrowLen, arrowY);
-      ctx.lineTo(eqX + arrowLen - s * 4, arrowY - 3);
-      ctx.lineTo(eqX + arrowLen - s * 4, arrowY + 3);
-      ctx.closePath(); ctx.fill();
-    };
-    drawArrow(eq1, d1);
-    drawArrow(eq2, d2);
+    ctx.beginPath(); ctx.arc(markerX, midY - nowVal * amp, 3.5, 0, 2 * Math.PI); ctx.fill();
 
     // Label
-    ctx.fillStyle = color; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(label, cx, cy + massR + 16);
-    ctx.font = '10px system-ui, sans-serif';
-    ctx.fillText(freqStr, cx, cy + massR + 28);
+    ctx.fillStyle = color; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    fillTextSub(ctx, label, plotX + 4, plotY + 12);
   }
 
   function draw() {
-    const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
+    const kappaRatio = parseFloat(kappaSlider?.value || 0.5);
     const k = 4, m = 1, kappa = kappaRatio * k;
 
     wClear(ctx, W, H);
 
-    // Matrix entries
     const a11 = (k + kappa) / m;
     const a12 = -kappa / m;
-    const lambdaS = a11 + a12; // = k/m (symmetric)
-    const lambdaA = a11 - a12; // = (k + 2κ)/m (antisymmetric)
+    const lambdaS = a11 + a12; // k/m
+    const lambdaA = a11 - a12; // (k + 2κ)/m
     const omegaS = Math.sqrt(lambdaS);
     const omegaA = Math.sqrt(lambdaA);
 
-    // Layout: three columns
-    // Left: matrix + eigenvalue results
-    // Center: determinant plot
-    // Right: animated mode shapes
+    // Normal mode coordinates
+    const xiS = (tVal) => As * Math.cos(omegaS * tVal);
+    const xiA = (tVal) => Aa * Math.cos(omegaA * tVal);
 
-    const colL = 0, colM = W * 0.3, colR = W * 0.68;
+    // Original coordinates: x1 = (ξs + ξa)/√2, x2 = (ξs − ξa)/√2
+    // (normalized so max amplitude ≈ 1)
+    const inv = 1 / Math.sqrt(2);
+    const x1 = (tVal) => inv * (As * Math.cos(omegaS * tVal) + Aa * Math.cos(omegaA * tVal));
+    const x2 = (tVal) => inv * (As * Math.cos(omegaS * tVal) - Aa * Math.cos(omegaA * tVal));
 
-    // === LEFT COLUMN: Matrix ===
-    const matX = colL + 14, matY = 22;
+    const tMax = 20;
+    const tNow = t % tMax;
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Matrix M:', matX, matY);
+    // === TOP: Animated spring-mass system ===
+    const mechY = 32, mechH = 38;
+    const mechL = W * 0.15, mechR = W * 0.85;
+    const mechW = mechR - mechL;
+    const eq1 = mechL + mechW * 0.33, eq2 = mechL + mechW * 0.67;
+    const massR = 10;
+    const disp = 22; // pixels per unit displacement
 
-    const mxL = matX + 2, mxR = matX + 150, myT = matY + 8, myB = matY + 56;
+    const x1Now = x1(tNow), x2Now = x2(tNow);
+    const m1x = eq1 + x1Now * disp, m2x = eq2 + x2Now * disp;
+
+    // Walls
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(mxL + 8, myT); ctx.lineTo(mxL, myT); ctx.lineTo(mxL, myB); ctx.lineTo(mxL + 8, myB);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(mxR - 8, myT); ctx.lineTo(mxR, myT); ctx.lineTo(mxR, myB); ctx.lineTo(mxR - 8, myB);
-    ctx.stroke();
-
-    // Matrix entries: numerical with symbolic below
-    ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center';
-    const mcx1 = mxL + 42, mcx2 = mxR - 42;
-    const mry1 = myT + 18, mry2 = myB - 6;
-    ctx.fillStyle = WCOLORS.teal; ctx.fillText(a11.toFixed(1), mcx1, mry1);
-    ctx.fillStyle = WCOLORS.amber; ctx.fillText(a12.toFixed(1), mcx2, mry1);
-    ctx.fillStyle = WCOLORS.amber; ctx.fillText(a12.toFixed(1), mcx1, mry2);
-    ctx.fillStyle = WCOLORS.teal; ctx.fillText(a11.toFixed(1), mcx2, mry2);
-
-    // Eigenvalue results below matrix
-    const evY = myB + 18;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Eigenvalues:', matX, evY);
-
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillStyle = WCOLORS.teal;
-    fillTextSub(ctx, '\u03C9\u00B2_s = ' + lambdaS.toFixed(1), matX, evY + 16);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
-    ctx.fillText('\u2192 \u03C9 = ' + omegaS.toFixed(2), matX + 62, evY + 16);
-
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, '\u03C9\u00B2_a = ' + lambdaA.toFixed(1), matX, evY + 32);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
-    ctx.fillText('\u2192 \u03C9 = ' + omegaA.toFixed(2), matX + 62, evY + 32);
-
-    // Eigenvectors
-    const vecY = evY + 50;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui, sans-serif';
-    ctx.fillText('Eigenvectors:', matX, vecY);
-    ctx.font = '11px system-ui, sans-serif';
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('(1, 1)  symmetric', matX, vecY + 16);
-    ctx.fillStyle = WCOLORS.red;
-    ctx.fillText('(1, \u22121)  antisymmetric', matX, vecY + 32);
-
-    // κ/k label
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif';
-    ctx.fillText('\u03BA/k = ' + kappaRatio.toFixed(2), matX, H - 10);
-
-    // === CENTER COLUMN: Determinant polynomial plot ===
-    const plotL = colM + 10, plotRt = colR - 14;
-    const plotTop = 18, plotBot = H - 22;
-    const plotW = plotRt - plotL, plotH = plotBot - plotTop;
-    const plotCenterX = plotL + plotW / 2;
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('det(M + \u03C9\u00B2I)', plotCenterX, plotTop + 2);
-
-    // Plot area
-    const ox = plotL + 20, oy = plotTop + plotH * 0.55;
-    const pw = plotW - 32, ph = plotH * 0.35;
-
-    // x-axis range: 0 to past lambdaA
-    const xMax = lambdaA * 1.3;
-
-    // det(M + ω²I) = (ω² - a11)² - a12²
-    function det(w2) {
-      return (w2 - a11) * (w2 - a11) - a12 * a12;
+    ctx.beginPath(); ctx.moveTo(mechL, mechY - 14); ctx.lineTo(mechL, mechY + 14); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mechR, mechY - 14); ctx.lineTo(mechR, mechY + 14); ctx.stroke();
+    // Hatch marks
+    ctx.lineWidth = 1;
+    for (let i = -2; i <= 2; i++) {
+      const hy = mechY + i * 5;
+      ctx.beginPath(); ctx.moveTo(mechL - 5, hy + 3); ctx.lineTo(mechL, hy - 3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mechR, hy - 3); ctx.lineTo(mechR + 5, hy + 3); ctx.stroke();
     }
 
-    // Vertical scale
-    const detAtZero = Math.abs(det(0));
-    const detAtMax = Math.abs(det(xMax));
-    const detPeak = Math.abs(det(a11));
-    const vMax = Math.max(detAtZero, detAtMax, detPeak) || 1;
-    const vScale = ph / vMax;
+    // Springs
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
+    drawSpringHE(mechL + 3, m1x - massR, mechY, 7, 6);
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.2;
+    drawSpringHE(m1x + massR, m2x - massR, mechY, 5, 6);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1.2;
+    drawSpringHE(m2x + massR, mechR - 3, mechY, 7, 6);
 
-    // Axes
+    // Masses
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(m1x, mechY, massR, 0, 2 * Math.PI); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(ox - 4, oy); ctx.lineTo(ox + pw + 4, oy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(ox, oy - ph - 6); ctx.lineTo(ox, oy + ph + 6); ctx.stroke();
-
-    // Axis labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u00B2', ox + pw + 12, oy + 4);
-    ctx.textAlign = 'right';
-    ctx.fillText('det', ox - 6, oy - ph);
-    ctx.textAlign = 'center';
-    ctx.fillText('0', ox - 8, oy + 4);
-
-    // Draw the determinant curve
-    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
-    ctx.beginPath();
-    let first = true;
-    for (let px = 0; px <= pw; px += 1) {
-      const w2 = (px / pw) * xMax;
-      const d = det(w2);
-      const py = oy - d * vScale;
-      // Clip to plot area
-      const clipped = Math.max(oy - ph - 8, Math.min(oy + ph + 8, py));
-      if (first) { ctx.moveTo(ox + px, clipped); first = false; }
-      else ctx.lineTo(ox + px, clipped);
-    }
-    ctx.stroke();
-
-    // Mark roots with vertical dashed lines and dots
-    const rootSx = ox + (lambdaS / xMax) * pw;
-    const rootAx = ox + (lambdaA / xMax) * pw;
-
-    ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
-    ctx.strokeStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.moveTo(rootSx, oy - ph * 0.5); ctx.lineTo(rootSx, oy + 4); ctx.stroke();
-    ctx.strokeStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.moveTo(rootAx, oy - ph * 0.5); ctx.lineTo(rootAx, oy + 4); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Root dots on x-axis
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.arc(rootSx, oy, 5, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(m1x, mechY, massR, 0, 2 * Math.PI); ctx.stroke();
     ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(rootAx, oy, 5, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(m2x, mechY, massR, 0, 2 * Math.PI); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(m2x, mechY, massR, 0, 2 * Math.PI); ctx.stroke();
 
-    // Root labels
-    ctx.font = 'bold 10px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillStyle = WCOLORS.teal;
-    fillTextSub(ctx, '\u03C9\u00B2_s=' + lambdaS.toFixed(1), rootSx, oy + 16);
-    ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, '\u03C9\u00B2_a=' + lambdaA.toFixed(1), rootAx, oy + 16);
+    // Mass labels
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('1', m1x, mechY + 4);
+    ctx.fillText('2', m2x, mechY + 4);
 
-    // "= 0" label on the zero line
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('= 0', ox + pw + 6, oy + 4);
+    // Spring labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('k', (mechL + m1x) / 2, mechY - 16);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('\u03BA', (m1x + m2x) / 2, mechY - 16);
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('k', (m2x + mechR) / 2, mechY - 16);
 
-    // === RIGHT COLUMN: Animated mode shapes ===
-    const modeCx = colR + (W - colR) / 2;
+    // === BOTTOM: Four waveform plots (2×2 grid) ===
+    const plotTop = mechY + mechH + 8;
+    const plotBot = H - 8;
+    const totalPlotH = plotBot - plotTop;
+    const rowH = (totalPlotH - 10) / 2; // gap between rows
+    const halfW = (W - 30) / 2; // left half and right half
 
+    const leftX = 10, rightX = W / 2 + 8;
+    const row1Y = plotTop, row2Y = plotTop + rowH + 10;
+
+    // Column headers
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Mode shapes', modeCx, 20);
+    ctx.fillText('Original basis (coupled)', leftX + halfW / 2, row1Y - 2);
+    ctx.fillText('Eigenbasis (decoupled)', rightX + halfW / 2, row1Y - 2);
 
-    // Symmetric mode
-    const symPhase = Math.sin(omegaS * t * 0.5);
-    drawModeShape(modeCx, H * 0.32, symPhase, symPhase, WCOLORS.teal,
-      'Symmetric  (1, 1)', '\u03C9 = ' + omegaS.toFixed(2));
+    // Left column: x₁(t) and x₂(t) — messy
+    drawWaveform(leftX, row1Y + 4, halfW, rowH - 4, x1, tMax, tNow, WCOLORS.teal, 'x\u2081(t)');
+    drawWaveform(leftX, row2Y, halfW, rowH - 4, x2, tMax, tNow, WCOLORS.red, 'x\u2082(t)');
 
-    // Antisymmetric mode
-    const antiPhase = Math.sin(omegaA * t * 0.5);
-    drawModeShape(modeCx, H * 0.68, antiPhase, -antiPhase, WCOLORS.red,
-      'Antisymmetric  (1, \u22121)', '\u03C9 = ' + omegaA.toFixed(2));
+    // Right column: ξs(t) and ξa(t) — clean single frequencies
+    drawWaveform(rightX, row1Y + 4, halfW, rowH - 4, xiS, tMax, tNow, WCOLORS.teal, '\u03BE_s(t)');
+    drawWaveform(rightX, row2Y, halfW, rowH - 4, xiA, tMax, tNow, WCOLORS.red, '\u03BE_a(t)');
 
-    // Faint dividers between columns
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.3;
-    ctx.beginPath(); ctx.moveTo(colM + 2, 10); ctx.lineTo(colM + 2, H - 10); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(colR - 2, 10); ctx.lineTo(colR - 2, H - 10); ctx.stroke();
-    ctx.globalAlpha = 1;
+    // Frequency annotations on right-side plots
+    ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('\u03C9 = ' + omegaS.toFixed(2), rightX + halfW - 4, row1Y + 23);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('\u03C9 = ' + omegaA.toFixed(2), rightX + halfW - 4, row2Y + 19);
+
+    // "Two frequencies mixed" annotation on left plots
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row1Y + 23);
+    ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row2Y + 19);
+
+    // Arrow between columns
+    const arrowY = plotTop + totalPlotH / 2 + 2;
+    const arrowL = leftX + halfW + 4, arrowR = rightX - 4;
+    const arrowMid = (arrowL + arrowR) / 2;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(arrowL, arrowY); ctx.lineTo(arrowR, arrowY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.moveTo(arrowR, arrowY);
+    ctx.lineTo(arrowR - 5, arrowY - 3);
+    ctx.lineTo(arrowR - 5, arrowY + 3);
+    ctx.closePath(); ctx.fill();
+    // Label on arrow
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('P\u207B\u00B9MP', arrowMid, arrowY - 5);
+
+    // κ/k value
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('\u03BA/k = ' + kappaRatio.toFixed(2), W - 10, mechY - 16);
   }
 
   function animate() {
