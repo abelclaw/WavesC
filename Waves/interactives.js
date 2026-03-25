@@ -6027,32 +6027,37 @@ function initHelmholtzResonator() {
 function initBeatsDemo() {
   const canvas = document.getElementById('scene-beats-demo');
   if (!canvas) return;
+  canvas.height = 420;
   const setup = wSetupCanvas(canvas);
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let dfSlider = document.getElementById('bd-df');
-  if (!dfSlider) {
+  let f1Slider = document.getElementById('bd-f1');
+  let f2Slider = document.getElementById('bd-f2');
+  if (!f1Slider) {
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>\u0394f (Hz): <input type="range" id="bd-df" min="0" max="30" step="0.5" value="3"><span class="scene-val" id="bd-df-val">3.0</span></label>';
+        '<label>f\u2081 (Hz): <input type="range" id="bd-f1" min="20" max="80" step="0.5" value="40"><span class="scene-val" id="bd-f1-val">40.0</span></label>' +
+        '<label>f\u2082 (Hz): <input type="range" id="bd-f2" min="20" max="80" step="0.5" value="43"><span class="scene-val" id="bd-f2-val">43.0</span></label>';
       parent.appendChild(controls);
-      dfSlider = document.getElementById('bd-df');
+      f1Slider = document.getElementById('bd-f1');
+      f2Slider = document.getElementById('bd-f2');
     }
   }
 
   // Play button (append to existing controls)
   {
-    const controls = dfSlider?.closest('.scene-controls') || canvas.parentElement;
+    const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('bd-play')) {
       wMakePlayBtn(controls, 'bd-play', '\u25B6 Listen', () => {
-        const df = parseFloat(dfSlider?.value || 3);
+        const f1 = parseFloat(f1Slider?.value || 40);
+        const f2 = parseFloat(f2Slider?.value || 43);
         wPlayTones('bd-play', [
-          { freq: 440, gain: 0.5 },
-          { freq: 440 + df, gain: 0.5 }
+          { freq: f1 * 11, gain: 0.5 },
+          { freq: f2 * 11, gain: 0.5 }
         ], 0);
       });
     }
@@ -6062,75 +6067,94 @@ function initBeatsDemo() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    const df = parseFloat(dfSlider?.value || 3);
-    document.getElementById('bd-df-val')?.replaceChildren(document.createTextNode(df.toFixed(1)));
+    const f1 = parseFloat(f1Slider?.value || 40);
+    const f2 = parseFloat(f2Slider?.value || 43);
+    const df = Math.abs(f1 - f2);
+    document.getElementById('bd-f1-val')?.replaceChildren(document.createTextNode(f1.toFixed(1)));
+    document.getElementById('bd-f2-val')?.replaceChildren(document.createTextNode(f2.toFixed(1)));
     // Update live audio if playing
     if (wIsPlaying('bd-play')) {
       wUpdateTones('bd-play', [
-        { freq: 440, gain: 0.5 },
-        { freq: 440 + df, gain: 0.5 }
+        { freq: f1 * 11, gain: 0.5 },
+        { freq: f2 * 11, gain: 0.5 }
       ]);
     }
 
     t += 0.015;
     wClear(ctx, W, H);
 
-    const f1 = 40;
-    const f2 = f1 + df;
     const omega1 = 2 * Math.PI * f1 * 0.01;
     const omega2 = 2 * Math.PI * f2 * 0.01;
 
-    const plotL = 30, plotR = W - 20;
+    const plotL = 40, plotR = W - 15;
     const plotW = plotR - plotL;
-    const topY = H * 0.25;
-    const botY = H * 0.68;
-    const ampSmall = 25;
-    const ampBig = 45;
+    // Three vertically stacked plots
+    const row1Y = H * 0.14;   // center of wave 1
+    const row2Y = H * 0.38;   // center of wave 2
+    const row3Y = H * 0.72;   // center of sum
+    const ampSmall = H * 0.08;
+    const ampBig = H * 0.16;
     const xRange = 12;
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Beat Pattern: f\u2081 = ' + f1 + ' Hz, f\u2082 = ' + f2.toFixed(1) + ' Hz', W / 2, 14);
-
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(plotL, topY); ctx.lineTo(plotR, topY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, botY); ctx.lineTo(plotR, botY); ctx.stroke();
-
     const steps = 500;
-    // Wave 1
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1; ctx.globalAlpha = 0.35;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Beats: Two Frequencies and Their Sum', W / 2, 14);
+
+    // --- Row 1: Wave 1 ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row1Y); ctx.lineTo(plotR, row1Y); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= steps; i++) {
       const tLocal = t + (i / steps) * xRange;
       const y = Math.sin(omega1 * tLocal) * ampSmall;
       const px = plotL + (i / steps) * plotW;
-      i === 0 ? ctx.moveTo(px, topY - y) : ctx.lineTo(px, topY - y);
+      i === 0 ? ctx.moveTo(px, row1Y - y) : ctx.lineTo(px, row1Y - y);
     }
     ctx.stroke();
-    // Wave 2
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('f\u2081 = ' + f1.toFixed(1) + ' Hz', plotL + 3, row1Y - ampSmall - 4);
+
+    // --- Row 2: Wave 2 ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row2Y); ctx.lineTo(plotR, row2Y); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= steps; i++) {
       const tLocal = t + (i / steps) * xRange;
       const y = Math.sin(omega2 * tLocal) * ampSmall;
       const px = plotL + (i / steps) * plotW;
-      i === 0 ? ctx.moveTo(px, topY - y) : ctx.lineTo(px, topY - y);
+      i === 0 ? ctx.moveTo(px, row2Y - y) : ctx.lineTo(px, row2Y - y);
     }
     ctx.stroke();
-    ctx.globalAlpha = 1;
 
-    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillStyle = WCOLORS.teal; ctx.globalAlpha = 0.6; ctx.fillText('f\u2081', plotL + 3, topY - ampSmall - 3);
-    ctx.fillStyle = WCOLORS.amber; ctx.fillText('f\u2082', plotL + 20, topY - ampSmall - 3);
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('f\u2082 = ' + f2.toFixed(1) + ' Hz', plotL + 3, row2Y - ampSmall - 4);
 
-    // Sum
+    // Separator line
+    const sepY = (row2Y + row3Y) / 2 - ampSmall * 0.3;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(plotL, sepY); ctx.lineTo(plotR, sepY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('f\u2081 + f\u2082  \u2192  sum', W / 2, sepY - 4);
+
+    // --- Row 3: Sum ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row3Y); ctx.lineTo(plotR, row3Y); ctx.stroke();
+
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
     ctx.beginPath();
     for (let i = 0; i <= steps; i++) {
       const tLocal = t + (i / steps) * xRange;
       const y = (Math.sin(omega1 * tLocal) + Math.sin(omega2 * tLocal)) * ampBig / 2;
       const px = plotL + (i / steps) * plotW;
-      i === 0 ? ctx.moveTo(px, botY - y) : ctx.lineTo(px, botY - y);
+      i === 0 ? ctx.moveTo(px, row3Y - y) : ctx.lineTo(px, row3Y - y);
     }
     ctx.stroke();
 
@@ -6143,7 +6167,7 @@ function initBeatsDemo() {
         const tLocal = t + (i / steps) * xRange;
         const env = Math.cos(omegaBeat * tLocal) * ampBig;
         const px = plotL + (i / steps) * plotW;
-        i === 0 ? ctx.moveTo(px, botY - env) : ctx.lineTo(px, botY - env);
+        i === 0 ? ctx.moveTo(px, row3Y - env) : ctx.lineTo(px, row3Y - env);
       }
       ctx.stroke();
       ctx.beginPath();
@@ -6151,27 +6175,29 @@ function initBeatsDemo() {
         const tLocal = t + (i / steps) * xRange;
         const env = -Math.cos(omegaBeat * tLocal) * ampBig;
         const px = plotL + (i / steps) * plotW;
-        i === 0 ? ctx.moveTo(px, botY - env) : ctx.lineTo(px, botY - env);
+        i === 0 ? ctx.moveTo(px, row3Y - env) : ctx.lineTo(px, row3Y - env);
       }
       ctx.stroke();
       ctx.setLineDash([]);
     }
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Sum: beat pattern', plotL + 3, botY - ampBig - 8);
-
-    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Beat frequency = |f\u2081 \u2212 f\u2082| = ' + df.toFixed(1) + ' Hz', W / 2, H - 8);
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.text;
+    ctx.fillText('Sum (f\u2081 + f\u2082)', plotL + 3, row3Y - ampBig - 4);
 
     if (df > 0.1) {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-      ctx.fillText('envelope', plotR - 5, botY - ampBig - 3);
+      ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'right';
+      ctx.fillText('envelope', plotR - 5, row3Y - ampBig - 4);
     }
+
+    ctx.fillStyle = WCOLORS.red; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Beat frequency = |f\u2081 \u2212 f\u2082| = ' + df.toFixed(1) + ' Hz', W / 2, H - 8);
 
     requestAnimationFrame(tick);
   }
 
-  dfSlider?.addEventListener('input', () => {});
+  f1Slider?.addEventListener('input', () => {});
+  f2Slider?.addEventListener('input', () => {});
   tick();
 }
 
