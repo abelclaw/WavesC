@@ -3283,6 +3283,25 @@ function initBeats() {
 
   const kappaSlider = document.getElementById('beats-kappa');
 
+  // Play button
+  {
+    const controls = kappaSlider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('beats-play')) {
+      wMakePlayBtn(controls, 'beats-play', '\u25B6 Listen', () => {
+        const kr = parseFloat(kappaSlider?.value || 0.2);
+        const kk = 4, mm = 1;
+        const wS = Math.sqrt(kk / mm);
+        const wA = Math.sqrt((kk + 2 * kr * kk) / mm);
+        // Scale to audible range: map ωₛ (~2) to ~220 Hz
+        const scale = 110;
+        wPlayTones('beats-play', [
+          { freq: wS * scale, gain: 0.5 },
+          { freq: wA * scale, gain: 0.5 }
+        ], 0);
+      });
+    }
+  }
+
   let t = 0;
   const A0 = 0.8;
 
@@ -3294,6 +3313,14 @@ function initBeats() {
     const omegaS = Math.sqrt(k / m);
     const omegaA = Math.sqrt((k + 2 * kappaRatio * k) / m);
     const omegaBeat = (omegaA - omegaS) / 2;
+    // Update live audio if playing
+    if (wIsPlaying('beats-play')) {
+      const scale = 110;
+      wUpdateTones('beats-play', [
+        { freq: omegaS * scale, gain: 0.5 },
+        { freq: omegaA * scale, gain: 0.5 }
+      ]);
+    }
     const dt = 0.03;
     t += dt;
 
