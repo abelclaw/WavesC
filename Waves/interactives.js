@@ -3289,8 +3289,8 @@ function initBeats() {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>ω<sub>s</sub> (rad/s): <input type="range" id="beats-f1" min="1" max="5" step="0.05" value="2"><span class="scene-val" id="beats-f1-val">2.00</span></label>' +
-        '<label>ω<sub>a</sub> (rad/s): <input type="range" id="beats-f2" min="1" max="5" step="0.05" value="2.4"><span class="scene-val" id="beats-f2-val">2.40</span></label>';
+        '<label>ν<sub>s</sub> (Hz): <input type="range" id="beats-f1" min="0.5" max="3" step="0.05" value="1"><span class="scene-val" id="beats-f1-val">1.00</span></label>' +
+        '<label>ν<sub>a</sub> (Hz): <input type="range" id="beats-f2" min="0.5" max="3" step="0.05" value="1.2"><span class="scene-val" id="beats-f2-val">1.20</span></label>';
       parent.appendChild(controls);
       f1Slider = document.getElementById('beats-f1');
       f2Slider = document.getElementById('beats-f2');
@@ -3302,9 +3302,9 @@ function initBeats() {
     const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('beats-play')) {
       wMakePlayBtn(controls, 'beats-play', '\u25B6 Listen', () => {
-        const wS = parseFloat(f1Slider?.value || 2);
-        const wA = parseFloat(f2Slider?.value || 2.4);
-        const scale = 110;
+        const wS = parseFloat(f1Slider?.value || 1);
+        const wA = parseFloat(f2Slider?.value || 1.2);
+        const scale = 220;
         wPlayTones('beats-play', [
           { freq: wS * scale, gain: 0.5 },
           { freq: wA * scale, gain: 0.5 }
@@ -3318,17 +3318,20 @@ function initBeats() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    const omegaS = parseFloat(f1Slider?.value || 2);
-    const omegaA = parseFloat(f2Slider?.value || 2.4);
-    document.getElementById('beats-f1-val')?.replaceChildren(document.createTextNode(omegaS.toFixed(2)));
-    document.getElementById('beats-f2-val')?.replaceChildren(document.createTextNode(omegaA.toFixed(2)));
-    const omegaBeat = Math.abs(omegaA - omegaS) / 2;
+    const nuS = parseFloat(f1Slider?.value || 1);
+    const nuA = parseFloat(f2Slider?.value || 1.2);
+    document.getElementById('beats-f1-val')?.replaceChildren(document.createTextNode(nuS.toFixed(2)));
+    document.getElementById('beats-f2-val')?.replaceChildren(document.createTextNode(nuA.toFixed(2)));
+    const nuBeat = Math.abs(nuA - nuS);
+    const omegaS = 2 * Math.PI * nuS;
+    const omegaA = 2 * Math.PI * nuA;
+    const omegaBeat = Math.PI * Math.abs(nuA - nuS);
     // Update live audio if playing
     if (wIsPlaying('beats-play')) {
-      const scale = 110;
+      const scale = 220;
       wUpdateTones('beats-play', [
-        { freq: omegaS * scale, gain: 0.5 },
-        { freq: omegaA * scale, gain: 0.5 }
+        { freq: nuS * scale, gain: 0.5 },
+        { freq: nuA * scale, gain: 0.5 }
       ]);
     }
     const dt = 0.03;
@@ -3354,7 +3357,7 @@ function initBeats() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Beats from Coupled Oscillators', W / 2, 14);
 
-    // --- Row 1: Symmetric mode cos(ωₛt) ---
+    // --- Row 1: Symmetric mode cos(2πνₛt) ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL, row1Mid); ctx.lineTo(plotR, row1Mid); ctx.stroke();
 
@@ -3369,11 +3372,11 @@ function initBeats() {
     ctx.stroke();
 
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Symmetric mode  cos(ω_s t)', plotL + 3, row1Mid - amp - 4);
+    ctx.fillText('Symmetric mode  cos(2πν_s t)', plotL + 3, row1Mid - amp - 4);
     ctx.textAlign = 'right';
-    fillTextSub(ctx, 'ω_s = ' + omegaS.toFixed(2) + ' rad/s', plotR - 3, row1Mid - amp - 4);
+    fillTextSub(ctx, 'ν_s = ' + nuS.toFixed(2) + ' Hz', plotR - 3, row1Mid - amp - 4);
 
-    // --- Row 2: Antisymmetric mode cos(ωₐt) ---
+    // --- Row 2: Antisymmetric mode cos(2πνₐt) ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
     ctx.beginPath(); ctx.moveTo(plotL, row2Mid); ctx.lineTo(plotR, row2Mid); ctx.stroke();
 
@@ -3388,9 +3391,9 @@ function initBeats() {
     ctx.stroke();
 
     ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Antisymmetric mode  cos(ω_a t)', plotL + 3, row2Mid - amp - 4);
+    ctx.fillText('Antisymmetric mode  cos(2πν_a t)', plotL + 3, row2Mid - amp - 4);
     ctx.textAlign = 'right';
-    fillTextSub(ctx, 'ω_a = ' + omegaA.toFixed(2) + ' rad/s', plotR - 3, row2Mid - amp - 4);
+    fillTextSub(ctx, 'ν_a = ' + nuA.toFixed(2) + ' Hz', plotR - 3, row2Mid - amp - 4);
 
     // Separator: arrow showing sum
     const sepY = row2Mid + rowH / 2 + gap / 2;
@@ -3398,7 +3401,7 @@ function initBeats() {
     ctx.beginPath(); ctx.moveTo(plotL, sepY); ctx.lineTo(plotR, sepY); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('x₁(t) = ½[cos(ω_s t) + cos(ω_a t)]  →  beats', W / 2, sepY - 3);
+    ctx.fillText('x₁(t) = ½[cos(2πν_s t) + cos(2πν_a t)]  →  beats', W / 2, sepY - 3);
 
     // --- Row 3: Sum x₁(t) showing beats ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
@@ -3441,9 +3444,8 @@ function initBeats() {
     ctx.globalAlpha = 1;
 
     // Bottom info
-    const beatFreq = omegaBeat / Math.PI;
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'f_{beat} = |ω_a − ω_s|/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W / 2, H - 6);
+    fillTextSub(ctx, 'ν_{beat} = |ν_a − ν_s| = ' + nuBeat.toFixed(2) + ' Hz', W / 2, H - 6);
 
     requestAnimationFrame(tick);
   }

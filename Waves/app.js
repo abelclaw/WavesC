@@ -3307,8 +3307,8 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-beats" width="600" height="440"></canvas>
           <div class="scene-controls">
-            <label><span>&omega;<sub>s</sub> (rad/s): </span><input type="range" id="beats-f1" min="1" max="5" step="0.05" value="2"><span class="scene-val" id="beats-f1-val">2.00</span></label>
-            <label><span>&omega;<sub>a</sub> (rad/s): </span><input type="range" id="beats-f2" min="1" max="5" step="0.05" value="2.4"><span class="scene-val" id="beats-f2-val">2.40</span></label>
+            <label><span>&nu;<sub>s</sub> (Hz): </span><input type="range" id="beats-f1" min="0.5" max="3" step="0.05" value="1"><span class="scene-val" id="beats-f1-val">1.00</span></label>
+            <label><span>&nu;<sub>a</sub> (Hz): </span><input type="range" id="beats-f2" min="0.5" max="3" step="0.05" value="1.2"><span class="scene-val" id="beats-f2-val">1.20</span></label>
           </div>
         </div>
       `;
