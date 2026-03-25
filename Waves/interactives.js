@@ -3635,10 +3635,12 @@ function initEigenvalueSolver() {
     ctx.fillStyle = WCOLORS.red;
     ctx.fillText('\u03C9 = ' + omegaA.toFixed(2), rightX + halfW - 4, row2Y + 19);
 
-    // "Two frequencies mixed" annotation on left plots
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row1Y + 23);
-    ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row2Y + 19);
+    // "Two frequencies mixed" annotation on left plots (only when both modes active)
+    if (As > 0.01 && Aa > 0.01) {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row1Y + 23);
+      ctx.fillText('two \u03C9 mixed', leftX + halfW - 4, row2Y + 19);
+    }
 
     // Arrow between columns
     const arrowY = plotTop + totalPlotH / 2 + 2;
@@ -3656,9 +3658,9 @@ function initEigenvalueSolver() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('P\u207B\u00B9MP', arrowMid, arrowY - 5);
 
-    // κ/k value
+    // Amplitude readout
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('\u03BA/k = ' + kappaRatio.toFixed(2), W - 10, mechY - 16);
+    fillTextSub(ctx, As.toFixed(2) + ' \u03BE_s + ' + Aa.toFixed(2) + ' \u03BE_a', W - 10, mechY - 16);
   }
 
   function animate() {
@@ -3668,7 +3670,7 @@ function initEigenvalueSolver() {
     requestAnimationFrame(animate);
   }
 
-  kappaSlider?.addEventListener('input', () => {});
+  mixSlider?.addEventListener('input', () => { t = 0; });
   animate();
 }
 
