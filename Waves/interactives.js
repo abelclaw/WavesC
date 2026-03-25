@@ -4007,14 +4007,21 @@ function initNMassChain() {
 
   const nSlider = document.getElementById('nchain-n');
   const modeSlider = document.getElementById('nchain-mode');
-  const orientBtn = document.getElementById('nchain-orient-btn');
+  const longBtn = document.getElementById('nchain-long-btn');
+  const transBtn = document.getElementById('nchain-trans-btn');
 
   let t = 0;
-  let orient = 'transverse'; // 'longitudinal' or 'transverse'
+  let orient = 'transverse';
 
-  orientBtn?.addEventListener('click', () => {
-    orient = orient === 'longitudinal' ? 'transverse' : 'longitudinal';
-    if (orientBtn) orientBtn.textContent = orient === 'longitudinal' ? 'Longitudinal' : 'Transverse';
+  longBtn?.addEventListener('click', () => {
+    orient = 'longitudinal';
+    longBtn.classList.add('scene-btn-active');
+    transBtn?.classList.remove('scene-btn-active');
+  });
+  transBtn?.addEventListener('click', () => {
+    orient = 'transverse';
+    transBtn.classList.add('scene-btn-active');
+    longBtn?.classList.remove('scene-btn-active');
   });
 
   function tick() {

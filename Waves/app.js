@@ -3353,14 +3353,14 @@ function sceneMarkup(type) {
       `;
     case "n-mass-chain":
       return `
-        <div class="scene-label">N-Mass Chain</div>
-        <p class="scene-caption">Adjust N and the mode number to explore normal modes. Toggle between longitudinal and transverse oscillations.</p>
+        <p class="scene-caption">Adjust N and the mode number to explore normal modes.</p>
         <div class="interactive-scene">
           <canvas id="scene-n-mass-chain" width="600" height="380"></canvas>
           <div class="scene-controls">
             <label><span>N: </span><input type="range" id="nchain-n" min="3" max="20" step="1" value="8"><span class="scene-val" id="nchain-n-val">8</span></label>
             <label><span>Mode: </span><input type="range" id="nchain-mode" min="1" max="20" step="1" value="1"><span class="scene-val" id="nchain-mode-val">1</span></label>
-            <button id="nchain-orient-btn" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Transverse</button>
+            <button id="nchain-long-btn" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Longitudinal</button>
+            <button id="nchain-trans-btn" class="scene-btn scene-btn-active" style="font-size:11px;padding:2px 10px;cursor:pointer;">Transverse</button>
           </div>
         </div>
       `;
