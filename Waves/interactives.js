@@ -3471,8 +3471,7 @@ function initEigenvalueSolver() {
   const btnSym = document.getElementById('eigen-ic-sym');
   const btnAnti = document.getElementById('eigen-ic-anti');
   const btnMix = document.getElementById('eigen-ic-mix');
-  const btnAsym = document.getElementById('eigen-ic-asym');
-  const allBtns = [btnSym, btnAnti, btnMix, btnAsym];
+  const allBtns = [btnSym, btnAnti, btnMix];
 
   function setIC(as, aa) {
     As = as; Aa = aa; t = 0;
@@ -3481,8 +3480,6 @@ function initEigenvalueSolver() {
   btnSym?.addEventListener('click', () => { setIC(1, 0); btnSym.classList.add('scene-btn-active'); });
   btnAnti?.addEventListener('click', () => { setIC(0, 1); btnAnti.classList.add('scene-btn-active'); });
   btnMix?.addEventListener('click', () => { setIC(1, 1); btnMix.classList.add('scene-btn-active'); });
-  btnAsym?.addEventListener('click', () => { setIC(1, 1); btnAsym.classList.add('scene-btn-active'); });
-  // "x1 only" means x1(0)=1, x2(0)=0 → ξs = ξa = 1/√2, but we normalize to 1 for display
 
   function drawSpringHE(x1, x2, y, coils, coilH) {
     const len = x2 - x1;

@@ -3323,7 +3323,6 @@ function sceneMarkup(type) {
             <button id="eigen-ic-sym" class="scene-btn" title="Pure symmetric mode">Sym only</button>
             <button id="eigen-ic-anti" class="scene-btn" title="Pure antisymmetric mode">Anti only</button>
             <button id="eigen-ic-mix" class="scene-btn scene-btn-active" title="Equal mix of both modes">Mix</button>
-            <button id="eigen-ic-asym" class="scene-btn" title="Only mass 1 displaced">x&#x2081; only</button>
           </div>
         </div>
       `;

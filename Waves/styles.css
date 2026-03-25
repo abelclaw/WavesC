@@ -4617,7 +4617,7 @@ a {
 }
 
 .scene-btn-active {
-  background: var(--heading);
+  background: #1f2a2e;
   box-shadow: 0 0 0 2px var(--accent);
 }
 
