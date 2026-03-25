@@ -3288,8 +3288,8 @@ function initBeats() {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>ν<sub>s</sub> (Hz): <input type="range" id="beats-f1" min="0.5" max="3" step="0.05" value="1"><span class="scene-val" id="beats-f1-val">1.00</span></label>' +
-        '<label>ν<sub>a</sub> (Hz): <input type="range" id="beats-f2" min="0.5" max="3" step="0.05" value="1.2"><span class="scene-val" id="beats-f2-val">1.20</span></label>';
+        '<label>ν<sub>s</sub> (Hz): <input type="range" id="beats-f1" min="0.5" max="3" step="0.05" value="1.0"><span class="scene-val" id="beats-f1-val">1.00</span></label>' +
+        '<label>ν<sub>a</sub> (Hz): <input type="range" id="beats-f2" min="0.5" max="3" step="0.05" value="1.15"><span class="scene-val" id="beats-f2-val">1.15</span></label>';
       parent.appendChild(controls);
       f1Slider = document.getElementById('beats-f1');
       f2Slider = document.getElementById('beats-f2');
@@ -3301,12 +3301,13 @@ function initBeats() {
     const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('beats-play')) {
       wMakePlayBtn(controls, 'beats-play', '\u25B6 Listen', () => {
-        const wS = parseFloat(f1Slider?.value || 1);
-        const wA = parseFloat(f2Slider?.value || 1.2);
-        const scale = 220;
+        const nS = parseFloat(f1Slider?.value || 1);
+        const nA = parseFloat(f2Slider?.value || 1.15);
+        // Center audio around 440 Hz; amplify Δν by 20× for audible beats
+        const dnu = (nA - nS) * 20;
         wPlayTones('beats-play', [
-          { freq: wS * scale, gain: 0.5 },
-          { freq: wA * scale, gain: 0.5 }
+          { freq: 440 - dnu / 2, gain: 0.5 },
+          { freq: 440 + dnu / 2, gain: 0.5 }
         ], 0);
       });
     }
@@ -3318,7 +3319,7 @@ function initBeats() {
   function tick() {
     if (!canvas.isConnected) return;
     const nuS = parseFloat(f1Slider?.value || 1);
-    const nuA = parseFloat(f2Slider?.value || 1.2);
+    const nuA = parseFloat(f2Slider?.value || 1.15);
     document.getElementById('beats-f1-val')?.replaceChildren(document.createTextNode(nuS.toFixed(2)));
     document.getElementById('beats-f2-val')?.replaceChildren(document.createTextNode(nuA.toFixed(2)));
     const nuBeat = Math.abs(nuA - nuS);
@@ -3327,10 +3328,10 @@ function initBeats() {
     const omegaBeat = Math.PI * Math.abs(nuA - nuS);
     // Update live audio if playing
     if (wIsPlaying('beats-play')) {
-      const scale = 220;
+      const dnu = (nuA - nuS) * 20;
       wUpdateTones('beats-play', [
-        { freq: nuS * scale, gain: 0.5 },
-        { freq: nuA * scale, gain: 0.5 }
+        { freq: 440 - dnu / 2, gain: 0.5 },
+        { freq: 440 + dnu / 2, gain: 0.5 }
       ]);
     }
     const dt = 0.03;
@@ -3462,25 +3463,8 @@ function initEigenvalueSolver() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  const kappaSlider = document.getElementById('eigen-kappa');
+  const mixSlider = document.getElementById('eigen-mix');
   let t = 0;
-
-  // Initial condition amplitudes in normal mode basis: As * cos(ωs t), Aa * cos(ωa t)
-  let As = 1, Aa = 1; // "mix" preset
-
-  // IC buttons
-  const btnSym = document.getElementById('eigen-ic-sym');
-  const btnAnti = document.getElementById('eigen-ic-anti');
-  const btnMix = document.getElementById('eigen-ic-mix');
-  const allBtns = [btnSym, btnAnti, btnMix];
-
-  function setIC(as, aa) {
-    As = as; Aa = aa; t = 0;
-    allBtns.forEach(b => { if (b) b.classList.remove('scene-btn-active'); });
-  }
-  btnSym?.addEventListener('click', () => { setIC(1, 0); btnSym.classList.add('scene-btn-active'); });
-  btnAnti?.addEventListener('click', () => { setIC(0, 1); btnAnti.classList.add('scene-btn-active'); });
-  btnMix?.addEventListener('click', () => { setIC(1, 1); btnMix.classList.add('scene-btn-active'); });
 
   function drawSpringHE(x1, x2, y, coils, coilH) {
     const len = x2 - x1;
@@ -3544,24 +3528,22 @@ function initEigenvalueSolver() {
   }
 
   function draw() {
-    const kappaRatio = parseFloat(kappaSlider?.value || 0.5);
-    const k = 4, m = 1, kappa = kappaRatio * k;
+    // Mix slider: 0 = pure ξs, 1 = pure ξa, 0.5 = equal mix
+    const mix = parseFloat(mixSlider?.value || 0.5);
+    const As = 1 - mix;
+    const Aa = mix;
 
     wClear(ctx, W, H);
 
-    const a11 = (k + kappa) / m;
-    const a12 = -kappa / m;
-    const lambdaS = a11 + a12; // k/m
-    const lambdaA = a11 - a12; // (k + 2κ)/m
-    const omegaS = Math.sqrt(lambdaS);
-    const omegaA = Math.sqrt(lambdaA);
+    // Fixed frequencies (κ/k = 0.5)
+    const omegaS = 2.0;
+    const omegaA = Math.sqrt(8); // ≈ 2.83
 
     // Normal mode coordinates
     const xiS = (tVal) => As * Math.cos(omegaS * tVal);
     const xiA = (tVal) => Aa * Math.cos(omegaA * tVal);
 
     // Original coordinates: x1 = (ξs + ξa)/√2, x2 = (ξs − ξa)/√2
-    // (normalized so max amplitude ≈ 1)
     const inv = 1 / Math.sqrt(2);
     const x1 = (tVal) => inv * (As * Math.cos(omegaS * tVal) + Aa * Math.cos(omegaA * tVal));
     const x2 = (tVal) => inv * (As * Math.cos(omegaS * tVal) - Aa * Math.cos(omegaA * tVal));
