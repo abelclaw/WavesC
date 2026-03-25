@@ -14092,8 +14092,8 @@ function initCieColorSpaceGamut() {
     {x:0.7346,y:0.2654},{x:0.7347,y:0.2653}
   ];
 
-  var plotL = 55, plotB = H - 35, plotT = 20;
-  var plotSize = Math.min(W - 80, H - 60);
+  var plotL = 55, plotB = H - 35, plotT = 30;
+  var plotSize = Math.min(W - 80, H - 70);
   var plotR = plotL + plotSize;
 
   function toScreen(cx, cy) {
@@ -14135,31 +14135,46 @@ function initCieColorSpaceGamut() {
   ];
 
   // Track which gamuts are visible
-  var visible = { srgb: true, p3: false, r2020: false, ntsc: false, adobe: false };
+  var visible = { srgb: true, p3: false, r2020: false, ntsc: false, adobe: false, mono: false };
 
-  // Create toggle buttons
-  var parent = canvas.parentElement;
-  if (parent) {
-    var controls = document.createElement('div');
-    controls.className = 'scene-controls';
-    var html = '';
-    for (var gi = 0; gi < gamuts.length; gi++) {
-      var g = gamuts[gi];
-      html += '<button id="cie-' + g.id + '" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin:2px;border:2px solid ' + g.color + ';color:' + (visible[g.id] ? '#fff' : g.color) + ';background:' + (visible[g.id] ? g.color : 'transparent') + ';">' + g.label + '</button>';
+  // Create toggle buttons (guard against double-init)
+  if (!document.getElementById('cie-srgb')) {
+    var parent = canvas.parentElement;
+    if (parent) {
+      var controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      var html = '';
+      for (var gi = 0; gi < gamuts.length; gi++) {
+        var g = gamuts[gi];
+        html += '<button id="cie-' + g.id + '" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin:2px;border:2px solid ' + g.color + ';color:' + (visible[g.id] ? '#fff' : g.color) + ';background:' + (visible[g.id] ? g.color : 'transparent') + ';">' + g.label + '</button>';
+      }
+      html += '<button id="cie-mono" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin:2px;border:2px solid ' + WCOLORS.axis + ';color:' + WCOLORS.axis + ';background:transparent;">Spectral Colors</button>';
+      controls.innerHTML = html;
+      parent.appendChild(controls);
     }
-    controls.innerHTML = html;
-    parent.appendChild(controls);
   }
 
   // Attach button listeners
+  function updateBtn(id, on, color) {
+    var btn = document.getElementById('cie-' + id);
+    if (btn) {
+      btn.style.background = on ? color : 'transparent';
+      btn.style.color = on ? '#fff' : color;
+    }
+  }
   gamuts.forEach(function(g) {
     var btn = document.getElementById('cie-' + g.id);
     if (btn) btn.addEventListener('click', function() {
       visible[g.id] = !visible[g.id];
-      btn.style.background = visible[g.id] ? g.color : 'transparent';
-      btn.style.color = visible[g.id] ? '#fff' : g.color;
+      updateBtn(g.id, visible[g.id], g.color);
       draw();
     });
+  });
+  var monoBtn = document.getElementById('cie-mono');
+  if (monoBtn) monoBtn.addEventListener('click', function() {
+    visible.mono = !visible.mono;
+    updateBtn('mono', visible.mono, WCOLORS.axis);
+    draw();
   });
 
   // Pre-render horseshoe colors to offscreen canvas
@@ -14257,6 +14272,24 @@ function initCieColorSpaceGamut() {
       if (visible[gamuts[gi].id]) drawTriangle(gamuts[gi]);
     }
 
+    // Spectral color swatches along the locus boundary
+    if (visible.mono) {
+      for (var si = 0; si < spectralLocus.length - 1; si++) {
+        var sp = spectralLocus[si];
+        var sNext = spectralLocus[si + 1];
+        var ss = toScreen(sp.x, sp.y);
+        // Offset outward from center
+        var sdx = sp.x - 0.33, sdy = sp.y - 0.33;
+        var slen = Math.sqrt(sdx*sdx + sdy*sdy);
+        if (slen < 0.01) continue;
+        var ox = (sdx/slen) * 8, oy = -(sdy/slen) * 8;
+        ctx.fillStyle = xyToRGB(sp.x, sp.y);
+        ctx.beginPath();
+        ctx.arc(ss.x + ox, ss.y + oy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     // White point D65
     var wp = toScreen(0.3127, 0.3290);
     ctx.beginPath(); ctx.arc(wp.x, wp.y, 3, 0, Math.PI * 2);
@@ -14267,7 +14300,7 @@ function initCieColorSpaceGamut() {
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('CIE 1931 Chromaticity Diagram', plotL, plotT - 5);
+    ctx.fillText('CIE 1931 Chromaticity Diagram', plotL + 60, plotT - 12);
   }
 
   draw();
