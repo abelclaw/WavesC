@@ -17670,8 +17670,8 @@ function initDopplerMovingSource() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     const fAhead = (1 / (1 - beta)).toFixed(2);
     const fBehind = (1 / (1 + beta)).toFixed(2);
-    ctx.fillText('f(ahead) = f\u2080/(1\u2212\u03B2) = ' + fAhead + 'f\u2080', W * 0.55, H - 40);
-    ctx.fillText('f(behind) = f\u2080/(1+\u03B2) = ' + fBehind + 'f\u2080', W * 0.55, H - 26);
+    ctx.fillText('\u03BD(ahead) = \u03BD\u2080/(1\u2212\u03B2) = ' + fAhead + '\u03BD\u2080', W * 0.55, H - 40);
+    ctx.fillText('\u03BD(behind) = \u03BD\u2080/(1+\u03B2) = ' + fBehind + '\u03BD\u2080', W * 0.55, H - 26);
 
     // Slider
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
@@ -17793,7 +17793,7 @@ function initDopplerAngle() {
     const thetaDeg = Math.acos(Math.max(-1, Math.min(1, cosTheta))) * 180 / Math.PI;
     const fColor = fReceived > 1.05 ? WCOLORS.blue : (fReceived < 0.95 ? WCOLORS.red : WCOLORS.text);
     ctx.fillStyle = fColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('f/f\u2080 = ' + fReceived.toFixed(3) + '   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
+    ctx.fillText('\u03BD/\u03BD\u2080 = ' + fReceived.toFixed(3) + '   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
 
     // --- PLOT: f/f₀ vs θ (bottom half) ---
     const plotL = W * 0.12, plotR = W - 15, plotT = H * 0.6, plotB = H - 14;
@@ -17818,7 +17818,7 @@ function initDopplerAngle() {
     ctx.beginPath(); ctx.moveTo(plotL, f0Y); ctx.lineTo(plotR, f0Y); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('f\u2080', plotL - 4, f0Y + 3);
+    ctx.fillText('\u03BD\u2080', plotL - 4, f0Y + 3);
 
     // Axis labels
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
@@ -17835,7 +17835,7 @@ function initDopplerAngle() {
     ctx.save(); ctx.translate(plotL - 10, (plotT + plotB) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('f / f\u2080', 0, 0);
+    ctx.fillText('\u03BD / \u03BD\u2080', 0, 0);
     ctx.restore();
 
     // Draw the f vs θ curve
@@ -18094,8 +18094,8 @@ function initRelativisticDopplerRedshift() {
 
     // Formula
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText("f' = f\u2080\u221A((1\u2212\u03B2)/(1+\u03B2))  (receding)", W / 2, H * 0.7);
-    ctx.fillText("f' = f\u2080\u221A((1+\u03B2)/(1\u2212\u03B2))  (approaching)", W / 2, H * 0.7 + 18);
+    ctx.fillText("\u03BD' = \u03BD\u2080\u221A((1\u2212\u03B2)/(1+\u03B2))  (receding)", W / 2, H * 0.7);
+    ctx.fillText("\u03BD' = \u03BD\u2080\u221A((1+\u03B2)/(1\u2212\u03B2))  (approaching)", W / 2, H * 0.7 + 18);
 
     // Slider
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
