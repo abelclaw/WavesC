@@ -3429,6 +3429,72 @@ function initEigenvalueSolver() {
   const kappaSlider = document.getElementById('eigen-kappa');
   let t = 0;
 
+  function drawSpringHE(x1, x2, y, coils, coilH) {
+    const len = x2 - x1;
+    if (Math.abs(len) < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(x1, y);
+    const segLen = len / (coils * 2 + 2);
+    let cx = x1 + segLen;
+    ctx.lineTo(cx, y);
+    for (let i = 0; i < coils; i++) {
+      const mx = cx + segLen;
+      ctx.lineTo(mx, y + coilH * ((i % 2 === 0) ? 1 : -1));
+      cx = mx + segLen;
+      ctx.lineTo(cx, y);
+    }
+    ctx.lineTo(x2, y);
+    ctx.stroke();
+  }
+
+  // Draw a mode shape: wall-spring-mass-spring-mass-spring-wall
+  function drawModeShape(cx, cy, d1, d2, color, label, freqStr) {
+    const modeW = 160, massR = 7;
+    const wallL = cx - modeW / 2, wallR = cx + modeW / 2;
+    const eq1 = wallL + modeW * 0.33, eq2 = wallL + modeW * 0.67;
+    const m1x = eq1 + d1 * 16, m2x = eq2 + d2 * 16;
+
+    // Walls
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(wallL, cy - 10); ctx.lineTo(wallL, cy + 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wallR, cy - 10); ctx.lineTo(wallR, cy + 10); ctx.stroke();
+
+    // Springs
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    drawSpringHE(wallL + 2, m1x - massR, cy, 5, 4);
+    drawSpringHE(m1x + massR, m2x - massR, cy, 4, 4);
+    drawSpringHE(m2x + massR, wallR - 2, cy, 5, 4);
+
+    // Masses
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(m1x, cy, massR, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(m2x, cy, massR, 0, 2 * Math.PI); ctx.fill();
+
+    // Displacement arrows
+    const drawArrow = (eqX, disp) => {
+      if (Math.abs(disp) < 0.05) return;
+      const arrowY = cy - massR - 5;
+      const arrowLen = disp * 12;
+      ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(eqX, arrowY); ctx.lineTo(eqX + arrowLen, arrowY); ctx.stroke();
+      const s = disp > 0 ? 1 : -1;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(eqX + arrowLen, arrowY);
+      ctx.lineTo(eqX + arrowLen - s * 4, arrowY - 3);
+      ctx.lineTo(eqX + arrowLen - s * 4, arrowY + 3);
+      ctx.closePath(); ctx.fill();
+    };
+    drawArrow(eq1, d1);
+    drawArrow(eq2, d2);
+
+    // Label
+    ctx.fillStyle = color; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(label, cx, cy + massR + 16);
+    ctx.font = '10px system-ui, sans-serif';
+    ctx.fillText(freqStr, cx, cy + massR + 28);
+  }
+
   function draw() {
     const kappaRatio = parseFloat(kappaSlider?.value || 0.3);
     const k = 4, m = 1, kappa = kappaRatio * k;
@@ -3443,127 +3509,179 @@ function initEigenvalueSolver() {
     const omegaS = Math.sqrt(lambdaS);
     const omegaA = Math.sqrt(lambdaA);
 
-    // Left side: matrix display
-    const matX = 30, matY = 40;
+    // Layout: three columns
+    // Left: matrix + eigenvalue results
+    // Center: determinant plot
+    // Right: animated mode shapes
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Equation of motion matrix  M⁻¹K:', matX, matY);
+    const colL = 0, colM = W * 0.3, colR = W * 0.68;
 
-    // Draw matrix brackets
-    const mxL = matX + 10, mxR = matX + 200, myT = matY + 15, myB = matY + 75;
+    // === LEFT COLUMN: Matrix ===
+    const matX = colL + 14, matY = 22;
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Matrix M:', matX, matY);
+
+    const mxL = matX + 2, mxR = matX + 150, myT = matY + 8, myB = matY + 56;
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(mxL + 10, myT); ctx.lineTo(mxL, myT); ctx.lineTo(mxL, myB); ctx.lineTo(mxL + 10, myB);
+    ctx.moveTo(mxL + 8, myT); ctx.lineTo(mxL, myT); ctx.lineTo(mxL, myB); ctx.lineTo(mxL + 8, myB);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(mxR - 10, myT); ctx.lineTo(mxR, myT); ctx.lineTo(mxR, myB); ctx.lineTo(mxR - 10, myB);
+    ctx.moveTo(mxR - 8, myT); ctx.lineTo(mxR, myT); ctx.lineTo(mxR, myB); ctx.lineTo(mxR - 8, myB);
     ctx.stroke();
 
-    // Matrix entries
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '14px system-ui, sans-serif'; ctx.textAlign = 'center';
-    const cx1 = mxL + 55, cx2 = mxR - 55;
-    const ry1 = myT + 22, ry2 = myB - 10;
-    ctx.fillText('(k+κ)/m', cx1, ry1);
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('−κ/m', cx2, ry1);
-    ctx.fillStyle = WCOLORS.amber;
-    ctx.fillText('−κ/m', cx1, ry2);
+    // Matrix entries: numerical with symbolic below
+    ctx.font = '13px system-ui, sans-serif'; ctx.textAlign = 'center';
+    const mcx1 = mxL + 42, mcx2 = mxR - 42;
+    const mry1 = myT + 18, mry2 = myB - 6;
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText(a11.toFixed(1), mcx1, mry1);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText(a12.toFixed(1), mcx2, mry1);
+    ctx.fillStyle = WCOLORS.amber; ctx.fillText(a12.toFixed(1), mcx1, mry2);
+    ctx.fillStyle = WCOLORS.teal; ctx.fillText(a11.toFixed(1), mcx2, mry2);
+
+    // Eigenvalue results below matrix
+    const evY = myB + 18;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Eigenvalues:', matX, evY);
+
+    ctx.font = '11px system-ui, sans-serif';
     ctx.fillStyle = WCOLORS.teal;
-    ctx.fillText('(k+κ)/m', cx2, ry2);
+    fillTextSub(ctx, '\u03C9\u00B2_s = ' + lambdaS.toFixed(1), matX, evY + 16);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
+    ctx.fillText('\u2192 \u03C9 = ' + omegaS.toFixed(2), matX + 62, evY + 16);
 
-    // Numerical values
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('= ' + a11.toFixed(1), cx1, ry1 + 16);
-    ctx.fillText('= ' + a12.toFixed(1), cx2, ry1 + 16);
-    ctx.fillText('= ' + a12.toFixed(1), cx1, ry2 + 16);
-    ctx.fillText('= ' + a11.toFixed(1), cx2, ry2 + 16);
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillStyle = WCOLORS.red;
+    fillTextSub(ctx, '\u03C9\u00B2_a = ' + lambdaA.toFixed(1), matX, evY + 32);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
+    ctx.fillText('\u2192 \u03C9 = ' + omegaA.toFixed(2), matX + 62, evY + 32);
 
-    // Right side: animated eigenvector phase space
-    const plotCx = W - 130, plotCy = H / 2 + 10;
-    const plotR = 80;
+    // Eigenvectors
+    const vecY = evY + 50;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui, sans-serif';
+    ctx.fillText('Eigenvectors:', matX, vecY);
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('(1, 1)  symmetric', matX, vecY + 16);
+    ctx.fillStyle = WCOLORS.red;
+    ctx.fillText('(1, \u22121)  antisymmetric', matX, vecY + 32);
 
-    // Grid lines
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    for (let g = -plotR; g <= plotR; g += plotR / 2) {
-      if (Math.abs(g) < 1) continue;
-      ctx.beginPath(); ctx.moveTo(plotCx + g, plotCy - plotR); ctx.lineTo(plotCx + g, plotCy + plotR); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(plotCx - plotR, plotCy + g); ctx.lineTo(plotCx + plotR, plotCy + g); ctx.stroke();
+    // κ/k label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif';
+    ctx.fillText('\u03BA/k = ' + kappaRatio.toFixed(2), matX, H - 10);
+
+    // === CENTER COLUMN: Determinant polynomial plot ===
+    const plotL = colM + 10, plotRt = colR - 14;
+    const plotTop = 18, plotBot = H - 22;
+    const plotW = plotRt - plotL, plotH = plotBot - plotTop;
+    const plotCenterX = plotL + plotW / 2;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('det(M + \u03C9\u00B2I)', plotCenterX, plotTop + 2);
+
+    // Plot area
+    const ox = plotL + 20, oy = plotTop + plotH * 0.55;
+    const pw = plotW - 32, ph = plotH * 0.35;
+
+    // x-axis range: 0 to past lambdaA
+    const xMax = lambdaA * 1.3;
+
+    // det(M + ω²I) = (ω² - a11)² - a12²
+    function det(w2) {
+      return (w2 - a11) * (w2 - a11) - a12 * a12;
     }
+
+    // Vertical scale
+    const detAtZero = Math.abs(det(0));
+    const detAtMax = Math.abs(det(xMax));
+    const detPeak = Math.abs(det(a11));
+    const vMax = Math.max(detAtZero, detAtMax, detPeak) || 1;
+    const vScale = ph / vMax;
 
     // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotCx - plotR - 10, plotCy); ctx.lineTo(plotCx + plotR + 10, plotCy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotCx, plotCy - plotR - 10); ctx.lineTo(plotCx, plotCy + plotR + 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox - 4, oy); ctx.lineTo(ox + pw + 4, oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox, oy - ph - 6); ctx.lineTo(ox, oy + ph + 6); ctx.stroke();
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('x₁', plotCx + plotR + 18, plotCy + 4);
-    ctx.fillText('x₂', plotCx, plotCy - plotR - 16);
+    // Axis labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('\u03C9\u00B2', ox + pw + 12, oy + 4);
+    ctx.textAlign = 'right';
+    ctx.fillText('det', ox - 6, oy - ph);
+    ctx.textAlign = 'center';
+    ctx.fillText('0', ox - 8, oy + 4);
 
-    // Draw faint eigenvector direction lines
-    ctx.setLineDash([4, 4]);
-    ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
+    // Draw the determinant curve
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
+    ctx.beginPath();
+    let first = true;
+    for (let px = 0; px <= pw; px += 1) {
+      const w2 = (px / pw) * xMax;
+      const d = det(w2);
+      const py = oy - d * vScale;
+      // Clip to plot area
+      const clipped = Math.max(oy - ph - 8, Math.min(oy + ph + 8, py));
+      if (first) { ctx.moveTo(ox + px, clipped); first = false; }
+      else ctx.lineTo(ox + px, clipped);
+    }
+    ctx.stroke();
+
+    // Mark roots with vertical dashed lines and dots
+    const rootSx = ox + (lambdaS / xMax) * pw;
+    const rootAx = ox + (lambdaA / xMax) * pw;
+
+    ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
     ctx.strokeStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.moveTo(plotCx - plotR * 0.85, plotCy + plotR * 0.85); ctx.lineTo(plotCx + plotR * 0.85, plotCy - plotR * 0.85); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rootSx, oy - ph * 0.5); ctx.lineTo(rootSx, oy + 4); ctx.stroke();
     ctx.strokeStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.moveTo(plotCx - plotR * 0.85, plotCy - plotR * 0.85); ctx.lineTo(plotCx + plotR * 0.85, plotCy + plotR * 0.85); ctx.stroke();
-    ctx.globalAlpha = 1.0;
+    ctx.beginPath(); ctx.moveTo(rootAx, oy - ph * 0.5); ctx.lineTo(rootAx, oy + 4); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Animate dots oscillating along eigenvector directions
-    const amp = plotR * 0.7;
-    const inv = 1 / Math.sqrt(2);
-
-    // Symmetric mode: dot oscillates along (1,1) direction
-    const phaseS = Math.sin(omegaS * t * 0.5);
-    const sx = amp * inv * phaseS;
-    const sy = -amp * inv * phaseS;
+    // Root dots on x-axis
     ctx.fillStyle = WCOLORS.teal;
-    ctx.globalAlpha = 0.12;
-    for (let i = 6; i >= 1; i--) {
-      const tp = Math.sin(omegaS * (t - i * 0.03) * 0.5);
-      const tx = amp * inv * tp, ty = -amp * inv * tp;
-      ctx.beginPath(); ctx.arc(plotCx + tx, plotCy + ty, 5 - i * 0.5, 0, 2 * Math.PI); ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
-    ctx.beginPath(); ctx.arc(plotCx + sx, plotCy + sy, 7, 0, 2 * Math.PI); ctx.fill();
-
-    // Antisymmetric mode: dot oscillates along (1,-1) direction
-    const phaseA = Math.sin(omegaA * t * 0.5);
-    const ax = amp * inv * phaseA;
-    const ay = amp * inv * phaseA;
+    ctx.beginPath(); ctx.arc(rootSx, oy, 5, 0, 2 * Math.PI); ctx.fill();
     ctx.fillStyle = WCOLORS.red;
-    ctx.globalAlpha = 0.12;
-    for (let i = 6; i >= 1; i--) {
-      const tp = Math.sin(omegaA * (t - i * 0.03) * 0.5);
-      const tx = amp * inv * tp, ty = amp * inv * tp;
-      ctx.beginPath(); ctx.arc(plotCx + tx, plotCy + ty, 5 - i * 0.5, 0, 2 * Math.PI); ctx.fill();
-    }
-    ctx.globalAlpha = 1.0;
-    ctx.beginPath(); ctx.arc(plotCx + ax, plotCy + ay, 7, 0, 2 * Math.PI); ctx.fill();
+    ctx.beginPath(); ctx.arc(rootAx, oy, 5, 0, 2 * Math.PI); ctx.fill();
 
-    // Labels for eigenvectors
-    ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    // Root labels
+    ctx.font = 'bold 10px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillStyle = WCOLORS.teal;
-    fillTextSub(ctx, 'ξ_s (1,1)', plotCx + plotR * 0.5, plotCy - plotR * 0.78);
+    fillTextSub(ctx, '\u03C9\u00B2_s=' + lambdaS.toFixed(1), rootSx, oy + 16);
     ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, 'ξ_a (1,−1)', plotCx + plotR * 0.5, plotCy + plotR * 0.88);
+    fillTextSub(ctx, '\u03C9\u00B2_a=' + lambdaA.toFixed(1), rootAx, oy + 16);
 
-    // Eigenvalue display
-    const evY = H - 50;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Eigenvalues (ω²):', matX, evY);
+    // "= 0" label on the zero line
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('= 0', ox + pw + 6, oy + 4);
 
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '13px system-ui, sans-serif';
-    fillTextSub(ctx, 'ω²_s = k/m = ' + lambdaS.toFixed(2) + '   →  ω_s = ' + omegaS.toFixed(2), matX, evY + 22);
-    ctx.fillStyle = WCOLORS.red;
-    fillTextSub(ctx, 'ω²_a = (k+2κ)/m = ' + lambdaA.toFixed(2) + '   →  ω_a = ' + omegaA.toFixed(2), matX, evY + 44);
+    // === RIGHT COLUMN: Animated mode shapes ===
+    const modeCx = colR + (W - colR) / 2;
 
-    // κ/k label
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), W - 10, 20);
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Mode shapes', modeCx, 20);
+
+    // Symmetric mode
+    const symPhase = Math.sin(omegaS * t * 0.5);
+    drawModeShape(modeCx, H * 0.32, symPhase, symPhase, WCOLORS.teal,
+      'Symmetric  (1, 1)', '\u03C9 = ' + omegaS.toFixed(2));
+
+    // Antisymmetric mode
+    const antiPhase = Math.sin(omegaA * t * 0.5);
+    drawModeShape(modeCx, H * 0.68, antiPhase, -antiPhase, WCOLORS.red,
+      'Antisymmetric  (1, \u22121)', '\u03C9 = ' + omegaA.toFixed(2));
+
+    // Faint dividers between columns
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.3;
+    ctx.beginPath(); ctx.moveTo(colM + 2, 10); ctx.lineTo(colM + 2, H - 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(colR - 2, 10); ctx.lineTo(colR - 2, H - 10); ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   function animate() {
+    if (!canvas.isConnected) return;
     t += 0.04;
     draw();
     requestAnimationFrame(animate);
