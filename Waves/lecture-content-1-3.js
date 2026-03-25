@@ -136,7 +136,15 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>The smaller the $Q$, the more the damping. $Q$ stands for "quality." The higher $Q$ is, the higher quality, and the less resistance/friction/damping is involved. For example, a tuning fork vibrates for a long time -- it is a very high quality resonator with $Q \\sim 1000$. An atomic clock has $Q \\approx 10^{11}$, while silly putty has $Q \\sim 0.01$.</p>
 
-<p>$Q$ is roughly the number of complete oscillations a system has gone through before its amplitude goes down by a factor of around 20. After $Q$ cycles, the amplitude has decayed by a factor of $e^{-\\pi} \\approx 0.043 \\approx 1/23$, giving us the "1/20 rule."</p>
+<p>$Q$ is roughly the number of complete oscillations a system has gone through before its amplitude goes down by a factor of around 20.</p>
+
+<details class="derivation-card"><summary>Derive: The 1/20 Rule for Q</summary><div class="derivation-body">
+<p>Due to the $\\cos(\\omega_u t)$ factor, it takes a time $t_Q = (2\\pi/\\omega_u) \\cdot Q$ to go through $Q$ complete cycles. Due to the $e^{-(\\gamma/2)t}$ envelope, the amplitude has decayed by a factor of:</p>
+
+<p style="text-align:center;">$$\\exp\\!\\left(-\\frac{\\gamma}{2}\\,t_Q\\right) = \\exp\\!\\left(-\\frac{\\gamma}{2} \\cdot Q \\cdot \\frac{2\\pi}{\\omega_u}\\right) = \\exp\\!\\left(-\\frac{\\omega_0}{\\omega_u}\\,\\pi\\right) \\approx e^{-\\pi} = 0.043$$</p>
+
+<p>In the last step, we used that $\\omega_u \\approx \\omega_0$ when $Q \\gg 1$. (If $Q$ is not large, then the system is highly damped and counting oscillations is not so useful.) Since $0.043 \\approx 1/23$, we get the "<strong>1/20 rule</strong>": after $Q$ oscillations, the amplitude has dropped to roughly $1/20$ of its initial value.</p>
+</div></details>
 
 <p><strong>Overdamping ($\\gamma > 2\\omega_0$):</strong> In the overdamped case, $(\\gamma/2)^2 - \\omega_0^2$ is positive, so the roots are real. The general solution is simply $x(t) = C_1 e^{-u_1 t} + C_2 e^{-u_2 t}$, where $u_1$ and $u_2$ are both positive real numbers. Both solutions have exponential decay -- no oscillation at all. Since $u_1 > u_2$, the $u_1$ solution dies away first. Overdamped systems have $Q < 1/2$.</p>
 
