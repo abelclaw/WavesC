@@ -3303,9 +3303,9 @@ function sceneMarkup(type) {
     case "beats":
       return `
         <div class="scene-label">Beats from Coupled Oscillators</div>
-        <p class="scene-caption">Start with one mass displaced. Energy sloshes between the two masses at the beat frequency |&omega;<sub>f</sub> &minus; &omega;<sub>s</sub>|.</p>
+        <p class="scene-caption">Two normal modes at slightly different frequencies combine to produce beats. Adjust &kappa;/k to change the frequency difference.</p>
         <div class="interactive-scene">
-          <canvas id="scene-beats" width="600" height="320"></canvas>
+          <canvas id="scene-beats" width="600" height="440"></canvas>
           <div class="scene-controls">
             <label><span>&kappa;/k: </span><input type="range" id="beats-kappa" min="0.05" max="1" step="0.05" value="0.2"><span class="scene-val" id="beats-kappa-val">0.20</span></label>
           </div>

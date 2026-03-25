@@ -3276,6 +3276,7 @@ function initNormalModes() {
 function initBeats() {
   const canvas = document.getElementById('scene-beats');
   if (!canvas) return;
+  canvas.height = 440;
   const setup = wSetupCanvas(canvas);
   if (!setup) return;
   const { ctx, W, H } = setup;
@@ -3288,96 +3289,126 @@ function initBeats() {
   function tick() {
     if (!canvas.isConnected) return;
     const kappaRatio = parseFloat(kappaSlider?.value || 0.15);
+    document.getElementById('beats-kappa-val')?.replaceChildren(document.createTextNode(kappaRatio.toFixed(2)));
     const k = 4, m = 1;
     const omegaS = Math.sqrt(k / m);
     const omegaA = Math.sqrt((k + 2 * kappaRatio * k) / m);
-    const omegaAvg = (omegaS + omegaA) / 2;
     const omegaBeat = (omegaA - omegaS) / 2;
     const dt = 0.03;
     t += dt;
 
     wClear(ctx, W, H);
 
-    const plotL = 50, plotR = W - 20;
+    const plotL = 50, plotR = W - 15;
     const plotW = plotR - plotL;
-    const panelH = (H - 60) / 2;
     const tMax = 30;
 
-    for (let panel = 0; panel < 2; panel++) {
-      const pTop = 30 + panel * (panelH + 15);
-      const pMid = pTop + panelH / 2;
-
-      // Axes
-      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(plotL, pTop); ctx.lineTo(plotL, pTop + panelH); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(plotL, pMid); ctx.lineTo(plotR, pMid); ctx.stroke();
-
-      // Labels
-      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(panel === 0 ? 'x₁(t)' : 'x₂(t)', plotL - 20, pTop + 8);
-      ctx.fillText('t', plotR + 10, pMid + 4);
-
-      // Draw waveform
-      const waveColor = panel === 0 ? WCOLORS.teal : WCOLORS.blue;
-      ctx.strokeStyle = waveColor; ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      const halfH = (panelH / 2) * 0.85;
-      for (let px = 0; px <= plotW; px += 1) {
-        const tSample = (px / plotW) * tMax;
-        let val;
-        if (panel === 0) {
-          val = A0 * Math.cos(omegaBeat * tSample) * Math.cos(omegaAvg * tSample);
-        } else {
-          val = A0 * Math.sin(omegaBeat * tSample) * Math.sin(omegaAvg * tSample);
-        }
-        const py = pMid - val * halfH;
-        px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
-      }
-      ctx.stroke();
-
-      // Beat envelope
-      ctx.strokeStyle = waveColor; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-      ctx.globalAlpha = 0.5;
-      for (let sign = -1; sign <= 1; sign += 2) {
-        ctx.beginPath();
-        for (let px = 0; px <= plotW; px += 2) {
-          const tSample = (px / plotW) * tMax;
-          let env;
-          if (panel === 0) {
-            env = sign * A0 * Math.cos(omegaBeat * tSample);
-          } else {
-            env = sign * A0 * Math.sin(omegaBeat * tSample);
-          }
-          const py = pMid - env * halfH;
-          px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
-        }
-        ctx.stroke();
-      }
-      ctx.setLineDash([]); ctx.globalAlpha = 1.0;
-
-      // Moving time marker
-      const tNow = t % tMax;
-      const markerX = plotL + (tNow / tMax) * plotW;
-      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(markerX, pTop); ctx.lineTo(markerX, pTop + panelH); ctx.stroke();
-    }
+    // Three rows: symmetric mode, antisymmetric mode, sum (x₁)
+    const topPad = 28;
+    const botPad = 24;
+    const gap = 12;
+    const rowH = (H - topPad - botPad - gap * 2) / 3;
+    const row1Mid = topPad + rowH / 2;
+    const row2Mid = topPad + rowH + gap + rowH / 2;
+    const row3Mid = topPad + 2 * (rowH + gap) + rowH / 2;
+    const amp = rowH * 0.4;
 
     // Header
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('Energy Transfer via Beats', W / 2, 14);
+    ctx.fillText('Beats from Coupled Oscillators', W / 2, 14);
 
-    // Panel labels
-    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('x₁', plotL - 40, 30 + panelH / 2 + 4);
-    ctx.fillStyle = WCOLORS.blue;
-    ctx.fillText('x₂', plotL - 40, 30 + panelH + 15 + panelH / 2 + 4);
+    // --- Row 1: Symmetric mode cos(ωₛt) ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row1Mid); ctx.lineTo(plotR, row1Mid); ctx.stroke();
 
-    // Labels
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tSample = (px / plotW) * tMax;
+      const val = A0 * Math.cos(omegaS * tSample);
+      const py = row1Mid - val * amp;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Symmetric mode  cos(ω_s t)', plotL + 3, row1Mid - amp - 4);
+    ctx.textAlign = 'right';
+    fillTextSub(ctx, 'ω_s = ' + omegaS.toFixed(2) + ' rad/s', plotR - 3, row1Mid - amp - 4);
+
+    // --- Row 2: Antisymmetric mode cos(ωₐt) ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row2Mid); ctx.lineTo(plotR, row2Mid); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tSample = (px / plotW) * tMax;
+      const val = A0 * Math.cos(omegaA * tSample);
+      const py = row2Mid - val * amp;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('Antisymmetric mode  cos(ω_a t)', plotL + 3, row2Mid - amp - 4);
+    ctx.textAlign = 'right';
+    fillTextSub(ctx, 'ω_a = ' + omegaA.toFixed(2) + ' rad/s', plotR - 3, row2Mid - amp - 4);
+
+    // Separator: arrow showing sum
+    const sepY = row2Mid + rowH / 2 + gap / 2;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(plotL, sepY); ctx.lineTo(plotR, sepY); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('x₁(t) = ½[cos(ω_s t) + cos(ω_a t)]  →  beats', W / 2, sepY - 3);
+
+    // --- Row 3: Sum x₁(t) showing beats ---
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(plotL, row3Mid); ctx.lineTo(plotR, row3Mid); ctx.stroke();
+
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= plotW; px++) {
+      const tSample = (px / plotW) * tMax;
+      const val = A0 * 0.5 * (Math.cos(omegaS * tSample) + Math.cos(omegaA * tSample));
+      const py = row3Mid - val * amp;
+      px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+    }
+    ctx.stroke();
+
+    // Beat envelope
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1.5; ctx.setLineDash([5, 3]);
+    for (let sign = -1; sign <= 1; sign += 2) {
+      ctx.beginPath();
+      for (let px = 0; px <= plotW; px += 2) {
+        const tSample = (px / plotW) * tMax;
+        const env = sign * A0 * Math.cos(omegaBeat * tSample);
+        const py = row3Mid - env * amp;
+        px === 0 ? ctx.moveTo(plotL + px, py) : ctx.lineTo(plotL + px, py);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('x₁(t)  —  sum', plotL + 3, row3Mid - amp - 4);
+    ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'right';
+    ctx.fillText('envelope', plotR - 5, row3Mid - amp - 4);
+
+    // Moving time marker across all 3 rows
+    const tNow = t % tMax;
+    const markerX = plotL + (tNow / tMax) * plotW;
+    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.moveTo(markerX, topPad); ctx.lineTo(markerX, H - botPad); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // Bottom info
     const beatFreq = omegaBeat / Math.PI;
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 6);
-    ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'right';
-    fillTextSub(ctx, 'f_{beat} = (ω_a − ω_s)/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'right';
+    fillTextSub(ctx, 'f_{beat} = |ω_a − ω_s|/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
 
     requestAnimationFrame(tick);
   }
