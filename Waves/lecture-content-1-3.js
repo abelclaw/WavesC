@@ -134,7 +134,14 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p style="text-align:center;"><strong>$$Q = \\frac{\\omega_0}{\\gamma}$$</strong></p>
 
-<p>The smaller the $Q$, the more the damping. $Q$ stands for "quality." The higher $Q$ is, the higher quality, and the less resistance/friction/damping is involved. For example, a tuning fork vibrates for a long time -- it is a very high quality resonator with $Q \\sim 1000$. An atomic clock has $Q \\approx 10^{11}$, while silly putty has $Q \\sim 0.01$.</p>
+<p>The smaller the $Q$, the more the damping. $Q$ stands for "quality." The higher $Q$ is, the higher quality, and the less resistance/friction/damping is involved.</p>
+
+<div class="figure-row" style="display:flex;gap:12px;justify-content:center;align-items:flex-end;margin:1.2em 0">
+<figure style="text-align:center;margin:0"><img src="images/nist-f2-clock.jpg" alt="NIST-F2 cesium fountain atomic clock" style="height:150px"><figcaption style="font-size:0.85em">Atomic clock<br>$Q \\approx 10^{11}$</figcaption></figure>
+<figure style="text-align:center;margin:0"><img src="images/tuning-fork.jpg" alt="Tuning fork on resonator box" style="height:150px"><figcaption style="font-size:0.85em">Tuning fork<br>$Q \\approx 1000$</figcaption></figure>
+<figure style="text-align:center;margin:0"><img src="images/silly-putty.jpg" alt="Silly putty dripping" style="height:150px"><figcaption style="font-size:0.85em">Silly putty<br>$Q \\sim 0.01$</figcaption></figure>
+</div>
+<p style="text-align:center;font-size:0.85em;color:#666;margin-top:-0.5em">Some Q-factors. Images: NIST (public domain), Wikimedia Commons (CC BY-SA).</p>
 
 <p>$Q$ is roughly the number of complete oscillations a system has gone through before its amplitude goes down by a factor of around 20.</p>
 

@@ -335,6 +335,7 @@ window.LECTURE_CONTENT_4_7 = {
   {
     heading: "Helmholtz Resonators",
     body: `<p>An important object in the physics of sound is the <strong>Helmholtz resonator</strong> -- a hollow cavity with a small opening, like a bottle or a violin body. They work because the volume of air in the body cannot change, so pushing down on the air in the neck forces the air in the body to push back with essentially a linear restoring force, like a spring. The air in the neck acts like a mass and the air in the body acts like a spring.</p>
+<figure style="text-align:center;margin:1.2em 0"><img src="images/helmholtz-resonator.jpg" alt="Brass Helmholtz resonator" style="max-width:250px;width:100%;border-radius:6px"><figcaption style="font-size:0.85em;color:#666">A brass Helmholtz resonator. Air in the neck oscillates as a mass; air in the cavity acts as a spring. (Wikimedia Commons, CC BY-SA 2.5)</figcaption></figure>
 <details class="derivation-card"><summary>Derive: Resonant frequency of a Helmholtz resonator</summary><div class="derivation-body">
 <p>We use $\\omega = \\sqrt{k_{\\text{spring}} / m}$. The spring constant comes from $F = -k \\Delta x$. For pressure, $F = A \\cdot dp$ where $A$ is the cross-sectional area of the neck.</p>
 <p>Since $\\rho = m/V$, we get $d\\rho = -(m/V^2) dV = -\\rho (dV/V)$. Using $dp/d\\rho = \\gamma p/\\rho$ for sound waves: $dp = -\\gamma (p/V) dV$.</p>
