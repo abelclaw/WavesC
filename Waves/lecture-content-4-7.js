@@ -290,9 +290,10 @@ window.LECTURE_CONTENT_4_7 = {
 <p>Thus $v = \\sqrt{p/\\rho}$ for a gas. It turns out this is only correct at constant temperature. The correct velocity uses the derivative at <strong>constant entropy</strong>, since when a wave passes through air it leaves it in the same state:</p>
 <p style="text-align:center;"><strong>$$v = \\sqrt{\\left(\\frac{dp}{d\\rho}\\right)_S}$$</strong></p>
 <details class="derivation-card"><summary>Derive: Speed of sound using the adiabatic index</summary><div class="derivation-body">
-<p>From thermodynamics, $(dp/d\\rho)_S = \\gamma \\cdot p/\\rho$, where $\\gamma = C_P / C_V$ is the ratio of specific heats. A more useful formula is $\\gamma = (f + 2) / f$, where $f$ is the number of degrees of freedom.</p>
+<p>From thermodynamics, $(dp/d\\rho)_S = \\gamma \\cdot p/\\rho$, where $\\gamma = C_P / C_V$ is the ratio of specific heats. By the equipartition theorem, each degree of freedom contributes $\\frac{1}{2}k_B T$ to the energy, so $U = \\frac{f}{2} n R T$. Then $C_V = \\frac{f}{2} n R$ and $C_P = C_V + nR = \\frac{f+2}{2} n R$. Their ratio gives:</p>
+<p style="text-align:center;"><strong>$$\\gamma = \\frac{C_P}{C_V} = \\frac{f + 2}{f}$$</strong></p>
 <p>For a <strong>monatomic gas</strong> (like Argon), only translations matter: $f = 3$, so $\\gamma = 5/3 = 1.67$.</p>
-<p>For a <strong>diatomic gas</strong> (like N$_2$ or O$_2$, which is mostly what air is), both atoms can move but rotation around the bond axis leaves the molecule unchanged, so $f = 5$ (3 translations + 1 rotation + 1 vibration). Thus $\\gamma = 7/5 = 1.4$.</p>
+<p>For a <strong>diatomic gas</strong> (like N$_2$ or O$_2$, which is mostly what air is), $f = 5$ (3 translations + 2 rotations). Thus $\\gamma = 7/5 = 1.4$.</p>
 </div></details>
 <p>We sometimes define a <strong>bulk modulus</strong> $B = \\gamma p$. Then the speed of sound in air is <strong>$c_s = \\sqrt{\\gamma p / \\rho} = \\sqrt{B / \\rho}$</strong>. Note that $B$ and $c_s$ are properties of the gas, not the wave. All waves have the same velocity in the same type of air.</p>
 <p>Using the ideal gas law ($pV = nRT$), we can also write: <strong>$c_s = \\sqrt{\\gamma R T / m}$</strong>, where $T$ is temperature and $m$ is the molecular weight. This tells us that the speed of sound depends <em>only on temperature</em>, not on density or pressure separately. It also tells us the speed of sound differs in gases with different molecular masses at the same temperature.</p>
@@ -438,7 +439,12 @@ window.LECTURE_CONTENT_4_7 = {
 <tr><th>Decimal</th><td>1</td><td>1.059</td><td>1.122</td><td>1.189</td><td>1.260</td><td>1.335</td><td>1.414</td><td>1.498</td><td>1.587</td><td>1.682</td><td>1.782</td><td>1.888</td><td>2</td></tr>
 </table>
 <p>This is the <strong>equal-tempered scale</strong>, the standard tuning for all of Western music. In this scale, the <strong>circle of fifths</strong> exactly closes: each note going clockwise is a fifth above the previous (C $\\to$ G $\\to$ D $\\to$ A $\\to$ E $\\to$ B $\\to$ F# $\\to$ Db $\\to$ Ab $\\to$ Eb $\\to$ Bb $\\to$ F $\\to$ C). Going counterclockwise, the intervals are fourths.</p>
-<p>In the Pythagorean scale, the circle does not quite close: going up 12 fifths and normalizing back down leaves you at $(3/2)^{12} \\times 2^{-7} = 1.014$ times where you started -- off by 1.4%. In the equal-tempered scale, it exactly closes, but none of the intervals are exactly perfect fifths ($2^{7/12} = 1.498$ instead of 1.5). The perfect 4th and perfect 5th are very close to their optimal values, while the 6th and 7th are not as close.</p>`,
+<details class="derivation-card"><summary>Derive: The Pythagorean Comma</summary><div class="derivation-body">
+<p>Going up 12 perfect fifths multiplies the frequency by $(3/2)^{12}$. Going up 7 octaves multiplies by $2^7 = 128$. If these were equal, the circle of fifths would close exactly. But:</p>
+<p style="text-align:center;">$$\\left(\\frac{3}{2}\\right)^{12} = \\frac{3^{12}}{2^{12}} = \\frac{531441}{4096} = 129.746$$</p>
+<p>Compare with $2^7 = 128$. The ratio is $129.746/128 = 1.0136$, meaning 12 fifths overshoots 7 octaves by about 1.4%. This discrepancy is the <strong>Pythagorean comma</strong>.</p>
+</div></details>
+<p>In the equal-tempered scale, the circle exactly closes, but none of the intervals are exactly perfect fifths ($2^{7/12} = 1.498$ instead of 1.5). The perfect 4th and perfect 5th are very close to their optimal values, while the 6th and 7th are not as close.</p>`,
     interactive: "circle-of-fifths",
     interactiveCaption: "The circle of fifths: each step clockwise is a perfect fifth. In equal temperament the circle exactly closes; in Pythagorean tuning it does not",
     mathLinks: []
