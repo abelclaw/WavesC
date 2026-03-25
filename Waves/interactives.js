@@ -5948,16 +5948,21 @@ function initHelmholtzResonator() {
   const vSlider = document.getElementById('hr-v');
   const lSlider = document.getElementById('hr-l');
 
-  let t = 0;
-
-  // Seeded random for stable molecule positions
-  function seededRandom(seed) {
-    let s = seed;
-    return function() {
-      s = (s * 16807 + 0) % 2147483647;
-      return s / 2147483647;
-    };
+  // Play button to hear the resonant frequency
+  {
+    const controls = aSlider?.closest('.scene-controls') || canvas.parentElement;
+    if (controls && !document.getElementById('hr-play')) {
+      wMakePlayBtn(controls, 'hr-play', '\u25B6 Listen', () => {
+        const A = parseFloat(aSlider?.value || 4);
+        const V = parseFloat(vSlider?.value || 80);
+        const L = parseFloat(lSlider?.value || 5);
+        const fRes = (343 / (2 * Math.PI)) * Math.sqrt(A / (V * L));
+        wPlayTones('hr-play', [{ freq: fRes, gain: 0.6 }], 0);
+      });
+    }
   }
+
+  let t = 0;
 
   function tick() {
     if (!canvas.isConnected) return;
@@ -5968,29 +5973,60 @@ function initHelmholtzResonator() {
     document.getElementById('hr-v-val')?.replaceChildren(document.createTextNode(V.toFixed(0)));
     document.getElementById('hr-l-val')?.replaceChildren(document.createTextNode(L.toFixed(1)));
 
+    // Update live audio if playing
+    if (wIsPlaying('hr-play')) {
+      const cs2 = 343;
+      const fLive = (cs2 / (2 * Math.PI)) * Math.sqrt(A / (V * L));
+      wUpdateTones('hr-play', [{ freq: fLive, gain: 0.6 }]);
+    }
+
     const cs = 343;
     const fRes = (cs / (2 * Math.PI)) * Math.sqrt(A / (V * L));
 
     t += 0.04;
     wClear(ctx, W, H);
 
+    // --- Layout ---
     const bottleX = W * 0.3;
-    const bottleCenterY = H * 0.55;
+    const bottleCenterY = H * 0.5;
 
-    const neckW = 10 + A * 3;
-    const neckH = 15 + L * 4;
-    const bodyW = 100 * Math.sqrt(V / 80);
-    const bodyH = bodyW * 0.8;
+    const neckW = 14 + A * 4;
+    const neckH = 18 + L * 5;
+    const bodyW = 110 * Math.sqrt(V / 80);
+    const bodyH = bodyW * 0.75;
 
     const neckTop = bottleCenterY - bodyH / 2 - neckH;
     const neckBot = bottleCenterY - bodyH / 2;
     const bodyBot = bottleCenterY + bodyH / 2;
 
-    const omega = fRes * 0.01;
-    const neckDisp = 8 * Math.sin(omega * t);
+    // Oscillation — keep animation speed perceptible regardless of fRes
+    const omega = 0.06 + fRes * 0.005;
+    const phase = Math.sin(omega * t);
+    const neckDisp = 14 * phase;
 
-    // Bottle shape
-    ctx.fillStyle = 'rgba(15, 118, 110, 0.12)';
+    // --- Body air: compression/rarefaction coloring ---
+    const compAlpha = 0.08 + 0.22 * Math.abs(phase);
+    if (phase > 0) {
+      ctx.fillStyle = `rgba(217, 119, 6, ${compAlpha})`;  // amber = compressed
+    } else {
+      ctx.fillStyle = `rgba(37, 99, 235, ${compAlpha})`;   // blue = rarefied
+    }
+    ctx.beginPath();
+    ctx.moveTo(bottleX - bodyW / 2 + 8, neckBot + 8);
+    ctx.lineTo(bottleX + bodyW / 2 - 8, neckBot + 8);
+    ctx.lineTo(bottleX + bodyW / 2 - 8, bodyBot - 12);
+    ctx.quadraticCurveTo(bottleX, bodyBot - 6, bottleX - bodyW / 2 + 8, bodyBot - 12);
+    ctx.closePath();
+    ctx.fill();
+
+    // Compression label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    if (Math.abs(phase) > 0.3) {
+      ctx.fillText(phase > 0 ? 'compressed' : 'rarefied', bottleX, bottleCenterY + 4);
+    }
+
+    // --- Bottle outline ---
+    ctx.fillStyle = 'rgba(15, 118, 110, 0.07)';
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(bottleX - neckW / 2, neckTop);
@@ -6006,75 +6042,137 @@ function initHelmholtzResonator() {
     ctx.fill();
     ctx.stroke();
 
-    // Air molecules in neck
-    const rng = seededRandom(42);
-    const numNeckMols = Math.max(3, Math.round(A * 1.5));
+    // --- Air plug in neck (visible block that oscillates) ---
+    const plugH = neckH * 0.45;
+    const plugY = neckTop + (neckH - plugH) / 2 + neckDisp;
+    const plugGrad = ctx.createLinearGradient(bottleX - neckW / 2 + 3, 0, bottleX + neckW / 2 - 3, 0);
+    plugGrad.addColorStop(0, 'rgba(37, 99, 235, 0.25)');
+    plugGrad.addColorStop(0.5, 'rgba(37, 99, 235, 0.55)');
+    plugGrad.addColorStop(1, 'rgba(37, 99, 235, 0.25)');
+    ctx.fillStyle = plugGrad;
+    ctx.beginPath();
+    ctx.roundRect(bottleX - neckW / 2 + 3, plugY, neckW - 6, plugH, 3);
+    ctx.fill();
+
+    // Dots inside the plug for air-molecule feel
     ctx.fillStyle = WCOLORS.blue;
-    for (let i = 0; i < numNeckMols; i++) {
-      const frac = (i + 0.5) / numNeckMols;
-      const mx = bottleX + (rng() * 0.6 - 0.3) * neckW * 0.5;
-      const my = neckTop + frac * neckH + neckDisp;
-      ctx.globalAlpha = 0.7;
-      ctx.beginPath(); ctx.arc(mx, my, 2.5, 0, Math.PI * 2); ctx.fill();
+    const numDots = Math.max(3, Math.round(A * 1.2));
+    for (let i = 0; i < numDots; i++) {
+      const fx = (i % 3 - 1) * 0.25;
+      const fy = (Math.floor(i / 3) + 0.5) / Math.ceil(numDots / 3);
+      const dx = bottleX + fx * (neckW - 10);
+      const dy = plugY + fy * plugH;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(dx, dy, 2.5, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // Body air compression indicator
-    const bodyComp = Math.sin(omega * t);
-    const bodyAlpha = 0.15 + 0.15 * bodyComp;
-    ctx.fillStyle = `rgba(15, 118, 110, ${bodyAlpha})`;
-    ctx.fillRect(bottleX - bodyW / 2 + 5, neckBot + 5, bodyW - 10, bodyH - 10);
+    // --- Arrow showing air motion direction at neck opening ---
+    const arrowLen = 10 + 12 * Math.abs(phase);
+    const arrowDir = -Math.sign(phase);
+    if (Math.abs(phase) > 0.15) {
+      ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
+      ctx.globalAlpha = Math.min(1, Math.abs(phase) * 1.5);
+      const ax = bottleX;
+      const ay = neckTop - 2;
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(ax, ay + arrowDir * arrowLen);
+      ctx.stroke();
+      const tipY = ay + arrowDir * arrowLen;
+      ctx.beginPath();
+      ctx.moveTo(ax - 4, tipY - arrowDir * 5);
+      ctx.lineTo(ax, tipY);
+      ctx.lineTo(ax + 4, tipY - arrowDir * 5);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
 
-    // Spring analogy (right half)
-    const springX = W * 0.7;
+    // --- Spring-mass analogy (right half) ---
+    const springX = W * 0.72;
     const springTop2 = neckTop + 10;
     const springBot2 = bodyBot - 10;
-    const springMid = (springTop2 + springBot2) / 2;
-    const massBlockY = springMid - 30 + neckDisp * 2;
+    const springRange = (springBot2 - springTop2) * 0.15;
+    const massBlockY = (springTop2 + springBot2) / 2 - 15 + neckDisp * (springRange / 14);
+
+    // Wall / anchor at bottom
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(springX - 22, springBot2, 44, 5);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    for (let hx = springX - 20; hx < springX + 22; hx += 6) {
+      ctx.beginPath(); ctx.moveTo(hx, springBot2 + 5); ctx.lineTo(hx + 5, springBot2); ctx.stroke();
+    }
 
     // Spring coils
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
-    const sCoils = 6;
-    const sW2 = 15;
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
+    const sCoils = 7;
+    const sW2 = 16;
+    const sTop = massBlockY + 14;
+    const sBot = springBot2;
+    const totalLen = sBot - sTop;
+    const segLen = totalLen / (sCoils * 2 + 2);
     ctx.beginPath();
-    ctx.moveTo(springX, springBot2);
-    const totalSpringLen = springBot2 - massBlockY - 15;
-    const sSegLen = totalSpringLen / (sCoils * 2 + 2);
-    let sy = springBot2 - sSegLen;
+    ctx.moveTo(springX, sBot);
+    let sy = sBot - segLen;
     ctx.lineTo(springX, sy);
     for (let i = 0; i < sCoils; i++) {
-      const midPt = sy - sSegLen;
+      const midPt = sy - segLen;
       ctx.lineTo(springX + sW2 * ((i % 2 === 0) ? 1 : -1), midPt);
-      sy = midPt - sSegLen;
+      sy = midPt - segLen;
       ctx.lineTo(springX, sy);
     }
-    ctx.lineTo(springX, massBlockY + 15);
+    ctx.lineTo(springX, sTop);
     ctx.stroke();
 
     // Mass block
     ctx.fillStyle = WCOLORS.blue;
-    ctx.fillRect(springX - 18, massBlockY - 12, 36, 24);
-    ctx.fillStyle = '#fff'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.beginPath();
+    ctx.roundRect(springX - 20, massBlockY - 14, 40, 28, 4);
+    ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('m', springX, massBlockY + 4);
 
-    // Wall
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(springX - 20, springBot2, 40, 4);
+    // Labels for spring analogy
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('neck air = mass', springX, massBlockY - 22);
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.fillText('body air = spring', springX, springBot2 + 18);
 
-    // Labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Neck air → mass m', springX, massBlockY - 22);
-    ctx.fillText('Body air → spring k', springX, springBot2 + 20);
+    // Dashed connecting arrow between bottle and spring
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bottleX + bodyW / 2 + 6, bottleCenterY);
+    ctx.lineTo(springX - 28, bottleCenterY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(springX - 28, bottleCenterY);
+    ctx.lineTo(springX - 34, bottleCenterY - 3);
+    ctx.moveTo(springX - 28, bottleCenterY);
+    ctx.lineTo(springX - 34, bottleCenterY + 3);
+    ctx.stroke();
 
+    // --- Parameter labels on bottle ---
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('A (neck area)', bottleX + neckW / 2 + 5, neckTop + neckH / 2);
-    ctx.fillText('L (neck length)', bottleX + neckW / 2 + 5, neckTop + neckH / 2 + 12);
-    ctx.fillText('V (body volume)', bottleX + bodyW / 2 + 5, bottleCenterY);
+    ctx.fillText('A', bottleX + neckW / 2 + 4, neckTop + neckH * 0.35);
+    ctx.fillText('L', bottleX + neckW / 2 + 4, neckTop + neckH * 0.65);
+    // Dimension bracket for L
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    const bx = bottleX + neckW / 2 + 2;
+    ctx.beginPath();
+    ctx.moveTo(bx, neckTop + 2); ctx.lineTo(bx, neckBot - 2);
+    ctx.moveTo(bx - 2, neckTop + 2); ctx.lineTo(bx + 3, neckTop + 2);
+    ctx.moveTo(bx - 2, neckBot - 2); ctx.lineTo(bx + 3, neckBot - 2);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.textAlign = 'left';
+    ctx.fillText('V', bottleX + bodyW / 2 + 6, bottleCenterY + 4);
 
+    // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Helmholtz Resonator', W / 2, 16);
 
-    // Resonant frequency formula (prominent)
+    // --- Resonant frequency (prominent) ---
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 13px system-ui';
     ctx.fillText('f\u2080 = (c\u209B / 2\u03C0) \u00B7 \u221A(A / VL)', W / 2, H - 22);
     ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 14px system-ui';
