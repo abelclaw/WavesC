@@ -281,7 +281,7 @@ window.LECTURE_CONTENT_4_7 = {
 <p>In a snapshot of the wave, it is hard to see $A(x, t)$ directly. Instead, what we observe is the <strong>density</strong> of the gas $\\rho(x, t)$. The two are closely related: as with any oscillator, the molecules move fastest as they pass through equilibrium and stop when they are farthest from equilibrium. When molecules are moving fastest to the right, they pile up, creating the most dense region. When they move fastest to the left, the region is least dense. Therefore density agrees with velocity: $\\rho$ is proportional to $\\rho_0 + dA/dt$.</p>
 <p>If the displacement is $A(x, t) = A_0 \\cos(kx - \\omega t)$, then the density is $\\rho(x, t) = \\rho_0 + (\\Delta \\rho) \\sin(kx - \\omega t)$. The density <strong>lags behind the amplitude by 90 degrees</strong> (a quarter wavelength).</p>`,
     interactive: "sound-wave-longitudinal",
-    interactiveCaption: "Visualization of a longitudinal sound wave: air molecules oscillate back and forth while the density wave propagates forward",
+    interactiveCaption: "Spherical wavefronts emanate from a point source: compression and rarefaction regions spread outward with amplitude falling off as 1/\u221Ar",
     mathLinks: []
   },
   {

@@ -5305,6 +5305,181 @@ function initStringTransverseWave() {
   const ampSlider = document.getElementById('stw-amp');
   const speedSlider = document.getElementById('stw-speed');
 
+  // String geometry
+  const stringY = H / 2;
+  const stringLeft = 40;
+  const stringRight = W - 40;
+  const stringLen = stringRight - stringLeft;
+  const nSegments = 200;
+  const nMasses = 30; // number of visible "test masses" on the string
+
+  // Positions of the highlighted masses along the string
+  const massPositions = [];
+  for (let i = 0; i < nMasses; i++) {
+    massPositions.push(stringLeft + (i + 1) * stringLen / (nMasses + 1));
+  }
+
+  function tick() {
+    if (!canvas.isConnected) return;
+    const freq = parseFloat(freqSlider?.value || 1.2);
+    const A = parseFloat(ampSlider?.value || 0.8);
+    const speed = parseFloat(speedSlider?.value || 0.015);
+    document.getElementById('stw-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
+    document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
+    document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
+
+    t += speed;
+    wClear(ctx, W, H);
+
+    const k = freq * 0.12;       // wavenumber
+    const omega = freq * 2.0;    // angular frequency
+    const maxAmp = 50 * A;       // max transverse displacement in px
+
+    // Draw equilibrium line (dashed)
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(stringLeft, stringY);
+    ctx.lineTo(stringRight, stringY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Compute displacement at each point along the string
+    function displacement(x) {
+      return maxAmp * Math.sin(k * (x - stringLeft) - omega * t);
+    }
+
+    // Draw the string as a smooth curve
+    ctx.strokeStyle = WCOLORS.amber;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i = 0; i <= nSegments; i++) {
+      const x = stringLeft + (i / nSegments) * stringLen;
+      const y = stringY - displacement(x);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Draw fixed endpoints
+    ctx.fillStyle = WCOLORS.text;
+    ctx.beginPath();
+    ctx.arc(stringLeft, stringY, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(stringRight, stringY, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw test masses on the string with velocity arrows
+    for (let i = 0; i < nMasses; i++) {
+      const mx = massPositions[i];
+      const dy = displacement(mx);
+      const my = stringY - dy;
+
+      // Velocity is d(displacement)/dt = maxAmp * omega * cos(k*(x-stringLeft) - omega*t)
+      const vy = -maxAmp * omega * Math.cos(k * (mx - stringLeft) - omega * t);
+
+      // Draw mass
+      ctx.fillStyle = WCOLORS.cyan;
+      ctx.beginPath();
+      ctx.arc(mx, my, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw velocity arrow (vertical, scaled down for display)
+      const arrowLen = vy * 0.15;
+      if (Math.abs(arrowLen) > 2) {
+        ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(mx, my);
+        ctx.lineTo(mx, my + arrowLen);
+        ctx.stroke();
+        // Arrowhead
+        const dir = arrowLen > 0 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(mx - 3, my + arrowLen - dir * 4);
+        ctx.lineTo(mx, my + arrowLen);
+        ctx.lineTo(mx + 3, my + arrowLen - dir * 4);
+        ctx.stroke();
+      }
+    }
+
+    // Highlight one mass to show force diagram
+    const highlightIdx = Math.floor(nMasses / 2);
+    const hx = massPositions[highlightIdx];
+    const hdy = displacement(hx);
+    const hy = stringY - hdy;
+
+    // Draw slope lines (tension direction) at highlighted mass
+    const dx = 2;
+    const slopeLeft = (displacement(hx) - displacement(hx - dx)) / dx;
+    const slopeRight = (displacement(hx + dx) - displacement(hx)) / dx;
+
+    // Draw tension arrows from both sides
+    const tLen = 35;
+    ctx.lineWidth = 1.5;
+
+    // Left tension arrow (pulling toward left neighbor)
+    const angL = Math.atan2(-slopeLeft, -1);
+    ctx.strokeStyle = 'rgba(255, 180, 50, 0.7)';
+    ctx.beginPath();
+    ctx.moveTo(hx, hy);
+    ctx.lineTo(hx + tLen * Math.cos(angL), hy + tLen * Math.sin(angL));
+    ctx.stroke();
+
+    // Right tension arrow (pulling toward right neighbor)
+    const angR = Math.atan2(-slopeRight, 1);
+    ctx.beginPath();
+    ctx.moveTo(hx, hy);
+    ctx.lineTo(hx + tLen * Math.cos(angR), hy + tLen * Math.sin(angR));
+    ctx.stroke();
+
+    // Highlight the mass
+    ctx.fillStyle = WCOLORS.amber;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Transverse Oscillations on a String', W / 2, 14);
+
+    // Labels
+    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('T (tension)', 10, H - 10);
+    ctx.fillStyle = 'rgba(100, 200, 255, 0.6)';
+    ctx.fillText('\u2191\u2193 velocity', 100, H - 10);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.fillText('Net force \u221D curvature (\u2202\u00B2A/\u2202x\u00B2)', W - 10, H - 10);
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+// =========================================================================
+// CHAPTER 6: Sound Wave (Spherical Wave from a Point Source)
+// =========================================================================
+function initSoundWaveLongitudinal() {
+  const canvas = document.getElementById('scene-sound-wave-longitudinal');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let t = 0;
+
+  const freqSlider = document.getElementById('swl-freq');
+  const ampSlider = document.getElementById('swl-amp');
+  const speedSlider = document.getElementById('swl-speed');
+
   // Speaker position (left-center)
   const srcX = 45;
   const srcY = H / 2;
@@ -5324,9 +5499,9 @@ function initStringTransverseWave() {
     const freq = parseFloat(freqSlider?.value || 1.2);
     const A = parseFloat(ampSlider?.value || 0.8);
     const speed = parseFloat(speedSlider?.value || 0.015);
-    document.getElementById('stw-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
-    document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
-    document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
+    document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
+    document.getElementById('swl-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
+    document.getElementById('swl-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
 
     t += speed;
     wClear(ctx, W, H);
@@ -5419,182 +5594,6 @@ function initStringTransverseWave() {
     requestAnimationFrame(tick);
   }
 
-  tick();
-}
-
-// =========================================================================
-// CHAPTER 6: Sound Wave (Longitudinal)
-// =========================================================================
-function initSoundWaveLongitudinal() {
-  const canvas = document.getElementById('scene-sound-wave-longitudinal');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
-
-  const wlSlider = document.getElementById('swl-wl');
-  const freqSlider = document.getElementById('swl-freq');
-
-  let t = 0;
-  let paused = false;
-  const pauseBtn = document.getElementById('swl-pause');
-  pauseBtn?.addEventListener('click', () => {
-    paused = !paused;
-    pauseBtn.textContent = paused ? 'Play' : 'Pause';
-  });
-
-  const ampDisp = 7; // max radial displacement in px
-
-  // Pre-build dot positions: concentric semicircular arcs of dots
-  // Each arc is at a fixed equilibrium radius; dots are spaced along the arc
-  const numArcs = 40;       // number of concentric arcs
-  const arcSpacing = 12;    // px between arcs (equilibrium)
-  const dotAngularGap = 12; // px gap between dots along each arc
-  const angleSpan = 0.9;    // half-angle in radians (~52°)
-
-  const dots = []; // { eqR, angle } — equilibrium radius and angle
-  for (let i = 0; i < numArcs; i++) {
-    const eqR = 15 + i * arcSpacing;
-    // Number of dots on this arc: arc length / gap
-    const arcLen = 2 * angleSpan * eqR;
-    const nDots = Math.max(3, Math.round(arcLen / dotAngularGap));
-    for (let j = 0; j < nDots; j++) {
-      const angle = -angleSpan + (2 * angleSpan) * (j + 0.5) / nDots;
-      dots.push({ eqR, angle });
-    }
-  }
-
-  function tick() {
-    if (!canvas.isConnected) return;
-    const wl = parseFloat(wlSlider?.value || 100);  // wavelength in px
-    const freq = parseFloat(freqSlider?.value || 1.0);
-    const phaseSpeed = wl * freq;  // v = λf, derived
-    document.getElementById('swl-wl-val')?.replaceChildren(document.createTextNode(wl));
-    document.getElementById('swl-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
-
-    if (!paused) t += 0.02;
-    wClear(ctx, W, H);
-
-    const airL = 30;
-    const airR = W - 10;
-    const airT = 28;
-    const airB = H - 20;
-
-    const k = 2 * Math.PI / wl;
-    const omega = 2 * Math.PI * freq;
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Radial Longitudinal Sound Wave', W / 2, 16);
-
-    // Speaker positioned at left, vertically centered
-    const spkW = 28;  // speaker cabinet width
-    const spkH = 60;  // speaker cabinet height
-    const spkX = 8;   // left edge of cabinet
-    const srcCY = (airT + airB) / 2;
-    const srcCX = spkX + spkW + 6; // source point = just past the cone
-
-    // Pulsing cone displacement
-    const coneDisp = 4 * Math.sin(omega * t);
-
-    // Speaker cabinet
-    ctx.fillStyle = '#3a3a3a';
-    ctx.strokeStyle = '#555';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(spkX, srcCY - spkH / 2, spkW, spkH, 3);
-    ctx.fill();
-    ctx.stroke();
-
-    // Speaker cone (trapezoidal, pulsing outward)
-    const coneBase = spkX + spkW;
-    const coneTip = coneBase + 10 + coneDisp;
-    ctx.fillStyle = '#666';
-    ctx.beginPath();
-    ctx.moveTo(coneBase, srcCY - 20);
-    ctx.lineTo(coneTip, srcCY - 6);
-    ctx.lineTo(coneTip, srcCY + 6);
-    ctx.lineTo(coneBase, srcCY + 20);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#888';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // Speaker magnet circle (decorative, on the cabinet)
-    ctx.fillStyle = '#2a2a2a';
-    ctx.beginPath();
-    ctx.arc(spkX + spkW / 2, srcCY, 10, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#555';
-    ctx.beginPath();
-    ctx.arc(spkX + spkW / 2, srcCY, 10, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Inner dust cap
-    ctx.fillStyle = '#444';
-    ctx.beginPath();
-    ctx.arc(spkX + spkW / 2, srcCY, 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Speaker label
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Speaker', spkX + spkW / 2, srcCY + spkH / 2 + 12);
-
-    // Wavefront radius
-    const wavefrontR = phaseSpeed * t;
-
-    // Clip to drawing region (right of speaker)
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(srcCX - 2, airT, airR - srcCX + 4, airB - airT);
-    ctx.clip();
-
-    // Draw each dot displaced radially
-    for (let i = 0; i < dots.length; i++) {
-      const { eqR, angle } = dots[i];
-
-      // Radial displacement: longitudinal oscillation along the radial direction
-      let disp = 0;
-      let normDens = 0;
-      if (eqR < wavefrontR) {
-        const distBehindFront = wavefrontR - eqR;
-        const envelope = Math.min(1, distBehindFront / (wl * 0.8));
-        disp = ampDisp * envelope * Math.sin(k * eqR - omega * t);
-        // Density ~ -d(displacement)/dr = compression indicator
-        normDens = envelope * Math.cos(k * eqR - omega * t);
-      }
-
-      const r = eqR + disp;
-      const x = srcCX + r * Math.cos(angle);
-      const y = srcCY + r * Math.sin(angle);
-
-      // Brightness from density: compression = bright, rarefaction = dim
-      const brightness = 0.3 + 0.6 * (1 + normDens) / 2;
-      const dotSize = 1.8 + 1.0 * (1 + normDens) / 2;
-
-      const cr = Math.round(90 * brightness);
-      const cg = Math.round(200 * brightness);
-      const cb = Math.round(220 * brightness);
-
-      ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.5 + 0.5 * brightness})`;
-      ctx.beginPath();
-      ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-
-    // Legend
-    ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('Bright = compression   Dim = rarefaction', airR, H - 4);
-
-    requestAnimationFrame(tick);
-  }
-
-  wlSlider?.addEventListener('input', () => {});
-  freqSlider?.addEventListener('input', () => {});
   tick();
 }
 

@@ -3443,8 +3443,8 @@ function sceneMarkup(type) {
     // =====================================================================
     case "string-transverse-wave":
       return `
-        <div class="scene-label">Spherical Wave from a Point Source</div>
-        <p class="scene-caption">Circular wavefronts emanate from a small speaker. Compression (dense, bright) and rarefaction (sparse, dim) regions spread outward, with amplitude falling off as 1/&radic;r.</p>
+        <div class="scene-label">Transverse Oscillations on a String</div>
+        <p class="scene-caption">A string under tension carries a transverse wave. Each segment moves up and down while the wave pattern travels horizontally. The net transverse force on each element comes from the difference in slope at its two ends.</p>
         <div class="interactive-scene">
           <canvas id="scene-string-transverse-wave" width="600" height="280"></canvas>
           <div class="scene-controls">
@@ -3456,14 +3456,14 @@ function sceneMarkup(type) {
       `;
     case "sound-wave-longitudinal":
       return `
-        <div class="scene-label">Longitudinal Sound Wave</div>
-        <p class="scene-caption">Air molecules oscillate back and forth. Regions of compression (dark) and rarefaction (light) propagate as a wave.</p>
+        <div class="scene-label">Spherical Wave from a Point Source</div>
+        <p class="scene-caption">Circular wavefronts emanate from a small speaker. Compression (dense, bright) and rarefaction (sparse, dim) regions spread outward, with amplitude falling off as 1/&radic;r.</p>
         <div class="interactive-scene">
           <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
           <div class="scene-controls">
-            <button id="swl-pause" class="scene-btn" style="font-size:11px;padding:2px 10px;cursor:pointer;">Pause</button>
-            <label><span>Wavelength λ: </span><input type="range" id="swl-wl" min="30" max="200" step="5" value="100"><span class="scene-val" id="swl-wl-val">100</span></label>
-            <label><span>Frequency f: </span><input type="range" id="swl-freq" min="0.3" max="3" step="0.1" value="1.0"><span class="scene-val" id="swl-freq-val">1.0</span></label>
+            <label><span>Frequency: </span><input type="range" id="swl-freq" min="0.5" max="3" step="0.1" value="1.2"><span class="scene-val" id="swl-freq-val">1.2</span></label>
+            <label><span>Amplitude: </span><input type="range" id="swl-amp" min="0.3" max="1.5" step="0.1" value="0.8"><span class="scene-val" id="swl-amp-val">0.8</span></label>
+            <label><span>Speed: </span><input type="range" id="swl-speed" min="0.005" max="0.04" step="0.005" value="0.015"><span class="scene-val" id="swl-speed-val">0.50x</span></label>
           </div>
         </div>
       `;
