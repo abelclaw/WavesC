@@ -325,9 +325,21 @@ window.LECTURE_CONTENT_1_3 = {
 
 <p>Thus for $\\gamma = 0$ (no damping), there is no absorptive part. Since the absorptive part is proportional to $\\gamma$, it should have to do with energy being lost from the oscillator into the system. To see how this works, we compute the power.</p>
 
-<p>Recall that work is force times displacement $W = F \\Delta x$, and power is work per unit time: $P = F \\, dx/dt$. Plugging in our solution:</p>
+<p>Recall that work is force times displacement $W = F \\Delta x$, and power is work per unit time: $P = F \\, dx/dt$.</p>
+
+<details class="derivation-card"><summary>Derive: Power Input from the Driving Force</summary><div class="derivation-body">
+<p>Plugging in our solution $x(t) = (F_0/m)[A\\cos(\\omega_d t) + B\\sin(\\omega_d t)]$ and the force $F = F_0\\cos(\\omega_d t)$:</p>
+
+<p style="text-align:center;">$$P = F_0\\cos(\\omega_d t)\\left[-\\omega_d \\frac{F_0}{m} A \\sin(\\omega_d t) + \\omega_d \\frac{F_0}{m} B \\cos(\\omega_d t)\\right]$$</p>
+
+<p>Using $2\\sin\\theta\\cos\\theta = \\sin(2\\theta)$:</p>
 
 <p style="text-align:center;">$$P = -\\frac{F_0^2}{2m} \\omega_d A \\sin(2\\omega_d t) + \\frac{F_0^2}{m} B \\omega_d \\cos^2(\\omega_d t)$$</p>
+
+<p>To get the average power, we integrate over one period $T = 2\\pi/\\omega_d$. The $\\sin(2\\omega_d t)$ term averages to zero, and $\\langle\\cos^2(\\omega_d t)\\rangle = 1/2$. Substituting $B$:</p>
+
+<p style="text-align:center;"><strong>$$\\langle P \\rangle = \\frac{F_0^2}{2m} B \\omega_d = \\frac{F_0^2}{2\\gamma m} \\cdot \\frac{(\\gamma\\omega_d)^2}{(\\omega_0^2 - \\omega_d^2)^2 + (\\gamma\\omega_d)^2}$$</strong></p>
+</div></details>
 
 <p>The absorptive part is proportional to $\\cos^2(\\omega_d t)$, which is <strong>positive for all times</strong>. Thus it always takes (absorbs) power. On the other hand, the elastic amplitude is proportional to $\\sin(2\\omega_d t)$, which is sometimes positive and sometimes negative. When the power is negative, the oscillator is <em>returning</em> power to the driver. The elastic amplitude averages to zero over a full cycle.</p>
 
