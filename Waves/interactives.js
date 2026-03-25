@@ -247,7 +247,6 @@ function initSceneInteractives() {
   initFourierSawtooth();
   initPluckedString();
   // Chapter 4 (continued)
-  initNMassModesNumerical();
   initDispersionRelationDiscrete();
   initContinuumLimit();
   initTravelingVsStanding();
@@ -3997,7 +3996,7 @@ function initThreeMassNormalModes() {
 }
 
 // =========================================================================
-// 7. N-MASS CHAIN (variable N, mode selector, tridiagonal matrix)
+// 7. N-MASS CHAIN (variable N, mode selector, longitudinal/transverse toggle)
 // =========================================================================
 function initNMassChain() {
   const canvas = document.getElementById('scene-n-mass-chain');
@@ -4008,8 +4007,15 @@ function initNMassChain() {
 
   const nSlider = document.getElementById('nchain-n');
   const modeSlider = document.getElementById('nchain-mode');
+  const orientBtn = document.getElementById('nchain-orient-btn');
 
   let t = 0;
+  let orient = 'transverse'; // 'longitudinal' or 'transverse'
+
+  orientBtn?.addEventListener('click', () => {
+    orient = orient === 'longitudinal' ? 'transverse' : 'longitudinal';
+    if (orientBtn) orientBtn.textContent = orient === 'longitudinal' ? 'Longitudinal' : 'Transverse';
+  });
 
   function tick() {
     if (!canvas.isConnected) return;
@@ -4029,59 +4035,114 @@ function initNMassChain() {
     for (let j = 1; j <= N; j++) {
       shape.push(Math.sin(j * modeNum * Math.PI / (N + 1)));
     }
-    // Normalize
     const maxShape = Math.max(...shape.map(Math.abs), 0.001);
 
     wClear(ctx, W, H);
 
-    // --- Top: animated chain ---
-    const chainY = 60;
+    const cosT = Math.cos(omegaP * t);
+    const chainMidY = H * 0.35;
     const chainL = 50, chainR = W - 50;
     const chainW = chainR - chainL;
-    const maxD = 25;
+    const maxAmp = orient === 'longitudinal' ? 25 : 45;
+    const radius = Math.max(4, Math.min(8, 70 / N));
 
-    // Wall
+    // --- Animated chain ---
+    // Walls
     ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(chainL - 5, chainY - 20, 5, 40);
-    ctx.fillRect(chainR, chainY - 20, 5, 40);
+    if (orient === 'longitudinal') {
+      ctx.fillRect(chainL - 5, chainMidY - 20, 5, 40);
+      ctx.fillRect(chainR, chainMidY - 20, 5, 40);
+    } else {
+      ctx.fillRect(chainL - 8, chainMidY - 40, 6, 80);
+      ctx.fillRect(chainR + 2, chainMidY - 40, 6, 80);
+      // Hatching
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        const wy = chainMidY - 35 + i * 14;
+        ctx.beginPath(); ctx.moveTo(chainL - 8, wy); ctx.lineTo(chainL - 14, wy + 7); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(chainR + 8, wy); ctx.lineTo(chainR + 14, wy + 7); ctx.stroke();
+      }
+    }
 
-    const cosT = Math.cos(omegaP * t);
+    // Compute displaced positions
     const massPositions = [];
     for (let j = 0; j < N; j++) {
       const eqX = chainL + chainW * (j + 1) / (N + 1);
-      const disp = (shape[j] / maxShape) * maxD * cosT * 0.7;
-      massPositions.push(eqX + disp);
+      const disp = (shape[j] / maxShape) * maxAmp * cosT * 0.7;
+      if (orient === 'longitudinal') {
+        massPositions.push({ x: eqX + disp, y: chainMidY });
+      } else {
+        massPositions.push({ x: eqX, y: chainMidY + disp });
+      }
     }
 
-    // Draw springs (simple lines for many masses)
+    // Equilibrium line (transverse only)
+    if (orient === 'transverse') {
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(chainL, chainMidY); ctx.lineTo(chainR, chainMidY); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Springs / connecting lines
+    const wallL = { x: chainL, y: chainMidY };
+    const wallR = { x: chainR, y: chainMidY };
+    const allPos = [wallL, ...massPositions, wallR];
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5;
-    const allPos = [chainL, ...massPositions, chainR];
-    for (let j = 0; j < allPos.length - 1; j++) {
-      // Simple zigzag
-      const x1 = allPos[j] + (j > 0 ? 8 : 0);
-      const x2 = allPos[j + 1] - (j < allPos.length - 2 ? 8 : 0);
-      const segs = 6;
-      ctx.beginPath();
-      ctx.moveTo(x1, chainY);
-      for (let s = 1; s < segs; s++) {
-        const frac = s / segs;
-        const sx = x1 + (x2 - x1) * frac;
-        const sy = chainY + (s % 2 === 1 ? 5 : -5);
-        ctx.lineTo(sx, sy);
+    if (orient === 'longitudinal') {
+      // Zigzag springs
+      for (let j = 0; j < allPos.length - 1; j++) {
+        const x1 = allPos[j].x + (j > 0 ? radius : 0);
+        const x2 = allPos[j + 1].x - (j < allPos.length - 2 ? radius : 0);
+        const segs = 6;
+        ctx.beginPath();
+        ctx.moveTo(x1, chainMidY);
+        for (let s = 1; s < segs; s++) {
+          const frac = s / segs;
+          const sx = x1 + (x2 - x1) * frac;
+          const sy = chainMidY + (s % 2 === 1 ? 5 : -5);
+          ctx.lineTo(sx, sy);
+        }
+        ctx.lineTo(x2, chainMidY);
+        ctx.stroke();
       }
-      ctx.lineTo(x2, chainY);
+    } else {
+      // Simple connecting lines
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(wallL.x, wallL.y);
+      for (let i = 0; i < massPositions.length; i++) {
+        ctx.lineTo(massPositions[i].x, massPositions[i].y);
+      }
+      ctx.lineTo(wallR.x, wallR.y);
       ctx.stroke();
+      ctx.globalAlpha = 1;
     }
 
     // Masses
     ctx.fillStyle = WCOLORS.teal;
-    const radius = Math.max(4, Math.min(10, 80 / N));
-    massPositions.forEach(mx => {
-      ctx.beginPath(); ctx.arc(mx, chainY, radius, 0, Math.PI * 2); ctx.fill();
+    massPositions.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, radius, 0, Math.PI * 2); ctx.fill();
     });
 
-    // --- Middle: mode shape plot ---
-    const plotT = 110, plotB = 190;
+    // Mode shape envelope (transverse only)
+    if (orient === 'transverse') {
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.5;
+      for (const sign of [1, -1]) {
+        ctx.beginPath();
+        ctx.moveTo(chainL, chainMidY);
+        for (let n = 1; n <= N; n++) {
+          const yEnv = sign * (shape[n - 1] / maxShape) * maxAmp * 0.7;
+          const xPos = chainL + (n / (N + 1)) * chainW;
+          ctx.lineTo(xPos, chainMidY + yEnv);
+        }
+        ctx.lineTo(chainR, chainMidY);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+
+    // --- Bottom: mode shape plot + matrix ---
+    const plotT = H * 0.6, plotB = H - 25;
     const plotL = 50, plotR2 = W * 0.55;
     const plotMidY = (plotT + plotB) / 2;
     const plotHalfH = (plotB - plotT) / 2 * 0.85;
@@ -4093,7 +4154,7 @@ function initNMassChain() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('Mode shape (mode ' + modeNum + ')', (plotL + plotR2) / 2, plotT - 5);
 
-    // Plot shape with walls at zero
+    // Plot shape
     ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(plotL, plotMidY);
@@ -4105,7 +4166,7 @@ function initNMassChain() {
     ctx.lineTo(plotR2, plotMidY);
     ctx.stroke();
 
-    // Dots
+    // Dots on shape
     ctx.fillStyle = WCOLORS.blue;
     for (let j = 0; j < N; j++) {
       const px = plotL + (plotR2 - plotL) * (j + 1) / (N + 1);
@@ -4114,27 +4175,23 @@ function initNMassChain() {
     }
 
     // --- Right: tridiagonal matrix ---
-    const matL = W * 0.6, matT = 105;
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('K/m matrix (' + N + '×' + N + '):', matL, matT);
+    const matL = W * 0.6, matT = plotT - 5;
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'left';
+    ctx.fillText('K/m matrix (' + N + '\u00d7' + N + '):', matL, matT);
 
-    const cellSize = Math.min(14, 100 / N);
+    const cellSize = Math.min(12, 90 / N);
     const matStartX = matL + 5;
-    const matStartY = matT + 10;
-    const dispN = Math.min(N, 10); // display at most 10x10
+    const matStartY = matT + 8;
+    const dispN = Math.min(N, 10);
 
     for (let i = 0; i < dispN; i++) {
       for (let j = 0; j < dispN; j++) {
         let val = 0;
-        if (i === j) val = 2; // diagonal
-        else if (Math.abs(i - j) === 1) val = -1; // off-diagonal
-
-        let color = WCOLORS.bg;
-        if (val === 2) color = WCOLORS.teal;
-        else if (val === -1) color = WCOLORS.amber;
+        if (i === j) val = 2;
+        else if (Math.abs(i - j) === 1) val = -1;
 
         if (val !== 0) {
-          ctx.fillStyle = color;
+          ctx.fillStyle = val === 2 ? WCOLORS.teal : WCOLORS.amber;
           ctx.globalAlpha = 0.7;
           ctx.fillRect(matStartX + j * cellSize, matStartY + i * cellSize, cellSize - 1, cellSize - 1);
           ctx.globalAlpha = 1.0;
@@ -4146,20 +4203,22 @@ function initNMassChain() {
     }
 
     if (N > 10) {
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui, sans-serif';
-      ctx.fillText('(showing 10×10 of ' + N + '×' + N + ')', matL, matStartY + dispN * cellSize + 14);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif';
+      ctx.fillText('(showing 10\u00d710 of ' + N + '\u00d7' + N + ')', matL, matStartY + dispN * cellSize + 12);
     }
 
     // Legend
     ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui, sans-serif'; ctx.textAlign = 'left';
-    const legY = matStartY + dispN * cellSize + 30;
-    ctx.fillRect(matL, legY, 10, 10); ctx.fillText(' = 2 (diagonal)', matL + 14, legY + 9);
+    const legY = matStartY + dispN * cellSize + (N > 10 ? 22 : 8);
+    ctx.fillRect(matL, legY, 10, 10); ctx.fillText(' = 2 (diag)', matL + 14, legY + 9);
     ctx.fillStyle = WCOLORS.amber;
-    ctx.fillRect(matL, legY + 16, 10, 10); ctx.fillText(' = −1 (off-diag)', matL + 14, legY + 25);
+    ctx.fillRect(matL, legY + 14, 10, 10); ctx.fillText(' = \u22121 (off-diag)', matL + 14, legY + 23);
 
-    // Info
+    // Header info
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('N = ' + N + '    Mode ' + modeNum + '/' + N + '    ω = ' + omegaP.toFixed(3), 10, 18);
+    ctx.fillText('N = ' + N + '    Mode ' + modeNum + '/' + N, 10, 18);
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif';
+    ctx.fillText('\u03C9 = 2\u03C9\u2080 sin(' + modeNum + '\u03C0/2\u00b7' + (N + 1) + ') = ' + omegaP.toFixed(3) + ' \u03C9\u2080', 10, 33);
 
     requestAnimationFrame(tick);
   }
@@ -4756,140 +4815,6 @@ function initPluckedString() {
     requestAnimationFrame(tick);
   }
 
-  tick();
-}
-
-// =========================================================================
-// CHAPTER 4 (continued): N-Mass Normal Modes (Numerical)
-// =========================================================================
-function initNMassModesNumerical() {
-  const canvas = document.getElementById('scene-n-mass-modes-numerical');
-  if (!canvas) return;
-  const setup = wSetupCanvas(canvas);
-  if (!setup) return;
-  const { ctx, W, H } = setup;
-
-  // Create controls
-  let nSlider = document.getElementById('nmm-n');
-  if (!nSlider) {
-    const parent = canvas.parentElement;
-    if (parent) {
-      const controls = document.createElement('div');
-      controls.className = 'scene-controls';
-      controls.innerHTML =
-        '<label>N: <input type="range" id="nmm-n" min="4" max="20" step="1" value="8"><span class="scene-val" id="nmm-n-val">8</span></label>' +
-        '<label>Mode j: <input type="range" id="nmm-j" min="1" max="8" step="1" value="1"><span class="scene-val" id="nmm-j-val">1</span></label>';
-      parent.appendChild(controls);
-      nSlider = document.getElementById('nmm-n');
-    }
-  }
-  const jSlider = document.getElementById('nmm-j');
-
-  let t = 0;
-
-  function tick() {
-    if (!canvas.isConnected) return;
-    const N = parseInt(nSlider?.value || 8);
-    const j = Math.min(parseInt(jSlider?.value || 1), N);
-    if (jSlider) jSlider.max = N;
-    if (parseInt(jSlider?.value || 1) > N && jSlider) jSlider.value = N;
-
-    document.getElementById('nmm-n-val')?.replaceChildren(document.createTextNode(N));
-    document.getElementById('nmm-j-val')?.replaceChildren(document.createTextNode(j));
-
-    const omega0 = 1;
-    const omegaJ = 2 * omega0 * Math.sin(j * Math.PI / (2 * (N + 1)));
-
-    t += 0.03;
-
-    wClear(ctx, W, H);
-
-    const margin = 50;
-    const chainL = margin + 10;
-    const chainR = W - margin - 10;
-    const chainW = chainR - chainL;
-    const midY = H / 2;
-    const maxAmp = 50;
-    const amplitude = Math.cos(omegaJ * t);
-
-    // Draw walls
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(chainL - 8, midY - 40, 6, 80);
-    ctx.fillRect(chainR + 2, midY - 40, 6, 80);
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    for (let i = 0; i < 6; i++) {
-      const wy = midY - 35 + i * 14;
-      ctx.beginPath(); ctx.moveTo(chainL - 8, wy); ctx.lineTo(chainL - 14, wy + 7); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(chainR + 8, wy); ctx.lineTo(chainR + 14, wy + 7); ctx.stroke();
-    }
-
-    // Compute mode shape displacements
-    const positions = [];
-    for (let n = 1; n <= N; n++) {
-      const yDisp = Math.sin(n * j * Math.PI / (N + 1)) * amplitude * maxAmp;
-      const xPos = chainL + (n / (N + 1)) * chainW;
-      positions.push({ x: xPos, y: midY + yDisp });
-    }
-
-    // Connecting lines (springs)
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(chainL, midY);
-    for (let i = 0; i < positions.length; i++) {
-      ctx.lineTo(positions[i].x, positions[i].y);
-    }
-    ctx.lineTo(chainR, midY);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // Equilibrium dashed line
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(chainL, midY); ctx.lineTo(chainR, midY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Masses
-    for (let i = 0; i < positions.length; i++) {
-      const p = positions[i];
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2); ctx.stroke();
-    }
-
-    // Mode shape envelope (ghost)
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(chainL, midY);
-    for (let n = 1; n <= N; n++) {
-      const yEnv = Math.sin(n * j * Math.PI / (N + 1)) * maxAmp;
-      const xPos = chainL + (n / (N + 1)) * chainW;
-      ctx.lineTo(xPos, midY + yEnv);
-    }
-    ctx.lineTo(chainR, midY);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(chainL, midY);
-    for (let n = 1; n <= N; n++) {
-      const yEnv = -Math.sin(n * j * Math.PI / (N + 1)) * maxAmp;
-      const xPos = chainL + (n / (N + 1)) * chainW;
-      ctx.lineTo(xPos, midY + yEnv);
-    }
-    ctx.lineTo(chainR, midY);
-    ctx.stroke();
-    ctx.setLineDash([]); ctx.globalAlpha = 1;
-
-    // Labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Normal Mode ' + j + ' of ' + N + ' masses', W / 2, 20);
-
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03C9\u2C7C = 2\u03C9\u2080 sin(j\u03C0/2(N+1)) = ' + omegaJ.toFixed(3) + ' \u03C9\u2080', W / 2, H - 10);
-
-    requestAnimationFrame(tick);
-  }
-
-  nSlider?.addEventListener('input', () => {});
-  jSlider?.addEventListener('input', () => {});
   tick();
 }
 
