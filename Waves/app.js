@@ -3319,10 +3319,7 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-eigenvalue-solver" width="700" height="340"></canvas>
           <div class="scene-controls">
-            <label><span>&kappa;/k: </span><input type="range" id="eigen-kappa" min="0.05" max="2" step="0.05" value="0.5"><span class="scene-val" id="eigen-kappa-val">0.50</span></label>
-            <button id="eigen-ic-sym" class="scene-btn" title="Pure symmetric mode">Sym only</button>
-            <button id="eigen-ic-anti" class="scene-btn" title="Pure antisymmetric mode">Anti only</button>
-            <button id="eigen-ic-mix" class="scene-btn scene-btn-active" title="Equal mix of both modes">Mix</button>
+            <label><span>&xi;<sub>s</sub> </span><input type="range" id="eigen-mix" min="0" max="1" step="0.01" value="0.5"><span> &xi;<sub>a</sub></span></label>
           </div>
         </div>
       `;
@@ -3353,7 +3350,6 @@ function sceneMarkup(type) {
       `;
     case "n-mass-chain":
       return `
-        <p class="scene-caption">Adjust N and the mode number to explore normal modes.</p>
         <div class="interactive-scene">
           <canvas id="scene-n-mass-chain" width="600" height="380"></canvas>
           <div class="scene-controls">
