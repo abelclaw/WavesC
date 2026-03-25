@@ -3281,18 +3281,29 @@ function initBeats() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  const kappaSlider = document.getElementById('beats-kappa');
+  let f1Slider = document.getElementById('beats-f1');
+  let f2Slider = document.getElementById('beats-f2');
+  if (!f1Slider) {
+    const parent = canvas.parentElement;
+    if (parent) {
+      const controls = document.createElement('div');
+      controls.className = 'scene-controls';
+      controls.innerHTML =
+        '<label>ω<sub>s</sub> (rad/s): <input type="range" id="beats-f1" min="1" max="5" step="0.05" value="2"><span class="scene-val" id="beats-f1-val">2.00</span></label>' +
+        '<label>ω<sub>a</sub> (rad/s): <input type="range" id="beats-f2" min="1" max="5" step="0.05" value="2.4"><span class="scene-val" id="beats-f2-val">2.40</span></label>';
+      parent.appendChild(controls);
+      f1Slider = document.getElementById('beats-f1');
+      f2Slider = document.getElementById('beats-f2');
+    }
+  }
 
   // Play button
   {
-    const controls = kappaSlider?.closest('.scene-controls') || canvas.parentElement;
+    const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('beats-play')) {
       wMakePlayBtn(controls, 'beats-play', '\u25B6 Listen', () => {
-        const kr = parseFloat(kappaSlider?.value || 0.2);
-        const kk = 4, mm = 1;
-        const wS = Math.sqrt(kk / mm);
-        const wA = Math.sqrt((kk + 2 * kr * kk) / mm);
-        // Scale to audible range: map ωₛ (~2) to ~220 Hz
+        const wS = parseFloat(f1Slider?.value || 2);
+        const wA = parseFloat(f2Slider?.value || 2.4);
         const scale = 110;
         wPlayTones('beats-play', [
           { freq: wS * scale, gain: 0.5 },
@@ -3307,12 +3318,11 @@ function initBeats() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    const kappaRatio = parseFloat(kappaSlider?.value || 0.15);
-    document.getElementById('beats-kappa-val')?.replaceChildren(document.createTextNode(kappaRatio.toFixed(2)));
-    const k = 4, m = 1;
-    const omegaS = Math.sqrt(k / m);
-    const omegaA = Math.sqrt((k + 2 * kappaRatio * k) / m);
-    const omegaBeat = (omegaA - omegaS) / 2;
+    const omegaS = parseFloat(f1Slider?.value || 2);
+    const omegaA = parseFloat(f2Slider?.value || 2.4);
+    document.getElementById('beats-f1-val')?.replaceChildren(document.createTextNode(omegaS.toFixed(2)));
+    document.getElementById('beats-f2-val')?.replaceChildren(document.createTextNode(omegaA.toFixed(2)));
+    const omegaBeat = Math.abs(omegaA - omegaS) / 2;
     // Update live audio if playing
     if (wIsPlaying('beats-play')) {
       const scale = 110;
@@ -3432,10 +3442,8 @@ function initBeats() {
 
     // Bottom info
     const beatFreq = omegaBeat / Math.PI;
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 6);
-    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'right';
-    fillTextSub(ctx, 'f_{beat} = |ω_a − ω_s|/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W - 10, H - 6);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    fillTextSub(ctx, 'f_{beat} = |ω_a − ω_s|/(2π) = ' + beatFreq.toFixed(3) + ' Hz', W / 2, H - 6);
 
     requestAnimationFrame(tick);
   }
