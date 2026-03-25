@@ -17851,8 +17851,9 @@ function initDopplerAngle() {
     var radialLabel = vRadial >= 0 ? 'toward' : 'away';
     ctx.fillText('v\u22C5cos\u03B8 = ' + (sourceSpeed * cosTheta).toFixed(3) + ' (' + radialLabel + ')   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
 
-    // --- PLOT: v cos θ vs θ (bottom half) ---
-    const plotL = W * 0.12, plotR = W - 15, plotT = H * 0.6, plotB = H - 14;
+    // --- PLOT: v cos θ vs source position (bottom half) ---
+    // Align plot horizontally with the source travel range
+    const plotL = W * 0.1, plotR = W * 0.9, plotT = H * 0.6, plotB = H - 14;
     const pW = plotR - plotL, pH = plotB - plotT;
 
     // Axes
@@ -17860,11 +17861,10 @@ function initDopplerAngle() {
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
-    // v cos θ ranges from +v_s (θ=0) to -v_s (θ=180)
-    // Plot range: ±v_s with padding
+    // v cos θ ranges from +v_s to -v_s; plot with padding
     var vMax = sourceSpeed * 1.15;
 
-    // Zero reference line (v cos θ = 0, i.e. θ = 90°)
+    // Zero reference line
     var zeroY = plotT + pH / 2;
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.setLineDash([4, 4]);
     ctx.beginPath(); ctx.moveTo(plotL, zeroY); ctx.lineTo(plotR, zeroY); ctx.stroke();
@@ -17876,55 +17876,45 @@ function initDopplerAngle() {
     ctx.fillText('+v\u209B', plotL - 4, plotT + 8);
     ctx.fillText('\u2212v\u209B', plotL - 4, plotB - 2);
 
-    // Axis labels
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03B8', (plotL + plotR) / 2, plotB + 13);
-    // Tick marks at 0°, 90°, 180°
-    var ticks = [0, 90, 180];
-    for (var ti = 0; ti < ticks.length; ti++) {
-      var tx = plotL + (ticks[ti] / 180) * pW;
-      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(tx, plotB); ctx.lineTo(tx, plotB + 4); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(ticks[ti] + '\u00B0', tx, plotB + 13);
-    }
+    // Y-axis label
     ctx.save(); ctx.translate(plotL - 10, (plotT + plotB) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('v\u209B cos\u03B8', 0, 0);
     ctx.restore();
 
-    // Draw the v cos θ curve (a simple cosine)
+    // Draw the v cos θ curve as a function of source x position
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     var nPts = 200;
     for (var i = 0; i <= nPts; i++) {
-      var angleDeg = (i / nPts) * 180;
-      var cosA = Math.cos(angleDeg * Math.PI / 180);
+      var sx = plotL + (i / nPts) * pW;
+      var ddx = observerX - sx;
+      var ddy = observerY - sourceY;
+      var dd = Math.sqrt(ddx * ddx + ddy * ddy);
+      var cosA = ddx / dd;
       var vVal = sourceSpeed * cosA;
-      var curX = plotL + (angleDeg / 180) * pW;
       var curY = zeroY - (vVal / vMax) * (pH / 2);
-      if (i === 0) ctx.moveTo(curX, curY); else ctx.lineTo(curX, curY);
+      if (i === 0) ctx.moveTo(sx, curY); else ctx.lineTo(sx, curY);
     }
     ctx.stroke();
 
     // Approaching/receding labels
     ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('toward observer', plotL + 4, plotT + 10);
+    ctx.fillText('toward', plotL + 4, plotT + 10);
     ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'right';
-    ctx.fillText('away from observer', plotR - 4, plotB - 4);
+    ctx.fillText('away', plotR - 4, plotB - 4);
 
-    // Moving dot on the curve showing current angle
-    var dotX = plotL + (thetaDeg / 180) * pW;
+    // Vertical guide line from source down to plot
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(sourceX, sourceY + 10); ctx.lineTo(sourceX, plotB); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Moving dot on the curve at current source position
     var dotVVal = sourceSpeed * cosTheta;
     var dotY = zeroY - (dotVVal / vMax) * (pH / 2);
-    // Vertical guide line
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([2, 2]);
-    ctx.beginPath(); ctx.moveTo(dotX, plotT); ctx.lineTo(dotX, plotB); ctx.stroke();
-    ctx.setLineDash([]);
-    // Dot
     ctx.fillStyle = radialColor;
-    ctx.beginPath(); ctx.arc(dotX, dotY, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sourceX, dotY, 5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
 
     requestAnimationFrame(tick);
