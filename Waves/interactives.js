@@ -14095,9 +14095,12 @@ function initCieColorSpaceGamut() {
   var plotL = 55, plotB = H - 35, plotT = 30;
   var plotSize = Math.min(W - 80, H - 70);
   var plotR = plotL + plotSize;
+  // Scale factors: fit spectral locus (max x~0.735, max y~0.834) within plot area
+  var xScale = 1.15;
+  var yScale = (plotB - plotT) / (0.85 * plotSize); // ensure y=0.85 fits
 
   function toScreen(cx, cy) {
-    return { x: plotL + cx * plotSize * 1.15, y: plotB - cy * plotSize * 1.3 };
+    return { x: plotL + cx * plotSize * xScale, y: plotB - cy * plotSize * yScale };
   }
 
   function xyToRGB(cx, cy) {
@@ -14183,8 +14186,8 @@ function initCieColorSpaceGamut() {
   var offCtx = offscreen.getContext('2d');
   for (var px = 0; px < W; px += 2) {
     for (var py = plotT; py < plotB; py += 2) {
-      var cx2 = (px - plotL) / (plotSize * 1.15);
-      var cy2 = (plotB - py) / (plotSize * 1.3);
+      var cx2 = (px - plotL) / (plotSize * xScale);
+      var cy2 = (plotB - py) / (plotSize * yScale);
       if (cx2>=0 && cx2<=0.8 && cy2>0.005 && cy2<=0.9 && isInsideLocus(cx2, cy2)) {
         offCtx.fillStyle = xyToRGB(cx2, cy2);
         offCtx.fillRect(px, py, 2, 2);
@@ -14272,22 +14275,20 @@ function initCieColorSpaceGamut() {
       if (visible[gamuts[gi].id]) drawTriangle(gamuts[gi]);
     }
 
-    // Spectral color swatches along the locus boundary
+    // Spectral color band along the locus boundary
     if (visible.mono) {
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
       for (var si = 0; si < spectralLocus.length - 1; si++) {
-        var sp = spectralLocus[si];
-        var sNext = spectralLocus[si + 1];
-        var ss = toScreen(sp.x, sp.y);
-        // Offset outward from center
-        var sdx = sp.x - 0.33, sdy = sp.y - 0.33;
-        var slen = Math.sqrt(sdx*sdx + sdy*sdy);
-        if (slen < 0.01) continue;
-        var ox = (sdx/slen) * 8, oy = -(sdy/slen) * 8;
-        ctx.fillStyle = xyToRGB(sp.x, sp.y);
+        var s1 = toScreen(spectralLocus[si].x, spectralLocus[si].y);
+        var s2 = toScreen(spectralLocus[si+1].x, spectralLocus[si+1].y);
+        ctx.strokeStyle = xyToRGB(spectralLocus[si].x, spectralLocus[si].y);
         ctx.beginPath();
-        ctx.arc(ss.x + ox, ss.y + oy, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(s1.x, s1.y);
+        ctx.lineTo(s2.x, s2.y);
+        ctx.stroke();
       }
+      ctx.lineCap = 'butt';
     }
 
     // White point D65
