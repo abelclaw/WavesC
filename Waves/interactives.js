@@ -4017,7 +4017,9 @@ function initNMassChain() {
     const N = parseInt(nSlider?.value || 5);
     let modeNum = parseInt(modeSlider?.value || 1);
     if (modeNum > N) modeNum = N;
-    if (modeSlider) modeSlider.max = N;
+    if (modeSlider) { modeSlider.max = N; if (parseInt(modeSlider.value) > N) modeSlider.value = N; }
+    document.getElementById('nchain-n-val')?.replaceChildren(document.createTextNode(String(N)));
+    document.getElementById('nchain-mode-val')?.replaceChildren(document.createTextNode(String(modeNum)));
 
     // Eigenfrequency for mode p: omega_p = 2*sin(p*pi/(2*(N+1)))
     const omegaP = 2 * Math.sin(modeNum * Math.PI / (2 * (N + 1)));
