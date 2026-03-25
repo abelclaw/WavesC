@@ -17750,6 +17750,62 @@ function initDopplerAngle() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Observer', observerX, observerY - 10);
 
+    // Direction unit vector from source to observer
+    const ux = dx / dist, uy = dy / dist;
+    // Perpendicular unit vector (90° CCW from line-of-sight)
+    const px = -uy, py = ux;
+
+    // Velocity components
+    const vParallel = cosTheta; // v_s cos θ (along line of sight, in units of v_s)
+    const sinTheta = Math.sqrt(1 - cosTheta * cosTheta);
+    const vPerp = sinTheta; // v_s sin θ (perpendicular)
+
+    // Arrow length scale
+    const arrowLen = 45;
+
+    // Draw the full velocity arrow (horizontal, +x direction) — faint
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(sourceX + arrowLen, sourceY); ctx.stroke();
+
+    // Draw parallel component (along line of sight toward observer)
+    const parLen = arrowLen * vParallel;
+    const parEndX = sourceX + ux * parLen;
+    const parEndY = sourceY + uy * parLen;
+    if (Math.abs(parLen) > 2) {
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(parEndX, parEndY); ctx.stroke();
+      // Arrowhead
+      var aDir = parLen > 0 ? 1 : -1;
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath();
+      ctx.moveTo(parEndX, parEndY);
+      ctx.lineTo(parEndX - aDir * ux * 6 - uy * 3, parEndY - aDir * uy * 6 + ux * 3);
+      ctx.lineTo(parEndX - aDir * ux * 6 + uy * 3, parEndY - aDir * uy * 6 - ux * 3);
+      ctx.closePath(); ctx.fill();
+      // Label
+      ctx.fillStyle = WCOLORS.teal; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('v cos\u03B8', parEndX + uy * 10, parEndY - ux * 10 + 3);
+    }
+
+    // Draw perpendicular component
+    // Sign: for source moving in +x, perp component is positive when observer is above-left
+    var perpSign = (sourceX < observerX) ? 1 : -1;
+    // Actually compute it properly: project v=(1,0) onto perp direction
+    var vDotPerp = px; // (1,0) · (px,py) = px
+    var perpLen = arrowLen * Math.abs(vDotPerp);
+    var perpDirSign = vDotPerp > 0 ? 1 : -1;
+    var perpEndX = sourceX + px * perpDirSign * perpLen;
+    var perpEndY = sourceY + py * perpDirSign * perpLen;
+    if (perpLen > 2) {
+      ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(perpEndX, perpEndY); ctx.stroke();
+      ctx.setLineDash([]);
+      // Label
+      ctx.fillStyle = WCOLORS.red; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('v sin\u03B8', perpEndX - uy * 10, perpEndY + ux * 10 + 3);
+    }
+
     // Dashed line from source to observer
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(sourceX, sourceY); ctx.lineTo(observerX, observerY); ctx.stroke();
@@ -17771,29 +17827,31 @@ function initDopplerAngle() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('\u03B8', sourceX + labelR * Math.cos(labelAngle), sourceY + labelR * Math.sin(labelAngle) + 3);
 
-    // Source dot
+    // Source dot (drawn on top)
     ctx.fillStyle = WCOLORS.red;
     ctx.beginPath(); ctx.arc(sourceX, sourceY, 7, 0, Math.PI * 2); ctx.fill();
 
-    // Velocity arrow
+    // Velocity arrow (full v, in +x direction)
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sourceX + 10, sourceY); ctx.lineTo(sourceX + 32, sourceY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sourceX + 10, sourceY); ctx.lineTo(sourceX + arrowLen, sourceY); ctx.stroke();
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath();
-    ctx.moveTo(sourceX + 32, sourceY);
-    ctx.lineTo(sourceX + 27, sourceY - 4);
-    ctx.lineTo(sourceX + 27, sourceY + 4);
+    ctx.moveTo(sourceX + arrowLen, sourceY);
+    ctx.lineTo(sourceX + arrowLen - 5, sourceY - 4);
+    ctx.lineTo(sourceX + arrowLen - 5, sourceY + 4);
     ctx.closePath(); ctx.fill();
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('v', sourceX + 34, sourceY - 2);
+    ctx.fillText('v', sourceX + arrowLen + 3, sourceY - 2);
 
-    // Current frequency readout
+    // Current readout
     const thetaDeg = Math.acos(Math.max(-1, Math.min(1, cosTheta))) * 180 / Math.PI;
-    const fColor = fReceived > 1.05 ? WCOLORS.blue : (fReceived < 0.95 ? WCOLORS.red : WCOLORS.text);
-    ctx.fillStyle = fColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('\u03BD/\u03BD\u2080 = ' + fReceived.toFixed(3) + '   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
+    const vRadial = sourceSpeed * cosTheta;
+    const radialColor = vRadial > 0.02 ? WCOLORS.teal : (vRadial < -0.02 ? WCOLORS.red : WCOLORS.text);
+    ctx.fillStyle = radialColor; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    var radialLabel = vRadial >= 0 ? 'toward' : 'away';
+    ctx.fillText('v\u22C5cos\u03B8 = ' + (sourceSpeed * cosTheta).toFixed(3) + ' (' + radialLabel + ')   \u03B8 = ' + thetaDeg.toFixed(0) + '\u00B0', W * 0.05, 20);
 
-    // --- PLOT: f/f₀ vs θ (bottom half) ---
+    // --- PLOT: v cos θ vs θ (bottom half) ---
     const plotL = W * 0.12, plotR = W - 15, plotT = H * 0.6, plotB = H - 14;
     const pW = plotR - plotL, pH = plotB - plotT;
 
@@ -17802,21 +17860,21 @@ function initDopplerAngle() {
     ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
 
-    // Compute f range for current speed to scale the plot
-    var fMax = 1 / (1 - sourceSpeed); // θ=0 (approaching head-on)
-    var fMin = 1 / (1 + sourceSpeed); // θ=180° (receding)
-    // Add a bit of padding
-    var fPlotMax = fMax + 0.1 * (fMax - fMin);
-    var fPlotMin = fMin - 0.1 * (fMax - fMin);
+    // v cos θ ranges from +v_s (θ=0) to -v_s (θ=180)
+    // Plot range: ±v_s with padding
+    var vMax = sourceSpeed * 1.15;
 
-    // f=f₀ reference line
-    var f0Frac = (1 - fPlotMin) / (fPlotMax - fPlotMin);
-    var f0Y = plotB - f0Frac * pH;
+    // Zero reference line (v cos θ = 0, i.e. θ = 90°)
+    var zeroY = plotT + pH / 2;
     ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5; ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(plotL, f0Y); ctx.lineTo(plotR, f0Y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, zeroY); ctx.lineTo(plotR, zeroY); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('\u03BD\u2080', plotL - 4, f0Y + 3);
+    ctx.fillText('0', plotL - 4, zeroY + 3);
+
+    // +v_s and -v_s labels
+    ctx.fillText('+v\u209B', plotL - 4, plotT + 8);
+    ctx.fillText('\u2212v\u209B', plotL - 4, plotB - 2);
 
     // Axis labels
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
@@ -17833,41 +17891,39 @@ function initDopplerAngle() {
     ctx.save(); ctx.translate(plotL - 10, (plotT + plotB) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03BD / \u03BD\u2080', 0, 0);
+    ctx.fillText('v\u209B cos\u03B8', 0, 0);
     ctx.restore();
 
-    // Draw the f vs θ curve
+    // Draw the v cos θ curve (a simple cosine)
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     var nPts = 200;
     for (var i = 0; i <= nPts; i++) {
       var angleDeg = (i / nPts) * 180;
       var cosA = Math.cos(angleDeg * Math.PI / 180);
-      var fVal = 1 / (1 - sourceSpeed * cosA);
-      var px = plotL + (angleDeg / 180) * pW;
-      var py = plotB - ((fVal - fPlotMin) / (fPlotMax - fPlotMin)) * pH;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      var vVal = sourceSpeed * cosA;
+      var curX = plotL + (angleDeg / 180) * pW;
+      var curY = zeroY - (vVal / vMax) * (pH / 2);
+      if (i === 0) ctx.moveTo(curX, curY); else ctx.lineTo(curX, curY);
     }
     ctx.stroke();
 
-    // Blue/red shading labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('approaching', plotL + 4, plotT + 10);
+    // Approaching/receding labels
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('toward observer', plotL + 4, plotT + 10);
     ctx.fillStyle = WCOLORS.red; ctx.textAlign = 'right';
-    ctx.fillText('receding', plotR - 4, plotB - 6);
+    ctx.fillText('away from observer', plotR - 4, plotB - 4);
 
     // Moving dot on the curve showing current angle
-    var currentThetaDeg = thetaDeg;
-    var dotCosA = Math.cos(currentThetaDeg * Math.PI / 180);
-    var dotF = 1 / (1 - sourceSpeed * dotCosA);
-    var dotX = plotL + (currentThetaDeg / 180) * pW;
-    var dotY = plotB - ((dotF - fPlotMin) / (fPlotMax - fPlotMin)) * pH;
+    var dotX = plotL + (thetaDeg / 180) * pW;
+    var dotVVal = sourceSpeed * cosTheta;
+    var dotY = zeroY - (dotVVal / vMax) * (pH / 2);
     // Vertical guide line
     ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5; ctx.setLineDash([2, 2]);
     ctx.beginPath(); ctx.moveTo(dotX, plotT); ctx.lineTo(dotX, plotB); ctx.stroke();
     ctx.setLineDash([]);
     // Dot
-    ctx.fillStyle = fColor;
+    ctx.fillStyle = radialColor;
     ctx.beginPath(); ctx.arc(dotX, dotY, 5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
 
