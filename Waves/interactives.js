@@ -4256,8 +4256,10 @@ function initFourierDecomposition() {
     if (waveType === 'square') {
       return xn < Math.PI ? 1 : -1;
     } else if (waveType === 'triangle') {
-      if (xn < Math.PI) return -1 + 2 * xn / Math.PI;
-      return 3 - 2 * xn / Math.PI;
+      const hp = Math.PI / 2;
+      if (xn < hp) return 2 * xn / Math.PI;
+      if (xn < 3 * hp) return 2 - 2 * xn / Math.PI;
+      return 2 * xn / Math.PI - 4;
     } else { // sawtooth
       return (((xn + Math.PI) % (2 * Math.PI)) / Math.PI) - 1; // rising sawtooth, discontinuity at π
     }
