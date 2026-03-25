@@ -14120,7 +14120,49 @@ function initCieColorSpaceGamut() {
     return inside;
   }
 
-  // Pre-render horseshoe colors to offscreen canvas (same approach as Planckian Locus)
+  // Gamut definitions: R, G, B primaries in xy chromaticity
+  var gamuts = [
+    { id: 'srgb',  label: 'sRGB (Monitors)',    color: '#2563eb',
+      R:{x:0.640,y:0.330}, G:{x:0.300,y:0.600}, B:{x:0.150,y:0.060} },
+    { id: 'p3',    label: 'DCI-P3 (Cinema)',     color: '#d97706',
+      R:{x:0.680,y:0.320}, G:{x:0.265,y:0.690}, B:{x:0.150,y:0.060} },
+    { id: 'r2020', label: 'Rec. 2020 (UHDTV)',   color: '#dc2626',
+      R:{x:0.708,y:0.292}, G:{x:0.170,y:0.797}, B:{x:0.131,y:0.046} },
+    { id: 'ntsc',  label: 'NTSC (1953 TV)',      color: '#16a34a',
+      R:{x:0.670,y:0.330}, G:{x:0.210,y:0.710}, B:{x:0.140,y:0.080} },
+    { id: 'adobe', label: 'Adobe RGB (Photo)',   color: '#7c3aed',
+      R:{x:0.640,y:0.330}, G:{x:0.210,y:0.710}, B:{x:0.150,y:0.060} }
+  ];
+
+  // Track which gamuts are visible
+  var visible = { srgb: true, p3: false, r2020: false, ntsc: false, adobe: false };
+
+  // Create toggle buttons
+  var parent = canvas.parentElement;
+  if (parent) {
+    var controls = document.createElement('div');
+    controls.className = 'scene-controls';
+    var html = '';
+    for (var gi = 0; gi < gamuts.length; gi++) {
+      var g = gamuts[gi];
+      html += '<button id="cie-' + g.id + '" class="scene-btn" style="font-size:11px;padding:2px 8px;cursor:pointer;margin:2px;border:2px solid ' + g.color + ';color:' + (visible[g.id] ? '#fff' : g.color) + ';background:' + (visible[g.id] ? g.color : 'transparent') + ';">' + g.label + '</button>';
+    }
+    controls.innerHTML = html;
+    parent.appendChild(controls);
+  }
+
+  // Attach button listeners
+  gamuts.forEach(function(g) {
+    var btn = document.getElementById('cie-' + g.id);
+    if (btn) btn.addEventListener('click', function() {
+      visible[g.id] = !visible[g.id];
+      btn.style.background = visible[g.id] ? g.color : 'transparent';
+      btn.style.color = visible[g.id] ? '#fff' : g.color;
+      draw();
+    });
+  });
+
+  // Pre-render horseshoe colors to offscreen canvas
   var offscreen = document.createElement('canvas');
   offscreen.width = W; offscreen.height = H;
   var offCtx = offscreen.getContext('2d');
@@ -14133,6 +14175,26 @@ function initCieColorSpaceGamut() {
         offCtx.fillRect(px, py, 2, 2);
       }
     }
+  }
+
+  function drawTriangle(g) {
+    var r = toScreen(g.R.x, g.R.y);
+    var gp = toScreen(g.G.x, g.G.y);
+    var b = toScreen(g.B.x, g.B.y);
+    // Semi-transparent fill
+    ctx.fillStyle = g.color + '18';
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y); ctx.lineTo(gp.x, gp.y); ctx.lineTo(b.x, b.y);
+    ctx.closePath();
+    ctx.fill();
+    // Stroke
+    ctx.strokeStyle = g.color; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Vertex dots
+    [r, gp, b].forEach(function(pt) {
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = g.color; ctx.fill();
+    });
   }
 
   function draw() {
@@ -14190,31 +14252,10 @@ function initCieColorSpaceGamut() {
       }
     }
 
-    // Film gamut triangle (DCI-P3 — close to optimal monochromatic primaries)
-    var filmR = toScreen(0.680, 0.320);
-    var filmG = toScreen(0.265, 0.690);
-    var filmB = toScreen(0.150, 0.060);
-    ctx.setLineDash([6, 3]);
-    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(filmR.x, filmR.y); ctx.lineTo(filmG.x, filmG.y);
-    ctx.lineTo(filmB.x, filmB.y); ctx.closePath();
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Film', filmG.x + 8, filmG.y + 14);
-
-    // sRGB gamut triangle (computer monitors)
-    var srgbR = toScreen(0.64, 0.33);
-    var srgbG = toScreen(0.30, 0.60);
-    var srgbB = toScreen(0.15, 0.06);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(srgbR.x, srgbR.y); ctx.lineTo(srgbG.x, srgbG.y);
-    ctx.lineTo(srgbB.x, srgbB.y); ctx.closePath();
-    ctx.stroke();
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Monitor (sRGB)', srgbR.x + 5, srgbR.y + 16);
+    // Draw visible gamut triangles
+    for (var gi = 0; gi < gamuts.length; gi++) {
+      if (visible[gamuts[gi].id]) drawTriangle(gamuts[gi]);
+    }
 
     // White point D65
     var wp = toScreen(0.3127, 0.3290);
