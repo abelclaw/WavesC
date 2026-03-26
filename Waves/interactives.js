@@ -17814,7 +17814,7 @@ function initPhasedArrayRadiation() {
 // =========================================================================
 // 11. Interferometer Resolution — "Resolve Two Stars"
 // Three sliders: star separation, baseline, number of antennas.
-// N dishes drawn on ground. Beam uses array factor sin²(Nβ)/sin²(β).
+// VLA-style dishes below observed image. Beam uses sin²(Nβ)/sin²(β).
 // =========================================================================
 function initInterferometerResolution() {
   const canvas = document.getElementById('scene-interferometer-resolution');
@@ -17825,16 +17825,17 @@ function initInterferometerResolution() {
 
   let baseline = 15, starSep = 0.06, nAnt = 5, dragging = null;
 
-  // Layout
-  const imgL = 12, imgW = Math.round(W * 0.34), imgT = 18, imgH = 138;
-  const pltL = imgL + imgW + 25, pltW = W - pltL - 10, pltT = imgT, pltH = imgH;
-  const gndT = imgT + imgH + 6, groundY = gndT + 24;
-  const slX = 12, slW = Math.round(W * 0.38);
-  const sl1Y = gndT + 52, sl2Y = sl1Y + 20, sl3Y = sl2Y + 20;
+  // Layout: left column = image + dishes, right column = profile + sliders
+  const colL = 12, colW = Math.round(W * 0.41);
+  const imgT = 18, imgH = 126;
+  const gndTop = imgT + imgH + 6, groundY = gndTop + 32;
+  const pltL = colL + colW + 22, pltW = W - pltL - 10, pltT = imgT, pltH = imgH;
+  const slX = pltL, slW = Math.min(pltW - 10, 210);
+  const sl1Y = pltT + pltH + 18, sl2Y = sl1Y + 22, sl3Y = sl2Y + 22;
 
   // Offscreen buffer
   const imgBuf = document.createElement('canvas');
-  imgBuf.width = imgW; imgBuf.height = imgH;
+  imgBuf.width = colW; imgBuf.height = imgH;
   const imgBufCtx = imgBuf.getContext('2d');
 
   // --- Slider hit test ---
@@ -17910,18 +17911,18 @@ function initInterferometerResolution() {
     ctx.fillText(resolved ? '\u2713 Resolved' : '\u2717 Unresolved', W - 10, 13);
 
     drawObservedImage();
-    drawProfile();
     drawGround();
+    drawProfile();
     drawSliders();
   }
 
   // --- Pixel-rendered observed image using array beam ---
   function drawObservedImage() {
     var fov = Math.max(starSep * 3.5, 0.5 / baseline * 5, 0.08);
-    var scale = imgW / fov;
-    var img = imgBufCtx.createImageData(imgW, imgH);
+    var scale = colW / fov;
+    var img = imgBufCtx.createImageData(colW, imgH);
     var d = img.data;
-    var icx = imgW / 2, icy = imgH / 2;
+    var icx = colW / 2, icy = imgH / 2;
     var sepPx = starSep * scale;
     var s1x = icx - sepPx / 2, s2x = icx + sepPx / 2;
     var envSig = Math.max(3 / baseline, 0.08);
@@ -17929,13 +17930,13 @@ function initInterferometerResolution() {
     var cutSq = cutPx * cutPx;
 
     for (var py = 0; py < imgH; py++) {
-      for (var px = 0; px < imgW; px++) {
+      for (var px = 0; px < colW; px++) {
         var dx1 = px - s1x, dy1 = py - icy;
         var dx2 = px - s2x, dy2 = py - icy;
         var r1sq = dx1 * dx1 + dy1 * dy1;
         var r2sq = dx2 * dx2 + dy2 * dy2;
         if (r1sq > cutSq && r2sq > cutSq) {
-          var idx = (py * imgW + px) * 4;
+          var idx = (py * colW + px) * 4;
           d[idx] = 8; d[idx + 1] = 12; d[idx + 2] = 18; d[idx + 3] = 255;
           continue;
         }
@@ -17948,7 +17949,7 @@ function initInterferometerResolution() {
         var rc = (15 + 202 * f) * (1 - core) + 255 * core;
         var gc = (118 + 1 * f) * (1 - core) + 255 * core;
         var bc = (110 - 104 * f) * (1 - core) + 255 * core;
-        var idx = (py * imgW + px) * 4;
+        var idx = (py * colW + px) * 4;
         d[idx]     = Math.min(255, Math.round(8 + rc * brightness));
         d[idx + 1] = Math.min(255, Math.round(12 + gc * brightness));
         d[idx + 2] = Math.min(255, Math.round(18 + bc * brightness));
@@ -17972,26 +17973,117 @@ function initInterferometerResolution() {
     // Background stars
     imgBufCtx.fillStyle = 'rgba(180,185,200,0.2)';
     for (var i = 0; i < 20; i++) {
-      var sx = (i * 137 + 53) % imgW;
+      var sx = (i * 137 + 53) % colW;
       var sy = (i * 171 + 29) % imgH;
       if (Math.abs(sx - icx) < 30 && Math.abs(sy - icy) < 30) continue;
       imgBufCtx.beginPath(); imgBufCtx.arc(sx, sy, 0.4 + (i % 3) * 0.3, 0, Math.PI * 2); imgBufCtx.fill();
     }
 
-    ctx.drawImage(imgBuf, imgL, imgT);
+    ctx.drawImage(imgBuf, colL, imgT);
     ctx.strokeStyle = '#2a3038'; ctx.lineWidth = 1;
-    ctx.strokeRect(imgL, imgT, imgW, imgH);
+    ctx.strokeRect(colL, imgT, colW, imgH);
 
     var beamR = 0.5 / baseline * 1.22 * scale;
-    if (beamR > 3 && beamR < Math.min(imgW, imgH) * 0.45) {
+    if (beamR > 3 && beamR < Math.min(colW, imgH) * 0.45) {
       ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.arc(imgL + imgW / 2, imgT + imgH / 2, beamR, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(colL + colW / 2, imgT + imgH / 2, beamR, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
     }
   }
 
-  // --- 1D intensity profile showing beam sidelobes ---
+  // --- VLA-style dish drawing ---
+  function drawVLADish(x, gy, s) {
+    // Concrete pedestal
+    ctx.fillStyle = '#8a8f94';
+    ctx.beginPath();
+    ctx.moveTo(x - 2.5 * s, gy);
+    ctx.lineTo(x + 2.5 * s, gy);
+    ctx.lineTo(x + 1.5 * s, gy - 6 * s);
+    ctx.lineTo(x - 1.5 * s, gy - 6 * s);
+    ctx.closePath();
+    ctx.fill();
+
+    // Elevation bearing / yoke
+    ctx.fillStyle = '#6b7075';
+    ctx.fillRect(x - 2.5 * s, gy - 8 * s, 5 * s, 2.5 * s);
+
+    // Parabolic dish (concave up, facing sky)
+    ctx.beginPath();
+    ctx.moveTo(x - 8 * s, gy - 14 * s);
+    ctx.quadraticCurveTo(x, gy - 8.5 * s, x + 8 * s, gy - 14 * s);
+    // Rim thickness
+    ctx.lineTo(x + 8 * s, gy - 15.5 * s);
+    ctx.quadraticCurveTo(x, gy - 10 * s, x - 8 * s, gy - 15.5 * s);
+    ctx.closePath();
+    ctx.fillStyle = '#d4d8dc';
+    ctx.fill();
+    ctx.strokeStyle = '#9ca3ab';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Dish interior shading (subtle concave look)
+    ctx.beginPath();
+    ctx.moveTo(x - 6 * s, gy - 14 * s);
+    ctx.quadraticCurveTo(x, gy - 10.5 * s, x + 6 * s, gy - 14 * s);
+    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+    ctx.lineWidth = 2 * s;
+    ctx.stroke();
+
+    // Subreflector support struts (four legs)
+    ctx.strokeStyle = '#6b7075';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(x - 6 * s, gy - 14.5 * s); ctx.lineTo(x, gy - 21 * s);
+    ctx.moveTo(x + 6 * s, gy - 14.5 * s); ctx.lineTo(x, gy - 21 * s);
+    ctx.moveTo(x - 2 * s, gy - 14 * s);   ctx.lineTo(x, gy - 21 * s);
+    ctx.moveTo(x + 2 * s, gy - 14 * s);   ctx.lineTo(x, gy - 21 * s);
+    ctx.stroke();
+
+    // Subreflector
+    ctx.fillStyle = '#4a5055';
+    ctx.beginPath(); ctx.arc(x, gy - 21 * s, 1.2 * s, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // --- Ground with N VLA dishes (below observed image only) ---
+  function drawGround() {
+    // Ground line spanning only the left column
+    var gL = colL, gR = colL + colW;
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(gL, groundY); ctx.lineTo(gR, groundY); ctx.stroke();
+
+    // Ground hatch
+    ctx.strokeStyle = 'rgba(31,42,46,0.08)';
+    for (var x = gL + 4; x < gR; x += 8) {
+      ctx.beginPath(); ctx.moveTo(x, groundY + 1); ctx.lineTo(x - 2, groundY + 4); ctx.stroke();
+    }
+
+    // Dish array
+    var span = Math.max(20, baseline / 200 * (colW - 24));
+    var midX = colL + colW / 2;
+    var startX = midX - span / 2;
+    var s = nAnt > 14 ? 0.6 : (nAnt > 8 ? 0.8 : 1.1);
+
+    for (var i = 0; i < nAnt; i++) {
+      var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : midX;
+      drawVLADish(dx, groundY, s);
+    }
+
+    // Baseline arrow
+    if (span > 24) {
+      var arrowY = groundY + 8;
+      var lx = startX, rx = startX + span;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(rx - 4, arrowY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(lx + 8, arrowY - 2.5); ctx.lineTo(lx + 8, arrowY + 2.5); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(rx - 4, arrowY); ctx.lineTo(rx - 8, arrowY - 2.5); ctx.lineTo(rx - 8, arrowY + 2.5); ctx.fill();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      fillTextSub(ctx, 'd = ' + baseline + '\u03BB', midX, arrowY + 12);
+    }
+  }
+
+  // --- 1D intensity profile (right column) ---
   function drawProfile() {
     var pL = pltL, pT = pltT, pW = pltW, pH = pltH;
     var resAngle = 0.5 / baseline;
@@ -18028,43 +18120,7 @@ function initInterferometerResolution() {
     ctx.stroke();
   }
 
-  // --- Ground with N telescope dishes ---
-  function drawGround() {
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(8, groundY); ctx.lineTo(W - 8, groundY); ctx.stroke();
-    ctx.strokeStyle = 'rgba(31,42,46,0.10)';
-    for (var x = 14; x < W - 8; x += 10) {
-      ctx.beginPath(); ctx.moveTo(x, groundY + 1); ctx.lineTo(x - 2, groundY + 5); ctx.stroke();
-    }
-
-    var maxSpan = W * 0.75;
-    var span = baseline / 200 * maxSpan;
-    var startX = W / 2 - span / 2;
-    var dishR = nAnt > 12 ? 4 : (nAnt > 7 ? 6 : 8);
-    for (var i = 0; i < nAnt; i++) {
-      var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : W / 2;
-      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.moveTo(dx, groundY); ctx.lineTo(dx, groundY - dishR * 1.5); ctx.stroke();
-      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(dx, groundY - dishR * 1.5, dishR, Math.PI + 0.5, 2 * Math.PI - 0.5); ctx.stroke();
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.beginPath(); ctx.arc(dx, groundY - dishR * 1.5 - dishR * 0.8, 1, 0, Math.PI * 2); ctx.fill();
-    }
-
-    if (span > 20) {
-      var arrowY = groundY + 10;
-      var lx = startX, rx = startX + span;
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(rx - 4, arrowY); ctx.stroke();
-      ctx.fillStyle = WCOLORS.amber;
-      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(lx + 8, arrowY - 2.5); ctx.lineTo(lx + 8, arrowY + 2.5); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(rx - 4, arrowY); ctx.lineTo(rx - 8, arrowY - 2.5); ctx.lineTo(rx - 8, arrowY + 2.5); ctx.fill();
-      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      fillTextSub(ctx, 'd = ' + baseline + '\u03BB', W / 2, arrowY + 11);
-    }
-  }
-
-  // --- Three sliders ---
+  // --- Three sliders (right column, below profile) ---
   function drawSliders() {
     var resAngle = 0.5 / baseline;
 
