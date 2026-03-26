@@ -1395,7 +1395,7 @@ const chapters = [
   },
   {
     number: 16,
-    title: "Prisms",
+    title: "Scattering",
     slug: "prisms",
     pdf: "./lectures/16-Prisms.pdf",
     conceptTitle: "Accelerating charges radiate; prisms separate colors",
