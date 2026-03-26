@@ -4085,6 +4085,18 @@ function sceneMarkup(type) {
         </div>
       `;
 
+    case "microscopic-index":
+      return `
+        <div class="scene-label">Microscopic Origin of the Index of Refraction</div>
+        <p class="scene-caption">The incoming wave drives charges that re-radiate. Their superposition produces an effective slower wave.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-microscopic-index" width="600" height="340"></canvas>
+          <div class="scene-controls">
+            <label><span>Index n: </span><input type="range" id="micro-index-n" min="1.0" max="2.0" step="0.05" value="1.5"><span class="scene-val" id="micro-index-n-val">1.50</span></label>
+          </div>
+        </div>
+      `;
+
     // =====================================================================
     // CHAPTER 16: PRISMS & SCATTERING
     // =====================================================================

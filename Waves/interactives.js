@@ -312,6 +312,7 @@ function initSceneInteractives() {
   initThinFilmInterference();
   initBrewsterAngle();
   // Chapter 16 - Prisms & Scattering
+  initMicroscopicIndex();
   initRayleighScattering();
   initPrismDispersion();
   // Chapter 8 - Fourier Transforms
@@ -10173,6 +10174,184 @@ function initBrewsterAngle() {
   }
 
   nSlider?.addEventListener('input', draw);
+  draw();
+}
+
+// =========================================================================
+// Microscopic Origin of the Index of Refraction
+// Shows incoming wave + re-radiated wave from charges = slowed superposition
+// =========================================================================
+function initMicroscopicIndex() {
+  const canvas = document.getElementById('scene-microscopic-index');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const nSlider = document.getElementById('micro-index-n');
+  const nVal = document.getElementById('micro-index-n-val');
+
+  let t = 0;
+  let animId = null;
+
+  // Material slab region
+  const slabL = W * 0.3;
+  const slabR = W * 0.75;
+
+  // Charge positions (fixed dots inside slab)
+  const charges = [];
+  const nRows = 4, nCols = 6;
+  for (let r = 0; r < nRows; r++) {
+    for (let c = 0; c < nCols; c++) {
+      charges.push({
+        x: slabL + (c + 0.5) * (slabR - slabL) / nCols,
+        y: 55 + (r + 0.5) * 50
+      });
+    }
+  }
+
+  function draw() {
+    const n = nSlider ? parseFloat(nSlider.value) : 1.5;
+    if (nVal) nVal.textContent = n.toFixed(2);
+
+    wClear(ctx, W, H);
+
+    const k = 2 * Math.PI / 80;   // wavenumber in vacuum (pixels)
+    const omega = 0.06;            // angular frequency
+    const amp = 22;                // wave amplitude in pixels
+
+    // --- Row layout ---
+    const row1Y = 55;    // incoming wave baseline
+    const row2Y = 140;   // re-radiated wave baseline
+    const row3Y = 230;   // superposition baseline
+    const labelX = 8;
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('How the index of refraction arises from interference', W / 2, 16);
+
+    // --- Material slab background (drawn on all rows) ---
+    ctx.fillStyle = 'rgba(100,160,220,0.08)';
+    ctx.fillRect(slabL, 25, slabR - slabL, row3Y + 40 - 25);
+    ctx.strokeStyle = 'rgba(100,160,220,0.3)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(slabL, 25); ctx.lineTo(slabL, row3Y + 40); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(slabR, 25); ctx.lineTo(slabR, row3Y + 40); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Slab labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('vacuum', slabL / 2, 35);
+    ctx.fillText('medium', (slabL + slabR) / 2, 35);
+    ctx.fillText('vacuum', (slabR + W) / 2, 35);
+
+    // Helper to draw a wave
+    function drawWave(yBase, color, waveFn, label) {
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      var started = false;
+      for (var px = 5; px < W - 5; px++) {
+        var val = waveFn(px);
+        if (val === null) { started = false; continue; }
+        var y = yBase - val * amp;
+        if (!started) { ctx.moveTo(px, y); started = true; }
+        else ctx.lineTo(px, y);
+      }
+      ctx.stroke();
+
+      // Baseline
+      ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(5, yBase); ctx.lineTo(W - 5, yBase); ctx.stroke();
+
+      // Label
+      ctx.fillStyle = color; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillText(label, labelX, yBase - amp - 8);
+    }
+
+    // 1) Incoming wave: travels at c everywhere (same wavelength everywhere)
+    drawWave(row1Y, WCOLORS.blue, function(px) {
+      return Math.sin(k * px - omega * t);
+    }, 'Incoming wave (speed c)');
+
+    // 2) Re-radiated wave: only exists inside/after the slab
+    //    Phase-shifted and with small amplitude proportional to (n-1)
+    var reRadAmp = (n - 1);  // relative amplitude
+    drawWave(row2Y, '#E87F3A', function(px) {
+      if (px < slabL) return 0;
+      // The re-radiated wave has a phase shift of ~pi/2 relative to incoming
+      // and builds up across the slab
+      var buildUp = 1;
+      if (px < slabR) {
+        buildUp = (px - slabL) / (slabR - slabL);
+      }
+      return reRadAmp * buildUp * Math.sin(k * px - omega * t - Math.PI / 2);
+    }, 'Re-radiated by charges');
+
+    // 3) Superposition: incoming + re-radiated = effective wave with phase delay
+    drawWave(row3Y, '#4CAF50', function(px) {
+      if (px < slabL) {
+        // Before slab: just incoming
+        return Math.sin(k * px - omega * t);
+      } else if (px <= slabR) {
+        // Inside slab: wave with effective wavenumber n*k
+        var phaseIn = k * slabL + n * k * (px - slabL) - omega * t;
+        return Math.sin(phaseIn);
+      } else {
+        // After slab: wave continues at c but with accumulated phase delay
+        var phaseDelay = (n - 1) * k * (slabR - slabL);
+        return Math.sin(k * px - omega * t - phaseDelay);
+      }
+    }, 'Superposition (effective speed c/n)');
+
+    // Draw charge dots on the re-radiated row, oscillating with the wave
+    for (var i = 0; i < charges.length; i++) {
+      var ch = charges[i];
+      // Charges oscillate with incoming wave phase
+      var displacement = 4 * Math.sin(k * ch.x - omega * t);
+      var cy = row2Y + (ch.y - 125) * 0.35;
+      ctx.beginPath();
+      ctx.arc(ch.x, cy + displacement, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = '#E87F3A';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(232,127,58,0.4)'; ctx.lineWidth = 0.5;
+      ctx.stroke();
+    }
+
+    // Phase delay annotation
+    var phaseDelay = (n - 1) * k * (slabR - slabL);
+    var delayWavelengths = phaseDelay / (2 * Math.PI);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(
+      'Phase delay through slab: ' + delayWavelengths.toFixed(1) + ' wavelengths   (n = ' + n.toFixed(2) + ')',
+      W / 2, row3Y + amp + 22
+    );
+
+    // Key insight at bottom
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(
+      'Between atoms, light still moves at c. The superposition just shifts the crests back.',
+      W / 2, H - 8
+    );
+  }
+
+  if (nSlider) nSlider.addEventListener('input', draw);
+
+  function animate() {
+    t++;
+    draw();
+    animId = requestAnimationFrame(animate);
+  }
+
+  // Observe visibility to start/stop animation
+  var obs = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      if (!animId) animate();
+    } else {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+    }
+  }, { threshold: 0.1 });
+  obs.observe(canvas);
+
   draw();
 }
 
