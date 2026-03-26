@@ -18489,6 +18489,39 @@ function initSingleSlitDiffraction() {
   let draggingSlider = false;
   const sliderX = 20, sliderW = W * 0.28, sliderY = H - 10;
 
+  // Dot accumulation state
+  var detectedDots = [];
+  var maxDots = 15000;
+
+  // CDF for inverse-transform sampling from sinc² distribution
+  var nBins = 500, cdf = [];
+
+  function sinc2(x) {
+    if (Math.abs(x) < 1e-8) return 1;
+    return Math.pow(Math.sin(x) / x, 2);
+  }
+
+  function rebuildCDF() {
+    cdf = [0];
+    for (var i = 1; i <= nBins; i++) {
+      var sinTheta = -1 + 2 * i / nBins;
+      var beta = Math.PI * aOverLambda * sinTheta;
+      cdf.push(cdf[i - 1] + sinc2(beta));
+    }
+    var tot = cdf[nBins];
+    if (tot === 0) { for (var i = 0; i <= nBins; i++) cdf[i] = i / nBins; return; }
+    for (var i = 0; i <= nBins; i++) cdf[i] /= tot;
+  }
+
+  function sampleY() {
+    var u = Math.random(), lo = 0, hi = nBins;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (cdf[m] < u) lo = m + 1; else hi = m; }
+    return lo / nBins;
+  }
+
+  rebuildCDF();
+
+  // Event handling
   canvas.addEventListener('mousedown', function(e) {
     const rect = canvas.getBoundingClientRect();
     if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
@@ -18501,28 +18534,40 @@ function initSingleSlitDiffraction() {
   canvas.addEventListener('touchend', function() { draggingSlider = false; });
 
   function handleDrag(mx) {
-    aOverLambda = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 9.5;
+    var newVal = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 9.5;
+    if (Math.abs(newVal - aOverLambda) > 0.05) {
+      aOverLambda = newVal;
+      detectedDots = [];
+      rebuildCDF();
+    }
   }
 
-  function sinc2(x) {
-    if (Math.abs(x) < 1e-8) return 1;
-    return Math.pow(Math.sin(x) / x, 2);
-  }
+  // Layout constants
+  const lambda = 18;
+  const slitX = W * 0.22;
+  const screenX = W * 0.52;
+  const screenW = W * 0.20;
+  const histX = W * 0.75;
+  const histW = W - histX - 10;
+  const areaTop = 24;
+  const areaBot = H - 28;
+  const areaH = areaBot - areaTop;
+  const slitCY = (areaTop + areaBot) / 2;
 
   function tick() {
     if (!canvas.isConnected) return;
     time += 0.05;
     wClear(ctx, W, H);
 
-    const lambda = 18;
-    const slitX = W * 0.22;
-    const plotL = W * 0.52;
-    const plotR = W - 15;
-    const areaTop = 24;
-    const areaBot = H - 28;
-    const areaH = areaBot - areaTop;
-    const slitCY = (areaTop + areaBot) / 2;
     const slitOpenH = Math.min(areaH * 0.7, aOverLambda * lambda);
+
+    // --- Emit new dots ---
+    var dotsPerFrame = 8;
+    for (var d = 0; d < dotsPerFrame; d++) {
+      if (detectedDots.length >= maxDots) break;
+      var yNorm = sampleY();
+      detectedDots.push({ y: yNorm, x: (Math.random() - 0.5) * 0.8 });
+    }
 
     // --- Incoming plane waves (moving right) ---
     ctx.lineWidth = 1.5;
@@ -18555,14 +18600,14 @@ function initSingleSlitDiffraction() {
     const nSources = Math.max(3, Math.round(aOverLambda * 3));
     ctx.save();
     ctx.beginPath();
-    ctx.rect(slitX - 2, 0, plotL - slitX, H);
+    ctx.rect(slitX - 2, 0, screenX - slitX - 5, H);
     ctx.clip();
     for (let i = 0; i < nSources; i++) {
       const sy = slitCY - slitOpenH / 2 + (i + 0.5) * (slitOpenH / nSources);
       for (let wf = 0; wf < 5; wf++) {
         const r = (time * 12 + wf * lambda) % (W * 0.8);
         if (r < 3) continue;
-        const alpha = Math.max(0, 0.15 * (1 - r / (W * 0.7)));
+        const alpha = Math.max(0, 0.12 * (1 - r / (W * 0.5)));
         if (alpha < 0.01) continue;
         ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
         ctx.lineWidth = 1;
@@ -18573,85 +18618,48 @@ function initSingleSlitDiffraction() {
     }
     ctx.restore();
 
-    // ===== Vertical I vs sin θ plot (far right) =====
-    const plotT = areaTop;
-    const plotB = areaBot;
-    const pH = plotB - plotT;
-    const pW = plotR - plotL;
+    // --- Screen area: accumulated dots ---
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.fillRect(screenX, areaTop, screenW, areaH);
 
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL, slitCY); ctx.lineTo(plotR, slitCY); ctx.stroke();
+    // Detector line (left edge of screen)
+    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(screenX, areaTop); ctx.lineTo(screenX, areaBot); ctx.stroke();
 
-    // sin θ tick marks and grid lines
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
-    for (let v = -1; v <= 1; v += 0.5) {
-      const py = slitCY + v * (pH / 2);
-      if (py < plotT || py > plotB) continue;
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(plotL, py); ctx.lineTo(plotR, py); ctx.stroke();
-      ctx.fillStyle = WCOLORS.textDim;
-      ctx.fillText(v.toFixed(1), plotL - 3, py + 3);
+    // Draw detected dots
+    for (var i = 0; i < detectedDots.length; i++) {
+      var dot = detectedDots[i];
+      var py = areaTop + dot.y * areaH;
+      var px = screenX + screenW * 0.5 + dot.x * screenW * 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Axis labels
-    ctx.save();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.translate(plotL - 18, slitCY);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('sin \u03B8', 0, 0);
-    ctx.restore();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('I/I\u2080', (plotL + plotR) / 2, plotB + 12);
+    // Screen label
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('SCREEN', screenX + screenW / 2, areaBot + 12);
 
-    // Compute sinc² intensity
-    const plotIntensities = [];
-    const nPlotSamples = Math.round(pH);
-    for (let py = 0; py <= nPlotSamples; py++) {
-      const sinTheta = -1 + 2 * py / nPlotSamples;
-      const beta = Math.PI * aOverLambda * sinTheta;
-      plotIntensities.push(sinc2(beta));
-    }
-
-    // Fill under curve
-    ctx.beginPath();
-    for (let py = 0; py <= nPlotSamples; py++) {
-      const px = plotL + plotIntensities[py] * pW * 0.9;
-      const yy = plotT + (1 - py / nPlotSamples) * pH;
-      if (py === 0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
-    }
-    ctx.lineTo(plotL, plotT);
-    ctx.lineTo(plotL, plotB);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(15,118,110,0.08)';
-    ctx.fill();
-
-    // Draw the curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let py = 0; py <= nPlotSamples; py++) {
-      const px = plotL + plotIntensities[py] * pW * 0.9;
-      const yy = plotT + (1 - py / nPlotSamples) * pH;
-      if (py === 0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
-    }
-    ctx.stroke();
-
-    // Mark first minima (±λ/a)
-    if (aOverLambda >= 1) {
-      const sinMin = 1 / aOverLambda;
-      if (sinMin <= 1) {
-        const yyPlus = slitCY - sinMin * (pH / 2);
-        const yyMinus = slitCY + sinMin * (pH / 2);
-        ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(plotL, yyPlus); ctx.lineTo(plotR, yyPlus); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(plotL, yyMinus); ctx.lineTo(plotR, yyMinus); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
-        ctx.fillText('\u03BB/a', plotR + 2, yyPlus + 3);
-        ctx.fillText('\u2212\u03BB/a', plotR + 2, yyMinus + 3);
+    // --- Histogram (right of screen) ---
+    if (detectedDots.length > 0) {
+      var nH = 80, bins = new Array(nH).fill(0);
+      for (var i = 0; i < detectedDots.length; i++) {
+        var bin = Math.min(nH - 1, Math.floor(detectedDots[i].y * nH));
+        bins[bin]++;
+      }
+      var maxBin = Math.max(1, Math.max.apply(null, bins));
+      for (var i = 0; i < nH; i++) {
+        var bh = (bins[i] / maxBin) * histW;
+        var by = areaTop + (i / nH) * areaH;
+        var binH = areaH / nH;
+        var intensity = bins[i] / maxBin;
+        ctx.fillStyle = 'rgba(15,118,110,' + (0.1 + intensity * 0.6) + ')';
+        ctx.fillRect(histX, by, bh, binH - 0.5);
       }
     }
+
+    // --- Dot count ---
+    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Photons: ' + detectedDots.length, screenX, areaTop - 8);
 
     // --- Slider ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
@@ -18665,7 +18673,7 @@ function initSingleSlitDiffraction() {
 
     // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Single Slit Diffraction', 10, 16);
+    ctx.fillText('Single Slit Diffraction \u2014 Photon Buildup', 10, 16);
 
     requestAnimationFrame(tick);
   }
