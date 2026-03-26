@@ -304,6 +304,7 @@ function initSceneInteractives() {
   initPhononPolarizations();
   initPolarization();
   initMalusLaw();
+  init3DMovieGlasses();
   // Chapter 15 - Refraction
   initSnellsLawDemo();
   initTotalInternalReflection();
