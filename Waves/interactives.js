@@ -9353,17 +9353,6 @@ function init3DMovieGlasses() {
       ctx.fillText('\u2014 you see a blurry double image.', cx, eyeY + 20);
     }
 
-    // ===== KEY POINTS =====
-    const noteY = eyeY + 90;
-    ctx.font = '11px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillStyle = WCOLORS.axis;
-    const nx = 24;
-    ctx.fillText('\u2022 Both images are full color. The polarization is invisible \u2014 unlike old', nx, noteY);
-    ctx.fillText('  red/blue anaglyph glasses, you see natural colors through each lens.', nx, noteY + 15);
-    ctx.fillText('\u2022 Circular polarization is tilt-independent. Linear polarization would fail', nx, noteY + 34);
-    ctx.fillText('  if you tilted your head 90\u00b0; circular works at any angle.', nx, noteY + 49);
-
     // Photo inset
     if (glassesImgLoaded) {
       const imgScale = 0.13;
