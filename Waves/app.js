@@ -3984,7 +3984,7 @@ function sceneMarkup(type) {
         <div class="scene-label">Interactive 2: The Electromagnetic Spectrum</div>
         <p class="scene-caption">Click or drag across the spectrum to explore wavelength, frequency, and photon energy at each scale.</p>
         <div class="interactive-scene">
-          <canvas id="scene-em-spectrum" width="600" height="500"></canvas>
+          <canvas id="scene-em-spectrum" width="600" height="310"></canvas>
         </div>
       `;
 
