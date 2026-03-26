@@ -5938,9 +5938,9 @@ function initHelmholtzResonator() {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
       controls.innerHTML =
-        '<label>Neck area A: <input type="range" id="hr-a" min="1" max="10" step="0.5" value="4"><span class="scene-val" id="hr-a-val">4.0</span></label>' +
-        '<label>Volume V: <input type="range" id="hr-v" min="20" max="200" step="5" value="80"><span class="scene-val" id="hr-v-val">80</span></label>' +
-        '<label>Neck length L: <input type="range" id="hr-l" min="1" max="15" step="0.5" value="5"><span class="scene-val" id="hr-l-val">5.0</span></label>';
+        '<label>Neck area A (cm\u00B2): <input type="range" id="hr-a" min="0.5" max="8" step="0.25" value="2"><span class="scene-val" id="hr-a-val">2.0</span></label>' +
+        '<label>Volume V (mL): <input type="range" id="hr-v" min="50" max="2000" step="25" value="500"><span class="scene-val" id="hr-v-val">500</span></label>' +
+        '<label>Neck length L (cm): <input type="range" id="hr-l" min="0.5" max="10" step="0.25" value="3"><span class="scene-val" id="hr-l-val">3.0</span></label>';
       parent.appendChild(controls);
       aSlider = document.getElementById('hr-a');
     }
@@ -5953,10 +5953,13 @@ function initHelmholtzResonator() {
     const controls = aSlider?.closest('.scene-controls') || canvas.parentElement;
     if (controls && !document.getElementById('hr-play')) {
       wMakePlayBtn(controls, 'hr-play', '\u25B6 Listen', () => {
-        const A = parseFloat(aSlider?.value || 4);
-        const V = parseFloat(vSlider?.value || 80);
-        const L = parseFloat(lSlider?.value || 5);
-        const fRes = (343 / (2 * Math.PI)) * Math.sqrt(A / (V * L));
+        const Acm2 = parseFloat(aSlider?.value || 2);
+        const VmL = parseFloat(vSlider?.value || 500);
+        const Lcm = parseFloat(lSlider?.value || 3);
+        const Asi = Acm2 * 1e-4;
+        const Vsi = VmL * 1e-6;
+        const Lsi = Lcm * 0.01;
+        const fRes = (343 / (2 * Math.PI)) * Math.sqrt(Asi / (Vsi * Lsi));
         wPlayTones('hr-play', [{ freq: fRes, gain: 0.6 }], 0);
       });
     }
@@ -5966,22 +5969,24 @@ function initHelmholtzResonator() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    const A = parseFloat(aSlider?.value || 4);
-    const V = parseFloat(vSlider?.value || 80);
-    const L = parseFloat(lSlider?.value || 5);
-    document.getElementById('hr-a-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
-    document.getElementById('hr-v-val')?.replaceChildren(document.createTextNode(V.toFixed(0)));
-    document.getElementById('hr-l-val')?.replaceChildren(document.createTextNode(L.toFixed(1)));
+    const Acm2 = parseFloat(aSlider?.value || 2);
+    const VmL = parseFloat(vSlider?.value || 500);
+    const Lcm = parseFloat(lSlider?.value || 3);
+    document.getElementById('hr-a-val')?.replaceChildren(document.createTextNode(Acm2.toFixed(1)));
+    document.getElementById('hr-v-val')?.replaceChildren(document.createTextNode(VmL.toFixed(0)));
+    document.getElementById('hr-l-val')?.replaceChildren(document.createTextNode(Lcm.toFixed(1)));
+
+    // Convert to SI: cm² → m², mL → m³, cm → m
+    const A = Acm2 * 1e-4;
+    const V = VmL * 1e-6;
+    const L = Lcm * 0.01;
 
     // Update live audio if playing
-    if (wIsPlaying('hr-play')) {
-      const cs2 = 343;
-      const fLive = (cs2 / (2 * Math.PI)) * Math.sqrt(A / (V * L));
-      wUpdateTones('hr-play', [{ freq: fLive, gain: 0.6 }]);
-    }
-
     const cs = 343;
     const fRes = (cs / (2 * Math.PI)) * Math.sqrt(A / (V * L));
+    if (wIsPlaying('hr-play')) {
+      wUpdateTones('hr-play', [{ freq: fRes, gain: 0.6 }]);
+    }
 
     t += 0.04;
     wClear(ctx, W, H);
@@ -5990,10 +5995,14 @@ function initHelmholtzResonator() {
     const bottleX = W * 0.3;
     const bottleCenterY = H * 0.5;
 
-    const neckW = 14 + A * 4;
-    const neckH = 18 + L * 5;
-    const bodyW = 110 * Math.sqrt(V / 80);
-    const bodyH = bodyW * 0.75;
+    // Visual sizing from slider values (not SI), clamped to fit canvas
+    const maxBodyH = H * 0.45;
+    const maxBodyW = W * 0.35;
+    const neckW = 12 + Acm2 * 5;
+    const neckH = Math.min(14 + Lcm * 6, H * 0.25);
+    const bodyWRaw = 50 + 50 * Math.sqrt(VmL / 200);
+    const bodyW = Math.min(bodyWRaw, maxBodyW);
+    const bodyH = Math.min(bodyW * 0.75, maxBodyH);
 
     const neckTop = bottleCenterY - bodyH / 2 - neckH;
     const neckBot = bottleCenterY - bodyH / 2;
