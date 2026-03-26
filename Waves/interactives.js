@@ -10179,7 +10179,7 @@ function initBrewsterAngle() {
 
 // =========================================================================
 // Microscopic Origin of the Index of Refraction
-// Shows incoming wave + re-radiated wave from charges = slowed superposition
+// Incoming (red) + re-radiated (blue) = superposition (purple), all inside material
 // =========================================================================
 function initMicroscopicIndex() {
   const canvas = document.getElementById('scene-microscopic-index');
@@ -10194,18 +10194,17 @@ function initMicroscopicIndex() {
   let t = 0;
   let animId = null;
 
-  // Material slab region
-  const slabL = W * 0.3;
-  const slabR = W * 0.75;
+  // The entire canvas represents the interior of the material
+  const margin = 15;
 
-  // Charge positions (fixed dots inside slab)
+  // Charge positions (grid of dots for row 2)
   const charges = [];
-  const nRows = 4, nCols = 6;
-  for (let r = 0; r < nRows; r++) {
-    for (let c = 0; c < nCols; c++) {
+  const chRows = 3, chCols = 10;
+  for (var r = 0; r < chRows; r++) {
+    for (var c = 0; c < chCols; c++) {
       charges.push({
-        x: slabL + (c + 0.5) * (slabR - slabL) / nCols,
-        y: 55 + (r + 0.5) * 50
+        x: margin + (c + 0.5) * (W - 2 * margin) / chCols,
+        yFrac: (r + 0.5) / chRows
       });
     }
   }
@@ -10216,41 +10215,37 @@ function initMicroscopicIndex() {
 
     wClear(ctx, W, H);
 
-    const k = 2 * Math.PI / 80;   // wavenumber in vacuum (pixels)
-    const omega = 0.06;            // angular frequency
-    const amp = 22;                // wave amplitude in pixels
+    const k = 2 * Math.PI / 90;
+    const omega = 0.06;
+    const amp = 20;
 
-    // --- Row layout ---
-    const row1Y = 55;    // incoming wave baseline
-    const row2Y = 140;   // re-radiated wave baseline
-    const row3Y = 230;   // superposition baseline
-    const labelX = 8;
+    // Colors: red + blue = purple
+    var colIncoming = '#dc2626';
+    var colReradiated = '#2563eb';
+    var colSuper = '#9333ea';
+
+    var row1Y = 55;
+    var row2Y = 145;
+    var row3Y = 240;
+    var rowH = 55;
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('How the index of refraction arises from interference', W / 2, 16);
+    ctx.fillText('Inside the material: how interference produces a slower wave', W / 2, 16);
 
-    // --- Material slab background (drawn on all rows) ---
-    ctx.fillStyle = 'rgba(100,160,220,0.08)';
-    ctx.fillRect(slabL, 25, slabR - slabL, row3Y + 40 - 25);
-    ctx.strokeStyle = 'rgba(100,160,220,0.3)'; ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(slabL, 25); ctx.lineTo(slabL, row3Y + 40); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(slabR, 25); ctx.lineTo(slabR, row3Y + 40); ctx.stroke();
-    ctx.setLineDash([]);
+    // Material background tint
+    ctx.fillStyle = 'rgba(100,160,220,0.05)';
+    ctx.fillRect(0, 25, W, row3Y + 40 - 25);
 
-    // Slab labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('vacuum', slabL / 2, 35);
-    ctx.fillText('medium', (slabL + slabR) / 2, 35);
-    ctx.fillText('vacuum', (slabR + W) / 2, 35);
+    ctx.fillText('\u2014 inside the material \u2014', W / 2, 30);
 
-    // Helper to draw a wave
-    function drawWave(yBase, color, waveFn, label) {
-      ctx.strokeStyle = color; ctx.lineWidth = 2;
+    // Helper to draw a wave across the full canvas width
+    function drawWave(yBase, color, waveFn, label, lw) {
+      ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
       ctx.beginPath();
       var started = false;
-      for (var px = 5; px < W - 5; px++) {
+      for (var px = margin; px < W - margin; px++) {
         var val = waveFn(px);
         if (val === null) { started = false; continue; }
         var y = yBase - val * amp;
@@ -10261,75 +10256,71 @@ function initMicroscopicIndex() {
 
       // Baseline
       ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(5, yBase); ctx.lineTo(W - 5, yBase); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(margin, yBase); ctx.lineTo(W - margin, yBase); ctx.stroke();
 
       // Label
-      ctx.fillStyle = color; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(label, labelX, yBase - amp - 8);
+      if (label) {
+        ctx.fillStyle = color; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText(label, margin, yBase - amp - 8);
+      }
     }
 
-    // 1) Incoming wave: travels at c everywhere (same wavelength everywhere)
-    drawWave(row1Y, WCOLORS.blue, function(px) {
+    // 1) Incoming wave: travels at c through the material (same k as vacuum)
+    drawWave(row1Y, colIncoming, function(px) {
       return Math.sin(k * px - omega * t);
-    }, 'Incoming wave (speed c)');
+    }, 'Incoming wave (speed c, unchanged)');
 
-    // 2) Re-radiated wave: only exists inside/after the slab
-    //    Phase-shifted and with small amplitude proportional to (n-1)
-    var reRadAmp = (n - 1);  // relative amplitude
-    drawWave(row2Y, '#E87F3A', function(px) {
-      if (px < slabL) return 0;
-      // The re-radiated wave has a phase shift of ~pi/2 relative to incoming
-      // and builds up across the slab
-      var buildUp = 1;
-      if (px < slabR) {
-        buildUp = (px - slabL) / (slabR - slabL);
-      }
-      return reRadAmp * buildUp * Math.sin(k * px - omega * t - Math.PI / 2);
-    }, 'Re-radiated by charges');
+    // 2) Re-radiated wave from charges: small amplitude, phase-shifted by ~90\u00b0
+    var reRadAmp = Math.min(n - 1, 0.9);
+    drawWave(row2Y, colReradiated, function(px) {
+      return reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
+    }, 'Re-radiated by electrons (small, phase-shifted)');
 
-    // 3) Superposition: incoming + re-radiated = effective wave with phase delay
-    drawWave(row3Y, '#4CAF50', function(px) {
-      if (px < slabL) {
-        // Before slab: just incoming
-        return Math.sin(k * px - omega * t);
-      } else if (px <= slabR) {
-        // Inside slab: wave with effective wavenumber n*k
-        var phaseIn = k * slabL + n * k * (px - slabL) - omega * t;
-        return Math.sin(phaseIn);
-      } else {
-        // After slab: wave continues at c but with accumulated phase delay
-        var phaseDelay = (n - 1) * k * (slabR - slabL);
-        return Math.sin(k * px - omega * t - phaseDelay);
-      }
-    }, 'Superposition (effective speed c/n)');
-
-    // Draw charge dots on the re-radiated row, oscillating with the wave
+    // Draw charge dots oscillating with the wave
     for (var i = 0; i < charges.length; i++) {
       var ch = charges[i];
-      // Charges oscillate with incoming wave phase
       var displacement = 4 * Math.sin(k * ch.x - omega * t);
-      var cy = row2Y + (ch.y - 125) * 0.35;
+      var cy = row2Y - rowH * 0.5 + ch.yFrac * rowH;
       ctx.beginPath();
-      ctx.arc(ch.x, cy + displacement, 3, 0, 2 * Math.PI);
-      ctx.fillStyle = '#E87F3A';
+      ctx.arc(ch.x, cy + displacement, 2.5, 0, 2 * Math.PI);
+      ctx.fillStyle = colReradiated;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(232,127,58,0.4)'; ctx.lineWidth = 0.5;
-      ctx.stroke();
     }
 
-    // Phase delay annotation
-    var phaseDelay = (n - 1) * k * (slabR - slabL);
-    var delayWavelengths = phaseDelay / (2 * Math.PI);
+    // 3) Superposition = actual sum of incoming + re-radiated
+    drawWave(row3Y, colSuper, function(px) {
+      var incoming = Math.sin(k * px - omega * t);
+      var rerad = reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
+      return incoming + rerad;
+    }, 'Superposition (crests shifted back \u2192 effective speed c/n)', 2.5);
+
+    // Faint copies of individual waves on the third row for comparison
+    ctx.globalAlpha = 0.2;
+    drawWave(row3Y, colIncoming, function(px) {
+      return Math.sin(k * px - omega * t);
+    }, '', 1);
+    drawWave(row3Y, colReradiated, function(px) {
+      return reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
+    }, '', 1);
+    ctx.globalAlpha = 1;
+
+    // + and = signs between rows
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('+', W - 30, (row1Y + row2Y) / 2 + 4);
+    ctx.fillText('=', W - 30, (row2Y + row3Y) / 2 + 4);
+
+    // Phase shift annotation
+    var phaseShift = Math.atan2(reRadAmp, 1);
+    var phaseShiftDeg = (phaseShift * 180 / Math.PI).toFixed(1);
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(
-      'Phase delay through slab: ' + delayWavelengths.toFixed(1) + ' wavelengths   (n = ' + n.toFixed(2) + ')',
-      W / 2, row3Y + amp + 22
+      'Crests shifted back by ' + phaseShiftDeg + '\u00b0 per wavelength  (n = ' + n.toFixed(2) + ')',
+      W / 2, row3Y + amp + 20
     );
 
-    // Key insight at bottom
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(
-      'Between atoms, light still moves at c. The superposition just shifts the crests back.',
+      'Red + blue = purple.  Adding a small phase-shifted wave pulls the crests back.',
       W / 2, H - 8
     );
   }
@@ -10342,7 +10333,6 @@ function initMicroscopicIndex() {
     animId = requestAnimationFrame(animate);
   }
 
-  // Observe visibility to start/stop animation
   var obs = new IntersectionObserver(function(entries) {
     if (entries[0].isIntersecting) {
       if (!animId) animate();
