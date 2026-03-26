@@ -17825,24 +17825,25 @@ function initInterferometerResolution() {
 
   let baseline = 15, starSep = 0.06, nAnt = 5, dragging = null;
 
-  // Observed image panel (left)
-  const imgL = 15, imgW = Math.round(W * 0.34), imgH = obsB - obsT - 4, imgTT = obsT + 2;
-  // 1D profile panel (right)
-  const pltL = imgL + imgW + 30, pltW = W - pltL - 12, pltH = imgH, pltT = imgTT;
+  // Layout
+  const imgL = 12, imgW = Math.round(W * 0.34), imgT = 18, imgH = 138;
+  const pltL = imgL + imgW + 25, pltW = W - pltL - 10, pltT = imgT, pltH = imgH;
+  const gndT = imgT + imgH + 6, groundY = gndT + 24;
+  const slX = 12, slW = Math.round(W * 0.38);
+  const sl1Y = gndT + 52, sl2Y = sl1Y + 20, sl3Y = sl2Y + 20;
 
-  // Max pixel half-separation for draggable objects
-  const maxStarHalf = W * 0.22;
-  const maxDishHalf = W * 0.40;
-
-  // Offscreen buffer for pixel-rendered observed image
+  // Offscreen buffer
   const imgBuf = document.createElement('canvas');
   imgBuf.width = imgW; imgBuf.height = imgH;
   const imgBufCtx = imgBuf.getContext('2d');
 
-  // --- Input: drag anywhere in sky strip or ground strip ---
+  // --- Slider hit test ---
   function hitTest(mx, my) {
-    if (my >= skyT && my <= skyB) return 'star';
-    if (my >= gndT && my <= gndB) return 'dish';
+    if (mx >= slX - 5 && mx <= slX + slW + 5) {
+      if (Math.abs(my - sl1Y) < 10) return 'sep';
+      if (Math.abs(my - sl2Y) < 10) return 'base';
+      if (Math.abs(my - sl3Y) < 10) return 'nant';
+    }
     return null;
   }
 
@@ -17869,13 +17870,31 @@ function initInterferometerResolution() {
   canvas.addEventListener('touchend', function() { dragging = null; });
 
   function handleDrag(mx) {
-    var halfSep = Math.abs(mx - midX);
-    if (dragging === 'star') {
-      starSep = Math.max(0.005, Math.min(0.2, halfSep / maxStarHalf * 0.2));
-    } else if (dragging === 'dish') {
-      baseline = Math.max(1, Math.min(200, Math.round(halfSep / maxDishHalf * 200)));
+    var t = Math.max(0, Math.min(1, (mx - slX) / slW));
+    if (dragging === 'sep') {
+      starSep = 0.005 + t * 0.195;
+    } else if (dragging === 'base') {
+      baseline = Math.max(2, Math.round(Math.exp(t * Math.log(200))));
+    } else if (dragging === 'nant') {
+      nAnt = 2 + Math.round(t * 25);
     }
     draw();
+  }
+
+  // --- Array beam: sin²(Nβ) / (N² sin²(β)) with Gaussian envelope ---
+  function beam(theta) {
+    var spacing = baseline / (nAnt - 1);
+    var beta = Math.PI * spacing * theta;
+    var af;
+    if (Math.abs(beta) < 1e-8) {
+      af = 1;
+    } else {
+      var s1 = Math.sin(beta);
+      if (Math.abs(s1) < 1e-10) { af = 1; }
+      else { var sN = Math.sin(nAnt * beta); af = (sN * sN) / (nAnt * nAnt * s1 * s1); }
+    }
+    var envSig = Math.max(3 / baseline, 0.08);
+    return af * Math.exp(-theta * theta / (2 * envSig * envSig));
   }
 
   // --- Main draw ---
@@ -17884,149 +17903,51 @@ function initInterferometerResolution() {
     var resAngle = 0.5 / baseline;
     var resolved = starSep > resAngle * 1.22;
 
-    // Title + badge
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Resolve Two Stars', 10, 13);
+    ctx.fillText('Interferometer Array', 10, 13);
     ctx.textAlign = 'right'; ctx.font = 'bold 11px system-ui';
     ctx.fillStyle = resolved ? '#16a34a' : '#dc2626';
     ctx.fillText(resolved ? '\u2713 Resolved' : '\u2717 Unresolved', W - 10, 13);
 
-    drawSkyStrip();
-    drawObservedImage(resAngle);
-    drawProfile(resAngle);
-    drawGroundStrip(resAngle);
+    drawObservedImage();
+    drawProfile();
+    drawGround();
+    drawSliders();
   }
 
-  // --- Sky strip: dark band with two draggable glowing stars ---
-  function drawSkyStrip() {
-    ctx.fillStyle = '#080c14';
-    ctx.fillRect(0, skyT, W, skyB - skyT);
-
-    var starHalf = starSep / 0.2 * maxStarHalf;
-    var s1x = midX - starHalf, s2x = midX + starHalf;
-    var sy = (skyT + skyB) / 2;
-
-    // Background stars
-    ctx.fillStyle = 'rgba(180,185,200,0.15)';
-    for (var i = 0; i < 18; i++) {
-      var bx = (i * 137 + 53) % W;
-      var by = skyT + 4 + (i * 43 + 11) % (skyB - skyT - 8);
-      if (Math.abs(bx - midX) < starHalf + 25) continue;
-      ctx.beginPath(); ctx.arc(bx, by, 0.5 + (i % 3) * 0.2, 0, Math.PI * 2); ctx.fill();
-    }
-
-    // Star glow halos
-    var g1 = ctx.createRadialGradient(s1x, sy, 0, s1x, sy, 18);
-    g1.addColorStop(0, 'rgba(15,118,110,0.5)'); g1.addColorStop(1, 'transparent');
-    ctx.fillStyle = g1; ctx.fillRect(s1x - 18, sy - 18, 36, 36);
-    var g2 = ctx.createRadialGradient(s2x, sy, 0, s2x, sy, 18);
-    g2.addColorStop(0, 'rgba(217,119,6,0.5)'); g2.addColorStop(1, 'transparent');
-    ctx.fillStyle = g2; ctx.fillRect(s2x - 18, sy - 18, 36, 36);
-
-    // Bright star dots
-    ctx.fillStyle = '#fff';
-    ctx.beginPath(); ctx.arc(s1x, sy, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(s2x, sy, 3, 0, Math.PI * 2); ctx.fill();
-
-    // Double-headed arrow between stars
-    var arrowY = sy + 12;
-    if (s2x - s1x > 16) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(s1x + 5, arrowY); ctx.lineTo(s2x - 5, arrowY); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.beginPath(); ctx.moveTo(s1x + 5, arrowY); ctx.lineTo(s1x + 9, arrowY - 2.5); ctx.lineTo(s1x + 9, arrowY + 2.5); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(s2x - 5, arrowY); ctx.lineTo(s2x - 9, arrowY - 2.5); ctx.lineTo(s2x - 9, arrowY + 2.5); ctx.fill();
-    }
-
-    // Angle label
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03B8 = ' + (starSep * 180 / Math.PI).toFixed(1) + '\u00B0', midX, arrowY + 11);
-
-    // Drag hint
-    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.font = '8px system-ui';
-    ctx.fillText('\u2190 drag to separate stars \u2192', midX, skyB - 2);
-  }
-
-  // --- Ground strip: horizon, two draggable telescope dishes, baseline ---
-  function drawGroundStrip(resAngle) {
-    var dishHalf = baseline / 200 * maxDishHalf;
-    var d1x = midX - dishHalf, d2x = midX + dishHalf;
-    var groundY = gndT + 26;
-
-    // Horizon line
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(8, groundY); ctx.lineTo(W - 8, groundY); ctx.stroke();
-
-    // Ground hatch
-    ctx.strokeStyle = 'rgba(31,42,46,0.12)';
-    for (var x = 14; x < W - 8; x += 10) {
-      ctx.beginPath(); ctx.moveTo(x, groundY + 1); ctx.lineTo(x - 3, groundY + 6); ctx.stroke();
-    }
-
-    // Telescope dishes
-    drawDish(d1x, groundY);
-    drawDish(d2x, groundY);
-
-    // Baseline arrow between dishes
-    var arrowY = groundY + 14;
-    if (d2x - d1x > 16) {
-      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(d1x + 5, arrowY); ctx.lineTo(d2x - 5, arrowY); ctx.stroke();
-      ctx.fillStyle = WCOLORS.amber;
-      ctx.beginPath(); ctx.moveTo(d1x + 5, arrowY); ctx.lineTo(d1x + 9, arrowY - 2.5); ctx.lineTo(d1x + 9, arrowY + 2.5); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(d2x - 5, arrowY); ctx.lineTo(d2x - 9, arrowY - 2.5); ctx.lineTo(d2x - 9, arrowY + 2.5); ctx.fill();
-    }
-
-    // Baseline label
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'd = ' + baseline + '\u03BB', midX, arrowY + 12);
-
-    // Resolution readout
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-    fillTextSub(ctx, '\u03B8_{res} = \u03BB/2d = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', midX, arrowY + 24);
-
-    // Drag hint
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
-    ctx.fillText('\u2190 drag to widen baseline \u2192', midX, gndB);
-  }
-
-  function drawDish(x, groundY) {
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(x, groundY); ctx.lineTo(x, groundY - 18); ctx.stroke();
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(x, groundY - 18, 10, Math.PI + 0.5, 2 * Math.PI - 0.5); ctx.stroke();
-    ctx.fillStyle = WCOLORS.teal;
-    ctx.beginPath(); ctx.arc(x, groundY - 26, 1.5, 0, Math.PI * 2); ctx.fill();
-  }
-
-  // --- Pixel-rendered observed image ---
-  function drawObservedImage(resAngle) {
-    var fov = Math.max(starSep * 3.5, resAngle * 5, 0.08);
+  // --- Pixel-rendered observed image using array beam ---
+  function drawObservedImage() {
+    var fov = Math.max(starSep * 3.5, 0.5 / baseline * 5, 0.08);
     var scale = imgW / fov;
-
     var img = imgBufCtx.createImageData(imgW, imgH);
     var d = img.data;
     var icx = imgW / 2, icy = imgH / 2;
-    var sigma = Math.max(resAngle * scale, 1.5);
     var sepPx = starSep * scale;
     var s1x = icx - sepPx / 2, s2x = icx + sepPx / 2;
-    var inv2s2 = 1 / (2 * sigma * sigma);
+    var envSig = Math.max(3 / baseline, 0.08);
+    var cutPx = envSig * 4.5 * scale;
+    var cutSq = cutPx * cutPx;
 
     for (var py = 0; py < imgH; py++) {
       for (var px = 0; px < imgW; px++) {
         var dx1 = px - s1x, dy1 = py - icy;
         var dx2 = px - s2x, dy2 = py - icy;
-        var I1 = Math.exp(-(dx1 * dx1 + dy1 * dy1) * inv2s2);
-        var I2 = Math.exp(-(dx2 * dx2 + dy2 * dy2) * inv2s2);
+        var r1sq = dx1 * dx1 + dy1 * dy1;
+        var r2sq = dx2 * dx2 + dy2 * dy2;
+        if (r1sq > cutSq && r2sq > cutSq) {
+          var idx = (py * imgW + px) * 4;
+          d[idx] = 8; d[idx + 1] = 12; d[idx + 2] = 18; d[idx + 3] = 255;
+          continue;
+        }
+        var I1 = beam(Math.sqrt(r1sq) / scale);
+        var I2 = beam(Math.sqrt(r2sq) / scale);
         var total = I1 + I2;
         var brightness = Math.min(total, 1);
         var f = total > 0.001 ? I2 / total : 0.5;
-
         var core = Math.max(0, brightness - 0.5) * 2;
         var rc = (15 + 202 * f) * (1 - core) + 255 * core;
         var gc = (118 + 1 * f) * (1 - core) + 255 * core;
         var bc = (110 - 104 * f) * (1 - core) + 255 * core;
-
         var idx = (py * imgW + px) * 4;
         d[idx]     = Math.min(255, Math.round(8 + rc * brightness));
         d[idx + 1] = Math.min(255, Math.round(12 + gc * brightness));
@@ -18054,74 +17975,129 @@ function initInterferometerResolution() {
       var sx = (i * 137 + 53) % imgW;
       var sy = (i * 171 + 29) % imgH;
       if (Math.abs(sx - icx) < 30 && Math.abs(sy - icy) < 30) continue;
-      imgBufCtx.beginPath();
-      imgBufCtx.arc(sx, sy, 0.4 + (i % 3) * 0.3, 0, Math.PI * 2);
-      imgBufCtx.fill();
+      imgBufCtx.beginPath(); imgBufCtx.arc(sx, sy, 0.4 + (i % 3) * 0.3, 0, Math.PI * 2); imgBufCtx.fill();
     }
 
-    // Blit to main canvas
-    ctx.drawImage(imgBuf, imgL, imgTT);
+    ctx.drawImage(imgBuf, imgL, imgT);
     ctx.strokeStyle = '#2a3038'; ctx.lineWidth = 1;
-    ctx.strokeRect(imgL, imgTT, imgW, imgH);
+    ctx.strokeRect(imgL, imgT, imgW, imgH);
 
-    // Beam size circle overlay
-    var beamR = resAngle * 1.22 * scale;
+    var beamR = 0.5 / baseline * 1.22 * scale;
     if (beamR > 3 && beamR < Math.min(imgW, imgH) * 0.45) {
       ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
       ctx.setLineDash([3, 3]);
-      ctx.beginPath();
-      ctx.arc(imgL + imgW / 2, imgTT + imgH / 2, beamR, 0, Math.PI * 2);
-      ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(imgL + imgW / 2, imgT + imgH / 2, beamR, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
     }
   }
 
-  // --- 1D intensity cross-section ---
-  function drawProfile(resAngle) {
+  // --- 1D intensity profile showing beam sidelobes ---
+  function drawProfile() {
     var pL = pltL, pT = pltT, pW = pltW, pH = pltH;
+    var resAngle = 0.5 / baseline;
 
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pL, pT + pH); ctx.lineTo(pL + pW, pT + pH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(pL, pT); ctx.lineTo(pL, pT + pH); ctx.stroke();
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('\u03B8', pL + pW / 2, pT + pH + 11);
-    ctx.fillText('Intensity Cross-Section', pL + pW / 2, pT - 4);
+    ctx.fillText('Intensity Profile', pL + pW / 2, pT - 4);
 
-    var thetaRange = Math.max(starSep * 2, resAngle * 2.5, 0.03);
-    var sig = resAngle;
-    var inv2s2 = 1 / (2 * sig * sig);
+    var thetaRange = Math.max(starSep * 2, resAngle * 3, 0.03);
     var yScale = (pH - 8) * 0.43;
 
-    // Individual star profiles (dashed)
-    for (var s = 0; s < 2; s++) {
-      var off = s === 0 ? -starSep / 2 : starSep / 2;
-      ctx.strokeStyle = s === 0 ? 'rgba(15,118,110,0.4)' : 'rgba(217,119,6,0.4)';
-      ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      for (var px = 0; px <= pW; px++) {
-        var theta = (px / pW - 0.5) * 2 * thetaRange;
-        var I = Math.exp(-(theta - off) * (theta - off) * inv2s2);
-        var py2 = pT + pH - 3 - I * yScale;
-        if (px === 0) ctx.moveTo(pL + px, py2); else ctx.lineTo(pL + px, py2);
-      }
-      ctx.stroke();
+    // Beam pattern alone (dashed, shows sidelobes)
+    ctx.strokeStyle = 'rgba(15,118,110,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    for (var px = 0; px <= pW; px++) {
+      var theta = (px / pW - 0.5) * 2 * thetaRange;
+      var py2 = pT + pH - 3 - beam(theta) * yScale;
+      if (px === 0) ctx.moveTo(pL + px, py2); else ctx.lineTo(pL + px, py2);
     }
-    ctx.setLineDash([]);
+    ctx.stroke(); ctx.setLineDash([]);
 
-    // Summed profile (solid bold)
+    // Observed: beam from each star summed (solid bold)
     ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
     ctx.beginPath();
     for (var px = 0; px <= pW; px++) {
       var theta = (px / pW - 0.5) * 2 * thetaRange;
-      var d1 = theta + starSep / 2, d2 = theta - starSep / 2;
-      var I = Math.exp(-d1 * d1 * inv2s2) + Math.exp(-d2 * d2 * inv2s2);
+      var I = beam(theta + starSep / 2) + beam(theta - starSep / 2);
       var py2 = pT + pH - 3 - I * yScale;
       if (px === 0) ctx.moveTo(pL + px, py2); else ctx.lineTo(pL + px, py2);
     }
     ctx.stroke();
   }
 
+  // --- Ground with N telescope dishes ---
+  function drawGround() {
+    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(8, groundY); ctx.lineTo(W - 8, groundY); ctx.stroke();
+    ctx.strokeStyle = 'rgba(31,42,46,0.10)';
+    for (var x = 14; x < W - 8; x += 10) {
+      ctx.beginPath(); ctx.moveTo(x, groundY + 1); ctx.lineTo(x - 2, groundY + 5); ctx.stroke();
+    }
+
+    var maxSpan = W * 0.75;
+    var span = baseline / 200 * maxSpan;
+    var startX = W / 2 - span / 2;
+    var dishR = nAnt > 12 ? 4 : (nAnt > 7 ? 6 : 8);
+    for (var i = 0; i < nAnt; i++) {
+      var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : W / 2;
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(dx, groundY); ctx.lineTo(dx, groundY - dishR * 1.5); ctx.stroke();
+      ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(dx, groundY - dishR * 1.5, dishR, Math.PI + 0.5, 2 * Math.PI - 0.5); ctx.stroke();
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.beginPath(); ctx.arc(dx, groundY - dishR * 1.5 - dishR * 0.8, 1, 0, Math.PI * 2); ctx.fill();
+    }
+
+    if (span > 20) {
+      var arrowY = groundY + 10;
+      var lx = startX, rx = startX + span;
+      ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(rx - 4, arrowY); ctx.stroke();
+      ctx.fillStyle = WCOLORS.amber;
+      ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(lx + 8, arrowY - 2.5); ctx.lineTo(lx + 8, arrowY + 2.5); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(rx - 4, arrowY); ctx.lineTo(rx - 8, arrowY - 2.5); ctx.lineTo(rx - 8, arrowY + 2.5); ctx.fill();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      fillTextSub(ctx, 'd = ' + baseline + '\u03BB', W / 2, arrowY + 11);
+    }
+  }
+
+  // --- Three sliders ---
+  function drawSliders() {
+    var resAngle = 0.5 / baseline;
+
+    var t1 = (starSep - 0.005) / 0.195;
+    drawSlider(slX, sl1Y, slW, t1, WCOLORS.amber);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    fillTextSub(ctx, '\u03B8_{sep} = ' + (starSep * 180 / Math.PI).toFixed(1) + '\u00B0', slX + slW + 10, sl1Y + 4);
+
+    var t2 = Math.log(baseline) / Math.log(200);
+    drawSlider(slX, sl2Y, slW, t2, WCOLORS.teal);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    fillTextSub(ctx, 'd/\u03BB = ' + baseline, slX + slW + 10, sl2Y + 4);
+
+    var t3 = (nAnt - 2) / 25;
+    drawSlider(slX, sl3Y, slW, t3, WCOLORS.blue);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('N = ' + nAnt + ' antennas', slX + slW + 10, sl3Y + 4);
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    fillTextSub(ctx, '\u03B8_{res} = \u03BB/2d = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', slX, sl3Y + 18);
+  }
+
+  function drawSlider(x, y, w, t, color) {
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + w * t, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+  }
+
   draw();
 }
+
 
 // =========================================================================
 // CHAPTER 19 - DIFFRACTION
@@ -18682,7 +18658,7 @@ function initSingleSlitDiffraction() {
 }
 
 // =========================================================================
-// 15. Fourier Optics Demo
+// 15. Fourier Optics Demo — "Draw Your Own Aperture"
 // =========================================================================
 function initFourierOpticsDemo() {
   const canvas = document.getElementById('scene-fourier-optics-demo');
@@ -18691,7 +18667,7 @@ function initFourierOpticsDemo() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let apertureType = 0; // 0=single, 1=double, 2=grating
+  var REPLACED_MARKER = true; // 0=single, 1=double, 2=grating
   const types = ['Single Slit', 'Double Slit', 'Grating (5 slits)'];
 
   canvas.addEventListener('click', function(e) {

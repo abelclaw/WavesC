@@ -4230,8 +4230,8 @@ function sceneMarkup(type) {
       `;
     case "interferometer-resolution":
       return `
-        <div class="scene-label">Interactive 4: Resolve Two Stars</div>
-        <p class="scene-caption">Drag the stars apart in the sky, then drag the telescope dishes apart on the ground to resolve them</p>
+        <div class="scene-label">Interactive 4: Interferometer Array</div>
+        <p class="scene-caption">Adjust star separation, baseline, and number of antennas to see how an interferometer resolves two stars</p>
         <div class="interactive-scene">
           <canvas id="scene-interferometer-resolution" width="600" height="300"></canvas>
         </div>
@@ -4267,9 +4267,9 @@ function sceneMarkup(type) {
     case "fourier-optics-demo":
       return `
         <div class="scene-label">Interactive 4: Fourier Optics</div>
-        <p class="scene-caption">The diffraction pattern is the Fourier transform of the aperture. Select different aperture shapes to see.</p>
+        <p class="scene-caption">Draw any aperture transparency T(x) on the left and watch the diffraction pattern — its Fourier transform — appear in real time.</p>
         <div class="interactive-scene">
-          <canvas id="scene-fourier-optics-demo" width="600" height="300"></canvas>
+          <canvas id="scene-fourier-optics-demo" width="600" height="340"></canvas>
         </div>
       `;
 
