@@ -10543,9 +10543,9 @@ function initPrismDispersion() {
     return `rgb(${Math.round(r * factor * 255)},${Math.round(g * factor * 255)},${Math.round(b * factor * 255)})`;
   }
 
-  // Cauchy dispersion: n(λ) ≈ n0 + B/λ²
+  // Cauchy dispersion: n(λ) ≈ n0 + B/λ²  (B exaggerated for visible spread)
   function cauchyN(wlNm, n0) {
-    const B = 4500;
+    const B = 25000;
     return n0 + B / (wlNm * wlNm);
   }
 
