@@ -18601,54 +18601,76 @@ function initSingleSlitDiffraction() {
       detectedDots.push({ y: yNorm, x: (Math.random() - 0.5) * 0.8 });
     }
 
-    // --- Incoming plane waves (moving right) ---
-    ctx.lineWidth = 1.5;
-    const waveSpan = slitX - 5;
-    for (let wf = 0; wf < 15; wf++) {
-      let x = ((time * 12 - wf * lambda) % waveSpan);
-      if (x < 0) x += waveSpan;
-      x += 5;
-      if (x > 5 && x < slitX - 4) {
-        const alpha = 0.15 + 0.15 * (x / slitX);
-        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
-        ctx.beginPath(); ctx.moveTo(x, areaTop); ctx.lineTo(x, areaBot); ctx.stroke();
-      }
-    }
+    // --- Box with hole and pulsing light behind it ---
+    const boxL = 10, boxR = slitX + 2;
+    const boxW = boxR - boxL;
 
-    // --- Barrier with single slit ---
+    // Pulsing light glow behind the box (visible through the slit)
+    const pulse = 0.5 + 0.5 * Math.sin(time * 2.5);
+    const glowAlpha = 0.25 + pulse * 0.35;
+
+    // Light glow visible through slit opening
+    const slitTop = slitCY - slitOpenH / 2;
+    const slitBot = slitCY + slitOpenH / 2;
+    const grad = ctx.createRadialGradient(boxL + boxW * 0.4, slitCY, 2, boxL + boxW * 0.4, slitCY, slitOpenH * 0.8);
+    grad.addColorStop(0, 'rgba(15,118,110,' + (glowAlpha * 0.9) + ')');
+    grad.addColorStop(0.6, 'rgba(15,118,110,' + (glowAlpha * 0.4) + ')');
+    grad.addColorStop(1, 'rgba(15,118,110,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(boxL, slitTop, boxW, slitOpenH);
+    ctx.clip();
+    ctx.fillStyle = grad;
+    ctx.fillRect(boxL, slitTop - slitOpenH, boxW, slitOpenH * 3);
+    ctx.restore();
+
+    // Box walls (opaque)
     ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(slitX - 2, areaTop, 4, slitCY - slitOpenH / 2 - areaTop);
-    ctx.fillRect(slitX - 2, slitCY + slitOpenH / 2, 4, areaBot - slitCY - slitOpenH / 2);
+    // Top wall
+    ctx.fillRect(boxL, areaTop, boxW, slitTop - areaTop);
+    // Bottom wall
+    ctx.fillRect(boxL, slitBot, boxW, areaBot - slitBot);
+    // Back wall (left edge)
+    ctx.fillRect(boxL, areaTop, 3, areaH);
+    // Top edge
+    ctx.fillRect(boxL, areaTop, boxW, 3);
+    // Bottom edge
+    ctx.fillRect(boxL, areaBot - 3, boxW, 3);
+
+    // Pulsing light source indicator on back wall
+    const bulbR = 6 + pulse * 3;
+    const glowR = 18 + pulse * 10;
+    const bulbGrad = ctx.createRadialGradient(boxL + 8, slitCY, 0, boxL + 8, slitCY, glowR);
+    bulbGrad.addColorStop(0, 'rgba(15,118,110,' + (0.5 + pulse * 0.4) + ')');
+    bulbGrad.addColorStop(0.4, 'rgba(15,118,110,' + (0.15 + pulse * 0.15) + ')');
+    bulbGrad.addColorStop(1, 'rgba(15,118,110,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(boxL, slitTop, boxW, slitOpenH);
+    ctx.clip();
+    ctx.fillStyle = bulbGrad;
+    ctx.fillRect(boxL, slitCY - glowR, glowR * 2, glowR * 2);
+    ctx.restore();
+    // Bright center dot
+    ctx.beginPath(); ctx.arc(boxL + 8, slitCY, bulbR, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15,118,110,' + (0.6 + pulse * 0.4) + ')';
+    ctx.fill();
+    ctx.beginPath(); ctx.arc(boxL + 8, slitCY, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+
+    // Front wall edges around slit (right edge of box)
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(boxR - 3, areaTop, 3, slitTop - areaTop);
+    ctx.fillRect(boxR - 3, slitBot, 3, areaBot - slitBot);
 
     // Slit width label
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(slitX + 8, slitCY - slitOpenH / 2); ctx.lineTo(slitX + 8, slitCY + slitOpenH / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(boxR + 6, slitTop); ctx.lineTo(boxR + 6, slitBot); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('a', slitX + 12, slitCY + 3);
-
-    // --- Diffracted wavelets from points in the slit ---
-    const nSources = Math.max(3, Math.round(aOverLambda * 3));
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(slitX - 2, 0, screenX - slitX - 5, H);
-    ctx.clip();
-    for (let i = 0; i < nSources; i++) {
-      const sy = slitCY - slitOpenH / 2 + (i + 0.5) * (slitOpenH / nSources);
-      for (let wf = 0; wf < 5; wf++) {
-        const r = (time * 12 + wf * lambda) % (W * 0.8);
-        if (r < 3) continue;
-        const alpha = Math.max(0, 0.12 * (1 - r / (W * 0.5)));
-        if (alpha < 0.01) continue;
-        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(slitX, sy, r, -Math.PI / 2, Math.PI / 2);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
+    ctx.fillText('a', boxR + 10, slitCY + 3);
 
     // --- Screen area: accumulated dots ---
     ctx.fillStyle = 'rgba(0,0,0,0.15)';
