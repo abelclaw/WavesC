@@ -11187,10 +11187,10 @@ function initFourierMagnitudePhase() {
   async function update() {
     if (updating) return;
     updating = true;
-    const selA = document.getElementById('fmp-selA');
-    const selB = document.getElementById('fmp-selB');
-    const typeA = selA ? selA.value : 'cat';
-    const typeB = selB ? selB.value : 'panda';
+    const btnsA = document.getElementById('fmp-btnsA');
+    const btnsB = document.getElementById('fmp-btnsB');
+    const typeA = btnsA ? btnsA.querySelector('.scene-btn-active')?.dataset.value || 'cat' : 'cat';
+    const typeB = btnsB ? btnsB.querySelector('.scene-btn-active')?.dataset.value || 'panda' : 'panda';
 
     const [pixA, pixB] = await Promise.all([getImage(typeA), getImage(typeB)]);
 
@@ -11215,8 +11215,17 @@ function initFourierMagnitudePhase() {
     updating = false;
   }
 
-  document.getElementById('fmp-selA')?.addEventListener('change', update);
-  document.getElementById('fmp-selB')?.addEventListener('change', update);
+  ['fmp-btnsA', 'fmp-btnsB'].forEach(id => {
+    const group = document.getElementById(id);
+    if (!group) return;
+    group.querySelectorAll('.scene-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelector('.scene-btn-active')?.classList.remove('scene-btn-active');
+        btn.classList.add('scene-btn-active');
+        update();
+      });
+    });
+  });
   update();
 }
 

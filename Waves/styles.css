@@ -4652,15 +4652,16 @@ a {
   height: 160px;
   background: #000;
 }
-.fmp-panel select {
-  font-size: 13px;
-  font-family: var(--body);
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 5px;
-  border: 1px solid var(--rule, #d4c9b8);
-  background: var(--paper, #faf5ec);
-  color: var(--ink);
+.fmp-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  max-width: 220px;
+}
+.fmp-btn-group .scene-btn {
+  font-size: 11px;
+  padding: 2px 8px;
 }
 .fmp-panel-label {
   font-family: var(--body);

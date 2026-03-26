@@ -3612,36 +3612,36 @@ function sceneMarkup(type) {
       `;
     case "fourier-magnitude-phase":
       return `
-        <div class="scene-label">Magnitude vs Phase</div>
+        <div class="scene-label">Interactive 5: Magnitude vs Phase</div>
         <p class="scene-caption">Pick two images. Their 2D Fourier transforms are split into magnitude and phase, then swapped. The result always resembles whichever image contributed the <strong>phase</strong>.</p>
         <div class="interactive-scene">
           <div id="fmp-container">
             <div class="fmp-top">
               <div class="fmp-panel fmp-panel-a">
-                <select id="fmp-selA">
-                  <option value="cat" selected>Cat</option>
-                  <option value="panda">Panda</option>
-                  <option value="einstein">Einstein</option>
-                  <option value="sunflower">Sunflower</option>
-                  <option value="butterfly">Butterfly</option>
-                  <option value="guitar">Guitar</option>
-                  <option value="star">Star &#9733;</option>
-                  <option value="checkerboard">Checkerboard</option>
-                </select>
+                <div class="fmp-btn-group" id="fmp-btnsA">
+                  <button class="scene-btn scene-btn-active" data-value="cat">Cat</button>
+                  <button class="scene-btn" data-value="panda">Panda</button>
+                  <button class="scene-btn" data-value="einstein">Einstein</button>
+                  <button class="scene-btn" data-value="sunflower">Sunflower</button>
+                  <button class="scene-btn" data-value="butterfly">Butterfly</button>
+                  <button class="scene-btn" data-value="guitar">Guitar</button>
+                  <button class="scene-btn" data-value="star">Star &#9733;</button>
+                  <button class="scene-btn" data-value="checkerboard">Checker</button>
+                </div>
                 <canvas id="fmp-imgA" width="128" height="128"></canvas>
                 <div class="fmp-panel-label">Image A</div>
               </div>
               <div class="fmp-panel fmp-panel-b">
-                <select id="fmp-selB">
-                  <option value="cat">Cat</option>
-                  <option value="panda" selected>Panda</option>
-                  <option value="einstein">Einstein</option>
-                  <option value="sunflower">Sunflower</option>
-                  <option value="butterfly">Butterfly</option>
-                  <option value="guitar">Guitar</option>
-                  <option value="star">Star &#9733;</option>
-                  <option value="checkerboard">Checkerboard</option>
-                </select>
+                <div class="fmp-btn-group" id="fmp-btnsB">
+                  <button class="scene-btn" data-value="cat">Cat</button>
+                  <button class="scene-btn scene-btn-active" data-value="panda">Panda</button>
+                  <button class="scene-btn" data-value="einstein">Einstein</button>
+                  <button class="scene-btn" data-value="sunflower">Sunflower</button>
+                  <button class="scene-btn" data-value="butterfly">Butterfly</button>
+                  <button class="scene-btn" data-value="guitar">Guitar</button>
+                  <button class="scene-btn" data-value="star">Star &#9733;</button>
+                  <button class="scene-btn" data-value="checkerboard">Checker</button>
+                </div>
                 <canvas id="fmp-imgB" width="128" height="128"></canvas>
                 <div class="fmp-panel-label">Image B</div>
               </div>
