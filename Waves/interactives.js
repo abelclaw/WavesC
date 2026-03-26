@@ -8862,6 +8862,12 @@ function init3DMovieGlasses() {
   if (btnOn) btnOn.addEventListener('click', () => setMode(true));
   if (btnOff) btnOff.addEventListener('click', () => setMode(false));
 
+  // Load glasses photo
+  const glassesImg = new Image();
+  glassesImg.src = 'images/reald-3d-glasses.jpg';
+  let glassesImgLoaded = false;
+  glassesImg.onload = () => { glassesImgLoaded = true; };
+
   // Simple 3D scene: a cube and a sphere, drawn with stereo offset
   function drawScene(cx, cy, scale, offset, color, alpha) {
     ctx.save();
@@ -9157,15 +9163,24 @@ function init3DMovieGlasses() {
     ctx.fillText('Projector 1', sceneCX - 80, polY + polR + 28);
     ctx.fillText('Projector 2', sceneCX + 80, polY + polR + 28);
 
-    // --- Glasses diagram ---
-    const glassesY = polY + polR + 60;
+    // --- Glasses photo + diagram ---
+    const glassesY = polY + polR + 50;
     if (glassesOn) {
-      drawGlasses(sceneCX, glassesY, 48, 30,
-        'rgba(220,38,38,0.45)', 'rgba(37,99,235,0.45)', 1.0);
+      // Draw photo of real 3D glasses
+      if (glassesImgLoaded) {
+        const imgScale = 0.18;
+        const imgW = glassesImg.width * imgScale;
+        const imgH = glassesImg.height * imgScale;
+        ctx.drawImage(glassesImg, sceneCX - imgW / 2, glassesY - imgH / 2, imgW, imgH);
+      } else {
+        // Fallback: draw glasses if image hasn't loaded yet
+        drawGlasses(sceneCX, glassesY, 48, 30,
+          'rgba(220,38,38,0.45)', 'rgba(37,99,235,0.45)', 1.0);
+      }
       ctx.font = '12px sans-serif';
       ctx.fillStyle = WCOLORS.teal;
       ctx.textAlign = 'center';
-      ctx.fillText('Each lens passes only its handedness \u2192 stereo depth!', sceneCX, glassesY + 30);
+      ctx.fillText('Each lens passes only its handedness \u2192 stereo depth!', sceneCX, glassesY + 34);
     } else {
       ctx.font = '12px sans-serif';
       ctx.fillStyle = WCOLORS.textDim;
@@ -9174,11 +9189,14 @@ function init3DMovieGlasses() {
       ctx.fillText('The brain can\'t separate them \u2014 you see a blurry double image.', sceneCX, glassesY + 18);
     }
 
-    // Advantage note
+    // Advantage note + attribution
     ctx.font = '11px sans-serif';
     ctx.fillStyle = WCOLORS.textDim;
     ctx.textAlign = 'center';
-    ctx.fillText('Circular polarization advantage: tilting your head doesn\'t break the effect (unlike linear).', sceneCX, H - 10);
+    ctx.fillText('Circular polarization advantage: tilting your head doesn\'t break the effect (unlike linear).', sceneCX, H - 22);
+    ctx.font = '9px sans-serif';
+    ctx.fillStyle = 'rgba(89,97,102,0.6)';
+    ctx.fillText('Photo: 3d-erlebnis / Wikimedia Commons, CC BY-SA 3.0', sceneCX, H - 8);
   }
 
   tick();
