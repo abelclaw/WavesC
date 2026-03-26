@@ -18294,9 +18294,8 @@ function initDiffractionGratingPattern() {
     wClear(ctx, W, H);
 
     const lambda = 18;
-    const gratingX = W * 0.18;
-    const wallX = W * 0.48;
-    const plotL = W * 0.58;
+    const gratingX = W * 0.22;
+    const plotL = W * 0.52;
     const plotR = W - 15;
     const gratingTop = 24;
     const gratingBot = H - 42;
@@ -18306,10 +18305,13 @@ function initDiffractionGratingPattern() {
     const totalGratingSpan = (N - 1) * slitSpacing;
     const slitOpenSize = Math.max(2, slitSpacing * 0.25);
 
-    // --- Incoming plane waves (left of grating) ---
+    // --- Incoming plane waves (left of grating, moving right) ---
     ctx.lineWidth = 1.5;
+    const waveSpan = gratingX - 5;
     for (let wf = 0; wf < 15; wf++) {
-      const x = gratingX - ((time * 12 + wf * lambda) % (gratingX + lambda));
+      let x = ((time * 12 - wf * lambda) % waveSpan);
+      if (x < 0) x += waveSpan;
+      x += 5;
       if (x > 5 && x < gratingX - 4) {
         const alpha = 0.15 + 0.15 * (x / gratingX);
         ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
@@ -18337,10 +18339,9 @@ function initDiffractionGratingPattern() {
     }
 
     // --- Diffracted wavelets from each slit ---
-    // Clip wavelets to the wave region so they don't overlap the plot
     ctx.save();
     ctx.beginPath();
-    ctx.rect(gratingX - 2, 0, wallX - gratingX + 10, H);
+    ctx.rect(gratingX - 2, 0, plotL - gratingX, H);
     ctx.clip();
     for (let i = 0; i < N; i++) {
       const sy = slitYs[i];
@@ -18358,38 +18359,6 @@ function initDiffractionGratingPattern() {
       }
     }
     ctx.restore();
-
-    // --- Distant wall / screen ---
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(wallX, gratingTop, 3, gratingH);
-
-    // --- Intensity pattern on the wall (bright bars) ---
-    const wallTop = gratingTop;
-    const wallBot = gratingBot;
-    const wallH = wallBot - wallTop;
-    const nSamples = Math.round(wallH);
-    const wallIntensities = [];
-    let wallMaxI = 0;
-    const wallDist = wallX - gratingX;
-    for (let py = 0; py < nSamples; py++) {
-      const dy = (wallTop + py) - gratingCY;
-      const sinTheta = dy / Math.sqrt(dy * dy + wallDist * wallDist);
-      const psi = 2 * Math.PI * dOverLambda * sinTheta;
-      let I;
-      if (Math.abs(Math.sin(psi / 2)) < 1e-8) {
-        I = 1;
-      } else {
-        const af = Math.sin(N * psi / 2) / (N * Math.sin(psi / 2));
-        I = af * af;
-      }
-      wallIntensities.push(I);
-      if (I > wallMaxI) wallMaxI = I;
-    }
-    for (let py = 0; py < nSamples; py++) {
-      const norm = wallIntensities[py] / Math.max(wallMaxI, 0.01);
-      ctx.fillStyle = 'rgba(15,118,110,' + (norm * 0.9 + 0.05) + ')';
-      ctx.fillRect(wallX + 3, wallTop + py, norm * 10, 1.2);
-    }
 
     // ===== Vertical I vs sin θ plot (far right) =====
     const plotT = gratingTop;
