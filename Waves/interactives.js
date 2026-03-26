@@ -18174,12 +18174,13 @@ function initDiffractionGratingPattern() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let N = 5, dOverLambda = 2.0;
+  let N = 5, dOverLambda = 2.5;
+  let time = 0;
   let draggingSlider = null;
-  const sliderX = 30, sliderW = W * 0.35;
+  const sliderX = 20, sliderW = W * 0.28;
   const sliders = [
-    { y: H - 32, label: 'N', min: 2, max: 50, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
-    { y: H - 14, label: 'd/\u03BB', min: 1, max: 5, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } }
+    { y: H - 28, label: 'N', min: 2, max: 20, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
+    { y: H - 10, label: 'd/\u03BB', min: 1, max: 5, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } }
   ];
 
   canvas.addEventListener('mousedown', function(e) {
@@ -18200,41 +18201,94 @@ function initDiffractionGratingPattern() {
     const s = sliders[draggingSlider];
     const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
     s.setVal(s.min + t * (s.max - s.min));
-    draw();
   }
 
-  function draw() {
+  function tick() {
+    if (!canvas.isConnected) return;
+    time += 0.05;
     wClear(ctx, W, H);
 
-    const plotL2 = 50, plotR2 = W - 20, plotT2 = 30, plotB2 = H - 60;
-    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+    const lambda = 18;
+    const gratingX = W * 0.25;
+    const wallX = W - 18;
+    const gratingTop = 20;
+    const gratingBot = H - 42;
+    const gratingH = gratingBot - gratingTop;
+    const gratingCY = (gratingTop + gratingBot) / 2;
+    const slitSpacing = dOverLambda * lambda;
+    const totalGratingSpan = (N - 1) * slitSpacing;
+    const slitOpenSize = Math.max(2, slitSpacing * 0.25);
 
-    // Axes
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('sin \u03B8', (plotL2 + plotR2) / 2, plotB2 + 14);
-    ctx.textAlign = 'right';
-    ctx.fillText('I/I\u2080', plotL2 - 5, plotT2 + 5);
-
-    // Tick marks on x-axis
-    for (let v = -1; v <= 1; v += 0.5) {
-      const px = plotL2 + (v + 1) / 2 * pW;
-      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(v.toFixed(1), px, plotB2 + 12);
-      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-      ctx.beginPath(); ctx.moveTo(px, plotT2); ctx.lineTo(px, plotB2); ctx.stroke();
+    // --- Incoming plane waves (left of grating) ---
+    ctx.lineWidth = 1.5;
+    for (let wf = 0; wf < 15; wf++) {
+      const x = gratingX - ((time * 12 + wf * lambda) % (gratingX + lambda));
+      if (x > 5 && x < gratingX - 4) {
+        const alpha = 0.15 + 0.15 * (x / gratingX);
+        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+        ctx.beginPath(); ctx.moveTo(x, gratingTop); ctx.lineTo(x, gratingBot); ctx.stroke();
+      }
     }
 
-    // Calculate and plot intensity
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    let maxI = 0;
+    // --- Grating barrier ---
+    ctx.fillStyle = WCOLORS.axis;
+    // Compute slit positions centered on grating
+    const slitYs = [];
+    for (let i = 0; i < N; i++) {
+      slitYs.push(gratingCY - totalGratingSpan / 2 + i * slitSpacing);
+    }
+    // Draw barrier segments between slits
+    let prevBottom = gratingTop;
+    for (let i = 0; i < N; i++) {
+      const slitTop = slitYs[i] - slitOpenSize / 2;
+      const slitBot = slitYs[i] + slitOpenSize / 2;
+      if (slitTop > prevBottom) {
+        ctx.fillRect(gratingX - 2, prevBottom, 4, slitTop - prevBottom);
+      }
+      prevBottom = slitBot;
+    }
+    if (prevBottom < gratingBot) {
+      ctx.fillRect(gratingX - 2, prevBottom, 4, gratingBot - prevBottom);
+    }
+
+    // --- Diffracted wavelets from each slit ---
+    for (let i = 0; i < N; i++) {
+      const sy = slitYs[i];
+      // If slit is outside visible area, skip
+      if (sy < gratingTop - 10 || sy > gratingBot + 10) continue;
+      for (let wf = 0; wf < 5; wf++) {
+        const r = (time * 12 + wf * lambda) % (W * 0.8);
+        if (r < 3) continue;
+        const alpha = Math.max(0, 0.18 * (1 - r / (W * 0.7)));
+        if (alpha < 0.01) continue;
+        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Only draw the right half-circles, clipped to visible area
+        const aStart = -Math.PI / 2;
+        const aEnd = Math.PI / 2;
+        ctx.arc(gratingX, sy, r, aStart, aEnd);
+        ctx.stroke();
+      }
+    }
+
+    // --- Distant wall / screen ---
+    ctx.fillStyle = WCOLORS.axis;
+    ctx.fillRect(wallX, gratingTop, 3, gratingH);
+
+    // --- Intensity pattern on the wall ---
+    // Compute the N-slit diffraction pattern and draw as bright bars
+    const wallTop = gratingTop;
+    const wallBot = gratingBot;
+    const wallH = wallBot - wallTop;
+    const nSamples = Math.round(wallH);
     const intensities = [];
-    for (let px = 0; px <= pW; px++) {
-      const sinTheta = (px / pW) * 2 - 1;
+    let maxI = 0;
+    for (let py = 0; py < nSamples; py++) {
+      const y = wallTop + py;
+      const dy = y - gratingCY;
+      const dist = wallX - gratingX;
+      const sinTheta = dy / Math.sqrt(dy * dy + dist * dist);
       const psi = 2 * Math.PI * dOverLambda * sinTheta;
       let I;
       if (Math.abs(Math.sin(psi / 2)) < 1e-8) {
@@ -18246,33 +18300,32 @@ function initDiffractionGratingPattern() {
       intensities.push(I);
       if (I > maxI) maxI = I;
     }
-
-    // Normalize and draw
-    for (let px = 0; px <= pW; px++) {
-      const py = plotB2 - (intensities[px] / Math.max(maxI, 0.01)) * pH * 0.9;
-      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    // Draw intensity as horizontal bars on the wall
+    for (let py = 0; py < nSamples; py++) {
+      const norm = intensities[py] / Math.max(maxI, 0.01);
+      const barW = norm * 14;
+      const bright = Math.round(norm * 255);
+      ctx.fillStyle = 'rgba(15,118,110,' + (norm * 0.9 + 0.05) + ')';
+      ctx.fillRect(wallX + 3, wallTop + py, barW, 1.2);
     }
-    ctx.stroke();
 
-    // Fill under curve
-    ctx.lineTo(plotR2, plotB2);
-    ctx.lineTo(plotL2, plotB2);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(15,118,110,0.08)';
-    ctx.fill();
-
-    // Mark principal maxima
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    for (let m = -3; m <= 3; m++) {
+    // --- Order labels on the wall ---
+    ctx.fillStyle = WCOLORS.amber; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+    const dist = wallX - gratingX;
+    for (let m = -4; m <= 4; m++) {
       const sinTheta = m / dOverLambda;
-      if (Math.abs(sinTheta) <= 1) {
-        const px = plotL2 + (sinTheta + 1) / 2 * pW;
-        ctx.beginPath(); ctx.arc(px, plotB2, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.fillText('m=' + m, px, plotT2 - 3);
+      if (Math.abs(sinTheta) > 0.95) continue;
+      const dy = sinTheta * dist / Math.sqrt(1 - sinTheta * sinTheta);
+      const py = gratingCY + dy;
+      if (py > wallTop + 5 && py < wallBot - 5) {
+        ctx.beginPath(); ctx.arc(wallX + 1, py, 2, 0, Math.PI * 2); ctx.fill();
+        if (m === 0 || Math.abs(m) === 1 || Math.abs(m) === 2) {
+          ctx.fillText('m=' + m, wallX + 20, py + 3);
+        }
       }
     }
 
-    // Sliders
+    // --- Sliders ---
     sliders.forEach(function(s, i) {
       ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(sliderX, s.y); ctx.lineTo(sliderX + sliderW, s.y); ctx.stroke();
@@ -18285,11 +18338,16 @@ function initDiffractionGratingPattern() {
       ctx.fillText(s.label + ' = ' + valStr, sliderX + sliderW + 10, s.y + 4);
     });
 
+    // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Diffraction Grating: N-Slit Pattern', 50, 20);
+    ctx.fillText('Diffraction Grating', 10, 14);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('Plane waves \u2192 grating \u2192 pattern on screen', W * 0.35, 14);
+
+    requestAnimationFrame(tick);
   }
 
-  draw();
+  tick();
 }
 
 // =========================================================================
