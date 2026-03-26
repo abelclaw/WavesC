@@ -18736,7 +18736,7 @@ function initSingleSlitDiffraction() {
 }
 
 // =========================================================================
-// 15. Fourier Optics Demo — "Draw Your Own Aperture"
+// 15. Fourier Optics Demo — Aperture → Fourier Transform
 // =========================================================================
 function initFourierOpticsDemo() {
   const canvas = document.getElementById('scene-fourier-optics-demo');
@@ -18745,95 +18745,79 @@ function initFourierOpticsDemo() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // Aperture data (256 samples, values 0-1)
+  // Aperture (256 samples, 0–1)
   const N = 256;
   const aperture = new Float32Array(N);
   let time = 0;
-  let drawing = false;
-  let lastDrawY = -1, lastDrawX = -1;
   let patternDirty = true;
 
-  // Cached diffraction pattern
+  // Cached FT pattern
   const nPat = 512;
   const patternCache = new Float32Array(nPat);
   let patternMax = 0;
 
+  // Mode: 0 = Square Wave, 1 = Gaussian, 2 = Draw
+  let mode = 0;
+  let slitWidth = 3.0;   // a in normalized units (square wave half-width)
+  let gaussSigma = 1.5;  // sigma for gaussian
+  let drawing = false, lastDrawX = -1, lastDrawY = -1;
+
   // Layout
-  const topY = 26, botY = H - 38;
+  const topY = 28, botY = H - 38;
   const areaH = botY - topY;
+  const midY = (topY + botY) / 2;
 
-  // T(x) drawing zone
-  const txL = 14, txR = 90, txW = txR - txL;
+  // Aperture panel
+  const apL = 10, apR = 85, apW = apR - apL;
 
-  // Barrier wall
-  const barrierX = 100;
-  const barW = 4;
+  // Barrier
+  const barrierX = 95, barW = 4;
 
-  // Diffraction pattern zone
-  const plotL = W * 0.62;
-  const plotR = W - 12;
+  // FT screen image
+  const ftL = W * 0.55, ftR = W - 10;
+  const ftW = Math.round(ftR - ftL);
 
-  // Brightness strip
-  const stripL = plotL, stripW = 28;
+  // Offscreen buffer for 2D diffraction image (redrawn only when dirty)
+  const ftBuf = document.createElement('canvas');
+  ftBuf.width = ftW; ftBuf.height = 512; // render at nPat resolution, scale to areaH
+  const ftCtx = ftBuf.getContext('2d');
 
-  // 1D plot
-  const pL = stripL + stripW + 10, pR = plotR, pW = pR - pL;
+  // Slider (used in modes 0 and 1)
+  const sliderX = apL, sliderW = apW, sliderY = botY + 12;
+  let draggingSlider = false;
 
-  // Preset buttons
-  var presets = ['Slit', 'Double', 'Grating', 'Sine', 'Gauss', 'Clear'];
-  var nBtn = presets.length;
-  var btnGap = 4;
-  var btnTotalW = W - 20;
-  var btnW = (btnTotalW - (nBtn - 1) * btnGap) / nBtn;
-  var btnY = H - 30, btnH = 22;
-  var activePreset = 0;
+  // Mode tabs
+  var tabs = ['Square', 'Gaussian', 'Draw'];
+  var nTabs = tabs.length;
+  var tabGap = 5;
+  var tabTotalW = W - 20;
+  var tabW = (tabTotalW - (nTabs - 1) * tabGap) / nTabs;
+  var tabY = H - 28, tabH = 22;
 
-  // ---- Presets ----
-  function loadPreset(idx) {
+  // ---- Build aperture from mode + parameters ----
+  function buildAperture() {
+    if (mode === 2) return; // draw mode: user controls aperture directly
     aperture.fill(0);
-    if (idx === 0) { // Single slit
+    if (mode === 0) { // Square wave (rect function)
       for (var i = 0; i < N; i++) {
-        var x = (i / N - 0.5) * 10;
-        if (Math.abs(x) < 1.5) aperture[i] = 1;
+        var x = (i / N - 0.5) * 10; // -5 to 5
+        if (Math.abs(x) < slitWidth) aperture[i] = 1;
       }
-    } else if (idx === 1) { // Double slit
+    } else if (mode === 1) { // Gaussian
       for (var i = 0; i < N; i++) {
         var x = (i / N - 0.5) * 10;
-        if (Math.abs(x - 1.8) < 0.4 || Math.abs(x + 1.8) < 0.4) aperture[i] = 1;
-      }
-    } else if (idx === 2) { // Grating (7 slits)
-      for (var i = 0; i < N; i++) {
-        var x = (i / N - 0.5) * 10;
-        for (var n = -3; n <= 3; n++) {
-          if (Math.abs(x - n * 1.2) < 0.18) aperture[i] = 1;
-        }
-      }
-    } else if (idx === 3) { // Sinusoidal: T(x) = 0.5(1 + cos(k0*x))
-      for (var i = 0; i < N; i++) {
-        var x = (i / N - 0.5) * 10;
-        if (Math.abs(x) < 3.5) {
-          aperture[i] = 0.5 * (1 + Math.cos(2.5 * x));
-        }
-      }
-    } else if (idx === 4) { // Gaussian
-      for (var i = 0; i < N; i++) {
-        var x = (i / N - 0.5) * 10;
-        aperture[i] = Math.exp(-x * x / 3);
+        aperture[i] = Math.exp(-x * x / (2 * gaussSigma * gaussSigma));
       }
     }
-    // idx === 5: clear (already zeroed)
-    activePreset = idx;
     patternDirty = true;
   }
 
-  loadPreset(0);
-
-  // ---- Drawing on T(x) ----
+  // ---- Drawing (mode 2 only) ----
   function paintAt(mx, my) {
     var frac = (my - topY) / areaH;
     if (frac < 0 || frac > 1) return;
     var idx = Math.floor(frac * N);
-    var tVal = Math.max(0, Math.min(1, (mx - txL) / txW));
+    var tVal = Math.max(0, Math.min(1, (mx - apL) / apW));
     var brushR = 3;
     for (var di = -brushR; di <= brushR; di++) {
       var ii = idx + di;
@@ -18842,10 +18826,9 @@ function initFourierOpticsDemo() {
       aperture[ii] = aperture[ii] * (1 - w) + tVal * w;
     }
     patternDirty = true;
-    activePreset = -1;
   }
 
-  function paintInterpolated(mx, my) {
+  function paintInterp(mx, my) {
     if (lastDrawY >= 0) {
       var dy = my - lastDrawY, dx = mx - lastDrawX;
       var steps = Math.max(1, Math.ceil(Math.abs(dy) / 2));
@@ -18860,51 +18843,75 @@ function initFourierOpticsDemo() {
   }
 
   // ---- Event handlers ----
-  function getPos(e) {
-    var rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  function getXY(e) {
+    var r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
   }
 
   function handleDown(mx, my) {
-    if (my > btnY - 2 && my < btnY + btnH + 2) {
-      for (var i = 0; i < nBtn; i++) {
-        var bx = 10 + i * (btnW + btnGap);
-        if (mx > bx && mx < bx + btnW) { loadPreset(i); return; }
+    // Tab buttons
+    if (my > tabY - 3 && my < tabY + tabH + 3) {
+      for (var i = 0; i < nTabs; i++) {
+        var tx = 10 + i * (tabW + tabGap);
+        if (mx > tx && mx < tx + tabW) {
+          if (mode !== i) {
+            mode = i;
+            if (mode === 2) { aperture.fill(0); patternDirty = true; }
+            else buildAperture();
+          }
+          return;
+        }
       }
     }
-    if (mx >= txL - 8 && mx <= txR + 8 && my >= topY && my <= botY) {
+    // Slider (modes 0 and 1)
+    if (mode < 2 && Math.abs(my - sliderY) < 12 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) {
+      draggingSlider = true;
+      handleSlider(mx);
+      return;
+    }
+    // Drawing (mode 2)
+    if (mode === 2 && mx >= apL - 5 && mx <= apR + 5 && my >= topY && my <= botY) {
       drawing = true;
       lastDrawX = -1; lastDrawY = -1;
-      paintInterpolated(mx, my);
+      paintInterp(mx, my);
     }
   }
 
-  canvas.addEventListener('mousedown', function(e) { var p = getPos(e); handleDown(p.x, p.y); });
+  function handleSlider(mx) {
+    var t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    if (mode === 0) {
+      slitWidth = 0.3 + t * 4.7; // 0.3 to 5.0
+    } else if (mode === 1) {
+      gaussSigma = 0.2 + t * 3.8; // 0.2 to 4.0
+    }
+    buildAperture();
+  }
+
+  canvas.addEventListener('mousedown', function(e) { var p = getXY(e); handleDown(p.x, p.y); });
   canvas.addEventListener('mousemove', function(e) {
-    if (!drawing) return;
-    var p = getPos(e);
-    paintInterpolated(p.x, p.y);
+    var p = getXY(e);
+    if (draggingSlider) { handleSlider(p.x); return; }
+    if (drawing && mode === 2) paintInterp(p.x, p.y);
   });
-  canvas.addEventListener('mouseup', function() { drawing = false; lastDrawX = -1; lastDrawY = -1; });
-  canvas.addEventListener('mouseleave', function() { drawing = false; lastDrawX = -1; lastDrawY = -1; });
+  canvas.addEventListener('mouseup', function() { draggingSlider = false; drawing = false; lastDrawX = -1; lastDrawY = -1; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = false; drawing = false; lastDrawX = -1; lastDrawY = -1; });
   canvas.addEventListener('touchstart', function(e) {
-    e.preventDefault();
-    var rect = canvas.getBoundingClientRect();
-    handleDown(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+    e.preventDefault(); var r = canvas.getBoundingClientRect();
+    handleDown(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
   }, { passive: false });
   canvas.addEventListener('touchmove', function(e) {
-    if (!drawing) return; e.preventDefault();
-    var rect = canvas.getBoundingClientRect();
-    paintInterpolated(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+    e.preventDefault(); var r = canvas.getBoundingClientRect();
+    var mx = e.touches[0].clientX - r.left, my = e.touches[0].clientY - r.top;
+    if (draggingSlider) { handleSlider(mx); return; }
+    if (drawing && mode === 2) paintInterp(mx, my);
   }, { passive: false });
-  canvas.addEventListener('touchend', function() { drawing = false; lastDrawX = -1; lastDrawY = -1; });
+  canvas.addEventListener('touchend', function() { draggingSlider = false; drawing = false; lastDrawX = -1; lastDrawY = -1; });
 
-  // ---- Compute diffraction pattern (DFT) ----
+  // ---- DFT + render offscreen 2D image ----
   function recomputePattern() {
     patternMax = 0;
     for (var k = 0; k < nPat; k++) {
-      var re = 0, im = 0;
-      var kShift = k - nPat / 2;
+      var re = 0, im = 0, kShift = k - nPat / 2;
       for (var n = 0; n < N; n++) {
         var phase = -2 * Math.PI * kShift * n / N;
         re += aperture[n] * Math.cos(phase);
@@ -18914,62 +18921,91 @@ function initFourierOpticsDemo() {
       patternCache[k] = I;
       if (I > patternMax) patternMax = I;
     }
+    // Render 2D screen image to offscreen buffer
+    var imgData = ftCtx.createImageData(ftW, nPat);
+    var d = imgData.data;
+    var gamma = 0.4;
+    var bandHW = ftW * 0.48;
+    for (var py = 0; py < nPat; py++) {
+      var Inorm = patternCache[py] / Math.max(patternMax, 0.001);
+      var bright = Inorm > 0.001 ? Math.pow(Inorm, gamma) * 255 : 0;
+      for (var px = 0; px < ftW; px++) {
+        var dx = (px - ftW / 2) / bandHW;
+        var val = Math.round(bright * Math.exp(-dx * dx * 2));
+        var off = (py * ftW + px) * 4;
+        d[off] = val; d[off + 1] = val; d[off + 2] = val; d[off + 3] = 255;
+      }
+    }
+    ftCtx.putImageData(imgData, 0, 0);
     patternDirty = false;
   }
 
-  // ---- Animation loop ----
+  // ---- Initial state ----
+  buildAperture();
+
+  // ---- Render ----
   function tick() {
     if (!canvas.isConnected) return;
     time += 0.05;
     if (patternDirty) recomputePattern();
-
     wClear(ctx, W, H);
     var lambda = 16;
-    var cy = (topY + botY) / 2;
 
     // ===== Title =====
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Fourier Optics', 10, 16);
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('\u2190 draw \u2192', txR + 2, 16);
 
-    // ===== T(x) drawing area =====
+    // ===== Aperture panel =====
+    // Background
     ctx.fillStyle = '#eae5db';
-    ctx.fillRect(txL, topY, txW, areaH);
+    ctx.fillRect(apL, topY, apW, areaH);
 
-    // Filled area showing transparency
-    ctx.fillStyle = 'rgba(15,118,110,0.22)';
+    // Filled area
+    ctx.fillStyle = 'rgba(15,118,110,0.25)';
     ctx.beginPath();
-    ctx.moveTo(txL, topY);
+    ctx.moveTo(apL, topY);
     for (var i = 0; i < N; i++) {
-      ctx.lineTo(txL + aperture[i] * txW, topY + (i / N) * areaH);
+      ctx.lineTo(apL + aperture[i] * apW, topY + (i / N) * areaH);
     }
-    ctx.lineTo(txL, botY);
-    ctx.closePath();
-    ctx.fill();
+    ctx.lineTo(apL, botY);
+    ctx.closePath(); ctx.fill();
 
-    // T(x) curve
+    // Curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
     for (var i = 0; i < N; i++) {
       var yy = topY + (i / N) * areaH;
-      var xx = txL + aperture[i] * txW;
+      var xx = apL + aperture[i] * apW;
       if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
     }
     ctx.stroke();
 
-    // Border and label
+    // Border
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(txL, topY, txW, areaH);
+    ctx.strokeRect(apL, topY, apW, areaH);
+
+    // Label
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'T(x)', (txL + txR) / 2, topY - 5);
+    fillTextSub(ctx, 'T(x)', (apL + apR) / 2, topY - 6);
 
-    // 0 and 1 tick labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui';
-    ctx.textAlign = 'left'; ctx.fillText('0', txL - 1, botY + 10);
-    ctx.textAlign = 'right'; ctx.fillText('1', txR + 1, botY + 10);
+    // Slider or draw hint
+    if (mode < 2) {
+      // Draw slider
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+      var t = mode === 0 ? (slitWidth - 0.3) / 4.7 : (gaussSigma - 0.2) / 3.8;
+      ctx.beginPath(); ctx.arc(sliderX + sliderW * t, sliderY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = WCOLORS.teal; ctx.fill();
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      if (mode === 0) ctx.fillText('width = ' + slitWidth.toFixed(1), (apL + apR) / 2, sliderY + 14);
+      else ctx.fillText('\u03C3 = ' + gaussSigma.toFixed(1), (apL + apR) / 2, sliderY + 14);
+    } else {
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('\u2190 draw \u2192', (apL + apR) / 2, sliderY + 2);
+    }
 
-    // ===== Barrier with aperture openings =====
+    // ===== Barrier =====
     ctx.fillStyle = WCOLORS.axis;
     for (var i = 0; i < N; i++) {
       if (aperture[i] < 0.08) {
@@ -18981,37 +19017,39 @@ function initFourierOpticsDemo() {
     ctx.fillRect(barrierX - barW / 2, botY, barW, 3);
 
     // ===== Incoming plane waves =====
-    var waveStart = txR + 6;
-    var waveSpan = barrierX - barW / 2 - waveStart;
-    ctx.lineWidth = 1.5;
-    for (var wf = 0; wf < 12; wf++) {
-      var x = ((time * 12 - wf * lambda) % waveSpan);
-      if (x < 0) x += waveSpan;
-      x += waveStart;
-      if (x > waveStart && x < barrierX - barW / 2) {
-        var alpha = 0.12 + 0.18 * ((x - waveStart) / waveSpan);
-        ctx.strokeStyle = 'rgba(15,118,110,' + alpha.toFixed(3) + ')';
-        ctx.beginPath(); ctx.moveTo(x, topY); ctx.lineTo(x, botY); ctx.stroke();
+    var waveStart = apR + 4;
+    var waveEnd = barrierX - barW / 2;
+    var waveSpan = waveEnd - waveStart;
+    if (waveSpan > 5) {
+      ctx.lineWidth = 1.5;
+      for (var wf = 0; wf < 10; wf++) {
+        var x = ((time * 12 - wf * lambda) % waveSpan);
+        if (x < 0) x += waveSpan;
+        x += waveStart;
+        if (x > waveStart + 2 && x < waveEnd - 2) {
+          var alpha = 0.10 + 0.20 * ((x - waveStart) / waveSpan);
+          ctx.strokeStyle = 'rgba(15,118,110,' + alpha.toFixed(3) + ')';
+          ctx.beginPath(); ctx.moveTo(x, topY); ctx.lineTo(x, botY); ctx.stroke();
+        }
       }
     }
 
-    // ===== Diffracted wavelets (Huygens) =====
+    // ===== Huygens wavelets =====
     ctx.save();
     ctx.beginPath();
-    ctx.rect(barrierX + barW / 2, topY - 2, plotL - barrierX - barW / 2, areaH + 4);
+    ctx.rect(barrierX + barW / 2, topY - 2, ftL - barrierX - barW / 2 - 5, areaH + 4);
     ctx.clip();
-
-    var nSources = 24;
-    for (var s = 0; s < nSources; s++) {
-      var idx = Math.floor((s + 0.5) * N / nSources);
+    var nSrc = 20;
+    for (var s = 0; s < nSrc; s++) {
+      var idx = Math.floor((s + 0.5) * N / nSrc);
       if (aperture[idx] < 0.1) continue;
       var sy = topY + (idx / N) * areaH;
       var amp = aperture[idx];
-      for (var wf = 0; wf < 6; wf++) {
-        var r = (time * 12 + wf * lambda) % (W * 0.55);
+      for (var wf = 0; wf < 5; wf++) {
+        var r = (time * 12 + wf * lambda) % (W * 0.5);
         if (r < 3) continue;
-        var a2 = Math.max(0, 0.14 * amp * (1 - r / (W * 0.5)));
-        if (a2 < 0.008) continue;
+        var a2 = Math.max(0, 0.13 * amp * (1 - r / (W * 0.45)));
+        if (a2 < 0.006) continue;
         ctx.strokeStyle = 'rgba(15,118,110,' + a2.toFixed(3) + ')';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -19021,86 +19059,45 @@ function initFourierOpticsDemo() {
     }
     ctx.restore();
 
-    // ===== FT label =====
+    // ===== FT arrow =====
     ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('FT \u2192', (barrierX + plotL) / 2, topY - 5);
+    ctx.fillText('FT \u2192', (barrierX + ftL) / 2, topY - 6);
 
-    // ===== Brightness strip =====
+    // ===== 2D Diffraction screen image (from offscreen buffer) =====
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, '|FT|^{2}', stripL + stripW / 2, topY - 5);
+    ctx.fillText('Screen', (ftL + ftR) / 2, topY - 6);
 
-    for (var py = 0; py < areaH; py++) {
-      var k = Math.floor(py / areaH * nPat);
-      var Iv = patternCache[k] / Math.max(patternMax, 0.001);
-      var bright = Math.round(Math.sqrt(Iv) * 255);
-      ctx.fillStyle = 'rgb(' + bright + ',' + bright + ',' + bright + ')';
-      ctx.fillRect(stripL, topY + py, stripW, 1);
-    }
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(stripL, topY, stripW, areaH);
+    ctx.drawImage(ftBuf, 0, 0, ftW, nPat, ftL, topY, ftW, areaH);
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+    ctx.strokeRect(ftL, topY, ftW, areaH);
 
-    // ===== 1D intensity plot =====
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
-    fillTextSub(ctx, 'I(\u03B8)', (pL + pR) / 2, topY - 5);
-
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(pL, topY); ctx.lineTo(pL, botY); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(pL, cy); ctx.lineTo(pR, cy); ctx.stroke();
-
-    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
-    for (var v = -1; v <= 1; v += 0.5) {
-      var py2 = cy + v * (areaH / 2);
-      if (py2 < topY || py2 > botY) continue;
-      ctx.beginPath(); ctx.moveTo(pL, py2); ctx.lineTo(pR, py2); ctx.stroke();
-    }
-
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '8px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('+1', pL - 3, topY + 4);
-    ctx.fillText('0', pL - 3, cy + 3);
-    ctx.fillText('\u20131', pL - 3, botY + 2);
-
-    // Fill under curve
+    // ===== 1D intensity curve overlaid on left edge of screen =====
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 2;
     ctx.beginPath();
     for (var py = 0; py <= areaH; py++) {
       var k = Math.floor(py / areaH * nPat);
       var Iv = patternCache[k] / Math.max(patternMax, 0.001);
-      var px = pL + Iv * pW * 0.92;
-      if (py === 0) ctx.moveTo(px, topY + py); else ctx.lineTo(px, topY + py);
-    }
-    ctx.lineTo(pL, botY);
-    ctx.lineTo(pL, topY);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(15,118,110,0.08)';
-    ctx.fill();
-
-    // Intensity curve
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (var py = 0; py <= areaH; py++) {
-      var k = Math.floor(py / areaH * nPat);
-      var Iv = patternCache[k] / Math.max(patternMax, 0.001);
-      var px = pL + Iv * pW * 0.92;
-      if (py === 0) ctx.moveTo(px, topY + py); else ctx.lineTo(px, topY + py);
+      var px2 = ftL + 3 + Iv * (ftW * 0.4);
+      if (py === 0) ctx.moveTo(px2, topY); else ctx.lineTo(px2, topY + py);
     }
     ctx.stroke();
 
-    // ===== Preset buttons =====
-    for (var i = 0; i < nBtn; i++) {
-      var bx = 10 + i * (btnW + btnGap);
-      var active = activePreset === i;
+    // ===== Mode tabs =====
+    for (var i = 0; i < nTabs; i++) {
+      var tx = 10 + i * (tabW + tabGap);
+      var active = mode === i;
       ctx.fillStyle = active ? WCOLORS.teal : '#e5e0d6';
       var br = 4;
       ctx.beginPath();
-      ctx.moveTo(bx + br, btnY);
-      ctx.arcTo(bx + btnW, btnY, bx + btnW, btnY + btnH, br);
-      ctx.arcTo(bx + btnW, btnY + btnH, bx, btnY + btnH, br);
-      ctx.arcTo(bx, btnY + btnH, bx, btnY, br);
-      ctx.arcTo(bx, btnY, bx + btnW, btnY, br);
-      ctx.closePath();
-      ctx.fill();
+      ctx.moveTo(tx + br, tabY);
+      ctx.arcTo(tx + tabW, tabY, tx + tabW, tabY + tabH, br);
+      ctx.arcTo(tx + tabW, tabY + tabH, tx, tabY + tabH, br);
+      ctx.arcTo(tx, tabY + tabH, tx, tabY, br);
+      ctx.arcTo(tx, tabY, tx + tabW, tabY, br);
+      ctx.closePath(); ctx.fill();
       ctx.fillStyle = active ? '#fff' : WCOLORS.text;
       ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(presets[i], bx + btnW / 2, btnY + 15);
+      ctx.fillText(tabs[i], tx + tabW / 2, tabY + 15);
     }
 
     requestAnimationFrame(tick);

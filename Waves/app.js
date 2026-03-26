@@ -4267,7 +4267,7 @@ function sceneMarkup(type) {
     case "fourier-optics-demo":
       return `
         <div class="scene-label">Interactive 4: Fourier Optics</div>
-        <p class="scene-caption">Draw any aperture transparency T(x) on the left and watch the diffraction pattern — its Fourier transform — appear in real time.</p>
+        <p class="scene-caption">The diffraction pattern on the screen is the Fourier transform of the aperture. Adjust the width of a square or Gaussian aperture, or draw your own.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-optics-demo" width="600" height="340"></canvas>
         </div>
