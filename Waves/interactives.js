@@ -1842,7 +1842,8 @@ function initTransientDecay() {
   const wdVal = document.getElementById('transient-wd-val');
   const w0Val = document.getElementById('transient-w0-val');
   const gammaVal = document.getElementById('transient-gamma-val');
-  const restartBtn = document.getElementById('transient-restart');
+  const playBtn = document.getElementById('transient-play');
+  let transientPlaying = true;
 
   // Driven oscillator math: x_total = x_ss + x_transient
   // x_ss = A cos(wd t) + B sin(wd t)
@@ -1892,7 +1893,10 @@ function initTransientDecay() {
   if (wdSlider) wdSlider.addEventListener('input', onSliderChange);
   if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
   if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
-  if (restartBtn) restartBtn.addEventListener('click', () => { x0 = 0; recompute(); t = 0; });
+  if (playBtn) playBtn.addEventListener('click', () => {
+    transientPlaying = !transientPlaying;
+    playBtn.textContent = transientPlaying ? 'Pause' : 'Play';
+  });
 
   // --- Drag the mass to set initial displacement ---
   // The pixel-to-physics scale factor used in draw
@@ -1963,7 +1967,7 @@ function initTransientDecay() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    if (!dragging) {
+    if (!dragging && transientPlaying) {
       t += 0.025;
       if (t > tMax) t = 0;
     }
@@ -7494,140 +7498,110 @@ function initSoundRefractionAtmosphere() {
     wClear(ctx, W, H);
 
     const panelW = W / 2 - 15;
-    const panelH = H - 40;
     const panelT = 30;
-    const groundY = panelT + panelH - 20;
+    const groundY = H - 30;
+    const skyH = groundY - panelT;
+    const N = 60;
 
-    // --- Daytime panel (left) ---
-    const lx = 10;
-
-    // Temperature gradient (hot at bottom, cold at top)
-    for (let y = panelT; y < groundY; y++) {
-      const frac = (y - panelT) / (groundY - panelT);
-      const r = Math.round(255 * (0.3 + 0.5 * frac));
-      const g = Math.round(200 * (0.5 + 0.3 * frac));
-      const b = Math.round(255 * (0.8 - 0.3 * frac));
-      ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
-      ctx.fillRect(lx, y, panelW, 1);
+    function drawPanel(ox, title, tempBot, tempTop, vBot, vTop, gradFn) {
+      for (let y = panelT; y < groundY; y++) {
+        const f = (y - panelT) / skyH;
+        const c = gradFn(f);
+        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},0.18)`;
+        ctx.fillRect(ox, y, panelW, 1);
+      }
+      ctx.fillStyle = '#8B7355';
+      ctx.fillRect(ox, groundY, panelW, 5);
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(title, ox + panelW / 2, 18);
+      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = tempBot.color; ctx.fillText(tempBot.label, ox + 4, groundY - 8);
+      ctx.fillStyle = tempTop.color; ctx.fillText(tempTop.label, ox + 4, panelT + 15);
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText(vBot, ox + panelW - 4, groundY - 8);
+      ctx.fillText(vTop, ox + panelW - 4, panelT + 15);
     }
 
-    // Ground
-    ctx.fillStyle = '#8B7355';
-    ctx.fillRect(lx, groundY, panelW, 5);
+    // --- Daytime: hot ground → v fast at bottom, v slow at top → rays curve UP ---
+    const lx = 10;
+    drawPanel(lx, 'Daytime (hot ground)',
+      { label: 'Hot', color: WCOLORS.red }, { label: 'Cold', color: WCOLORS.blue },
+      'v fast', 'v slow',
+      (f) => [Math.round(255 * (0.3 + 0.55 * f)), Math.round(180 * (0.4 + 0.35 * f)), Math.round(255 * (0.85 - 0.5 * f))]
+    );
 
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Daytime (hot ground)', lx + panelW / 2, 18);
-
-    // Temperature labels
-    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Hot', lx + 3, groundY - 5);
-    ctx.fillStyle = WCOLORS.blue;
-    ctx.fillText('Cold', lx + 3, panelT + 15);
-
-    // Speed labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('v fast', lx + panelW - 3, groundY - 5);
-    ctx.fillText('v slow', lx + panelW - 3, panelT + 15);
-
-    // Sound rays bending UPWARD (away from ground) - daytime
-    const srcX = lx + 20;
-    const srcY = groundY - 10;
+    const srcX = lx + 30;
+    const srcY = panelT + skyH * 0.7;
+    const launchDay = [-5, 8, 20, 35, 50, 65];
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    const angles = [0.15, 0.35, 0.55, 0.75, 0.95];
-    for (const a of angles) {
-      ctx.beginPath();
-      ctx.moveTo(srcX, srcY);
-      const steps = 40;
-      for (let s = 1; s <= steps; s++) {
-        const frac = s / steps;
-        const x = srcX + frac * (panelW - 40);
-        // Ray curves upward in daytime
-        const y = srcY - frac * a * (groundY - panelT) * 0.6 - frac * frac * a * 30;
-        if (y < panelT) break;
+    for (const deg of launchDay) {
+      const rad = deg * Math.PI / 180;
+      const vx = Math.cos(rad), vy = -Math.sin(rad);
+      ctx.beginPath(); ctx.moveTo(srcX, srcY);
+      const span = panelW - 50;
+      for (let s = 1; s <= N; s++) {
+        const x = srcX + vx * s * span / N;
+        // upward curvature (negative = up on canvas)
+        const y = srcY + vy * s * skyH * 0.55 / N - 0.003 * s * s * skyH;
+        if (x > lx + panelW || y < panelT || y > groundY) break;
         ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
 
     // Shadow zone
-    ctx.fillStyle = 'rgba(220, 38, 38, 0.1)';
-    ctx.fillRect(lx + panelW * 0.55, groundY - 40, panelW * 0.4, 40);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Shadow zone', lx + panelW * 0.75, groundY - 15);
+    const shL = lx + panelW * 0.5, shW = panelW * 0.45;
+    ctx.fillStyle = 'rgba(220, 38, 38, 0.10)';
+    ctx.fillRect(shL, groundY - 50, shW, 50);
+    ctx.strokeStyle = 'rgba(220, 38, 38, 0.3)'; ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]); ctx.strokeRect(shL, groundY - 50, shW, 50); ctx.setLineDash([]);
+    ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Shadow zone', shL + shW / 2, groundY - 20);
 
-    // Source marker
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX, srcY, 5, 0, 2 * Math.PI); ctx.fill();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('src', srcX, srcY + 14);
+    ctx.fillText('source', srcX, srcY + 16);
 
-    // --- Evening panel (right) ---
+    // --- Evening: cool ground → v slow at bottom, v fast at top → rays curve DOWN ---
     const rx = W / 2 + 5;
+    drawPanel(rx, 'Evening (cool ground)',
+      { label: 'Cool', color: WCOLORS.blue }, { label: 'Warm', color: WCOLORS.red },
+      'v slow', 'v fast',
+      (f) => [Math.round(255 * (0.55 - 0.3 * f)), Math.round(180 * (0.35 + 0.25 * f)), Math.round(255 * (0.45 + 0.45 * f))]
+    );
 
-    // Temperature gradient (cool at bottom, warm at top)
-    for (let y = panelT; y < groundY; y++) {
-      const frac = (y - panelT) / (groundY - panelT);
-      const r = Math.round(255 * (0.5 - 0.2 * frac));
-      const g = Math.round(200 * (0.5 + 0.1 * frac));
-      const b = Math.round(255 * (0.5 + 0.4 * frac));
-      ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
-      ctx.fillRect(rx, y, panelW, 1);
-    }
-
-    // Ground
-    ctx.fillStyle = '#8B7355';
-    ctx.fillRect(rx, groundY, panelW, 5);
-
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Evening (cool ground)', rx + panelW / 2, 18);
-
-    // Temperature labels
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Cool', rx + 3, groundY - 5);
-    ctx.fillStyle = WCOLORS.red;
-    ctx.fillText('Warm', rx + 3, panelT + 15);
-
-    // Speed labels
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('v slow', rx + panelW - 3, groundY - 5);
-    ctx.fillText('v fast', rx + panelW - 3, panelT + 15);
-
-    // Sound rays bending DOWNWARD (toward ground) - evening
-    const srcX2 = rx + 20;
-    const srcY2 = groundY - 10;
+    const srcX2 = rx + 30;
+    const srcY2 = panelT + skyH * 0.7;
+    const launchEve = [10, 20, 30, 42, 55, 68];
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    for (const a of angles) {
-      ctx.beginPath();
-      ctx.moveTo(srcX2, srcY2);
-      const steps = 40;
-      for (let s = 1; s <= steps; s++) {
-        const frac = s / steps;
-        const x = srcX2 + frac * (panelW - 40);
-        // Ray initially goes up then curves back down
-        const yUp = -a * (groundY - panelT) * 0.4 * frac;
-        const yCurve = a * 0.6 * (groundY - panelT) * frac * frac;
-        const y = srcY2 + yUp + yCurve;
-        if (y > groundY) break;
-        ctx.lineTo(x, Math.min(y, groundY));
+    for (const deg of launchEve) {
+      const rad = deg * Math.PI / 180;
+      const vx = Math.cos(rad), vy = -Math.sin(rad);
+      ctx.beginPath(); ctx.moveTo(srcX2, srcY2);
+      const span = panelW - 50;
+      for (let s = 1; s <= N; s++) {
+        const x = srcX2 + vx * s * span / N;
+        // downward curvature (positive = down on canvas)
+        const y = srcY2 + vy * s * skyH * 0.55 / N + 0.004 * s * s * skyH;
+        if (x > rx + panelW) break;
+        if (y > groundY) { ctx.lineTo(x, groundY); break; }
+        if (y < panelT) break;
+        ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
 
-    // Source marker
+    ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Sound carries far \u2192', rx + panelW * 0.68, groundY - 8);
+
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX2, srcY2, 5, 0, 2 * Math.PI); ctx.fill();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('src', srcX2, srcY2 + 14);
+    ctx.fillText('source', srcX2, srcY2 + 16);
 
-    // Sound travels far label
-    ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Sound carried far', rx + panelW * 0.65, groundY - 5);
-
-    // Bottom note
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Sound bends toward regions of slower wave speed', W / 2, H - 5);
+    ctx.fillText('Sound bends toward regions of slower wave speed (v \u221D \u221AT)', W / 2, H - 5);
   }
 
   draw();
@@ -12123,7 +12097,8 @@ function initStringJunction() {
     both: document.getElementById('sj-both'),
     'phase-flip': document.getElementById('sj-phase-flip'),
   };
-  const btnRestart = document.getElementById('sj-restart');
+  const btnPlay = document.getElementById('sj-play');
+  let sjPlaying = true;
 
   let mode = 'physical';
   let t = 0;
@@ -12136,7 +12111,10 @@ function initStringJunction() {
   }
 
   Object.entries(btns).forEach(([m, b]) => b && b.addEventListener('click', () => setMode(m)));
-  if (btnRestart) btnRestart.addEventListener('click', () => { t = 0; });
+  if (btnPlay) btnPlay.addEventListener('click', () => {
+    sjPlaying = !sjPlaying;
+    btnPlay.textContent = sjPlaying ? 'Pause' : 'Play';
+  });
   setMode('physical');
 
   function tick() {
