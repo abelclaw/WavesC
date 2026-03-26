@@ -3296,16 +3296,31 @@ function initBeats() {
     }
   }
 
-  // Play button
+  // Play buttons — one for each frequency alone, to compare
   {
     const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
-    if (controls && !document.getElementById('beats-play')) {
-      wMakePlayBtn(controls, 'beats-play', '\u25B6 Listen', () => {
+    if (controls && !document.getElementById('beats-play-s')) {
+      wMakePlayBtn(controls, 'beats-play-s', '\u25B6 νₛ alone', () => {
         const nS = parseFloat(f1Slider?.value || 1);
         const nA = parseFloat(f2Slider?.value || 1.15);
-        // Center audio around 440 Hz; amplify Δν by 20× for audible beats
         const dnu = (nA - nS) * 20;
-        wPlayTones('beats-play', [
+        wPlayTones('beats-play-s', [
+          { freq: 440 - dnu / 2, gain: 0.5 }
+        ], 0);
+      });
+      wMakePlayBtn(controls, 'beats-play-a', '\u25B6 νₐ alone', () => {
+        const nS = parseFloat(f1Slider?.value || 1);
+        const nA = parseFloat(f2Slider?.value || 1.15);
+        const dnu = (nA - nS) * 20;
+        wPlayTones('beats-play-a', [
+          { freq: 440 + dnu / 2, gain: 0.5 }
+        ], 0);
+      });
+      wMakePlayBtn(controls, 'beats-play-both', '\u25B6 Both (beats)', () => {
+        const nS = parseFloat(f1Slider?.value || 1);
+        const nA = parseFloat(f2Slider?.value || 1.15);
+        const dnu = (nA - nS) * 20;
+        wPlayTones('beats-play-both', [
           { freq: 440 - dnu / 2, gain: 0.5 },
           { freq: 440 + dnu / 2, gain: 0.5 }
         ], 0);
@@ -3327,9 +3342,15 @@ function initBeats() {
     const omegaA = 2 * Math.PI * nuA;
     const omegaBeat = Math.PI * Math.abs(nuA - nuS);
     // Update live audio if playing
-    if (wIsPlaying('beats-play')) {
-      const dnu = (nuA - nuS) * 20;
-      wUpdateTones('beats-play', [
+    const dnu = (nuA - nuS) * 20;
+    if (wIsPlaying('beats-play-s')) {
+      wUpdateTones('beats-play-s', [{ freq: 440 - dnu / 2, gain: 0.5 }]);
+    }
+    if (wIsPlaying('beats-play-a')) {
+      wUpdateTones('beats-play-a', [{ freq: 440 + dnu / 2, gain: 0.5 }]);
+    }
+    if (wIsPlaying('beats-play-both')) {
+      wUpdateTones('beats-play-both', [
         { freq: 440 - dnu / 2, gain: 0.5 },
         { freq: 440 + dnu / 2, gain: 0.5 }
       ]);
