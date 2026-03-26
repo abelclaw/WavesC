@@ -10744,19 +10744,7 @@ function initPrismDispersion() {
     }
     ctx.restore();
 
-    // --- Labels ---
-    if (rays.length > 0) {
-      const first = rays[0], last = rays[rays.length - 1];
-      ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillStyle = first.color;
-      ctx.fillText(first.name, first.exitEndX + 5, first.exitEndY - 5);
-      ctx.fillStyle = last.color;
-      ctx.fillText(last.name, last.exitEndX + 5, last.exitEndY + 12);
-    }
-
-    // White light label
-    ctx.fillStyle = '#ccc'; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText('White light', beamStartX + 5, beamStartY - 10);
+    // No color labels — the colors speak for themselves
 
     // Apex angle label (inside the prism, below apex)
     ctx.fillStyle = 'rgba(200,180,100,0.8)'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
