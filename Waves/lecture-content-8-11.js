@@ -2,15 +2,22 @@ window.LECTURE_CONTENT_8_11 = {
 
   "8": [
     {
-      heading: "Strings",
+      heading: "Interactive 1: Strings",
       body: `<p>To understand sound, we need to know more than just which notes are played — we need the <strong>shape</strong> of the notes. If a string were a pure infinitely thin oscillator, with no damping, it would produce pure notes. In the real world, strings have finite width and radius, we pluck or bow them in funny ways, the vibrations are transmitted to sound waves in the air through the body of the instrument, etc. All this combines to a much more interesting picture than pure frequencies.</p>
 <p>For example, the spectrum of a violin shows the intensity of each frequency produced (the vertical axis is in decibels, which is a logarithmic measure of sound intensity; we'll discuss this scale in Lecture 10). We know the basics of this spectrum: the fundamental and the harmonics are related to the <strong>Fourier series</strong> of the note played. Now we want to understand where the <strong>shape of the peaks</strong> comes from. The tool for studying these things is the <strong>Fourier transform</strong>.</p>`,
       interactive: "violin-spectrum",
-      interactiveCaption: "Spectrum of a violin showing the fundamental and harmonics with characteristic peak shapes",
+      interactiveCaption: "Idealized instrument spectra built from a few harmonics with Lorentzian peak shapes",
       mathLinks: ["fourier-series-review"]
     },
     {
-      heading: "Fourier Transforms",
+      heading: "Interactive 2: Real Instrument Spectra",
+      body: `<p>The idealized spectrum above captures the basic idea but doesn't sound like a real instrument. What's missing? Real instruments have <strong>time-varying spectra</strong>: the mix of harmonics changes during the attack, sustain, and decay of a note. Higher harmonics typically decay faster than lower ones. Bowed and blown instruments have <strong>vibrato</strong> — a slow frequency modulation around 5–7 Hz. And the attack transient often contains a burst of <strong>noise</strong> (the scratch of a bow, the chiff of a flute, the thwack of a hammer).</p>
+<p>This interactive synthesizes notes with these features: per-harmonic amplitude envelopes, vibrato, inharmonicity, and attack noise. Press play and compare to the idealized version — the difference in timbre is striking, even though both are built from sine waves.</p>`,
+      interactive: "real-instrument-spectrum",
+      interactiveCaption: "Realistic instrument synthesis with time-varying spectra — watch the live FFT as the note evolves"
+    },
+    {
+      heading: "Interactive 3: Fourier Transforms",
       body: `<p>In the violin spectrum, you can see that the violin produces sound waves with frequencies which are arbitrarily close. The way to describe these frequencies is with <strong>Fourier transforms</strong>.</p>
 <p>Recall the Fourier exponential series:</p>
 <p style="text-align:center;">$$f(x) = \\sum_{n=-\\infty}^{\\infty} c_n e^{i2\\pi nx/L}$$</p>
@@ -42,7 +49,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["fourier-transform-math"]
     },
     {
-      heading: "Example: Underdamped Oscillator",
+      heading: "Interactive 4: Example: Underdamped Oscillator",
       body: `<p>As an example, let us compute the Fourier transform of the position of an <strong>underdamped oscillator</strong>:</p>
 <p style="text-align:center;">$$f(t) = e^{-\\gamma t} \\cos(\\omega_0t) \\theta(t)$$</p>
 <p>where the <strong>unit-step function</strong> (Heaviside function) is defined by $\\theta$(t) = 1 for t &gt; 0 and $\\theta$(t) = 0 for t $\\leq$ 0. This function ensures that our oscillator starts at time t = 0. If we didn't include it, the amplitude would blow up as t $\\rightarrow -\\infty$.</p>
@@ -63,7 +70,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["fourier-transform-math", "underdamped-oscillator-math"]
     },
     {
-      heading: "Fourier Transform is Complex",
+      heading: "Interactive 5: Fourier Transform is Complex",
       body: `<p>For a real function <em>f(t)</em>, the Fourier transform will usually <strong>not be real</strong>. Indeed, the imaginary part of the Fourier transform of a real function is:</p>
 <p style="text-align:center;">$$Im[\\tilde{f}(k)] = (1/2\\pi) \\int_{-\\infty}^{\\infty} f(x) \\sin(kx) dx \\equiv \\tilde{f}_s(k)$$</p>
 <p>This is a <strong>Fourier sine transform</strong>. The imaginary part vanishes only if the function has no sine components, which happens if and only if the function is <strong>even</strong>. For an odd function, the Fourier transform is purely imaginary. For a general real function, the Fourier transform will have both real and imaginary parts. We can write:</p>
@@ -81,7 +88,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["complex-fourier-math"]
     },
     {
-      heading: "Filtering",
+      heading: "Interactive 6: Filtering",
       body: `<p>One thing we can do with the Fourier transform of an image (or any signal) is remove some components. If we remove low frequencies (below some cutoff $\\omega_{f}$), we call it a <strong>high-pass filter</strong>. A lot of background noise is at low frequencies, so a high-pass filter can clean up a signal.</p>
 <p>If we throw out the high frequencies, it is called a <strong>low-pass filter</strong>. A low-pass filter can be used to smooth data (such as a digital photo) since it throws out high-frequency noise. A filter that cuts out both high and low frequencies is called a <strong>band-pass filter</strong>.</p>
 <p>Here is a striking example. Take a photo of Einstein and apply a high-pass filter: you see the sharp features — edges, wrinkles, the structure of the face. Take a photo of Marilyn Monroe and apply a low-pass filter: you see the soft, blurry shape — the smooth variations in brightness.</p>
@@ -91,7 +98,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["filtering-math"]
     },
     {
-      heading: "Dirac $\\delta$ Function",
+      heading: "Interactive 7: Dirac $\\delta$ Function",
       body: `<p>What is the Fourier transform of a constant? If f(t) = 1, its transform is:</p>
 <p style="text-align:center;">$$\\delta(\\omega) \\equiv \\frac{1}{2\\pi} \\int_{-\\infty}^{\\infty} e^{-i\\omega t}\\, dt$$</p>
 <p>This object $\\delta(\\omega$) is the <strong>Dirac $\\delta$ function</strong>. It is zero everywhere except at the origin, where it is infinite, yet integrates to 1. Its key property is the <strong>sifting property</strong>: $\\int \\delta(x)\\,f(x)\\,dx = f(0)$ for any smooth function f.</p>
@@ -120,7 +127,7 @@ window.LECTURE_CONTENT_8_11 = {
 
   "9": [
     {
-      heading: "Boundary Conditions at a Junction",
+      heading: "Interactive 1: Boundary Conditions at a Junction",
       body: `<p>Suppose we take two taut strings, one thick and one thin, and knot them together. What will happen to a wave as it passes through the knot? Or, instead of changing the mass density at the junction, we could change the tension (for example, by tying the string to a ring on a fixed rod which can absorb the longitudinal force from the change in tension). What happens to a sound wave when it passes from air to water? What happens to a light wave when it passes from air to glass? In this lecture, we will answer these questions.</p>
 <p>Let's start with the string with varying tension. Say there is a knot at x = 0 and the tension changes abruptly between x &lt; 0 and x &gt; 0. To be concrete, imagine we have a right-moving traveling wave coming in at very early times, hitting the junction around t = 0. We would like to know what the wave looks like at late times.</p>
 <p>We write the amplitude of the wave as $\\psi_{L}$(x, t) to the left of the knot and $\\psi_{R}$(x, t) to the right:</p>
@@ -180,7 +187,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: []
     },
     {
-      heading: "Impedance for Masses",
+      heading: "Interactive 2: Impedance for Masses",
       body: `<p>To get intuition for impedance, it is helpful to go back to a more familiar system: <strong>masses</strong>. Suppose we collide a block of mass <em>m</em> with a larger block of mass <em>M</em>. Say <em>m</em> has velocity $v_{i}$ and <em>M</em> is initially at rest.</p>
 <details><summary><strong>Derivation using conservation laws</strong></summary>
 <p>Initial momentum: $p_{i}$ = m$v_{i}$. Initial energy: $E_{i} = \\frac{1}{2}$m$v_{i}$<sup>2</sup>.</p>
@@ -199,7 +206,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["impedance-matching-math"]
     },
     {
-      heading: "Complex Impedance",
+      heading: "Interactive 3: Complex Impedance",
       body: `<p>Let's revisit the driven oscillator from Chapter 2. Recall the equation of motion: m$\\ddot{x}$ + $\\gamma\\dot{x}$ + kx = $F_{0}$e<sup>i$\\omega$t</sup>. Back then we focused on finding the amplitude and phase of the response. Now we can reinterpret the same physics through <strong>impedance</strong>: the ratio Z = F/$\\dot{x}$, which measures how much a system resists being driven.</p>
 <p>The resonance peak from Chapter 2 is really an <strong>impedance matching</strong> story. Far from resonance, the driver and oscillator are mismatched — the driver pushes but the oscillator barely responds. At resonance, there is no mismatch: the driver couples perfectly to the oscillator, and the response is limited only by damping.</p>
 <p>Each part of the oscillator contributes its own impedance. The mass contributes $Z_m$ = i$\\omega$m. The spring contributes $Z_k$ = $-$ik/$\\omega$. The damper contributes $Z_\\gamma$ = $\\gamma$. The total impedance is:</p>
@@ -232,7 +239,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["circuit-impedance-math"]
     },
     {
-      heading: "Impedance for Other Stuff",
+      heading: "Interactive 4: Impedance for Other Stuff",
       body: `<p>For <strong>air</strong>, we recall v = $\\sqrt{B/\\rho}$ with B = $\\gamma$p = $\\rho v^{2}$ the bulk modulus and v the speed of sound. Then:</p>
 <p style="text-align:center;">$$Z_0 = B/v = \\rho v$$</p>
 <p>$Z_{0} = \\rho$v is called the <strong>specific impedance</strong>. It is a property of the medium. For example:</p>
@@ -278,7 +285,7 @@ window.LECTURE_CONTENT_8_11 = {
 
   "10": [
     {
-      heading: "Energy in a String",
+      heading: "Interactive 1: Energy in a String",
       body: `<p>The kinetic energy of a mass <em>m</em> with velocity <em>v</em> is $\\frac{1}{2}$m$v^{2}$. Thus if we have an oscillating wave in a string, the kinetic energy of each individual bit of string is:</p>
 <p style="text-align:center;">$$KE = \\frac{1}{2}(\\mu\\Delta x)(\\partial A/\\partial t)^2$$</p>
 <p>and the <strong>kinetic energy per unit length</strong> is:</p>
@@ -309,7 +316,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["wave-energy-math"]
     },
     {
-      heading: "Power",
+      heading: "Interactive 2: Power",
       body: `<p>An extremely important quantity related to waves is <strong>power</strong>. We want to use waves to do things, such as transmit sound or light, or energy in a wire. Thus we want to know the rate at which work can be done using a wave. For example, if you have an incoming sound wave, how much power can be transmitted by the wave to a microphone?</p>
 <p>For an incoming traveling wave, we want to know how much power is transmitted from one test mass to the next. Now, power = force $\\times$ velocity. But we don't want the net force, only the <strong>force from the left</strong> to compute power transmitted. The force from the left is T $\\partial$A/$\\partial$x. For $\\partial$A/$\\partial$x &gt; 0, this pulls downward. To see the power transmitted, we need the force which moves the string away from equilibrium (the upward force): F = -T $\\partial$A/$\\partial$x. Then:</p>
 <p style="text-align:center;">$$P = F \\cdot v = -T (\\partial A/\\partial x)(\\partial A/\\partial t)$$</p>
@@ -331,7 +338,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["wave-power-math", "reflection-transmission-math"]
     },
     {
-      heading: "Sound Intensity (Decibels)",
+      heading: "Interactive 3: Sound Intensity (Decibels)",
       body: `<p>Intensity is defined as <strong>power per unit area</strong>: I = P/A. Sound intensity is measured in <strong>decibels</strong>. A logarithmic scale is used because <strong>human hearing is logarithmic</strong>. For example, if something has an intensity 1000 times larger, you will perceive it as being only about 3 times as loud.</p>
 <p>The decibel scale is normalized so that 0 dB corresponds to the threshold of human hearing:</p>
 <p style="text-align:center;">$$0 dB \\equiv 10^{-12} W/m^2 = I_0$$</p>
@@ -352,7 +359,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["decibel-math"]
     },
     {
-      heading: "Plane Waves",
+      heading: "Interactive 4: Plane Waves",
       body: `<p>Waves propagate in 3 dimensions, so we need the <strong>3-dimensional wave equation</strong>:</p>
 <p style="text-align:center;">$$(\\partial^2/\\partial t^2 - v^2(\\partial^2/\\partial x^2 + \\partial^2/\\partial y^2 + \\partial^2/\\partial z^2)) A(x, y, z, t) = 0$$</p>
 <p>This is the obvious generalization of the 1D wave equation. It is invariant under rotations of x, y, and z (in fact, under a larger group — Lorentz transformations — which mix space and time).</p>
@@ -371,7 +378,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["plane-wave-math"]
     },
     {
-      heading: "Interference",
+      heading: "Interactive 5: Interference",
       body: `<p>Now we are ready to discuss one of the most important concepts in waves (and perhaps all of physics): <strong>constructive and destructive interference</strong>.</p>
 <p>Suppose we have a speaker emitting sound at frequency $\\omega$. At large enough distances, it appears as a plane wave $A_{1} = A_{0}$cos($\\omega$t - ky + $\\phi_{1}$). Now say we have another speaker directly behind the first, producing the same sound at the same volume: $A_{2} = A_{0}$cos($\\omega$t - ky + $\\phi_{2}$). The total wave is:</p>
 <p style="text-align:center;">$$A_{tot} = 2A_0 \\cos(\\omega t - ky + (\\phi_1+\\phi_2)/2) \\cos(\\Delta\\phi/2)$$</p>
@@ -407,7 +414,7 @@ window.LECTURE_CONTENT_8_11 = {
 
   "11": [
     {
-      heading: "Wave Packets",
+      heading: "Interactive 1: Wave Packets",
       body: `<p>The function</p>
 <p style="text-align:center;">$$g(x) = e^{-(x/\\sigma_x)^2/2}$$</p>
 <p>is called a <strong>Gaussian</strong>. When x = $\\pm \\sigma_{x}$, the Gaussian has decreased to about 0.6 of its peak value (1/$\\sqrt{e} \\approx$ 0.6). Alternatively, the Gaussian is at half its maximal value at x = $\\pm$1.1$\\sigma_{x}$. Either way, <strong>$\\sigma_{x}$ indicates the width</strong> of the Gaussian.</p>
@@ -427,7 +434,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["gaussian-fourier-math"]
     },
     {
-      heading: "Amplitude Modulation",
+      heading: "Interactive 2: Amplitude Modulation",
       body: `<p>One of the most important applications of wavepackets is in <strong>communication</strong>. How do we encode information in waves?</p>
 <p>The simplest way is to play a single note — a pure sine wave sin(2$\\pi \\nu_{c}$t). But if this is all that ever happens, <strong>no information is actually being transferred</strong>. To transmit a signal, we can start and stop the note periodically. For example, modulate the note by turning it on and off once a second:</p>
 <p style="text-align:center;">$$A(t) = f(t) \\sin(2\\pi\\nu_ct)$$</p>
@@ -447,7 +454,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["am-radio-math", "bandwidth-math"]
     },
     {
-      heading: "Dispersion Relations",
+      heading: "Interactive 3: Dispersion Relations",
       body: `<p>An extremely important concept in the study of waves is <strong>dispersion</strong>. Recall the <strong>dispersion relation</strong> is defined as the relationship between the frequency and the wavenumber: $\\omega$(k). For non-dispersive systems, like most of what we've covered so far, $\\omega$(k) = vk is a linear relation. An example of a dispersive system is a set of <strong>pendula coupled by springs</strong>, where the wave equation is modified to:</p>
 <p style="text-align:center;">$$\\partial^2A/\\partial t^2 - (E/\\mu)\\partial^2A/\\partial x^2 + (g/L)A = 0$$</p>
 <p>The dispersion relation is derived by plugging in A = $A_{0}$e<sup>i(kx+$\\omega$t)</sup>, leading to $\\omega = \\sqrt{(E/\\mu} k^{2}$ + g/L).</p>
@@ -464,7 +471,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["dispersion-relation-math"]
     },
     {
-      heading: "Time Evolution of Modes: Phase Velocity",
+      heading: "Interactive 4: Time Evolution of Modes: Phase Velocity",
       body: `<p>Now we will understand the importance of dispersion relations (and their name) by studying the <strong>time-evolution of propagating wavepackets</strong>.</p>
 <p>How do we solve the wave equation in a dispersive system with initial condition A(x, 0) = f(x)? For a non-dispersive wave with $\\omega$(k) = vk, the solution is simply A(x, t) = f(x $\\pm$ vt). But for a dispersive system, like the pendula/spring equation, a fixed-k solution works only if one k is present.</p>
 <p>For a dispersion relation $\\omega$(k), the amplitude $A_{0}$ exp[ik(x - $\\omega$(k)t/k)] is always a solution. We call the speed of this particular solution the <strong>phase velocity</strong>:</p>
@@ -484,7 +491,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["phase-velocity-math"]
     },
     {
-      heading: "Time Evolution of Signals: Group Velocity",
+      heading: "Interactive 5: Time Evolution of Signals: Group Velocity",
       body: `<p>Now take $\\omega$(k) to be arbitrary and take the initial signal shape to be our Gaussian wavepacket with carrier wavenumber $k_{c}$:</p>
 <p style="text-align:center;">$$f(x) = e^{-(x-x_0)^2/(2\\sigma_x^2)} e^{ik_cx}$$</p>
 <p>The Fourier transform $\\tilde{f}$(k) is exponentially suppressed away from k = $k_{c}$, so we can Taylor expand the dispersion relation:</p>
@@ -511,7 +518,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["group-velocity-math", "phase-velocity-math"]
     },
     {
-      heading: "Dispersion",
+      heading: "Interactive 6: Dispersion",
       body: `<p>Now we come to where dispersion relations got their name. We just saw that to first approximation, a wavepacket moves with velocity $v_{g}$. But in the first-order approximation, the dispersion relation might as well be linear (non-dispersive). So let's add the <strong>second term</strong> to see the dispersion:</p>
 <p style="text-align:center;">$$\\omega(k) = k_cv_p + (k - k_c)v_g + \\frac{1}{2}(k - k_c)^2\\Gamma + \\ldots$$</p>
 <p>where <strong>$\\Gamma = \\omega$&Prime;($k_{c}$)</strong> is a new parameter. For a non-dispersive wave, $\\Gamma$ = 0.</p>

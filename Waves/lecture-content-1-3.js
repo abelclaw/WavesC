@@ -18,7 +18,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: []
     },
     {
-      heading: "Why Waves? Why Oscillators?",
+      heading: "Interactive 1: Why Waves? Why Oscillators?",
       body: `<p>Recall <strong>Hooke's law</strong>: if you displace a spring a distance $x$ from its equilibrium position, the restoring force will be $F = -kx$ for some constant $k$. You probably had this law told to you in high school or introductory physics. Maybe it's an empirical fact, deduced from measuring springs, maybe it was just stated as true. Why is it true? Why does Hooke's law hold?</p>
 
 <p>To derive Hooke's law, you might imagine you need a microscopic description of a spring -- what is it made out of, how does it bend, how are the atoms arranged, and so on. Indeed, if you hope to <em>compute</em> $k$, yes, absolutely, you need all of this. In fact you need so much detail that generally it's impossible to compute $k$ in any real spring. But also generally, we don't care to compute $k$, we just measure it. That's not the point. We don't want to compute $k$. What we want to know is why the force is <em>proportional</em> to displacement. Why is Hooke's law true?</p>
@@ -53,7 +53,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["taylor-series"]
     },
     {
-      heading: "Simple Harmonic Motion",
+      heading: "Interactive 2: Simple Harmonic Motion",
       body: `<p>We have seen that the oscillator equation describes universally any system close to equilibrium. Now let's solve it. First, take $\\gamma = 0$. Then the equation becomes:</p>
 
 <p style="text-align:center;"><strong>$$\\frac{d^2 x(t)}{dt^2} + \\omega_0^2 x(t) = 0$$</strong></p>
@@ -88,7 +88,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["trig-identities", "differential-equations"]
     },
     {
-      heading: "Damped Oscillators",
+      heading: "Interactive 3: Damped Oscillators",
       body: `<p>A <strong>damped oscillator</strong> dissipates its energy, returning eventually to the equilibrium $x(t) = \\text{const}$ solution. When the object is at rest, the damping force must vanish. For small velocities, the damping force should be proportional to velocity: $F = -\\gamma \\, dx/dt$ with $\\gamma$ some constant. Contributions proportional to higher powers of velocity will be suppressed when the object is moving slowly. Thus the generic form for damped motion close to equilibrium is:</p>
 
 <p style="text-align:center;"><strong>$$\\frac{d^2 x}{dt^2} + \\gamma \\frac{dx}{dt} + \\omega_0^2 x = 0$$</strong></p>
@@ -123,7 +123,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["quadratic-formula", "complex-numbers"]
     },
     {
-      heading: "Underdamping, Overdamping, and Critical Damping",
+      heading: "Interactive 4: Underdamping, Overdamping, and Critical Damping",
       body: `<p><strong>Underdamping ($\\gamma < 2\\omega_0$):</strong> This case includes $\\gamma = 0$. For $\\gamma = 0$ the damping vanishes and we should regain the oscillator solution. Increasing $\\gamma$ from zero should slowly damp the oscillator. Since $\\gamma < 2\\omega_0$, the quantity $\\omega_u = \\sqrt{\\omega_0^2 - (\\gamma/2)^2}$ is a real number. The general solution becomes:</p>
 
 <p style="text-align:center;"><strong>$$x(t) = A e^{-(\\gamma/2)t} \\cos(\\omega_u t + \\phi)$$</strong></p>
@@ -264,7 +264,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["fourier-series"]
     },
     {
-      heading: "Solving the Driven Oscillator",
+      heading: "Interactive 1: Solving the Driven Oscillator",
       body: `<p>Our first task is to solve:</p>
 
 <p style="text-align:center;"><strong>$$\\frac{d^2 x}{dt^2} + \\gamma \\frac{dx}{dt} + \\omega_0^2 x = \\frac{F_0}{m} \\cos(\\omega_d t)$$</strong></p>
@@ -301,7 +301,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["complex-numbers"]
     },
     {
-      heading: "Transients",
+      heading: "Interactive 2: Transients",
       body: `<p>We found a single exact solution. What happened to the boundary conditions? The dependence on boundary conditions is entirely determined by solutions to the <strong>homogeneous equation</strong>, with $F = 0$:</p>
 
 <p style="text-align:center;">$$\\frac{d^2 x_0}{dt^2} + \\gamma \\frac{dx_0}{dt} + \\omega_0^2 x_0 = 0$$</p>
@@ -314,7 +314,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["differential-equations"]
     },
     {
-      heading: "Phase Lag",
+      heading: "Interactive 3: Phase Lag",
       body: `<p>A good way to see the physics hidden in the solution $x(t)$ is to take limits. First, consider the limit with no damping, $\\gamma = 0$. Then:</p>
 
 <p style="text-align:center;"><strong>$$x(t) = \\frac{F_0}{m} \\cdot \\frac{\\cos(\\omega_d t)}{\\omega_0^2 - \\omega_d^2}$$</strong></p>
@@ -327,7 +327,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: []
     },
     {
-      heading: "Power and Energy",
+      heading: "Interactive 4: Power and Energy",
       body: `<p>We see from the solution that there is a part of $x(t)$ which is exactly proportional to the driving force $F(t) = F_0 \\cos(\\omega_d t)$ and a part which is out of phase. We call the in-phase part the <strong>elastic amplitude</strong>. It is proportional to $A = (\\omega_0^2 - \\omega_d^2) / [(\\omega_0^2 - \\omega_d^2)^2 + (\\gamma\\omega_d)^2]$. The out-of-phase part is the <strong>absorptive amplitude</strong>, proportional to $B = \\gamma\\omega_d / [(\\omega_0^2 - \\omega_d^2)^2 + (\\gamma\\omega_d)^2]$.</p>
 
 <p>Thus for $\\gamma = 0$ (no damping), there is no absorptive part. Since the absorptive part is proportional to $\\gamma$, it should have to do with energy being lost from the oscillator into the system. To see how this works, we compute the power.</p>
@@ -356,7 +356,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: []
     },
     {
-      heading: "Resonance",
+      heading: "Interactive 5: Resonance",
       body: `<p>The average power put into the system over a period $T = 2\\pi/\\omega_d$ is:</p>
 
 <p style="text-align:center;"><strong>$$\\langle P \\rangle = \\frac{F_0^2}{2\\gamma m} \\cdot \\frac{(\\gamma\\omega_d)^2}{(\\omega_0^2 - \\omega_d^2)^2 + (\\gamma\\omega_d)^2}$$</strong></p>
@@ -396,7 +396,7 @@ window.LECTURE_CONTENT_1_3 = {
 
   "3": [
     {
-      heading: "Two Coupled Masses",
+      heading: "Interactive 1: Two Coupled Masses",
       body: `<p>To get to waves from oscillators, we have to start coupling them together. In the limit of a large number of coupled oscillators, we will find solutions that look like waves. Certain features of waves, such as resonance and <strong>normal modes</strong>, can be understood with a finite number of oscillators. Thus we start with two oscillators.</p>
 
 <p>Consider two identical masses attached by springs: each mass is connected to a wall by a spring of constant $k$, and the two masses are connected to each other by a spring of constant $\\kappa$. Let $x_1$ be the displacement of the first mass from its equilibrium and $x_2$ be the displacement of the second mass from its equilibrium.</p>
@@ -412,7 +412,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: []
     },
     {
-      heading: "Normal Modes",
+      heading: "Interactive 2: Normal Modes",
       body: `<p>One way to solve the coupled equations is to note that if we <em>add</em> them, we get:</p>
 
 <p style="text-align:center;">$$m(\\ddot{x}_1 + \\ddot{x}_2) = -k(x_1 + x_2)$$</p>
@@ -440,7 +440,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: []
     },
     {
-      heading: "Beats",
+      heading: "Interactive 3: Beats",
       body: `<p>What happens if we start with initial conditions that don't correspond to a single normal mode? For example, suppose we pull mass 1 to the right and leave mass 2 at rest: $x_1(0) = 1$, $x_2(0) = 0$. Then $A_s = A_f = 1$, and the motion of each mass involves <em>both</em> normal mode frequencies.</p>
 
 <p>When the coupling spring constant $\\kappa$ is small compared to $k$, we have $\\omega_s \\approx \\omega_f$. What we see in this case is the emergence of <strong>beats</strong>. Beats occur when two normal mode frequencies get close.</p>
@@ -481,7 +481,7 @@ window.LECTURE_CONTENT_1_3 = {
       mathLinks: ["linear-algebra", "eigenvalues"]
     },
     {
-      heading: "Finding Normal Modes from Eigenvalues",
+      heading: "Interactive 4: Finding Normal Modes from Eigenvalues",
       body: `<p>Let's recall how to solve an eigenvalue equation. The trick is to write it first as $(A - \\lambda \\mathbb{1})\\vec{v} = 0$, where $\\mathbb{1}$ is the identity matrix. For most values of $\\lambda$, the matrix $(A - \\lambda \\mathbb{1})$ has an inverse. Multiplying both sides by that inverse, we find $\\vec{v} = 0$, which is the trivial solution. The nontrivial solutions must correspond to values of $\\lambda$ for which $(A - \\lambda \\mathbb{1})$ does <strong>not</strong> have an inverse. <span class="inline-math-link" data-math="eigenvalues">Eigenvalues &rarr;</span></p>
 
 <p>When does a matrix not have an inverse? A result from linear algebra is that a matrix is not invertible if and only if its <strong>determinant is zero</strong>. Thus the equation $\\det(A - \\lambda \\mathbb{1}) = 0$ is an algebraic equation for $\\lambda$ whose solutions are the eigenvalues $\\lambda_i$.</p>

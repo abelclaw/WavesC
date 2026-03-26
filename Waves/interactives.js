@@ -312,6 +312,7 @@ function initSceneInteractives() {
   initPrismDispersion();
   // Chapter 8 - Fourier Transforms
   initViolinSpectrum();
+  initRealInstrumentSpectrum();
   initFourierTransformDerivation();
   initUnderdampedFourierTransform();
   initFourierMagnitudePhase();

@@ -9,7 +9,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: []
   },
   {
-    heading: "Waves",
+    heading: "Interactive 1: Waves",
     body: "<p>All waves are named after water waves. Think about how strange water waves are. Wind pushes up a pile of water, and the pile creates a wave. The wave moves and keeps on moving, carrying energy far from where it was created. But the water from that distant storm didn't move very far -- just the wave. The wind pushed the water and the water pushed other water, and the energy traveled for thousands of miles, even though the water only moved a few feet.</p><p>Sound is also a wave. When your vocal cords vibrate they shake the air. The air doesn't move very far, but the shaking does. The initial shaking makes the air nearby shake also, and so on until it reaches someone else's eardrums.</p><p><strong>A wave is a way of transporting energy long distances without actually transporting matter.</strong> It is also a good way to send a signal.</p><p>Light, radio, and TV signals also consist of waves. What is waving for these? The traditional answer is \"nothing\" but that is misleading. A much better answer is that there is a \"field\" that is shaking -- the electric and magnetic fields.</p>",
     interactive: "wave-transport-energy",
     interactiveCaption: "A wave pulse travels along a medium. Watch how the medium particles oscillate in place while the energy moves forward.",
@@ -30,7 +30,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: []
   },
   {
-    heading: "Transverse and Longitudinal Waves",
+    heading: "Interactive 2: Transverse and Longitudinal Waves",
     body: "<p>When you shake the end of a rope, the wave travels down its length. However, the shaking is sideways -- the rope vibrates perpendicular to the direction the wave is moving. This kind of wave is called a <strong>transverse wave</strong>.</p><p>A sound wave is different. The vibration of the air molecules is back and forth in the same direction that the wave is moving. This kind of compressional wave is called a <strong>longitudinal wave</strong>.</p><p><strong>Water surface waves</strong> are even stranger. If you are floating and a water wave passes by, you move slightly back and forth <em>as well as</em> up and down. For most water waves, the sideways motion is just as big as the up-and-down, and you wind up moving in a circle! But when the wave is past, you and the water around you are left in the same place.</p><p>The distance between crests (the high points of the waves) is called the <strong>wavelength</strong>. For deep water waves, waves with different wavelengths travel at very different speeds: short wavelength go slower, long wavelength go faster.</p>",
     interactive: "transverse-longitudinal-demo",
     interactiveCaption: "Compare transverse waves (rope) with longitudinal waves (sound). Notice how particle motion differs relative to wave propagation direction.",
@@ -51,7 +51,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["wave-equation-basics"]
   },
   {
-    heading: "Sound Doesn't Always Travel Straight",
+    heading: "Interactive 3: Sound Doesn't Always Travel Straight",
     body: "<p>Sound waves, whether in air or in the ocean, often do not travel in straight lines. They bend upwards or downwards depending on the relative sound speed in the nearby material. Here is the key rule:</p><p><strong>Waves tend to change their direction by bending their motion towards the side that has a slower wave velocity.</strong></p><p>To understand why, imagine you are walking arm-in-arm with a friend. If your friend is on your left side and slows down, that pulls your left side backwards and turns you towards the left. The same phenomenon happens with waves.</p><p>In a <strong>normal atmosphere</strong>, the air at high altitude is usually colder, so the velocity of sound is slower up high. A sound wave traveling horizontally near the ground will bend upward. This creates a <strong>shadow zone</strong> near the ground -- mornings tend to be quiet because sounds bend up toward the sky.</p><p>In the <strong>evening</strong>, the ground cools off rapidly and the air near the ground becomes cooler than the air above (a <strong>temperature inversion</strong>). Sound then bends downward, and you can hear distant sounds -- traffic, trains, ocean waves. There is no shadow zone. If you happen to be a wild beast, the evening would be a good time to search for prey.</p><p>If you wake up in the morning and hear distant traffic, it probably means there is an inversion, predicting a hot (and possibly smoggy) day.</p>",
     interactive: "sound-refraction-atmosphere",
     interactiveCaption: "Sound rays bend towards regions of slower wave speed. Compare daytime (bending up, shadow zone) vs evening (bending down, no shadow zone).",
@@ -79,7 +79,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: []
   },
   {
-    heading: "Waves Can Cancel or Reinforce",
+    heading: "Interactive 4: Waves Can Cancel or Reinforce",
     body: "<p>If two waves arrive with exactly opposite shakings -- one pushing you up while the other pushes you down -- they cancel. If the ups arrive together, you are shaken twice as much. This is not as unlikely as it sounds: even with only one earthquake, parts of the wave can bend so you are hit by the same earthquake from two directions.</p><p>If two waves are traveling together with slightly different frequencies $f_{1}$ and $f_{2}$, they produce <strong>beats</strong>. The shaking is modulated, with the biggest shaking occurring at a rate given by:</p><p style='text-align:center;'>$$f_{beats} = f_1 - f_2$$</p><p>Beats are used to tune musical instruments: play a tuning fork at 256 Hz alongside a guitar string. If you hear 1 beat per second, the guitar is mistuned by 1 Hz. Adjust the string until the beats disappear.</p><p>Because sound is a wave, it can be cancelled. <strong>Noise-canceling earphones</strong> have a built-in microphone that picks up noise, reverses it, and puts it into the speakers. The reversed sound cancels the noise, and the wearer hears silence. Music is then added on top of this quiet.</p>",
     interactive: "beats-demo",
     interactiveCaption: "Two waves of slightly different frequencies produce beats. Adjust the frequency difference to see how the beat pattern changes.",
@@ -117,7 +117,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["vector-calculus"]
   },
   {
-    heading: "Plane Waves",
+    heading: "Interactive 1: Plane Waves",
     body: "<p>For electromagnetic waves, the plane wave solutions are:</p><p style='text-align:center;'>$$E(x, t) = Re[E_0 e^{i(k\\cdot x - \\omega t)}]$$</p><p>with <strong>$\\omega$ = c|k|</strong>. The coefficient $E_{0}$ is itself a vector -- the <strong>polarization vector for the electric field</strong>. It describes which way the electric field is pointing, independent of the direction k the wave is moving.</p><p>Maxwell's equation $\\nabla \\cdot$ E = 0 implies that for a plane wave:</p><p style='text-align:center;'>$$k \\cdot E_0 = 0$$</p><p>So the <strong>polarization is orthogonal to the direction of propagation</strong>. Similarly, $B_{0}$ is perpendicular to both k and $E_{0}$. From $\\nabla \\times$ E = -$\\partial$B/$\\partial$t, we find:</p><p style='text-align:center;'>$$\\omega B_0 = k \\times E_0,  \\;  and  \\;  |E_0| = c|B_0|$$</p><p>In summary, for plane waves: k $\\perp$ E, k $\\perp$ B, E $\\perp$ B, and the amplitudes of the electric and magnetic fields are related by the speed of light. E and B are always in phase. For a given k and phase, there are <strong>two orthogonal directions</strong> that E can point -- these are the two linearly independent <strong>linear polarizations</strong> of light.</p>",
     interactive: "em-plane-wave",
     interactiveCaption: "A linearly polarized electromagnetic plane wave. E oscillates vertically, B horizontally, and both propagate in the k direction.",
@@ -148,7 +148,7 @@ window.LECTURE_CONTENT_12_16 = {
 
 "14": [
   {
-    heading: "Phonon Polarizations",
+    heading: "Interactive 1: Phonon Polarizations",
     body: "<p>Before discussing the polarization of light, let's build intuition with a simpler system: waves in a crystal lattice. In a 3D crystal, atoms sit at regular lattice sites and can vibrate in three independent directions relative to the wave's propagation direction.</p><p>A <strong>longitudinal</strong> phonon has atoms displaced along the propagation direction — compressions and rarefactions, like a sound wave. The two <strong>transverse</strong> phonons have atoms displaced perpendicular to propagation. In a 3D crystal with propagation along z, one transverse mode displaces atoms in x and the other in y.</p><p>These three modes — one longitudinal and two transverse — are the three <strong>polarizations</strong> of a phonon. The concept generalizes directly to electromagnetic waves, where E and B are always transverse to k (there is no longitudinal polarization for light in vacuum).</p>",
     interactive: "phonon-polarizations",
     interactiveCaption: "A crystal lattice with three phonon polarization modes. Click each button to see longitudinal (along k) and two transverse (perpendicular to k) vibrations.",
@@ -162,7 +162,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["complex-vectors"]
   },
   {
-    heading: "Linear Polarization",
+    heading: "Interactive 2: Linear Polarization",
     body: "<p>A plane wave is <strong>linearly polarized</strong> if there is no phase difference between $E_{x}$ and $E_{y}$. If $E_{y}$ = 0 but $E_{x} \\neq$ 0:</p><p style='text-align:center;'>$$E = E_0 \\hat{x} e^{i(kz - \\omega t)},  \\;  B = (E_0/c) \\hat{y} e^{i(kz - \\omega t)}$$</p><p>This is <strong>linear polarization in the x direction</strong>. The magnetic field is given by rotating the electric field 90$^\\circ$ counterclockwise in the x-y plane and dividing by c.</p><p>Taking the real part, the actual fields are:</p><p style='text-align:center;'>$$Re[E] = (E_0 \\cos(kz - \\omega t), 0, 0),  \\;  Re[B] = (0, E_0/c \\cos(kz - \\omega t), 0)$$</p><p>There is no x or y dependence -- the fields are completely uniform in the plane perpendicular to k. The electric field points in the x-direction with the same magnitude at each point of the plane, varying only in z and t.</p>",
     interactive: "em-polarization",
     interactiveCaption: "A polarized plane wave showing both E and B fields. Switch between linear and circular polarization modes.",
@@ -176,7 +176,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: []
   },
   {
-    heading: "Polaroid Film",
+    heading: "Interactive 3: Polaroid Film",
     body: "<p>One way to polarize light is using a <strong>polaroid film</strong>, invented by Edwin Land in 1928 while an undergraduate at Harvard. He found a way to align polymer molecules in a thin sheet into long needlelike strands. When an electric field acts on the electrons in those strands, it can only move them along the strand direction. Thus the only polarization which can pass through is linearly polarized <strong>perpendicular to the strips</strong>.</p><p>If the film has strips in the y-direction and a plane wave comes in with arbitrary polarization $E_{init} = E_{x} \\hat{x} + E_{y} \\hat{y}$, the polarizer absorbs the y-component. What exits is $E_{final} = E_{x} \\hat{x}$.</p><p>If the incoming field is linearly polarized at angle $\\theta$ to the pass direction:</p><p style='text-align:center;'>$$E_{init} = E_0(\\cos\\theta \\hat{x} + \\sin\\theta \\hat{y}) \\rightarrow E_{final} = E_0 \\cos\\theta \\hat{x}$$</p><p>Since intensity is proportional to the square of the field:</p><p style='text-align:center;'>$$I_{final} = I_{initial} \\cos^2\\theta$$</p><p>This is known as <strong>Malus' law</strong>.</p><figure style=\"text-align:center;margin:1.2em 0\"><img src=\"images/polarizing-filters.jpg\" alt=\"Circular polarizing filters\" style=\"max-width:300px;width:100%;border-radius:6px\"><figcaption style=\"font-size:0.85em;color:#666\">Polarizing filters: when two polarizers are aligned, light passes through; when crossed at 90°, light is blocked. (Wikimedia Commons, CC BY-SA 4.0)</figcaption></figure>",
     interactive: "malus-law",
     interactiveCaption: "Rotate a polarizing filter relative to linearly polarized light. The transmitted intensity follows Malus' law: I = I₀cos²θ.",
@@ -214,14 +214,14 @@ window.LECTURE_CONTENT_12_16 = {
 
 "15": [
   {
-    heading: "Refraction",
+    heading: "Interactive 1: Refraction",
     body: "<p>When light enters a medium with a different index of refraction, the frequency stays the same but the wavelength changes. Since v = c/n, we have $\\lambda_{1} n_{1} = \\lambda_{2} n_{2}$, so as the index of refraction goes up, the wavelength goes down.</p><p>When light enters at an angle, the wavefronts must match at the boundary. Drawing the plane waves as the location of maximum field values, we see that crests are spaced more closely in the medium with higher index of refraction. This forces the wave to bend.</p><p>Call R the distance between where wave crests hit the surface. The distance between crests is $\\lambda_{1}$ = R  \\sin \\theta_{1}$ in the first medium and $\\lambda_{2}$ = R  \\sin \\theta_{2}$ in the second. Since R is the same, and $n_{1} \\lambda_{1} = n_{2} \\lambda_{2}$:</p><p style='text-align:center;'>$$n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2$$</p><p>This is <strong>Snell's law</strong>. The same logic for reflected waves (same R, same $\\lambda$) gives the <strong>law of reflection</strong>: the angle of reflection equals the angle of incidence.</p><figure style=\"text-align:center;margin:1.2em 0\"><img src=\"images/refraction-straw.jpg\" alt=\"Straw appearing bent in a glass of water\" style=\"max-width:250px;width:100%;border-radius:6px\"><figcaption style=\"font-size:0.85em;color:#666\">A straw appears bent at the air-water interface due to refraction: light travels slower in water ($n = 1.33$) than in air, changing direction according to Snell's law. (Wikimedia Commons, CC BY-SA 3.0)</figcaption></figure>",
     interactive: "snells-law-demo",
     interactiveCaption: "Light refracting at a boundary. Adjust the angle of incidence and indices of refraction to see how the refracted ray bends.",
     mathLinks: ["snells-law"]
   },
   {
-    heading: "Total Internal Reflection",
+    heading: "Interactive 2: Total Internal Reflection",
     body: "<p>For a fast-to-slow interface (like air to water), the refracted angle is less than the incident angle. For a slow-to-fast interface (like water to air), the angle gets larger. Since the angle cannot be larger than 90$^\\circ$, there is a <strong>critical angle</strong> beyond which no refraction occurs:</p><p style='text-align:center;'>$$\\theta_c = \\sin^{-1}(n_2/n_1)$$</p><p>For the water-air interface ($n_{water}$ = 1.33), $\\theta_{c}$ = 49$^\\circ$. For incident angles larger than the critical angle, all the light is reflected: <strong>total internal reflection</strong>. This can only happen if $n_{2} < n_{1}$ -- light can be confined to a material with higher index of refraction but not a lower one.</p><p>Total internal reflection is the principle behind <strong>fiber optics</strong>. A fiber optical cable has a solid silica core ($n_{1} \\approx$ 1.4475) surrounded by cladding with slightly lower n ($n_{2} \\approx$ 1.444), giving $\\theta_{c}$ = 86$^\\circ$ from normal (just 4$^\\circ$ from the propagation direction). As long as the cable is not bent too sharply, the light bounces around inside with little loss.</p><p>You can always remember the bending direction through Muller's analogy: if slow people are surrounded by fast people walking arm-in-arm, the fast will bend inward to the slow. The same principle explains the SOFAR sound channel in the ocean and the atmospheric sound channel.</p>",
     interactive: "total-internal-reflection",
     interactiveCaption: "Increase the angle of incidence past the critical angle to see total internal reflection. Compare different material pairs.",
@@ -242,7 +242,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["impedance"]
   },
   {
-    heading: "Thin Film Interference",
+    heading: "Interactive 3: Thin Film Interference",
     body: "<p>Using Z $\\propto$ 1/n, the reflection coefficient becomes $E_{R}/E_{I}$ = ($n_{1} - n_{2}$)/($n_{1} + n_{2}$). For $n_{2} > n_{1}$ the reflected field has a <strong>$\\pi$ phase flip</strong>; for $n_{1} > n_{2}$ there is no flip.</p><p>For a thin film with $n_{film} > n_{air}$, there is a phase flip at the top surface but not at the bottom. Two reflected waves interfere: wave A (reflected off top with phase flip) and wave B (transmitted through, reflected off bottom with no flip, transmitted back out, having traveled extra distance 2d).</p><p>The total reflected field is $E_{tot} = E_{I}$R[-1 + $T^{2}$cos(4$\\pi$d/$\\lambda$)], where $\\lambda$ is the wavelength in the film. Complete <strong>destructive interference</strong> (no reflection) occurs when d = $\\lambda$/2, $\\lambda$, 3$\\lambda$/2, ... Complete <strong>constructive interference</strong> (maximum reflection) when d = $\\lambda$/4, 3$\\lambda$/4, 5$\\lambda$/4, ...</p><p>If the film thickness is comparable to the wavelength of visible light, different wavelengths have different intensities, producing colors. This happens in <strong>soap films</strong>: a vertical soap film gets denser at the bottom due to gravity, showing bands of color. At the very top, the film is black (complete destructive interference for all wavelengths).</p><p>Color due to thin-film interference is called <strong>iridescence</strong>. The colors of many butterflies and hummingbird gorgets are due to iridescence.</p>",
     interactive: "thin-film-interference",
     interactiveCaption: "Light reflecting from a thin film. Adjust the film thickness to see which wavelengths constructively or destructively interfere.",
@@ -256,7 +256,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["fresnel-equations"]
   },
   {
-    heading: "Brewster's Angle",
+    heading: "Interactive 4: Brewster's Angle",
     body: "<p>The reflected power for vertical polarization vanishes at a special angle called <strong>Brewster's angle</strong> $\\theta_{B}$. Setting $\\alpha = \\beta$ and solving (for $\\mu_{1} \\approx \\mu_{2}$):</p><p style='text-align:center;'>$$\\tan \\theta_B = n_2/n_1$$</p><p>For the air-glass interface, $\\theta_{B} = \\tan^{-1}$(1.5) = 56.3$^\\circ$. At this angle, the reflected light is completely polarized (only horizontal polarization remains).</p><p>What is going on physically? At Brewster's angle, the transmitted and reflected waves are <strong>perpendicular</strong> ($\\theta_{1} + \\theta_{2} = \\pi$/2). Since the reflected wave must be produced by the motion of particles in the surface, and particles moving in the surface can only produce light polarized <em>transverse</em> to their direction of motion, the vertically polarized reflected light vanishes.</p><p>The famous Harvard dropout <strong>Edwin Land</strong> started the Polaroid corporation, making polarizing sunglasses that remove glare from reflection by filtering out horizontally polarized light. His second fortune came from the Polaroid camera. In 1973, Land donated the money for the construction of the Harvard Science Center.</p>",
     interactive: "brewster-angle",
     interactiveCaption: "Fresnel reflection coefficients vs angle. At Brewster's angle, the vertically polarized reflected light vanishes completely.",
@@ -280,7 +280,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["larmor-formula"]
   },
   {
-    heading: "Rayleigh and Mie Scattering",
+    heading: "Interactive 1: Rayleigh and Mie Scattering",
     body: "<p>When sunlight hits the sky, it causes air molecules to vibrate. These vibrating molecules then radiate electromagnetic fields down to us -- the light <strong>scatters</strong> off the molecules.</p><p><strong>Rayleigh scattering</strong> (wavelength $\\lambda \\gg$ molecule size d): Light acts coherently and sets the molecule vibrating. The amplitude of oscillation is proportional to the electric field, so the acceleration is a = -$\\omega^{2}$A(x,t). By the Larmor formula:</p><p style='text-align:center;'>$$P \\propto \\omega^4 \\propto 1/\\lambda^4$$</p><p>This is <strong>Rayleigh's law</strong>. Since blue light ($\\lambda$ ~ 400 nm) is shorter wavelength than red ($\\lambda$ ~ 700 nm), the ratio of power emitted is $P_{blue}/P_{red}$ = (700/400)<sup>4</sup> = 9.4. <strong>That's why the sky is blue!</strong></p><p>When the sun is setting, we look through a long path of atmosphere. The blue scattered light goes off sideways, and we see mostly what is left over -- the red light. <strong>That's why sunsets are red!</strong></p><p><strong>Mie scattering</strong> (wavelength $\\lambda \\ll$ scatterer size d): Light bounces off particles like a mirror, and all wavelengths are reflected equally. Clouds are made of water droplets (d ~ 1 mm), much larger than visible wavelengths. Light just bounces off them uniformly. <strong>That's why clouds are white!</strong> Similarly, fat globules in milk (~10 $\\mu$m) scatter all wavelengths equally, which is why milk is white.</p><figure style=\"text-align:center;margin:1.2em 0\"><img src=\"images/sunset-rayleigh.jpg\" alt=\"Sunset over ocean showing red and orange sky\" style=\"max-width:400px;width:100%;border-radius:6px\"><figcaption style=\"font-size:0.85em;color:#666\">A sunset demonstrates Rayleigh scattering: when sunlight travels a long path through the atmosphere, blue light ($\\propto 1/\\lambda^4$) is scattered away, leaving the red and orange wavelengths. (Wikimedia Commons, CC BY-SA 4.0)</figcaption></figure>",
     interactive: "rayleigh-scattering",
     interactiveCaption: "Rayleigh scattering intensity vs wavelength. Shorter wavelengths scatter much more strongly, explaining why the sky is blue.",
@@ -301,7 +301,7 @@ window.LECTURE_CONTENT_12_16 = {
     mathLinks: ["driven-oscillator", "index-of-refraction"]
   },
   {
-    heading: "Prisms and Dispersion",
+    heading: "Interactive 2: Prisms and Dispersion",
     body: "<p>The calculation not only shows n is related to interference, but that <strong>n depends on frequency</strong>. We found:</p><p style='text-align:center;'>$$n = 1 + q^2\\rho/(2\\epsilon_0m(\\omega_0^2 - \\omega^2))$$</p><p>where $\\omega_{0}$ is a characteristic oscillation frequency of the glass. Since light typically has lower frequency than $\\omega_{0}$, expanding for $\\omega \\ll \\omega_{0}$ (or equivalently $\\lambda \\gg \\lambda_{0}$) gives:</p><p style='text-align:center;'>$$n = A + B/\\lambda^2 + ...$$</p><p>This is <strong>Cauchy's formula</strong>. It shows that the index of refraction increases at shorter wavelengths: blue light is bent more than red light.</p><p>Since the angle of refraction depends on n($\\lambda$), a prism bends different wavelengths by different amounts, spreading white light into the colors of the rainbow. This is called <strong>dispersion</strong>.</p>",
     interactive: "prism-dispersion",
     interactiveCaption: "White light entering a prism is dispersed into a rainbow. Blue bends more than red because glass has a higher index of refraction at shorter wavelengths.",

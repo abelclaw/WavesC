@@ -2,7 +2,7 @@ window.LECTURE_CONTENT_4_7 = {
 
 "4": [
   {
-    heading: "Review: Two Coupled Masses",
+    heading: "Interactive 1: Review: Two Coupled Masses",
     body: `<p>Last time we studied how two coupled masses on springs move. If we take the coupling spring constant equal to the wall spring constant ($\\kappa = k$) for simplicity, the two <strong>normal modes</strong> correspond to specific eigenvectors and frequencies. The <strong>symmetric (slow) mode</strong> has both masses moving together with frequency $\\omega_s = \\sqrt{k/m}$, while the <strong>antisymmetric (fast) mode</strong> has them moving in opposite directions with $\\omega_f = \\sqrt{3k/m}$.</p>
 <p>One way to make sure we only excite a particular mode is to choose initial conditions that match the eigenvector. If we displace both masses equally ($x_1 = x_2$), we excite only the symmetric mode. If we displace them oppositely ($x_1 = -x_2$), we excite only the fast mode. The normal mode solutions are in <strong>one-to-one correspondence with initial conditions</strong>.</p>
 <p>It is helpful to plot these initial conditions (the eigenvectors) as points: the x-axis is the mass index (1 or 2) and the y-axis is the displacement from equilibrium. The symmetric mode gives two dots at the same height; the antisymmetric mode gives two dots at opposite heights. Although the actual displacement is longitudinal (along the spring direction), we draw it vertically because it is easier to see -- especially when we go to many masses.</p>`,
@@ -11,7 +11,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["eigenvalues-eigenvectors", "matrix-diagonalization"]
   },
   {
-    heading: "Three Masses",
+    heading: "Interactive 2: Three Masses",
     body: `<p>Now consider 3 identical masses with all identical spring constants, connected in a line between two fixed walls. The equations of motion for each mass come from thinking about the forces: when mass $n$ is displaced, it feels a restoring force from the springs on either side. The key equation for the first mass is:</p>
 <p style="text-align:center;">$$m \\frac{d^2 x_1}{dt^2} = -2kx_1 + kx_2$$</p>
 <p>You should think of the first term $-2kx_1$ as the restoring force when mass 1 is moved: it always wants to go back to equilibrium. The second term $+kx_2$ is the force exerted on mass 1 when mass 2 is moved <em>holding everything else fixed</em>. It has a positive sign because if mass 2 moves away, mass 1 wants to follow. If we move mass 3 holding everything else fixed, no force is exerted on mass 1 (it is not directly connected).</p>
@@ -41,7 +41,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["linear-algebra-review", "eigenvalues-eigenvectors"]
   },
   {
-    heading: "N Modes: Equations of Motion",
+    heading: "Interactive 3: N Modes: Equations of Motion",
     body: `<p>Now we will solve the $N$ mass system. You should think of lots of springs put together as being simply one long spring where the masses are pieces of the spring itself. We will see the <strong>wave equation</strong> result from this system. Solutions to the wave equation describe not just normal modes, but also waves, such as pulses sent down the spring (like pulses sent down a slinky). These pulses are called <strong>traveling waves</strong>, which are actually linear combinations of normal modes.</p>
 <p>You may find this section quite abstract. It is not critical that you follow all the details and be able to reproduce it all on your own. This is one of the most complicated derivations we will do in the course. Do your best. You should understand the result though, as summarized in Section 4.4.</p>
 <p>Adding more masses to the right of mass 3 does not affect the equations of motion for masses 1 and 2. So their equations are the same as before. Mass 3 is now like mass 2 -- it has masses to the right and left of it. In fact, the general equation for any of the middle masses is:</p>
@@ -61,7 +61,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["boundary-conditions"]
   },
   {
-    heading: "N Modes: Exact Solution",
+    heading: "Interactive 4: N Modes: Exact Solution",
     body: `<p>With the numerical solution giving a hint of where to look, let us just solve the system. We want to find vectors $x_n$ that satisfy the equation of motion for the middle masses: $d^2 x_n/dt^2 = \\omega_0^2 [x_{n-1} - 2x_n + x_{n+1}]$.</p>
 <details class="derivation-card"><summary>Derive: Dispersion relation for N coupled oscillators</summary><div class="derivation-body">
 <p><strong>Step 1: Guess a solution.</strong> Since the time dependence is exponential (from linearity) and the numerical solution looks like sine functions, we guess: $x_n = B e^{ipn} e^{i\\omega t}$.</p>
@@ -94,7 +94,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: []
   },
   {
-    heading: "Continuum Limit: From Oscillators to the Wave Equation",
+    heading: "Interactive 5: Continuum Limit: From Oscillators to the Wave Equation",
     body: `<p>We will now take the limit $N \\to \\infty$. This will turn our discrete problem into a continuous problem, and our differences into derivatives.</p>
 <p>With $N$ masses, we called the displacement of each mass from its equilibrium point $x_n$. Since all the springs have the same constant, at equilibrium all the masses are a distance $\\Delta x$ apart. Let us define a function $A(x, t)$ as the <em>amplitude</em> of the displacement from equilibrium at a point $x$. So $A(n \\Delta x, t) = x_n(t)$. To be clear, these displacements are still longitudinal (in the direction of the springs), but we are drawing $A(x, t)$ in the transverse direction for visualization.</p>
 <details class="derivation-card"><summary>Derive: The wave equation from the continuum limit</summary><div class="derivation-body">
@@ -113,7 +113,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["partial-derivatives", "taylor-series"]
   },
   {
-    heading: "Solving the Wave Equation",
+    heading: "Interactive 6: Solving the Wave Equation",
     body: `<p>The wave equation is linear, so we can solve it with exponentials. Writing $A(x, t) = e^{i\\omega t} e^{ikx}$, we get the <strong>dispersion relation</strong>: $\\omega(k) = v|k|$. This is a linear dispersion relation. Since we have taken $N \\to \\infty$, all modes have $j \\ll N$, so the linearity is consistent with what we found for finite $N$.</p>
 <p>Since the wave equation has only second derivatives, the general solution for a fixed frequency $\\omega$ is: $A_k(x,t) = a_k \\cos(kx) \\cos(\\omega t) + b_k \\sin(kx) \\cos(\\omega t) + c_k \\cos(kx) \\sin(\\omega t) + d_k \\sin(kx) \\sin(\\omega t)$. The only difference from the discrete case is that now $\\omega = vk$ instead of the more complicated dispersion relation we found before. Note that in the continuum case $k$ has dimensions of 1/length and is called the <strong>wavenumber</strong>, equal to $2\\pi/\\lambda$.</p>
 <p>Which of the coefficients $a_k$, $b_k$, $c_k$, $d_k$ vanish depends on boundary conditions. Two particularly important cases emerge:</p>
@@ -152,7 +152,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["wave-equation-review", "trig-identities"]
   },
   {
-    heading: "Fourier's Theorem",
+    heading: "Interactive 1: Fourier's Theorem",
     body: `<p><strong>Fourier's theorem</strong> states that any square-integrable function $f(x)$ which is periodic on the interval $0 < x \\leq L$ (meaning $f(x + L) = f(x)$) can be written as:</p>
 <p style="text-align:center;"><strong>$$f(x) = a_0 + \\sum_{n=1}^{\\infty} a_n \\cos\\!\\left(\\frac{2\\pi n x}{L}\\right) + \\sum_{n=1}^{\\infty} b_n \\sin\\!\\left(\\frac{2\\pi n x}{L}\\right)$$</strong></p>
 <p>with coefficients: <strong>$a_0 = \\frac{1}{L} \\int_0^L f(x) \\, dx$</strong>, <strong>$a_n = \\frac{2}{L} \\int_0^L f(x) \\cos\\!\\left(\\frac{2\\pi n x}{L}\\right) dx$</strong>, and <strong>$b_n = \\frac{2}{L} \\int_0^L f(x) \\sin\\!\\left(\\frac{2\\pi n x}{L}\\right) dx$</strong>.</p>
@@ -180,7 +180,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["trig-product-formulas", "integration-techniques"]
   },
   {
-    heading: "Example: The Sawtooth Function",
+    heading: "Interactive 2: Example: The Sawtooth Function",
     body: `<p>Let us find the Fourier series for the <strong>sawtooth function</strong>, which equals $f(x) = x$ on the interval $0 < x \\leq 1$ and repeats periodically. This function is clearly periodic with $L = 1$.</p>
 <details class="derivation-card"><summary>Derive: Fourier series of the sawtooth function</summary><div class="derivation-body">
 <p><strong>$a_0$:</strong> $a_0 = \\int_0^1 x \\, dx = 1/2$.</p>
@@ -194,7 +194,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["integration-by-parts"]
   },
   {
-    heading: "Plucking a String",
+    heading: "Interactive 3: Plucking a String",
     body: `<p>Let us apply the Fourier decomposition to <strong>plucking a string</strong>. Suppose we pluck a string by pulling up one end (like a sawtooth shape). What happens to the string?</p>
 <p>We write the full time-dependent solution as: $A(x, t) = \\sum_{n=0}^{\\infty} [a_n \\cos(2n\\pi x / L) \\cos(\\omega_n t) + b_n \\sin(2n\\pi x / L) \\cos(\\omega_n t)]$, where $\\omega_n = (2n\\pi / L) v$ is determined by the dispersion relation. Here $v$ is the speed of sound in the string. We could also have included $\\sin(\\omega_n t)$ terms, but since the string starts at rest ($dA/dt = 0$ at $t = 0$), those coefficients must all vanish.</p>
 <p>At $t = 0$, the amplitude is just the Fourier decomposition of the pluck shape. If we approximate the pluck as the sawtooth function, then $a_n = 0$ and $b_n = -1/(\\pi n)$. So setting $L = 1$: <strong>$A(x, t) = \\sum_{n=1}^{\\infty} \\left(-\\frac{1}{\\pi n}\\right) \\sin(2\\pi n x) \\cos(2\\pi n v t)$</strong>. This gives the motion of the string for all time!</p>
@@ -255,7 +255,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["partial-derivatives"]
   },
   {
-    heading: "Transverse Oscillations on a String",
+    heading: "Interactive 1: Transverse Oscillations on a String",
     body: `<p>Consider a string of tension $T$. We define the amplitude $A(x, t)$ as the transverse displacement of the string at position $x$ at time $t$. We treat the string as a bunch of massless test probes connected by elastic segments. What is the force acting on the test mass at position $x$?</p>
 <details class="derivation-card"><summary>Derive: Wave equation for transverse oscillations</summary><div class="derivation-body">
 <p><strong>Step 1: Force from the left.</strong> Consider the downward component of force pulling on the mass at $x$ from the mass to the left (at $x - \\Delta x$). Drawing a triangle, the force is $F_{\\text{down,left}} = T \\sin(\\theta) = T \\Delta A / \\sqrt{\\Delta A^2 + \\Delta x^2}$. If the system is close to equilibrium, the slope is small ($\\Delta A \\ll \\Delta x$), so we approximate $\\sqrt{\\Delta A^2 + \\Delta x^2} \\approx \\Delta x$, giving:</p>
@@ -273,7 +273,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["small-angle-approximations", "partial-derivatives"]
   },
   {
-    heading: "Sound Waves",
+    heading: "Interactive 2: Sound Waves",
     body: `<p>Waves in air are just like waves in a solid: the air molecules are like little masses and the forces between them act like springs. Thus we have already derived the wave equation. What is left is to think about what is actually going on when a wave propagates through the air.</p>
 <p><strong>Sound waves are longitudinal density waves.</strong> The amplitude $A(x, t)$ measures the displacement from equilibrium of the molecule whose equilibrium position is at $x$. In a sound wave, each individual molecule is just oscillating back and forth around an equilibrium position, and the wave appears as a collective phenomenon among these moving molecules.</p>
 <p>In a snapshot of the wave, it is hard to see $A(x, t)$ directly. Instead, what we observe is the <strong>density</strong> of the gas $\\rho(x, t)$. The two are closely related: as with any oscillator, the molecules move fastest as they pass through equilibrium and stop when they are farthest from equilibrium. When molecules are moving fastest to the right, they pile up, creating the most dense region. When they move fastest to the left, the region is least dense. Therefore density agrees with velocity: $\\rho$ is proportional to $\\rho_0 + dA/dt$.</p>
@@ -301,7 +301,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["ideal-gas-law", "thermodynamics-basics"]
   },
   {
-    heading: "Standing Waves and Boundary Conditions",
+    heading: "Interactive 3: Standing Waves and Boundary Conditions",
     body: `<p>Now let us talk about <strong>standing wave</strong> solutions in more detail. We look for solutions of fixed frequency $\\omega$, which we can write in the general form:</p>
 <p style="text-align:center;">$$A(x, t) = A_0 \\sin(kx + \\phi_1) \\sin(\\omega t + \\phi_2)$$</p>
 <p>where $A_0$ is the amplitude, $k$ is the wavenumber, and $\\omega = vk$ from the dispersion relation. Instead of phases, we can equivalently write: $A(x, t) = A_0 \\sin(kx) \\sin(\\omega t) + A_1 \\sin(kx) \\cos(\\omega t) + A_2 \\cos(kx) \\cos(\\omega t) + A_3 \\cos(kx) \\sin(\\omega t)$.</p>
@@ -312,7 +312,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["boundary-conditions"]
   },
   {
-    heading: "Frequency Spectra for Different Boundary Conditions",
+    heading: "Interactive 4: Frequency Spectra for Different Boundary Conditions",
     body: `<p><strong>Both ends fixed:</strong> We need $\\sin(kL) = 0$, which means $k = n\\pi / L$ for $n = 1, 2, 3, \\ldots$ The allowed frequencies are:</p>
 <p style="text-align:center;"><strong>$$\\omega_n = v \\frac{\\pi}{L} n, \\quad n = 1, 2, 3, \\ldots$$</strong> (both ends fixed)</p>
 <p>This gives harmonics at $\\nu, 2\\nu, 3\\nu, 4\\nu, \\ldots$ All integer multiples are present.</p>
@@ -331,7 +331,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: []
   },
   {
-    heading: "Helmholtz Resonators",
+    heading: "Interactive 5: Helmholtz Resonators",
     body: `<p>An important object in the physics of sound is the <strong>Helmholtz resonator</strong> -- a hollow cavity with a small opening, like a bottle or a violin body. They work because the volume of air in the body cannot change, so pushing down on the air in the neck forces the air in the body to push back with essentially a linear restoring force, like a spring. The air in the neck acts like a mass and the air in the body acts like a spring.</p>
 <figure style="text-align:center;margin:1.2em 0"><img src="images/helmholtz-resonator.jpg" alt="Brass Helmholtz resonator" style="max-width:250px;width:100%;border-radius:6px"><figcaption style="font-size:0.85em;color:#666">A brass Helmholtz resonator. Air in the neck oscillates as a mass; air in the cavity acts as a spring. (Wikimedia Commons, CC BY-SA 2.5)</figcaption></figure>
 <details class="derivation-card"><summary>Derive: Resonant frequency of a Helmholtz resonator</summary><div class="derivation-body">
@@ -364,7 +364,7 @@ window.LECTURE_CONTENT_4_7 = {
 
 "7": [
   {
-    heading: "Why Do Notes Sound Good?",
+    heading: "Interactive 1: Why Do Notes Sound Good?",
     body: `<p>In the previous lecture, we saw that if you pluck a string, it will excite various frequencies. The amplitude of each frequency is proportional to the coefficient in the Fourier decomposition. Now we will start to understand how different frequencies combine to produce music.</p>
 <figure style="text-align:center;margin:1.2em 0"><img src="images/guitar-strings.png" alt="Classical guitar showing strings and sound hole" style="max-width:300px;width:100%;border-radius:6px"><figcaption style="font-size:0.85em;color:#666">A classical guitar. Each string vibrates at a fundamental frequency plus harmonics; the relative strengths of these harmonics determine the instrument's timbre. (Wikimedia Commons, CC BY-SA 2.0)</figcaption></figure>
 <p>A pure sine wave at middle C (C4 = 261 Hz) sounds pleasant, but not particularly interesting. A <strong>square wave</strong> version of the same note sounds somewhat tinny and unpleasant. These are the same notes, but different sounds. Why do they sound different? The Fourier decomposition reveals the answer: the pure sine wave has only one frequency, while the square wave has lots of other modes (all the odd harmonics with significant amplitudes). The extra high-frequency modes make the note sound less pure. If <em>all</em> frequencies are present at once, we get <strong>white noise</strong> -- perhaps as unmusical as you can get.</p>
@@ -375,7 +375,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["trig-sum-product"]
   },
   {
-    heading: "Dissonant and Consonant Note Pairs",
+    heading: "Interactive 2: Dissonant and Consonant Note Pairs",
     body: `<p>If we play a pure 300 Hz sine wave with a pure 580 Hz sine wave, it does not sound bad: $\\cos(300 \\cdot 2\\pi t) + \\cos(580 \\cdot 2\\pi t) = 2 \\cos(140 \\cdot 2\\pi t) \\cos(440 \\cdot 2\\pi t)$. The beat frequency $2 \\times 140$ Hz $= 280$ Hz is too high to be harsh -- it is just a note. But if we played 300 Hz and 580 Hz on an <em>actual instrument</em>, it would sound horrible.</p>
 <p>Why? Because real instruments excite harmonics. For a string plucked near the end, the Fourier coefficients scale like $1/n$. The fundamental ($n = 1$) has only twice the amplitude of the first harmonic ($n = 2$). Playing 580 Hz alongside a plucked 300 Hz string gives: $f(t) = \\cos(580T) + \\cos(300T) + \\frac{1}{2}\\cos(600T) + \\cdots$ . The 580 Hz and 600 Hz terms combine to produce beating at $2 \\times 10 = 20$ Hz, which is audible and jarring. There is beating between the external 580 Hz note and the first harmonic of the plucked string.</p>
 <p>Real instruments have significant amplitudes for many harmonics. The spectrum of a flute playing G4 (392 Hz) shows not just the fundamental but many higher harmonics with significant amplitudes. These harmonics determine the instrument's <strong>timbre</strong> -- what a note sounds like when played, as distinguished from its <strong>pitch</strong> (the fundamental frequency) and <strong>intensity</strong> (the power). All of this can be read off the Fourier spectrum.</p>
@@ -385,7 +385,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: ["fourier-series-math"]
   },
   {
-    heading: "Building Consonant Intervals",
+    heading: "Interactive 3: Building Consonant Intervals",
     body: `<p>Let us start with middle C (C4, frequency $\\nu_0 = 261$ Hz). Which notes sound good alongside C4? The 261 Hz note has harmonics at $\\nu_0, 2\\nu_0, 3\\nu_0, 4\\nu_0$, etc: 261 Hz, 522 Hz, 783 Hz, 1044 Hz, 1305 Hz, $\\ldots$ Playing any of those frequencies alongside C4 will sound harmonic because they exactly match an existing harmonic.</p>
 <p>The note at $2\\nu_0$ is one <strong>octave</strong> up (the 1st harmonic) = C5. Are there more harmonious notes between? Yes. Consider the note at $\\nu_5 = 391$ Hz. Its second harmonic is $2 \\times 391 = 783$ Hz, which matches the 3rd harmonic of C4. We call $\\nu_5 = (3/2) \\nu_0$ the <strong>perfect fifth</strong> (G4).</p>
 <p>Similarly, $\\nu_4 = 348$ Hz has its 3rd harmonic matching the 4th harmonic of C4. We call $\\nu_4 = (4/3) \\nu_0$ the <strong>perfect fourth</strong> (F4).</p>
@@ -431,7 +431,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: []
   },
   {
-    heading: "The Equal-Tempered Scale",
+    heading: "Interactive 4: The Equal-Tempered Scale",
     body: `<p>An interesting feature of the Pythagorean scale is that the 12th fifth is very close to 8 octaves: <strong>$(3/2)^{12} = 129.748 \\approx 128 = 2^7$</strong>. Thus we can make a compromise: declare that 12 steps around the <strong>circle of fifths</strong> gets you back to the note you started at. We simply relate all notes by powers of $2^{1/12}$. Each half-step gives another factor of $2^{1/12}$.</p>
 <table>
 <tr><th>Note</th><td>C</td><td>C#</td><td>D</td><td>D#</td><td>E</td><td>F</td><td>F#</td><td>G</td><td>G#</td><td>A</td><td>A#</td><td>B</td><td>C</td></tr>
@@ -450,7 +450,7 @@ window.LECTURE_CONTENT_4_7 = {
     mathLinks: []
   },
   {
-    heading: "Comparison of Scales",
+    heading: "Interactive 5: Comparison of Scales",
     body: `<p>Here is a side-by-side comparison of the three scales for the whole notes in the key of C:</p>
 <table>
 <tr><th>Note</th><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>A</td><td>B</td><td>C</td></tr>

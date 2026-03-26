@@ -3570,13 +3570,21 @@ function sceneMarkup(type) {
     // =====================================================================
     case "violin-spectrum":
       return `
-        <div class="scene-label">Instrument Spectrum</div>
+        <div class="scene-label">Instrument Spectra (Idealized)</div>
         <p class="scene-caption">Drag harmonic bars up and down to reshape the timbre, or choose an instrument preset. Hit Listen to hear how the spectrum sounds.</p>
         <div class="interactive-scene">
           <canvas id="scene-violin-spectrum" width="600" height="300"></canvas>
           <div class="scene-controls">
             <label><span>f<sub>0</sub>: </span><input type="range" id="violin-f0" min="100" max="800" step="10" value="440"><span class="scene-val" id="violin-f0-val">440 Hz</span></label>
           </div>
+        </div>
+      `;
+    case "real-instrument-spectrum":
+      return `
+        <div class="scene-label">Instrument Spectra (Realistic)</div>
+        <p class="scene-caption">Realistic instrument synthesis with time-varying harmonics, vibrato, and attack transients. The spectrum updates live as the note plays.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-real-instrument-spectrum" width="600" height="300"></canvas>
         </div>
       `;
     case "fourier-transform-derivation":
