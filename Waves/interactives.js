@@ -18483,8 +18483,9 @@ function initSingleSlitDiffraction() {
   const { ctx, W, H } = setup;
 
   let aOverLambda = 3.0;
+  let time = 0;
   let draggingSlider = false;
-  const sliderX = 20, sliderW = W * 0.35, sliderY = H - 16;
+  const sliderX = 20, sliderW = W * 0.28, sliderY = H - 10;
 
   canvas.addEventListener('mousedown', function(e) {
     const rect = canvas.getBoundingClientRect();
@@ -18499,7 +18500,6 @@ function initSingleSlitDiffraction() {
 
   function handleDrag(mx) {
     aOverLambda = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 9.5;
-    draw();
   }
 
   function sinc2(x) {
@@ -18507,102 +18507,168 @@ function initSingleSlitDiffraction() {
     return Math.pow(Math.sin(x) / x, 2);
   }
 
-  function draw() {
+  function tick() {
+    if (!canvas.isConnected) return;
+    time += 0.05;
     wClear(ctx, W, H);
 
-    // Slit diagram on left
-    const slitX = 60, slitH = H * 0.6;
-    const slitOpenH = Math.min(slitH * 0.8, aOverLambda * 10);
-    const slitCY = H * 0.42;
+    const lambda = 18;
+    const slitX = W * 0.22;
+    const plotL = W * 0.52;
+    const plotR = W - 15;
+    const areaTop = 24;
+    const areaBot = H - 28;
+    const areaH = areaBot - areaTop;
+    const slitCY = (areaTop + areaBot) / 2;
+    const slitOpenH = Math.min(areaH * 0.7, aOverLambda * lambda);
 
+    // --- Incoming plane waves (moving right) ---
+    ctx.lineWidth = 1.5;
+    const waveSpan = slitX - 5;
+    for (let wf = 0; wf < 15; wf++) {
+      let x = ((time * 12 - wf * lambda) % waveSpan);
+      if (x < 0) x += waveSpan;
+      x += 5;
+      if (x > 5 && x < slitX - 4) {
+        const alpha = 0.15 + 0.15 * (x / slitX);
+        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+        ctx.beginPath(); ctx.moveTo(x, areaTop); ctx.lineTo(x, areaBot); ctx.stroke();
+      }
+    }
+
+    // --- Barrier with single slit ---
     ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(slitX - 3, 20, 6, slitCY - slitOpenH / 2 - 20);
-    ctx.fillRect(slitX - 3, slitCY + slitOpenH / 2, 6, H - 40 - slitCY - slitOpenH / 2);
+    ctx.fillRect(slitX - 2, areaTop, 4, slitCY - slitOpenH / 2 - areaTop);
+    ctx.fillRect(slitX - 2, slitCY + slitOpenH / 2, 4, areaBot - slitCY - slitOpenH / 2);
 
     // Slit width label
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(slitX + 10, slitCY - slitOpenH / 2); ctx.lineTo(slitX + 10, slitCY + slitOpenH / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(slitX + 8, slitCY - slitOpenH / 2); ctx.lineTo(slitX + 8, slitCY + slitOpenH / 2); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('a', slitX + 14, slitCY + 3);
+    ctx.fillText('a', slitX + 12, slitCY + 3);
 
-    // Incoming arrows
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1;
-    for (let y = slitCY - slitOpenH / 2 + 5; y < slitCY + slitOpenH / 2; y += 12) {
-      ctx.beginPath(); ctx.moveTo(15, y); ctx.lineTo(slitX - 5, y); ctx.stroke();
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.beginPath();
-      ctx.moveTo(slitX - 5, y);
-      ctx.lineTo(slitX - 10, y - 3);
-      ctx.lineTo(slitX - 10, y + 3);
-      ctx.closePath(); ctx.fill();
+    // --- Diffracted wavelets from points in the slit ---
+    const nSources = Math.max(3, Math.round(aOverLambda * 3));
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(slitX - 2, 0, plotL - slitX, H);
+    ctx.clip();
+    for (let i = 0; i < nSources; i++) {
+      const sy = slitCY - slitOpenH / 2 + (i + 0.5) * (slitOpenH / nSources);
+      for (let wf = 0; wf < 5; wf++) {
+        const r = (time * 12 + wf * lambda) % (W * 0.8);
+        if (r < 3) continue;
+        const alpha = Math.max(0, 0.15 * (1 - r / (W * 0.7)));
+        if (alpha < 0.01) continue;
+        ctx.strokeStyle = 'rgba(15,118,110,' + alpha + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(slitX, sy, r, -Math.PI / 2, Math.PI / 2);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // ===== Vertical I vs sin θ plot (far right) =====
+    const plotT = areaTop;
+    const plotB = areaBot;
+    const pH = plotB - plotT;
+    const pW = plotR - plotL;
+
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotT); ctx.lineTo(plotL, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, slitCY); ctx.lineTo(plotR, slitCY); ctx.stroke();
+
+    // sin θ tick marks and grid lines
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    for (let v = -1; v <= 1; v += 0.5) {
+      const py = slitCY + v * (pH / 2);
+      if (py < plotT || py > plotB) continue;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(plotL, py); ctx.lineTo(plotR, py); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.fillText(v.toFixed(1), plotL - 3, py + 3);
     }
 
-    // Pattern plot on right
-    const plotL2 = W * 0.3, plotR2 = W - 15, plotT2 = 25, plotB2 = H - 35;
-    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+    // Axis labels
+    ctx.save();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.translate(plotL - 18, slitCY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('sin \u03B8', 0, 0);
+    ctx.restore();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('I/I\u2080', (plotL + plotR) / 2, plotB + 12);
 
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
+    // Compute sinc² intensity
+    const plotIntensities = [];
+    const nPlotSamples = Math.round(pH);
+    for (let py = 0; py <= nPlotSamples; py++) {
+      const sinTheta = -1 + 2 * py / nPlotSamples;
+      const beta = Math.PI * aOverLambda * sinTheta;
+      plotIntensities.push(sinc2(beta));
+    }
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('sin \u03B8', (plotL2 + plotR2) / 2, plotB2 + 13);
+    // Fill under curve
+    ctx.beginPath();
+    for (let py = 0; py <= nPlotSamples; py++) {
+      const px = plotL + plotIntensities[py] * pW * 0.9;
+      const yy = plotT + (1 - py / nPlotSamples) * pH;
+      if (py === 0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+    }
+    ctx.lineTo(plotL, plotT);
+    ctx.lineTo(plotL, plotB);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(15,118,110,0.08)';
+    ctx.fill();
 
-    // Plot sinc^2 pattern
+    // Draw the curve
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let px = 0; px <= pW; px++) {
-      const sinTheta = (px / pW - 0.5) * 2;
-      const beta = Math.PI * aOverLambda * sinTheta;
-      const I = sinc2(beta);
-      const py = plotB2 - I * pH * 0.9;
-      if (px === 0) ctx.moveTo(plotL2 + px, py); else ctx.lineTo(plotL2 + px, py);
+    for (let py = 0; py <= nPlotSamples; py++) {
+      const px = plotL + plotIntensities[py] * pW * 0.9;
+      const yy = plotT + (1 - py / nPlotSamples) * pH;
+      if (py === 0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
     }
     ctx.stroke();
 
-    // Mark first minima
+    // Mark first minima (±λ/a)
     if (aOverLambda >= 1) {
       const sinMin = 1 / aOverLambda;
       if (sinMin <= 1) {
-        const pxPlus = plotL2 + (0.5 + sinMin / 2) * pW;
-        const pxMinus = plotL2 + (0.5 - sinMin / 2) * pW;
+        const yyPlus = slitCY - sinMin * (pH / 2);
+        const yyMinus = slitCY + sinMin * (pH / 2);
         ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-        ctx.beginPath(); ctx.moveTo(pxPlus, plotT2); ctx.lineTo(pxPlus, plotB2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(pxMinus, plotT2); ctx.lineTo(pxMinus, plotB2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(plotL, yyPlus); ctx.lineTo(plotR, yyPlus); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(plotL, yyMinus); ctx.lineTo(plotR, yyMinus); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText('\u03BB/a', pxPlus, plotT2 - 3);
-        ctx.fillText('\u2212\u03BB/a', pxMinus, plotT2 - 3);
+        ctx.fillStyle = WCOLORS.red; ctx.font = '9px system-ui'; ctx.textAlign = 'left';
+        ctx.fillText('\u03BB/a', plotR + 2, yyPlus + 3);
+        ctx.fillText('\u2212\u03BB/a', plotR + 2, yyMinus + 3);
       }
     }
 
-    // Intensity bar below pattern
-    for (let px = 0; px <= pW; px++) {
-      const sinTheta = (px / pW - 0.5) * 2;
-      const beta = Math.PI * aOverLambda * sinTheta;
-      const I = sinc2(beta);
-      const bright = Math.round(I * 255);
-      ctx.fillStyle = 'rgb(' + bright + ',' + bright + ',' + bright + ')';
-      ctx.fillRect(plotL2 + px, plotB2 + 2, 1, 8);
-    }
-
-    // Slider
+    // --- Slider ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
     const st = (aOverLambda - 0.5) / 9.5;
     ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
     ctx.fillStyle = WCOLORS.teal; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('a/\u03BB = ' + aOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
 
+    // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Single Slit Diffraction', 10, 16);
+
+    requestAnimationFrame(tick);
   }
 
-  draw();
+  tick();
 }
 
 // =========================================================================
