@@ -8016,10 +8016,10 @@ function initEmSpectrum() {
     for (var bi = 0; bi < bands.length; bi++) {
       var b = bands[bi], x1 = logToX(b.logMin), x2 = logToX(b.logMax);
       if (b.name === 'Visible') {
-        // Pixel-by-pixel rainbow across the visible band
+        // Map full 380-780nm rainbow across the entire visible band width
         for (var rpx = Math.floor(x1); rpx <= Math.ceil(x2); rpx++) {
-          var logLpx = xToLog(rpx);
-          var nmPx = Math.pow(10, logLpx) * 1e9;
+          var t = (rpx - x1) / (x2 - x1);          // 0 at UV edge, 1 at IR edge
+          var nmPx = 380 + (780 - 380) * (1 - t);   // 780nm (red) at IR side, 380nm (violet) at UV side
           ctx.fillStyle = wavelengthToRGB(nmPx);
           ctx.fillRect(rpx, barTop, 1.5, barH);
         }
