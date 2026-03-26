@@ -9000,22 +9000,8 @@ function init3DMovieGlasses() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  const btnOn = document.getElementById('tdm-btn-glasses-on');
-  const btnOff = document.getElementById('tdm-btn-glasses-off');
   const sepSlider = document.getElementById('tdm-separation');
-
-  let glassesOn = true;
   let t = 0;
-
-  function setMode(on) {
-    glassesOn = on;
-    if (btnOn) btnOn.style.background = on ? '#0f766e' : '';
-    if (btnOn) btnOn.style.color = on ? '#fff' : '';
-    if (btnOff) btnOff.style.background = on ? '' : '#0f766e';
-    if (btnOff) btnOff.style.color = on ? '' : '#fff';
-  }
-  if (btnOn) btnOn.addEventListener('click', () => setMode(true));
-  if (btnOff) btnOff.addEventListener('click', () => setMode(false));
 
   // Load glasses photo
   const glassesImg = new Image();
@@ -9296,62 +9282,51 @@ function init3DMovieGlasses() {
     drawSmallPol(rayRX + 34, rayStartY + 42, 'R', rcpCol);
 
     // ===== BELOW GLASSES: what each eye sees =====
-    if (glassesOn) {
-      // Transmitted rays continuing down
-      ctx.save();
-      ctx.globalAlpha = 0.35;
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = lcpCol;
-      ctx.beginPath();
-      ctx.moveTo(gLens.leftCx, glassesY + lensH / 2);
-      ctx.lineTo(gLens.leftCx, eyeY - 2);
-      ctx.stroke();
-      ctx.strokeStyle = rcpCol;
-      ctx.beginPath();
-      ctx.moveTo(gLens.rightCx, glassesY + lensH / 2);
-      ctx.lineTo(gLens.rightCx, eyeY - 2);
-      ctx.stroke();
-      ctx.restore();
+    // Transmitted rays continuing down
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = lcpCol;
+    ctx.beginPath();
+    ctx.moveTo(gLens.leftCx, glassesY + lensH / 2);
+    ctx.lineTo(gLens.leftCx, eyeY - 2);
+    ctx.stroke();
+    ctx.strokeStyle = rcpCol;
+    ctx.beginPath();
+    ctx.moveTo(gLens.rightCx, glassesY + lensH / 2);
+    ctx.lineTo(gLens.rightCx, eyeY - 2);
+    ctx.stroke();
+    ctx.restore();
 
-      const bw = 100, bh = 60;
-      const elx = cx - 118, erx = cx + 18;
+    const bw = 100, bh = 60;
+    const elx = cx - 118, erx = cx + 18;
 
-      // Left eye panel
-      ctx.fillStyle = '#1a1a2e';
-      ctx.beginPath(); roundRect(ctx, elx, eyeY, bw, bh, 4); ctx.fill();
-      ctx.strokeStyle = lcpCol; ctx.lineWidth = 1.5;
-      ctx.beginPath(); roundRect(ctx, elx, eyeY, bw, bh, 4); ctx.stroke();
-      ctx.save();
-      ctx.beginPath(); ctx.rect(elx + 1, eyeY + 1, bw - 2, bh - 2); ctx.clip();
-      drawScene(elx + bw / 2, eyeY + bh / 2 - 2, 0.45, -sep / 4, 1.0);
-      ctx.restore();
+    // Left eye panel
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath(); roundRect(ctx, elx, eyeY, bw, bh, 4); ctx.fill();
+    ctx.strokeStyle = lcpCol; ctx.lineWidth = 1.5;
+    ctx.beginPath(); roundRect(ctx, elx, eyeY, bw, bh, 4); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(elx + 1, eyeY + 1, bw - 2, bh - 2); ctx.clip();
+    drawScene(elx + bw / 2, eyeY + bh / 2 - 2, 0.45, -sep / 4, 1.0);
+    ctx.restore();
 
-      // Right eye panel
-      ctx.fillStyle = '#1a1a2e';
-      ctx.beginPath(); roundRect(ctx, erx, eyeY, bw, bh, 4); ctx.fill();
-      ctx.strokeStyle = rcpCol; ctx.lineWidth = 1.5;
-      ctx.beginPath(); roundRect(ctx, erx, eyeY, bw, bh, 4); ctx.stroke();
-      ctx.save();
-      ctx.beginPath(); ctx.rect(erx + 1, eyeY + 1, bw - 2, bh - 2); ctx.clip();
-      drawScene(erx + bw / 2, eyeY + bh / 2 - 2, 0.45, sep / 4, 1.0);
-      ctx.restore();
+    // Right eye panel
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath(); roundRect(ctx, erx, eyeY, bw, bh, 4); ctx.fill();
+    ctx.strokeStyle = rcpCol; ctx.lineWidth = 1.5;
+    ctx.beginPath(); roundRect(ctx, erx, eyeY, bw, bh, 4); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(erx + 1, eyeY + 1, bw - 2, bh - 2); ctx.clip();
+    drawScene(erx + bw / 2, eyeY + bh / 2 - 2, 0.45, sep / 4, 1.0);
+    ctx.restore();
 
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = lcpCol;
-      ctx.fillText('Left eye', elx + bw / 2, eyeY + bh + 14);
-      ctx.fillStyle = rcpCol;
-      ctx.fillText('Right eye', erx + bw / 2, eyeY + bh + 14);
-      ctx.fillStyle = WCOLORS.teal;
-      ctx.font = '12px sans-serif';
-      ctx.fillText('\u2192 brain fuses into depth \u2190', cx, eyeY + bh / 2 + 3);
-    } else {
-      ctx.font = '12px sans-serif';
-      ctx.fillStyle = WCOLORS.textDim;
-      ctx.textAlign = 'center';
-      ctx.fillText('Without glasses, both polarizations reach both eyes', cx, eyeY + 4);
-      ctx.fillText('\u2014 you see a blurry double image.', cx, eyeY + 20);
-    }
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = lcpCol;
+    ctx.fillText('Left eye', elx + bw / 2, eyeY + bh + 14);
+    ctx.fillStyle = rcpCol;
+    ctx.fillText('Right eye', erx + bw / 2, eyeY + bh + 14);
 
     // Photo inset
     if (glassesImgLoaded) {

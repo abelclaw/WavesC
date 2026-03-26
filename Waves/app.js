@@ -4027,13 +4027,11 @@ function sceneMarkup(type) {
     case "3d-movie-glasses":
       return `
         <div class="scene-label">Interactive 4: 3D Movie Glasses</div>
-        <p class="scene-caption">Two projectors send the same full-color image with slight offset and opposite circular polarizations. Toggle glasses to see how each eye receives only one image.</p>
+        <p class="scene-caption">Two projectors send the same full-color image with slight offset and opposite circular polarizations. Each lens of the glasses passes only one handedness, so each eye receives only one image.</p>
         <div class="interactive-scene">
           <canvas id="scene-3d-movie-glasses" width="600" height="440"></canvas>
           <div class="scene-controls">
-            <button id="tdm-btn-glasses-on" class="scene-btn" style="background:#0f766e;color:#fff;">Glasses On</button>
-            <button id="tdm-btn-glasses-off" class="scene-btn">Glasses Off</button>
-            <label style="margin-left:12px;"><span>Stereo offset: </span><input type="range" id="tdm-separation" min="2" max="24" step="1" value="10"><span class="scene-val" id="tdm-separation-val">10 px</span></label>
+            <label><span>Stereo offset: </span><input type="range" id="tdm-separation" min="2" max="24" step="1" value="10"><span class="scene-val" id="tdm-separation-val">10 px</span></label>
           </div>
         </div>
       `;
