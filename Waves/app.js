@@ -4230,8 +4230,8 @@ function sceneMarkup(type) {
       `;
     case "interferometer-resolution":
       return `
-        <div class="scene-label">Interactive 4: Interferometer Resolution</div>
-        <p class="scene-caption">Two antennas separated by d. Angular resolution improves as d/&lambda; increases.</p>
+        <div class="scene-label">Interactive 4: Resolve Two Stars</div>
+        <p class="scene-caption">Adjust the interferometer baseline and star separation to see when two stars can be distinguished</p>
         <div class="interactive-scene">
           <canvas id="scene-interferometer-resolution" width="600" height="300"></canvas>
         </div>

@@ -17812,7 +17812,7 @@ function initPhasedArrayRadiation() {
 }
 
 // =========================================================================
-// 11. Interferometer Resolution
+// 11. Interferometer Resolution — "Resolve Two Stars"
 // =========================================================================
 function initInterferometerResolution() {
   const canvas = document.getElementById('scene-interferometer-resolution');
@@ -17821,98 +17821,223 @@ function initInterferometerResolution() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let dOverLambda = 5;
-  let draggingSlider = false;
-  const sliderX = 30, sliderW = W * 0.5, sliderY = H - 18;
+  let baseline = 12, starSep = 0.06, dragging = null;
+
+  // Layout regions
+  const skyW = Math.round(W * 0.42), skyH = Math.round(H * 0.66);
+  const skyL = 10, skyT = 24;
+  const plotL = skyL + skyW + 28, plotT = skyT;
+  const plotW = W - plotL - 12, plotH = skyH;
+  const slX = 15, slW = W * 0.50;
+  const sl1Y = H - 36, sl2Y = H - 14;
+
+  // Offscreen buffer for pixel-rendered sky image
+  const skyBuf = document.createElement('canvas');
+  skyBuf.width = skyW; skyBuf.height = skyH;
+  const skyBufCtx = skyBuf.getContext('2d');
+
+  function hitTest(mx, my) {
+    if (mx >= slX && mx <= slX + slW) {
+      if (Math.abs(my - sl1Y) < 14) return 'baseline';
+      if (Math.abs(my - sl2Y) < 14) return 'separation';
+    }
+    return null;
+  }
 
   canvas.addEventListener('mousedown', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+    var r = canvas.getBoundingClientRect();
+    dragging = hitTest(e.clientX - r.left, e.clientY - r.top);
+    if (dragging) handleDrag(e.clientX - r.left);
   });
-  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
-  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
-  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
-  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
-  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    handleDrag(e.clientX - canvas.getBoundingClientRect().left);
+  });
+  canvas.addEventListener('mouseup', function() { dragging = null; });
+  canvas.addEventListener('mouseleave', function() { dragging = null; });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); var r = canvas.getBoundingClientRect();
+    dragging = hitTest(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+    if (dragging) handleDrag(e.touches[0].clientX - r.left);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (!dragging) return; e.preventDefault();
+    handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { dragging = null; });
 
   function handleDrag(mx) {
-    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
-    dOverLambda = 1 + t * 19;
+    var t = Math.max(0, Math.min(1, (mx - slX) / slW));
+    if (dragging === 'baseline') {
+      baseline = Math.round(Math.exp(t * Math.log(200)));
+      if (baseline < 1) baseline = 1;
+    } else {
+      starSep = 0.005 + t * 0.195;
+    }
     draw();
   }
 
   function draw() {
     wClear(ctx, W, H);
+    var resAngle = 0.5 / baseline;
+    var resolved = starSep > resAngle * 1.22;
 
-    // Two antennas
-    const antY = H * 0.3;
-    const sep = Math.min(W * 0.3, dOverLambda * 8);
-    const a1x = W * 0.3 - sep / 2, a2x = W * 0.3 + sep / 2;
+    // Title and status badge
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Resolve Two Stars', 10, 16);
+    ctx.textAlign = 'right'; ctx.font = 'bold 11px system-ui';
+    ctx.fillStyle = resolved ? '#16a34a' : '#dc2626';
+    ctx.fillText(resolved ? '\u2713 Resolved' : '\u2717 Unresolved', W - 10, 16);
 
-    // Ground line
-    ctx.strokeStyle = WCOLORS.textDim; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(a1x - 20, antY + 20); ctx.lineTo(a2x + 20, antY + 20); ctx.stroke();
+    // === Pixel-rendered observed sky ===
+    var fov = Math.max(starSep * 3.5, resAngle * 5, 0.08);
+    var scale = skyW / fov;
+    renderSky(resAngle, scale);
+    ctx.drawImage(skyBuf, skyL, skyT);
+    ctx.strokeStyle = '#2a3038'; ctx.lineWidth = 1;
+    ctx.strokeRect(skyL, skyT, skyW, skyH);
 
-    // Antennas
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(a1x, antY + 20); ctx.lineTo(a1x, antY - 15); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(a2x, antY + 20); ctx.lineTo(a2x, antY - 15); ctx.stroke();
-    // Dishes
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(a1x, antY - 15, 8, Math.PI * 1.2, Math.PI * 1.8); ctx.stroke();
-    ctx.beginPath(); ctx.arc(a2x, antY - 15, 8, Math.PI * 1.2, Math.PI * 1.8); ctx.stroke();
+    // Beam size circle overlay (Rayleigh limit)
+    var beamR = resAngle * 1.22 * scale;
+    if (beamR > 3 && beamR < Math.min(skyW, skyH) * 0.45) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.arc(skyL + skyW / 2, skyT + skyH / 2, beamR, 0, Math.PI * 2);
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.font = '8px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('beam', skyL + skyW / 2, skyT + skyH / 2 + beamR + 9);
+    }
 
-    // d label
-    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(a1x, antY + 30); ctx.lineTo(a2x, antY + 30); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = WCOLORS.amber; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('d', (a1x + a2x) / 2, antY + 44);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Observed Image', skyL + skyW / 2, skyT + skyH + 11);
 
-    // Fringe pattern
-    const plotL2 = W * 0.55, plotR2 = W - 15, plotT2 = 30, plotB2 = H * 0.7;
-    const pW = plotR2 - plotL2, pH = plotB2 - plotT2;
+    // === 1D intensity cross-section ===
+    drawProfile(resAngle);
 
+    // === Sliders ===
+    var bt = Math.log(Math.max(1, baseline)) / Math.log(200);
+    drawSlider(slX, sl1Y, slW, bt, WCOLORS.teal);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    fillTextSub(ctx, 'd/\u03BB = ' + baseline, slX + slW + 10, sl1Y + 4);
+    ctx.fillStyle = WCOLORS.textDim;
+    fillTextSub(ctx, '\u03B8_{res} = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', slX + slW + 75, sl1Y + 4);
+
+    var st = (starSep - 0.005) / 0.195;
+    drawSlider(slX, sl2Y, slW, st, WCOLORS.amber);
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+    fillTextSub(ctx, '\u03B8_{sep} = ' + (starSep * 180 / Math.PI).toFixed(1) + '\u00B0', slX + slW + 10, sl2Y + 4);
+  }
+
+  function renderSky(resAngle, scale) {
+    var img = skyBufCtx.createImageData(skyW, skyH);
+    var d = img.data;
+    var cx = skyW / 2, cy = skyH / 2;
+    var sigma = Math.max(resAngle * scale, 1.5);
+    var sepPx = starSep * scale;
+    var s1x = cx - sepPx / 2, s2x = cx + sepPx / 2;
+    var inv2s2 = 1 / (2 * sigma * sigma);
+
+    for (var py = 0; py < skyH; py++) {
+      for (var px = 0; px < skyW; px++) {
+        var dx1 = px - s1x, dy1 = py - cy;
+        var dx2 = px - s2x, dy2 = py - cy;
+        var I1 = Math.exp(-(dx1 * dx1 + dy1 * dy1) * inv2s2);
+        var I2 = Math.exp(-(dx2 * dx2 + dy2 * dy2) * inv2s2);
+        var total = I1 + I2;
+        var brightness = Math.min(total, 1);
+        var f = total > 0.001 ? I2 / total : 0.5;
+
+        // White-hot core that fades to teal (star 1) or amber (star 2)
+        var core = Math.max(0, brightness - 0.5) * 2;
+        var rc = (15 + 202 * f) * (1 - core) + 255 * core;
+        var gc = (118 + 1 * f) * (1 - core) + 255 * core;
+        var bc = (110 - 104 * f) * (1 - core) + 255 * core;
+
+        var idx = (py * skyW + px) * 4;
+        d[idx]     = Math.min(255, Math.round(8 + rc * brightness));
+        d[idx + 1] = Math.min(255, Math.round(12 + gc * brightness));
+        d[idx + 2] = Math.min(255, Math.round(18 + bc * brightness));
+        d[idx + 3] = 255;
+      }
+    }
+    skyBufCtx.putImageData(img, 0, 0);
+
+    // True position crosshairs
+    skyBufCtx.strokeStyle = 'rgba(255,255,255,0.5)'; skyBufCtx.lineWidth = 1;
+    var m = 4;
+    skyBufCtx.beginPath();
+    skyBufCtx.moveTo(s1x - m, cy); skyBufCtx.lineTo(s1x + m, cy);
+    skyBufCtx.moveTo(s1x, cy - m); skyBufCtx.lineTo(s1x, cy + m);
+    skyBufCtx.stroke();
+    skyBufCtx.beginPath();
+    skyBufCtx.moveTo(s2x - m, cy); skyBufCtx.lineTo(s2x + m, cy);
+    skyBufCtx.moveTo(s2x, cy - m); skyBufCtx.lineTo(s2x, cy + m);
+    skyBufCtx.stroke();
+
+    // Faint background stars
+    skyBufCtx.fillStyle = 'rgba(180,185,200,0.2)';
+    for (var i = 0; i < 20; i++) {
+      var sx = (i * 137 + 53) % skyW;
+      var sy = (i * 171 + 29) % skyH;
+      if (Math.abs(sx - cx) < 30 && Math.abs(sy - cy) < 30) continue;
+      skyBufCtx.beginPath();
+      skyBufCtx.arc(sx, sy, 0.4 + (i % 3) * 0.3, 0, Math.PI * 2);
+      skyBufCtx.fill();
+    }
+  }
+
+  function drawProfile(resAngle) {
+    var pL = plotL, pT = plotT, pW = plotW, pH = plotH;
+
+    // Axes
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(plotL2, plotB2); ctx.lineTo(plotR2, plotB2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plotL2, plotT2); ctx.lineTo(plotL2, plotB2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pL, pT + pH); ctx.lineTo(pL + pW, pT + pH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pL, pT); ctx.lineTo(pL, pT + pH); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u03B8', pL + pW / 2, pT + pH + 11);
+    ctx.fillText('Intensity Cross-Section', pL + pW / 2, pT - 4);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u03B8', (plotL2 + plotR2) / 2, plotB2 + 14);
-    ctx.textAlign = 'right';
-    ctx.fillText('I', plotL2 - 5, plotT2 + 5);
+    var thetaRange = Math.max(starSep * 2, resAngle * 2.5, 0.03);
+    var sig = resAngle;
+    var inv2s2 = 1 / (2 * sig * sig);
+    var yScale = (pH - 8) * 0.43;
 
-    // cos^2 fringe
-    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    // Individual star profiles (dashed)
+    for (var s = 0; s < 2; s++) {
+      var off = s === 0 ? -starSep / 2 : starSep / 2;
+      ctx.strokeStyle = s === 0 ? 'rgba(15,118,110,0.4)' : 'rgba(217,119,6,0.4)';
+      ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      for (var px = 0; px <= pW; px++) {
+        var theta = (px / pW - 0.5) * 2 * thetaRange;
+        var I = Math.exp(-(theta - off) * (theta - off) * inv2s2);
+        var py2 = pT + pH - 3 - I * yScale;
+        if (px === 0) ctx.moveTo(pL + px, py2); else ctx.lineTo(pL + px, py2);
+      }
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Summed profile (solid bold)
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
     ctx.beginPath();
-    for (let px = 0; px <= pW; px++) {
-      const theta = (px / pW - 0.5) * Math.PI * 0.8;
-      const I = Math.pow(Math.cos(Math.PI * dOverLambda * Math.sin(theta)), 2);
-      const py2 = plotB2 - I * pH * 0.9;
-      if (px === 0) ctx.moveTo(plotL2 + px, py2); else ctx.lineTo(plotL2 + px, py2);
+    for (var px = 0; px <= pW; px++) {
+      var theta = (px / pW - 0.5) * 2 * thetaRange;
+      var d1 = theta + starSep / 2, d2 = theta - starSep / 2;
+      var I = Math.exp(-d1 * d1 * inv2s2) + Math.exp(-d2 * d2 * inv2s2);
+      var py2 = pT + pH - 3 - I * yScale;
+      if (px === 0) ctx.moveTo(pL + px, py2); else ctx.lineTo(pL + px, py2);
     }
     ctx.stroke();
+  }
 
-    // Resolution
-    const deltaTheta = 1 / dOverLambda;
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('\u0394\u03B8 = \u03BB/d = ' + (1/dOverLambda).toFixed(3) + ' rad', plotL2, plotB2 + 30);
-    ctx.fillText('= ' + (180 / (Math.PI * dOverLambda)).toFixed(2) + '\u00B0', plotL2 + 130, plotB2 + 30);
-
-    // Slider
+  function drawSlider(x, y, w, t, color) {
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = (dOverLambda - 1) / 19;
-    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
-    ctx.fillStyle = WCOLORS.teal; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x + w * t, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('d/\u03BB = ' + dOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Two-Antenna Interferometer', 10, 18);
   }
 
   draw();
