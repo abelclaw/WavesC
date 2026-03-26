@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 380" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#87CEEB"/>
+      <stop offset="100%" stop-color="#b8e0f0"/>
+    </linearGradient>
+    <linearGradient id="dishGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c0c0c0"/>
+      <stop offset="60%" stop-color="#a0a0a0"/>
+      <stop offset="100%" stop-color="#888"/>
+    </linearGradient>
+    <linearGradient id="jungleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2d7a3a"/>
+      <stop offset="100%" stop-color="#1a5c28"/>
+    </linearGradient>
+    <marker id="arrowL2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
+      <path d="M8,0 L0,3 L8,6" fill="#e63946" stroke="none"/>
+    </marker>
+    <marker id="arrowR2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#e63946" stroke="none"/>
+    </marker>
+    <clipPath id="dishClip">
+      <ellipse cx="160" cy="220" rx="140" ry="50"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="380" fill="#f8f8f8" rx="8"/>
+
+  <!-- === LEFT: Arecibo overview === -->
+  <g transform="translate(0, 0)">
+    <!-- Sky -->
+    <rect x="10" y="10" width="300" height="290" rx="6" fill="url(#skyGrad)"/>
+    <!-- Clouds -->
+    <ellipse cx="80" cy="40" rx="35" ry="12" fill="rgba(255,255,255,0.7)"/>
+    <ellipse cx="220" cy="55" rx="28" ry="10" fill="rgba(255,255,255,0.5)"/>
+
+    <!-- Jungle hills background -->
+    <path d="M10,180 Q50,150 90,170 Q130,145 170,165 Q210,140 250,160 Q280,145 310,170 L310,300 L10,300 Z" fill="url(#jungleGrad)"/>
+    <!-- Jungle texture dots -->
+    <g fill="#3a8a4a" opacity="0.6">
+      <circle cx="40" cy="175" r="4"/><circle cx="60" cy="168" r="5"/><circle cx="100" cy="172" r="4"/>
+      <circle cx="140" cy="160" r="5"/><circle cx="180" cy="167" r="4"/><circle cx="220" cy="155" r="5"/>
+      <circle cx="260" cy="163" r="4"/><circle cx="290" cy="168" r="5"/>
+    </g>
+
+    <!-- Dish (parabolic) -->
+    <path d="M30,220 Q160,290 290,220" fill="none" stroke="#999" stroke-width="3"/>
+    <path d="M30,220 Q160,290 290,220 L290,225 Q160,295 30,225 Z" fill="url(#dishGrad)" stroke="#888" stroke-width="1"/>
+    <!-- Grid lines on dish -->
+    <g stroke="#777" stroke-width="0.5" opacity="0.6">
+      <line x1="60" y1="232" x2="260" y2="232"/>
+      <line x1="45" y1="240" x2="275" y2="240"/>
+      <line x1="38" y1="248" x2="282" y2="248"/>
+      <line x1="42" y1="256" x2="278" y2="256"/>
+      <line x1="52" y1="264" x2="268" y2="264"/>
+      <!-- Vertical grid lines -->
+      <line x1="80" y1="225" x2="75" y2="270"/>
+      <line x1="120" y1="228" x2="118" y2="278"/>
+      <line x1="160" y1="230" x2="160" y2="282"/>
+      <line x1="200" y1="228" x2="202" y2="278"/>
+      <line x1="240" y1="225" x2="245" y2="270"/>
+    </g>
+
+    <!-- Support towers -->
+    <line x1="30" y1="220" x2="20" y2="170" stroke="#888" stroke-width="3"/>
+    <line x1="290" y1="220" x2="300" y2="170" stroke="#888" stroke-width="3"/>
+    <line x1="160" y1="130" x2="20" y2="170" stroke="#999" stroke-width="1.5"/>
+    <line x1="160" y1="130" x2="300" y2="170" stroke="#999" stroke-width="1.5"/>
+    <!-- More cables -->
+    <line x1="160" y1="130" x2="160" y2="100" stroke="#999" stroke-width="1"/>
+
+    <!-- Receiver platform -->
+    <rect x="140" y="120" width="40" height="15" rx="3" fill="#aaa" stroke="#888" stroke-width="1"/>
+    <path d="M148,135 L152,150 L168,150 L172,135" fill="#999" stroke="#888" stroke-width="1"/>
+    <circle cx="160" cy="155" r="8" fill="#bbb" stroke="#888" stroke-width="1"/>
+
+    <!-- Cables from towers to platform -->
+    <line x1="20" y1="170" x2="148" y2="127" stroke="#aaa" stroke-width="1" stroke-dasharray="3,2"/>
+    <line x1="300" y1="170" x2="172" y2="127" stroke="#aaa" stroke-width="1" stroke-dasharray="3,2"/>
+
+    <!-- Zoom circle on dish surface -->
+    <circle cx="160" cy="255" r="25" fill="none" stroke="#e63946" stroke-width="2.5" stroke-dasharray="4,2"/>
+
+    <!-- Label -->
+    <text x="160" y="310" text-anchor="middle" font-size="13" fill="#333" font-weight="600">Arecibo Observatory</text>
+    <text x="160" y="325" text-anchor="middle" font-size="11" fill="#666">305 m dish, Puerto Rico</text>
+  </g>
+
+  <!-- === Connector lines === -->
+  <line x1="185" y1="248" x2="390" y2="60" stroke="#e63946" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <line x1="185" y1="262" x2="390" y2="310" stroke="#e63946" stroke-width="1.5" stroke-dasharray="6,3"/>
+
+  <!-- === RIGHT: Zoomed-in grid === -->
+  <g transform="translate(390, 50)">
+    <rect x="0" y="0" width="280" height="270" rx="8" fill="#a8a8a8" stroke="#e63946" stroke-width="2.5"/>
+
+    <!-- Metal grid: horizontal bars -->
+    <g stroke="#888" fill="#888">
+      <!-- Horizontal bars -->
+      <rect x="0" y="42" width="280" height="6" fill="#909090"/>
+      <rect x="0" y="92" width="280" height="6" fill="#909090"/>
+      <rect x="0" y="142" width="280" height="6" fill="#909090"/>
+      <rect x="0" y="192" width="280" height="6" fill="#909090"/>
+      <rect x="0" y="242" width="280" height="6" fill="#909090"/>
+      <!-- Vertical bars -->
+      <rect x="42" y="0" width="6" height="270" fill="#909090"/>
+      <rect x="99" y="0" width="6" height="270" fill="#909090"/>
+      <rect x="156" y="0" width="6" height="270" fill="#909090"/>
+      <rect x="213" y="0" width="6" height="270" fill="#909090"/>
+    </g>
+
+    <!-- Open squares (sky showing through) -->
+    <g fill="#87CEEB" opacity="0.5">
+      <!-- Row 1 -->
+      <rect x="48" y="48" width="51" height="44" rx="1"/>
+      <rect x="105" y="48" width="51" height="44" rx="1"/>
+      <rect x="162" y="48" width="51" height="44" rx="1"/>
+      <!-- Row 2 -->
+      <rect x="48" y="98" width="51" height="44" rx="1"/>
+      <rect x="105" y="98" width="51" height="44" rx="1"/>
+      <rect x="162" y="98" width="51" height="44" rx="1"/>
+      <!-- Row 3 -->
+      <rect x="48" y="148" width="51" height="44" rx="1"/>
+      <rect x="105" y="148" width="51" height="44" rx="1"/>
+      <rect x="162" y="148" width="51" height="44" rx="1"/>
+      <!-- Row 4 -->
+      <rect x="48" y="198" width="51" height="44" rx="1"/>
+      <rect x="105" y="198" width="51" height="44" rx="1"/>
+      <rect x="162" y="198" width="51" height="44" rx="1"/>
+    </g>
+
+    <!-- Dimension arrow: grid spacing (center to center) -->
+    <line x1="45" y1="16" x2="102" y2="16" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
+    <rect x="48" y="2" width="50" height="16" rx="3" fill="#e63946"/>
+    <text x="73" y="14" text-anchor="middle" font-size="10" fill="white" font-weight="bold">~10 cm</text>
+
+    <!-- Dimension arrow: vertical spacing -->
+    <line x1="240" y1="45" x2="240" y2="95" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
+    <rect x="248" y="58" width="30" height="16" rx="3" fill="#e63946"/>
+    <text x="263" y="70" text-anchor="middle" font-size="9" fill="white" font-weight="bold">d</text>
+
+    <!-- Bar width label -->
+    <line x1="99" y1="230" x2="105" y2="230" stroke="#4ecdc4" stroke-width="2" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
+  </g>
+
+  <!-- Labels below zoom -->
+  <text x="530" y="342" text-anchor="middle" font-size="12" fill="#e63946" font-weight="600">d ~ 10 cm ≪ λ ~ 1 m</text>
+  <text x="530" y="358" text-anchor="middle" font-size="11" fill="#666">Grid spacing vs. radio wavelength (400 MHz)</text>
+</svg>
