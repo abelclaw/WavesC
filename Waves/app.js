@@ -4451,7 +4451,7 @@ function renderLearnMode(chapter) {
       <details class="lecture-toc">
         <summary class="toc-toggle">Contents</summary>
         <ol>
-          ${lectureContent.map((section, index) => `<li><a href="javascript:void(0)" data-scroll-to="lecture-section-${index}">${section.heading}</a></li>`).join("")}
+          ${lectureContent.map((section, index) => `<li><a href="javascript:void(0)" data-scroll-to="lecture-section-${index}">${section.heading.replace(/^Interactive \d+:\s*/, "")}</a></li>`).join("")}
         </ol>
       </details>
     `
