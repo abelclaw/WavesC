@@ -58,8 +58,6 @@ window.LECTURE_CONTENT_4_7 = {
 <p>These rigid walls correspond to <strong>fixed boundary conditions</strong> at $n = 0$ and $n = N+1$. To be clear, there is really no mass at $n = 0$, but we are just pretending one is there (and it never moves). When we extend the interpolation curves to $n = 0$ and $n = N+1$, the solutions clearly look like:</p>
 <p style="text-align:center;">$$x_n = B \\sin(pn) e^{i\\omega t}$$</p>
 <p>for some value $p$. The boundary conditions imply that $p = \\frac{\\pi}{N+1} j$ for $j = 1, 2, 3, \\ldots$ These $p$ values are called <strong>wavenumbers</strong>. In the continuum limit, we will see that wavenumber $p = 2\\pi/\\lambda$ with $\\lambda$ the wavelength. In the discrete case, $p$ is dimensionless so it is harder to think of it as related to a wavelength. The fact that wavenumbers are <strong>quantized by the boundary conditions</strong> is extremely important, both classically and in quantum mechanics.</p>`,
-    interactive: "n-mass-chain",
-    interactiveCaption: "Normal mode shapes for N coupled masses — switch to transverse to see the sinusoidal envelope",
     mathLinks: ["boundary-conditions"]
   },
   {
