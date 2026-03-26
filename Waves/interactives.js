@@ -9003,12 +9003,6 @@ function init3DMovieGlasses() {
   const sepSlider = document.getElementById('tdm-separation');
   let t = 0;
 
-  // Load glasses photo
-  const glassesImg = new Image();
-  glassesImg.src = 'images/reald-3d-glasses.jpg';
-  let glassesImgLoaded = false;
-  glassesImg.onload = () => { glassesImgLoaded = true; };
-
   // Full-color scene: house, tree, sun — drawn with horizontal offset
   function drawScene(cx, cy, scale, offset, alpha) {
     ctx.save();
@@ -9328,17 +9322,6 @@ function init3DMovieGlasses() {
     ctx.fillStyle = rcpCol;
     ctx.fillText('Right eye', erx + bw / 2, eyeY + bh + 14);
 
-    // Photo inset
-    if (glassesImgLoaded) {
-      const imgScale = 0.13;
-      const imgW = glassesImg.width * imgScale;
-      const imgH = glassesImg.height * imgScale;
-      ctx.drawImage(glassesImg, W - imgW - 10, glassesY - imgH / 2, imgW, imgH);
-      ctx.font = '8px sans-serif';
-      ctx.fillStyle = 'rgba(89,97,102,0.45)';
-      ctx.textAlign = 'right';
-      ctx.fillText('Photo: 3d-erlebnis, CC BY-SA 3.0', W - 8, glassesY + imgH / 2 + 10);
-    }
   }
 
   tick();
