@@ -7518,6 +7518,27 @@ function initSoundRefractionAtmosphere() {
       ctx.fillText(vTop, ox + panelW - 4, panelT + 15);
     }
 
+    // Helper: trace a ray parameterized by horizontal distance dx.
+    // y(dx) = srcY - dx*tan(theta) + sign*kappa*dx^2
+    // sign=-1 curves up (daytime), sign=+1 curves down (evening)
+    function traceRay(srcRx, srcRy, deg, kappa, sign, maxX, clipTop, clipBot) {
+      const rad = deg * Math.PI / 180;
+      const tanA = Math.tan(rad);
+      const span = maxX - srcRx;
+      ctx.beginPath(); ctx.moveTo(srcRx, srcRy);
+      const steps = 80;
+      for (let s = 1; s <= steps; s++) {
+        const dx = s * span / steps;
+        const x = srcRx + dx;
+        // y decreases (up) with tan term; curvature bends further
+        const y = srcRy - dx * tanA + sign * kappa * dx * dx;
+        if (y < clipTop || x > maxX) break;
+        if (y > clipBot) { ctx.lineTo(x, clipBot); break; }
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
     // --- Daytime: hot ground → v fast at bottom, v slow at top → rays curve UP ---
     const lx = 10;
     drawPanel(lx, 'Daytime (hot ground)',
@@ -7526,34 +7547,28 @@ function initSoundRefractionAtmosphere() {
       (f) => [Math.round(255 * (0.3 + 0.55 * f)), Math.round(180 * (0.4 + 0.35 * f)), Math.round(255 * (0.85 - 0.5 * f))]
     );
 
-    const srcX = lx + 30;
-    const srcY = panelT + skyH * 0.7;
-    const launchDay = [-5, 8, 20, 35, 50, 65];
+    // Source near ground on left
+    const srcX = lx + 25;
+    const srcY = groundY - 15;
+    const rayEnd = lx + panelW - 5;
+    // Curvature: kappa has units 1/px. Negative sign = bend upward on canvas.
+    const kappaDay = 0.0025;
+    const dayAngles = [2, 8, 16, 25, 35, 48];
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    for (const deg of launchDay) {
-      const rad = deg * Math.PI / 180;
-      const vx = Math.cos(rad), vy = -Math.sin(rad);
-      ctx.beginPath(); ctx.moveTo(srcX, srcY);
-      const span = panelW - 50;
-      for (let s = 1; s <= N; s++) {
-        const x = srcX + vx * s * span / N;
-        // upward curvature (negative = up on canvas)
-        const y = srcY + vy * s * skyH * 0.55 / N - 0.003 * s * s * skyH;
-        if (x > lx + panelW || y < panelT || y > groundY) break;
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+    for (const deg of dayAngles) {
+      traceRay(srcX, srcY, deg, kappaDay, -1, rayEnd, panelT, groundY);
     }
 
-    // Shadow zone
-    const shL = lx + panelW * 0.5, shW = panelW * 0.45;
+    // Shadow zone near ground on right
+    const shL = lx + panelW * 0.55, shW = panelW * 0.42;
     ctx.fillStyle = 'rgba(220, 38, 38, 0.10)';
-    ctx.fillRect(shL, groundY - 50, shW, 50);
+    ctx.fillRect(shL, groundY - 45, shW, 45);
     ctx.strokeStyle = 'rgba(220, 38, 38, 0.3)'; ctx.lineWidth = 1;
-    ctx.setLineDash([4, 3]); ctx.strokeRect(shL, groundY - 50, shW, 50); ctx.setLineDash([]);
+    ctx.setLineDash([4, 3]); ctx.strokeRect(shL, groundY - 45, shW, 45); ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Shadow zone', shL + shW / 2, groundY - 20);
+    ctx.fillText('Shadow zone', shL + shW / 2, groundY - 18);
 
+    // Source marker
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX, srcY, 5, 0, 2 * Math.PI); ctx.fill();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
@@ -7567,30 +7582,23 @@ function initSoundRefractionAtmosphere() {
       (f) => [Math.round(255 * (0.55 - 0.3 * f)), Math.round(180 * (0.35 + 0.25 * f)), Math.round(255 * (0.45 + 0.45 * f))]
     );
 
-    const srcX2 = rx + 30;
-    const srcY2 = panelT + skyH * 0.7;
-    const launchEve = [10, 20, 30, 42, 55, 68];
+    // Source near ground on left
+    const srcX2 = rx + 25;
+    const srcY2 = groundY - 15;
+    const rayEnd2 = rx + panelW - 5;
+    // Positive sign = bend downward on canvas (toward ground)
+    const kappaEve = 0.003;
+    const eveAngles = [8, 16, 25, 35, 45, 58];
     ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
-    for (const deg of launchEve) {
-      const rad = deg * Math.PI / 180;
-      const vx = Math.cos(rad), vy = -Math.sin(rad);
-      ctx.beginPath(); ctx.moveTo(srcX2, srcY2);
-      const span = panelW - 50;
-      for (let s = 1; s <= N; s++) {
-        const x = srcX2 + vx * s * span / N;
-        // downward curvature (positive = down on canvas)
-        const y = srcY2 + vy * s * skyH * 0.55 / N + 0.004 * s * s * skyH;
-        if (x > rx + panelW) break;
-        if (y > groundY) { ctx.lineTo(x, groundY); break; }
-        if (y < panelT) break;
-        ctx.lineTo(x, y);
-      }
-      ctx.stroke();
+    for (const deg of eveAngles) {
+      traceRay(srcX2, srcY2, deg, kappaEve, +1, rayEnd2, panelT, groundY);
     }
 
+    // Label
     ctx.fillStyle = WCOLORS.teal; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Sound carries far \u2192', rx + panelW * 0.68, groundY - 8);
 
+    // Source marker
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath(); ctx.arc(srcX2, srcY2, 5, 0, 2 * Math.PI); ctx.fill();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
