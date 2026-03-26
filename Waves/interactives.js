@@ -17813,7 +17813,8 @@ function initPhasedArrayRadiation() {
 
 // =========================================================================
 // 11. Interferometer Resolution — "Resolve Two Stars"
-// Drag stars apart in the sky, drag telescope dishes apart on the ground.
+// Three sliders: star separation, baseline, number of antennas.
+// N dishes drawn on ground. Beam uses array factor sin²(Nβ)/sin²(β).
 // =========================================================================
 function initInterferometerResolution() {
   const canvas = document.getElementById('scene-interferometer-resolution');
@@ -17822,13 +17823,7 @@ function initInterferometerResolution() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let baseline = 15, starSep = 0.06, dragging = null;
-
-  // Layout: sky strip | observation panels | ground strip
-  const midX = W / 2;
-  const skyT = 16, skyB = 74;
-  const obsT = 78, obsB = 216;
-  const gndT = 222, gndB = H - 2;
+  let baseline = 15, starSep = 0.06, nAnt = 5, dragging = null;
 
   // Observed image panel (left)
   const imgL = 15, imgW = Math.round(W * 0.34), imgH = obsB - obsT - 4, imgTT = obsT + 2;
@@ -18259,13 +18254,14 @@ function initDiffractionGratingPattern() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let N = 5, dOverLambda = 2.5;
+  let N = 5, dOverLambda = 2.5, aOverLambda = 0.5;
   let time = 0;
   let draggingSlider = null;
   const sliderX = 20, sliderW = W * 0.28;
   const sliders = [
-    { y: H - 28, label: 'N', min: 2, max: 20, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
-    { y: H - 10, label: 'd/\u03BB', min: 1, max: 5, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } }
+    { y: H - 42, label: 'N', min: 2, max: 20, getVal: function() { return N; }, setVal: function(v) { N = Math.round(v); } },
+    { y: H - 24, label: 'd/\u03BB', min: 1, max: 5, getVal: function() { return dOverLambda; }, setVal: function(v) { dOverLambda = v; } },
+    { y: H - 6, label: 'a/\u03BB', min: 0.2, max: 4, getVal: function() { return aOverLambda; }, setVal: function(v) { aOverLambda = Math.min(v, dOverLambda); } }
   ];
 
   canvas.addEventListener('mousedown', function(e) {
@@ -18298,12 +18294,12 @@ function initDiffractionGratingPattern() {
     const plotL = W * 0.52;
     const plotR = W - 15;
     const gratingTop = 24;
-    const gratingBot = H - 42;
+    const gratingBot = H - 54;
     const gratingH = gratingBot - gratingTop;
     const gratingCY = (gratingTop + gratingBot) / 2;
     const slitSpacing = dOverLambda * lambda;
     const totalGratingSpan = (N - 1) * slitSpacing;
-    const slitOpenSize = Math.max(2, slitSpacing * 0.25);
+    const slitOpenSize = Math.max(2, aOverLambda * lambda);
 
     // --- Incoming plane waves (left of grating, moving right) ---
     ctx.lineWidth = 1.5;
@@ -18395,19 +18391,25 @@ function initDiffractionGratingPattern() {
     ctx.fillText('I/I\u2080', (plotL + plotR) / 2, plotB + 12);
 
     // Compute and plot the intensity curve (vertical: sin θ, horizontal: I)
+    // Full grating: I = sinc²(πa sinθ/λ) × [sin(Nπd sinθ/λ) / (N sin(πd sinθ/λ))]²
     const plotIntensities = [];
     let plotMaxI = 0;
     const nPlotSamples = Math.round(pH);
     for (let py = 0; py <= nPlotSamples; py++) {
       const sinTheta = -1 + 2 * py / nPlotSamples;
+      // Single-slit envelope
+      const beta = Math.PI * aOverLambda * sinTheta;
+      const env = Math.abs(beta) < 1e-8 ? 1 : Math.pow(Math.sin(beta) / beta, 2);
+      // N-slit array factor
       const psi = 2 * Math.PI * dOverLambda * sinTheta;
-      let I;
+      let af2;
       if (Math.abs(Math.sin(psi / 2)) < 1e-8) {
-        I = 1;
+        af2 = 1;
       } else {
         const af = Math.sin(N * psi / 2) / (N * Math.sin(psi / 2));
-        I = af * af;
+        af2 = af * af;
       }
+      const I = env * af2;
       plotIntensities.push(I);
       if (I > plotMaxI) plotMaxI = I;
     }
