@@ -3296,34 +3296,24 @@ function initBeats() {
     }
   }
 
-  // Play buttons — one for each frequency alone, to compare
+  // Play buttons — one for each frequency
   {
-    const controls = f1Slider?.closest('.scene-controls') || canvas.parentElement;
-    if (controls && !document.getElementById('beats-play-s')) {
-      wMakePlayBtn(controls, 'beats-play-s', '\u25B6 νₛ alone', () => {
+    const parent = f1Slider?.closest('.scene-controls')?.parentElement || canvas.parentElement;
+    if (parent && !document.getElementById('beats-play-1')) {
+      const btnRow = document.createElement('div');
+      btnRow.className = 'scene-controls';
+      parent.appendChild(btnRow);
+      wMakePlayBtn(btnRow, 'beats-play-1', '\u25B6 ν\u2081', () => {
         const nS = parseFloat(f1Slider?.value || 1);
         const nA = parseFloat(f2Slider?.value || 1.15);
         const dnu = (nA - nS) * 20;
-        wPlayTones('beats-play-s', [
-          { freq: 440 - dnu / 2, gain: 0.5 }
-        ], 0);
+        wPlayTones('beats-play-1', [{ freq: 440 - dnu / 2, gain: 0.5 }], 0);
       });
-      wMakePlayBtn(controls, 'beats-play-a', '\u25B6 νₐ alone', () => {
+      wMakePlayBtn(btnRow, 'beats-play-2', '\u25B6 ν\u2082', () => {
         const nS = parseFloat(f1Slider?.value || 1);
         const nA = parseFloat(f2Slider?.value || 1.15);
         const dnu = (nA - nS) * 20;
-        wPlayTones('beats-play-a', [
-          { freq: 440 + dnu / 2, gain: 0.5 }
-        ], 0);
-      });
-      wMakePlayBtn(controls, 'beats-play-both', '\u25B6 Both (beats)', () => {
-        const nS = parseFloat(f1Slider?.value || 1);
-        const nA = parseFloat(f2Slider?.value || 1.15);
-        const dnu = (nA - nS) * 20;
-        wPlayTones('beats-play-both', [
-          { freq: 440 - dnu / 2, gain: 0.5 },
-          { freq: 440 + dnu / 2, gain: 0.5 }
-        ], 0);
+        wPlayTones('beats-play-2', [{ freq: 440 + dnu / 2, gain: 0.5 }], 0);
       });
     }
   }
@@ -3343,17 +3333,11 @@ function initBeats() {
     const omegaBeat = Math.PI * Math.abs(nuA - nuS);
     // Update live audio if playing
     const dnu = (nuA - nuS) * 20;
-    if (wIsPlaying('beats-play-s')) {
-      wUpdateTones('beats-play-s', [{ freq: 440 - dnu / 2, gain: 0.5 }]);
+    if (wIsPlaying('beats-play-1')) {
+      wUpdateTones('beats-play-1', [{ freq: 440 - dnu / 2, gain: 0.5 }]);
     }
-    if (wIsPlaying('beats-play-a')) {
-      wUpdateTones('beats-play-a', [{ freq: 440 + dnu / 2, gain: 0.5 }]);
-    }
-    if (wIsPlaying('beats-play-both')) {
-      wUpdateTones('beats-play-both', [
-        { freq: 440 - dnu / 2, gain: 0.5 },
-        { freq: 440 + dnu / 2, gain: 0.5 }
-      ]);
+    if (wIsPlaying('beats-play-2')) {
+      wUpdateTones('beats-play-2', [{ freq: 440 + dnu / 2, gain: 0.5 }]);
     }
     const dt = 0.03;
     t += dt;
