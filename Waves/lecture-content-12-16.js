@@ -74,8 +74,8 @@ window.LECTURE_CONTENT_12_16 = {
   {
     heading: "The Liquid Core of the Earth",
     body: "<p>About 2900 km deep (halfway to the center), there is a very thick layer of liquid, mostly liquid iron. We know this from watching earthquake signals: <strong>only the P waves pass through the core</strong>. The S waves are all reflected.</p><p>P waves are longitudinal \"pressure\" waves that travel through rock, air, or liquids. But S waves are transverse \"shear\" waves -- they travel through solids but don't go through liquids, because liquids can just slip past in the transverse direction.</p><p>The fact that P waves pass but S waves don't gave the clue that there is a liquid core. Scientists also measured wave speeds and the density of the core, and were able to rule out every possible liquid except iron (with possibly some nickel mixed in). The very center -- the inner core -- is under such great pressure that it has been compressed into a solid, even though it too is extremely hot.</p>",
-    interactive: null,
-    interactiveCaption: null,
+    interactive: "seismic-earth-core",
+    interactiveCaption: "P-waves (blue) penetrate the liquid outer core while S-waves (red) are reflected at the boundary. Click the surface to trigger an earthquake from different locations.",
     mathLinks: []
   },
   {

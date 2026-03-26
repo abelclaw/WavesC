@@ -296,8 +296,10 @@ function initSceneInteractives() {
   initWaveTransportEnergy();
   initTransverseLongitudinalDemo();
   initSoundRefractionAtmosphere();
+  initSeismicEarthCore();
   // Chapter 13 - Light
   initEmPlaneWave();
+  initEmSpectrum();
   // Chapter 14 - Polarization
   initPhononPolarizations();
   initPolarization();
@@ -7771,6 +7773,235 @@ function initEmPlaneWave() {
   }
 
   tick();
+}
+
+function initEmSpectrum() {
+  const canvas = document.getElementById('scene-em-spectrum');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // Spectrum bands: name, log10(wavelength in m) range, color, description
+  const bands = [
+    { name: 'Radio',      logMin: -1,   logMax: 4,    color: '#6366f1', desc: 'AM/FM broadcasting, cell phones' },
+    { name: 'Microwave',  logMin: -3,   logMax: -1,   color: '#8b5cf6', desc: 'Rotational modes of water, radar' },
+    { name: 'Infrared',   logMin: -5.2, logMax: -3,   color: '#ef4444', desc: 'Vibrational modes, thermal imaging' },
+    { name: 'Visible',    logMin: -6.15,logMax: -5.2,  color: null, desc: 'Electronic transitions in atoms' },
+    { name: 'UV',         logMin: -8,   logMax: -6.15, color: '#7c3aed', desc: 'Ionizing, sunburn, fluorescence' },
+    { name: 'X-ray',      logMin: -12,  logMax: -8,   color: '#0ea5e9', desc: 'Crystallography, medical imaging' },
+    { name: 'Gamma',      logMin: -16,  logMax: -12,  color: '#14b8a6', desc: 'Nuclear decay, cosmic rays' },
+  ];
+
+  const logLambdaMin = -16;  // 10^-16 m (gamma)
+  const logLambdaMax = 4;    // 10^4 m (radio)
+  const specLeft = 60;
+  const specRight = W - 20;
+  const specW = specRight - specLeft;
+  const barTop = 70;
+  const barH = 50;
+
+  let markerLogLambda = -6.6; // start in visible (green-ish)
+  let dragging = false;
+
+  function logToX(logL) {
+    return specLeft + (logL - logLambdaMin) / (logLambdaMax - logLambdaMin) * specW;
+  }
+  function xToLog(x) {
+    return logLambdaMin + (x - specLeft) / specW * (logLambdaMax - logLambdaMin);
+  }
+
+  // Visible spectrum: wavelength (nm) to RGB
+  function wavelengthToRGB(nm) {
+    let r = 0, g = 0, b = 0;
+    if (nm >= 380 && nm < 440) { r = -(nm - 440) / 60; b = 1; }
+    else if (nm < 490) { g = (nm - 440) / 50; b = 1; }
+    else if (nm < 510) { g = 1; b = -(nm - 510) / 20; }
+    else if (nm < 580) { r = (nm - 510) / 70; g = 1; }
+    else if (nm < 645) { r = 1; g = -(nm - 645) / 65; }
+    else if (nm <= 780) { r = 1; }
+    // intensity falloff at edges
+    let f = 1;
+    if (nm >= 380 && nm < 420) f = 0.3 + 0.7 * (nm - 380) / 40;
+    else if (nm > 700 && nm <= 780) f = 0.3 + 0.7 * (780 - nm) / 80;
+    else if (nm < 380 || nm > 780) f = 0;
+    return `rgb(${Math.round(r * f * 255)},${Math.round(g * f * 255)},${Math.round(b * f * 255)})`;
+  }
+
+  function getBandAt(logL) {
+    for (const b of bands) {
+      if (logL >= b.logMin && logL <= b.logMax) return b;
+    }
+    return null;
+  }
+
+  function formatSI(val, unit) {
+    const prefixes = [
+      { exp: -15, sym: 'fm' }, { exp: -12, sym: 'pm' }, { exp: -10, sym: 'Å' },
+      { exp: -9, sym: 'nm' }, { exp: -6, sym: 'μm' }, { exp: -3, sym: 'mm' },
+      { exp: -2, sym: 'cm' }, { exp: 0, sym: 'm' }, { exp: 3, sym: 'km' },
+    ];
+    if (unit === 'm') {
+      for (let i = prefixes.length - 1; i >= 0; i--) {
+        if (val >= Math.pow(10, prefixes[i].exp) * 0.95) {
+          const scaled = val / Math.pow(10, prefixes[i].exp);
+          return scaled < 100 ? scaled.toPrecision(3) + ' ' + prefixes[i].sym
+                              : Math.round(scaled) + ' ' + prefixes[i].sym;
+        }
+      }
+      return val.toExponential(1) + ' m';
+    }
+    // Frequency
+    if (val >= 1e18) return (val / 1e18).toPrecision(3) + ' EHz';
+    if (val >= 1e15) return (val / 1e15).toPrecision(3) + ' PHz';
+    if (val >= 1e12) return (val / 1e12).toPrecision(3) + ' THz';
+    if (val >= 1e9) return (val / 1e9).toPrecision(3) + ' GHz';
+    if (val >= 1e6) return (val / 1e6).toPrecision(3) + ' MHz';
+    if (val >= 1e3) return (val / 1e3).toPrecision(3) + ' kHz';
+    return val.toPrecision(3) + ' Hz';
+  }
+
+  function formatEnergy(eV) {
+    if (eV >= 1e6) return (eV / 1e6).toPrecision(3) + ' MeV';
+    if (eV >= 1e3) return (eV / 1e3).toPrecision(3) + ' keV';
+    if (eV >= 0.1) return eV.toPrecision(3) + ' eV';
+    if (eV >= 1e-3) return (eV * 1e3).toPrecision(3) + ' meV';
+    return (eV * 1e6).toPrecision(3) + ' μeV';
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('The Electromagnetic Spectrum', W / 2, 16);
+
+    // Draw bands
+    for (const b of bands) {
+      const x1 = logToX(b.logMin);
+      const x2 = logToX(b.logMax);
+      if (b.name === 'Visible') {
+        // Draw actual visible spectrum colors
+        for (let px = Math.floor(x1); px <= Math.ceil(x2); px++) {
+          const logL = xToLog(px);
+          const nm = Math.pow(10, logL) * 1e9;
+          ctx.fillStyle = wavelengthToRGB(nm);
+          ctx.fillRect(px, barTop, 1, barH);
+        }
+      } else {
+        ctx.fillStyle = b.color;
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(x1, barTop, x2 - x1, barH);
+        ctx.globalAlpha = 1;
+      }
+      // Band label
+      const cx = (x1 + x2) / 2;
+      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(b.name, cx, barTop - 5);
+    }
+
+    // Border around bar
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(specLeft, barTop, specW, barH);
+
+    // Wavelength axis (log scale) - below the bar
+    const axisY = barTop + barH + 18;
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(specLeft, axisY); ctx.lineTo(specRight, axisY); ctx.stroke();
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    for (let logL = -15; logL <= 4; logL += 1) {
+      const x = logToX(logL);
+      if (x < specLeft || x > specRight) continue;
+      ctx.beginPath(); ctx.moveTo(x, axisY - 3); ctx.lineTo(x, axisY + 3); ctx.stroke();
+      if (logL % 3 === 0 || (logL >= -8 && logL <= 0)) {
+        ctx.fillText('10' + (logL < 0 ? '\u207B' : '') + String(Math.abs(logL)).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join(''), x, axisY + 14);
+      }
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('wavelength (m)', W / 2, axisY + 26);
+
+    // Arrows showing direction
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
+    ctx.textAlign = 'left';
+    ctx.fillText('← higher energy', specLeft, barTop + barH + 48);
+    ctx.textAlign = 'right';
+    ctx.fillText('lower energy →', specRight, barTop + barH + 48);
+
+    // Marker line
+    const mx = logToX(markerLogLambda);
+    if (mx >= specLeft && mx <= specRight) {
+      ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(mx, barTop - 2); ctx.lineTo(mx, barTop + barH + 2); ctx.stroke();
+
+      // Triangle indicator on top
+      ctx.fillStyle = WCOLORS.text;
+      ctx.beginPath(); ctx.moveTo(mx, barTop - 2); ctx.lineTo(mx - 5, barTop - 10); ctx.lineTo(mx + 5, barTop - 10); ctx.closePath(); ctx.fill();
+
+      // Compute values
+      const lambda = Math.pow(10, markerLogLambda);
+      const c = 3e8;
+      const h = 6.626e-34;
+      const eVconv = 1.602e-19;
+      const freq = c / lambda;
+      const energy = h * freq / eVconv;
+      const band = getBandAt(markerLogLambda);
+
+      // Info panel
+      const panelY = barTop + barH + 60;
+      const panelCx = W / 2;
+
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+      if (band) ctx.fillText(band.name + ' waves', panelCx, panelY);
+
+      ctx.font = '12px system-ui'; ctx.fillStyle = WCOLORS.text;
+      const line1 = 'λ = ' + formatSI(lambda, 'm') + '      ν = ' + formatSI(freq, 'Hz') + '      E = ' + formatEnergy(energy);
+      ctx.fillText(line1, panelCx, panelY + 18);
+
+      if (band) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
+        ctx.fillText(band.desc, panelCx, panelY + 36);
+      }
+
+      // Show visible color swatch if in visible range
+      const nm = lambda * 1e9;
+      if (nm >= 380 && nm <= 780) {
+        const swatchY = panelY + 44;
+        ctx.fillStyle = wavelengthToRGB(nm);
+        ctx.beginPath();
+        ctx.arc(panelCx, swatchY + 8, 8, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText(Math.round(nm) + ' nm', panelCx + 18, swatchY + 12);
+      }
+    }
+
+    // Instruction
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Click or drag across the spectrum to explore', W / 2, H - 4);
+  }
+
+  function handlePointer(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const logL = xToLog(x);
+    markerLogLambda = Math.max(logLambdaMin, Math.min(logLambdaMax, logL));
+    draw();
+  }
+
+  canvas.addEventListener('pointerdown', function(e) {
+    dragging = true;
+    canvas.setPointerCapture(e.pointerId);
+    handlePointer(e);
+  });
+  canvas.addEventListener('pointermove', function(e) {
+    if (dragging) handlePointer(e);
+  });
+  canvas.addEventListener('pointerup', function() { dragging = false; });
+  canvas.addEventListener('pointercancel', function() { dragging = false; });
+
+  draw();
 }
 
 // =========================================================================
@@ -19049,4 +19280,333 @@ function initDopplerSpectroscopyExoplanet() {
   }
 
   tick();
+}
+
+// =========================================================================
+// SEISMIC WAVES THROUGH EARTH'S CORE
+// =========================================================================
+function initSeismicEarthCore() {
+  const canvas = document.getElementById('scene-seismic-earth-core');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // Earth geometry (scaled to canvas)
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  const earthR = Math.min(W, H) * 0.42;
+  const mantleR = earthR;             // outer surface
+  const outerCoreR = earthR * 0.545;  // ~2900 km / 6371 km
+  const innerCoreR = earthR * 0.192;  // ~1220 km / 6371 km
+
+  // Wave speeds (relative, for animation)
+  const VP_MANTLE = 1.0;
+  const VP_CORE = 0.72;
+  const VS_MANTLE = 0.55;
+
+  // Colors
+  const COL_MANTLE = '#8B6914';
+  const COL_OUTER_CORE = '#CD4F00';
+  const COL_INNER_CORE = '#FFB300';
+  const COL_P = '#2563eb';
+  const COL_S = '#dc2626';
+  const COL_SHADOW = 'rgba(220,38,38,0.08)';
+
+  // Ray paths: precomputed for P and S waves
+  // We'll trace rays from earthquake source at various angles
+  let quakeAngle = -Math.PI * 0.38; // position on surface where quake occurs
+  let rays = [];
+  let t = 0;
+  let playing = true;
+
+  // Seismograph stations around the surface
+  const NUM_STATIONS = 24;
+
+  function quakePos() {
+    return { x: cx + mantleR * Math.cos(quakeAngle), y: cy + mantleR * Math.sin(quakeAngle) };
+  }
+
+  // Trace a ray from surface through Earth layers
+  // Returns array of {x,y,t} waypoints with cumulative travel time
+  function traceRay(startAngle, rayAngle, isP) {
+    const speed = isP ? VP_MANTLE : VS_MANTLE;
+    const coreSpeed = isP ? VP_CORE : 0; // S-waves don't enter liquid core
+    const sx = cx + mantleR * Math.cos(startAngle);
+    const sy = cy + mantleR * Math.sin(startAngle);
+
+    // Direction from start toward center region
+    const dirAngle = startAngle + Math.PI + rayAngle;
+    const dx = Math.cos(dirAngle);
+    const dy = Math.sin(dirAngle);
+
+    const points = [{ x: sx, y: sy, t: 0 }];
+    const step = 2.0;
+    let px = sx, py = sy;
+    let cumT = 0;
+    let inCore = false;
+    let reflected = false;
+    let exited = false;
+
+    for (let i = 0; i < 600; i++) {
+      // Current distance from center
+      const distSq = (px - cx) * (px - cx) + (py - cy) * (py - cy);
+      const dist = Math.sqrt(distSq);
+
+      // Check if we've exited Earth
+      if (i > 5 && dist > mantleR + 2) {
+        exited = true;
+        break;
+      }
+
+      // Check if entering outer core
+      if (!inCore && !reflected && dist <= outerCoreR) {
+        if (!isP) {
+          // S-wave reflects off outer core boundary
+          reflected = true;
+          // Reflect: compute normal at boundary, reflect direction
+          const nx = (px - cx) / dist;
+          const ny = (py - cy) / dist;
+          const dot = dx * nx + dy * ny;
+          // Push point just outside core
+          points.push({ x: px, y: py, t: cumT });
+          // Reflected direction
+          const rdx = dx - 2 * dot * nx;
+          const rdy = dy - 2 * dot * ny;
+          // Continue with reflected ray
+          let rpx = px, rpy = py;
+          for (let j = 0; j < 400; j++) {
+            rpx += rdx * step;
+            rpy += rdy * step;
+            cumT += step / speed;
+            const rd = Math.sqrt((rpx - cx) * (rpx - cx) + (rpy - cy) * (rpy - cy));
+            if (rd > mantleR + 2) break;
+            if (j % 3 === 0) points.push({ x: rpx, y: rpy, t: cumT });
+          }
+          break;
+        } else {
+          inCore = true;
+          points.push({ x: px, y: py, t: cumT });
+        }
+      }
+
+      // Check if exiting outer core (P-wave)
+      if (inCore && dist > outerCoreR) {
+        inCore = false;
+        points.push({ x: px, y: py, t: cumT });
+      }
+
+      const curSpeed = inCore ? coreSpeed : speed;
+      if (curSpeed <= 0) break;
+
+      // Slight refraction toward center (simplified gravity bending)
+      const toCenter = Math.atan2(cy - py, cx - px);
+      const bend = 0.0008;
+      const fdx = Math.cos(Math.atan2(dy, dx) * (1 - bend) + toCenter * bend);
+      const fdy = Math.sin(Math.atan2(dy, dx) * (1 - bend) + toCenter * bend);
+
+      px += fdx * step;
+      py += fdy * step;
+      cumT += step / curSpeed;
+
+      if (i % 3 === 0) points.push({ x: px, y: py, t: cumT });
+    }
+
+    return points;
+  }
+
+  function generateRays() {
+    rays = [];
+    const numRays = 18;
+    for (let i = 0; i < numRays; i++) {
+      const spread = (i / (numRays - 1) - 0.5) * 1.3;
+      const pRay = traceRay(quakeAngle, spread, true);
+      if (pRay.length > 3) rays.push({ points: pRay, isP: true, spread: spread });
+      const sRay = traceRay(quakeAngle, spread, false);
+      if (sRay.length > 3) rays.push({ points: sRay, isP: false, spread: spread });
+    }
+  }
+
+  generateRays();
+
+  // Click/tap to set earthquake position
+  function handleClick(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const my = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+    const dx = mx - cx, dy = my - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > mantleR * 0.7 && dist < mantleR * 1.15) {
+      quakeAngle = Math.atan2(dy, dx);
+      t = 0;
+      generateRays();
+    }
+  }
+  canvas.addEventListener('click', handleClick);
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); handleClick(e); });
+
+  // Reset button
+  const resetBtn = document.getElementById('seismic-reset');
+  if (resetBtn) resetBtn.addEventListener('click', function() { t = 0; });
+
+  // Play/pause
+  const playBtn = document.getElementById('seismic-play');
+  if (playBtn) playBtn.addEventListener('click', function() {
+    playing = !playing;
+    playBtn.textContent = playing ? 'Pause' : 'Play';
+  });
+
+  // Speed slider
+  const speedSlider = document.getElementById('seismic-speed');
+  const speedVal = document.getElementById('seismic-speed-val');
+  if (speedSlider) speedSlider.addEventListener('input', function() {
+    if (speedVal) speedVal.textContent = parseFloat(speedSlider.value).toFixed(1) + 'x';
+  });
+
+  function getSpeed() {
+    return speedSlider ? parseFloat(speedSlider.value) : 1;
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    // Draw Earth layers
+    // Mantle
+    const mantleGrad = ctx.createRadialGradient(cx, cy, outerCoreR, cx, cy, mantleR);
+    mantleGrad.addColorStop(0, '#A0782C');
+    mantleGrad.addColorStop(0.6, '#8B6914');
+    mantleGrad.addColorStop(1, '#6B4F10');
+    ctx.beginPath(); ctx.arc(cx, cy, mantleR, 0, Math.PI * 2);
+    ctx.fillStyle = mantleGrad; ctx.fill();
+    ctx.strokeStyle = '#4a3810'; ctx.lineWidth = 2; ctx.stroke();
+
+    // Outer core (liquid)
+    const coreGrad = ctx.createRadialGradient(cx, cy, innerCoreR, cx, cy, outerCoreR);
+    coreGrad.addColorStop(0, '#FF6B00');
+    coreGrad.addColorStop(1, '#CD4F00');
+    ctx.beginPath(); ctx.arc(cx, cy, outerCoreR, 0, Math.PI * 2);
+    ctx.fillStyle = coreGrad; ctx.fill();
+    ctx.strokeStyle = '#8B3600'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Inner core (solid)
+    const innerGrad = ctx.createRadialGradient(cx - innerCoreR * 0.2, cy - innerCoreR * 0.2, 0, cx, cy, innerCoreR);
+    innerGrad.addColorStop(0, '#FFD54F');
+    innerGrad.addColorStop(1, '#FFB300');
+    ctx.beginPath(); ctx.arc(cx, cy, innerCoreR, 0, Math.PI * 2);
+    ctx.fillStyle = innerGrad; ctx.fill();
+    ctx.strokeStyle = '#FF8F00'; ctx.lineWidth = 1; ctx.stroke();
+
+    // Layer labels
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.85;
+    ctx.fillText('Inner Core', cx, cy + 4);
+    ctx.fillText('(solid iron)', cx, cy + 16);
+    ctx.font = '10px system-ui';
+    ctx.fillText('Outer Core', cx, cy - outerCoreR * 0.5);
+    ctx.fillText('(liquid iron)', cx, cy - outerCoreR * 0.5 + 13);
+    ctx.fillStyle = '#fff8e1';
+    ctx.fillText('Mantle', cx + mantleR * 0.42, cy - mantleR * 0.55);
+    ctx.fillText('(solid rock)', cx + mantleR * 0.42, cy - mantleR * 0.55 + 13);
+    ctx.globalAlpha = 1;
+
+    // Draw seismograph stations
+    for (let i = 0; i < NUM_STATIONS; i++) {
+      const a = (i / NUM_STATIONS) * Math.PI * 2;
+      const sx = cx + (mantleR + 6) * Math.cos(a);
+      const sy = cy + (mantleR + 6) * Math.sin(a);
+      ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#596166'; ctx.fill();
+    }
+
+    // Draw wave rays
+    const maxT = rays.reduce(function(m, r) {
+      return Math.max(m, r.points[r.points.length - 1].t);
+    }, 0);
+
+    for (let ri = 0; ri < rays.length; ri++) {
+      const ray = rays[ri];
+      const pts = ray.points;
+      const color = ray.isP ? COL_P : COL_S;
+
+      // Draw the path traced so far
+      ctx.strokeStyle = color;
+      ctx.lineWidth = ray.isP ? 2 : 1.8;
+      ctx.globalAlpha = 0.7;
+      ctx.setLineDash(ray.isP ? [] : [4, 3]);
+      ctx.beginPath();
+      let drawn = false;
+      for (let pi = 0; pi < pts.length; pi++) {
+        if (pts[pi].t > t) break;
+        if (!drawn) { ctx.moveTo(pts[pi].x, pts[pi].y); drawn = true; }
+        else ctx.lineTo(pts[pi].x, pts[pi].y);
+      }
+      if (drawn) ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // Draw wavefront dot at current position
+      for (let pi = 0; pi < pts.length - 1; pi++) {
+        if (pts[pi].t <= t && pts[pi + 1].t > t) {
+          const frac = (t - pts[pi].t) / (pts[pi + 1].t - pts[pi].t);
+          const wx = pts[pi].x + (pts[pi + 1].x - pts[pi].x) * frac;
+          const wy = pts[pi].y + (pts[pi + 1].y - pts[pi].y) * frac;
+          ctx.beginPath(); ctx.arc(wx, wy, ray.isP ? 4 : 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = color; ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+          break;
+        }
+      }
+    }
+
+    // Earthquake source marker
+    const qp = quakePos();
+    ctx.save();
+    // Pulsing ring
+    const pulse = 1 + 0.3 * Math.sin(t * 0.05);
+    ctx.beginPath(); ctx.arc(qp.x, qp.y, 10 * pulse, 0, Math.PI * 2);
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2; ctx.globalAlpha = 0.4 + 0.3 * Math.sin(t * 0.05); ctx.stroke();
+    ctx.globalAlpha = 1;
+    // Star burst
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+      const r = i % 2 === 0 ? 7 : 3.5;
+      if (i === 0) ctx.moveTo(qp.x + r * Math.cos(a), qp.y + r * Math.sin(a));
+      else ctx.lineTo(qp.x + r * Math.cos(a), qp.y + r * Math.sin(a));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#b45309'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+
+    // Legend
+    const lx = 10, ly = H - 50;
+    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    // P-wave legend
+    ctx.strokeStyle = COL_P; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + 24, ly); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + 24, ly, 3, 0, Math.PI * 2); ctx.fillStyle = COL_P; ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.fillText('P-wave (compression)', lx + 32, ly + 4);
+    // S-wave legend
+    ctx.strokeStyle = COL_S; ctx.lineWidth = 2; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(lx, ly + 18); ctx.lineTo(lx + 24, ly + 18); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(lx + 24, ly + 18, 3, 0, Math.PI * 2); ctx.fillStyle = COL_S; ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.fillText('S-wave (shear) \u2014 blocked by liquid', lx + 32, ly + 22);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Seismic Waves Through Earth\u2019s Interior', 10, 18);
+
+    // Instruction
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Click the surface to move the earthquake', W - 10, 16);
+
+    // Advance time
+    if (playing) t += 1.8 * getSpeed();
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
 }

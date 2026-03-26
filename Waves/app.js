@@ -3938,6 +3938,20 @@ function sceneMarkup(type) {
         </div>
       `;
 
+    case "seismic-earth-core":
+      return `
+        <div class="scene-label">Seismic Waves Through Earth's Interior</div>
+        <p class="scene-caption">P-waves (blue) pass through the liquid outer core. S-waves (red, dashed) are reflected because liquids cannot sustain shear. Click the surface to relocate the earthquake.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-seismic-earth-core" width="600" height="420"></canvas>
+          <div class="scene-controls">
+            <label><span>Speed: </span><input type="range" id="seismic-speed" min="0.3" max="3" step="0.1" value="1"><span class="scene-val" id="seismic-speed-val">1.0x</span></label>
+            <button id="seismic-reset" style="padding:2px 10px;cursor:pointer">Restart</button>
+            <button id="seismic-play" style="padding:2px 10px;cursor:pointer">Pause</button>
+          </div>
+        </div>
+      `;
+
     // =====================================================================
     // CHAPTER 13: LIGHT
     // =====================================================================
@@ -3951,6 +3965,15 @@ function sceneMarkup(type) {
             <label><span>Frequency: </span><input type="range" id="empw-freq" min="0.5" max="4" step="0.1" value="1.5"><span class="scene-val" id="empw-freq-val">1.5</span></label>
             <label><span>Amplitude: </span><input type="range" id="empw-amp" min="0.2" max="1" step="0.05" value="0.7"><span class="scene-val" id="empw-amp-val">0.70</span></label>
           </div>
+        </div>
+      `;
+
+    case "em-spectrum":
+      return `
+        <div class="scene-label">Interactive 2: The Electromagnetic Spectrum</div>
+        <p class="scene-caption">Click or drag across the spectrum to explore wavelength, frequency, and photon energy at each scale.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-em-spectrum" width="600" height="320"></canvas>
         </div>
       `;
 
