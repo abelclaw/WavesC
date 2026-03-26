@@ -4475,7 +4475,7 @@ function renderLearnMode(chapter) {
     .map(
       (section, index) => `
       <div class="lecture-section" id="lecture-section-${index}">
-        <h3>${section.heading}</h3>
+        <h3>${section.heading.replace(/^Interactive \d+:\s*/, "")}</h3>
         <div class="lecture-section-body">${section.body}</div>
         ${
           section.interactive
