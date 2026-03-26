@@ -10592,12 +10592,8 @@ function initPrismDispersion() {
   }
 
   const spectralWavelengths = [
-    { wl: 400, name: 'Violet' },
-    { wl: 440, name: 'Blue' },
-    { wl: 490, name: 'Cyan' },
+    { wl: 450, name: 'Blue' },
     { wl: 530, name: 'Green' },
-    { wl: 570, name: 'Yellow' },
-    { wl: 610, name: 'Orange' },
     { wl: 700, name: 'Red' },
   ];
 
@@ -10701,7 +10697,7 @@ function initPrismDispersion() {
       });
     }
 
-    const waveAmp = 6;
+    const waveAmp = 3;
     const baseWlPx = 20;
 
     // --- Incident beam: solid white bar (like the GIF) ---
@@ -10725,7 +10721,7 @@ function initPrismDispersion() {
     for (const ray of rays) {
       const wlPx = baseWlPx * (ray.wl / 550);
       drawWaveAlongPath(ray.exitX, ray.exitY, ray.exitEndX, ray.exitEndY,
-        waveAmp * 1.5, wlPx, phase, ray.color, 2, false);
+        waveAmp * 1.3, wlPx, phase, ray.color, 2, false);
     }
 
     // --- Re-draw prism on top so it overlays the internal waves cleanly ---
