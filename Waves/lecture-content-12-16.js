@@ -199,8 +199,8 @@ window.LECTURE_CONTENT_12_16 = {
   {
     heading: "Quarter and Half-Wave Plates",
     body: "<p>Suppose a plane wave polarized in the $\\hat{x} + \\hat{y}$ direction passes through a birefringent crystal of thickness L whose optical axes align with x and y. Inside the crystal, the two components propagate at different speeds, producing a net phase difference:</p><p style='text-align:center;'>$$\\Delta\\phi = (\\omega/c) L (n_x - n_y)$$</p><p>A <strong>quarter-wave plate</strong> is chosen so that $\\Delta \\phi = \\pi$/2, converting linearly polarized light into circularly polarized light. Key notes: the phase depends linearly on frequency $\\omega$ (different lengths needed for different colors), and light polarized along one crystal axis will remain linearly polarized (orientation matters).</p><p>A <strong>half-wave plate</strong> (double thickness, $\\Delta \\phi = \\pi$) converts ($E_{x}, E_{y}) \\rightarrow (E_{x}$, -$E_{y}$), rotating linear polarization by 90$^\\circ$. A <strong>full-wave plate</strong> ($\\Delta \\phi$ = 2$\\pi$) returns the polarization to its initial value.</p><p>Application: <strong>3D movies</strong>. IMAX projects two movies simultaneously -- one with left-hand circular polarization, one with right-handed. Your 3D glasses have one lens transmitting left-handed and the other right-handed, so each eye sees a different image, giving the illusion of depth.</p><p>Application: <strong>Rapatronic cameras</strong>. A shutter made of two crossed polarizers with a voltage-controlled birefringent material between them. With voltage on, the material acts as a half-wave plate, transmitting all light. Voltage off (in microseconds) closes the shutter. Used to photograph atomic bomb detonations at $10^{-6}$ s after detonation.</p>",
-    interactive: null,
-    interactiveCaption: null,
+    interactive: "3d-movie-glasses",
+    interactiveCaption: "Toggle glasses on/off to see how circular polarization separates the left and right eye images. Adjust separation to control the stereo offset.",
     mathLinks: ["wave-plates"]
   },
   {

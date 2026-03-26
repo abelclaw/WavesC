@@ -8856,6 +8856,356 @@ function initMalusLaw() {
 }
 
 // =========================================================================
+// 3D MOVIE GLASSES (CHAPTER 14)
+// =========================================================================
+
+function init3DMovieGlasses() {
+  const canvas = document.getElementById('scene-3d-movie-glasses');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const btnOn = document.getElementById('tdm-btn-glasses-on');
+  const btnOff = document.getElementById('tdm-btn-glasses-off');
+  const sepSlider = document.getElementById('tdm-separation');
+
+  let glassesOn = true;
+  let t = 0;
+
+  function setMode(on) {
+    glassesOn = on;
+    if (btnOn) btnOn.style.background = on ? '#0f766e' : '';
+    if (btnOn) btnOn.style.color = on ? '#fff' : '';
+    if (btnOff) btnOff.style.background = on ? '' : '#0f766e';
+    if (btnOff) btnOff.style.color = on ? '' : '#fff';
+  }
+  if (btnOn) btnOn.addEventListener('click', () => setMode(true));
+  if (btnOff) btnOff.addEventListener('click', () => setMode(false));
+
+  // Simple 3D scene: a cube and a sphere, drawn with stereo offset
+  function drawScene(cx, cy, scale, offset, color, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    // Draw a cube (wireframe)
+    const s = 32 * scale;
+    const x0 = cx - s / 2 + offset;
+    const y0 = cy - s / 2;
+    const d = s * 0.35; // depth offset for 3D look
+
+    // Front face
+    ctx.beginPath();
+    ctx.rect(x0, y0, s, s);
+    ctx.stroke();
+
+    // Back face
+    ctx.beginPath();
+    ctx.rect(x0 + d, y0 - d, s, s);
+    ctx.stroke();
+
+    // Connecting edges
+    ctx.beginPath();
+    ctx.moveTo(x0, y0); ctx.lineTo(x0 + d, y0 - d);
+    ctx.moveTo(x0 + s, y0); ctx.lineTo(x0 + s + d, y0 - d);
+    ctx.moveTo(x0 + s, y0 + s); ctx.lineTo(x0 + s + d, y0 + s - d);
+    ctx.moveTo(x0, y0 + s); ctx.lineTo(x0 + d, y0 + s - d);
+    ctx.stroke();
+
+    // Draw a sphere (circle) to the right
+    const sx = cx + 60 * scale + offset;
+    const sy = cy + 5;
+    const sr = 22 * scale;
+    ctx.beginPath();
+    ctx.arc(sx, sy, sr, 0, 2 * Math.PI);
+    ctx.stroke();
+    // Shading arc
+    ctx.beginPath();
+    ctx.arc(sx - sr * 0.15, sy - sr * 0.1, sr * 0.7, -0.8, 1.0);
+    ctx.stroke();
+
+    // Draw a triangle to the left
+    const tx = cx - 65 * scale + offset;
+    const ty = cy + s / 2;
+    const th = 45 * scale;
+    const tw = 35 * scale;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx + tw, ty);
+    ctx.lineTo(tx + tw / 2, ty - th);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Draw circular polarization indicator (rotating E-field arrow)
+  function drawPolIndicator(cx, cy, r, handed, phase, color) {
+    ctx.save();
+    const dir = handed === 'L' ? 1 : -1;
+    const angle = dir * phase;
+    const ex = cx + r * Math.cos(angle);
+    const ey = cy - r * Math.sin(angle);
+
+    // Circle path
+    ctx.strokeStyle = WCOLORS.grid;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Arrow
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(ex, ey);
+    ctx.stroke();
+
+    // Arrowhead
+    const aLen = 5;
+    const aAngle = Math.atan2(-(ey - cy), ex - cx);
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - aLen * Math.cos(aAngle - 0.4), ey + aLen * Math.sin(aAngle - 0.4));
+    ctx.lineTo(ex - aLen * Math.cos(aAngle + 0.4), ey + aLen * Math.sin(aAngle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+
+    // Label
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(handed === 'L' ? 'LCP' : 'RCP', cx, cy + r + 14);
+    ctx.restore();
+  }
+
+  // Draw glasses
+  function drawGlasses(cx, cy, lensW, lensH, leftColor, rightColor, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const gap = 4;
+    const bridge = 16;
+
+    // Left lens
+    const lx = cx - bridge / 2 - lensW;
+    const ly = cy - lensH / 2;
+    ctx.fillStyle = leftColor;
+    ctx.beginPath();
+    roundRect(ctx, lx, ly, lensW, lensH, 8);
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundRect(ctx, lx, ly, lensW, lensH, 8);
+    ctx.stroke();
+
+    // Right lens
+    const rx = cx + bridge / 2;
+    ctx.fillStyle = rightColor;
+    ctx.beginPath();
+    roundRect(ctx, rx, ly, lensW, lensH, 8);
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.beginPath();
+    roundRect(ctx, rx, ly, lensW, lensH, 8);
+    ctx.stroke();
+
+    // Bridge
+    ctx.strokeStyle = WCOLORS.axis;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(lx + lensW, cy - 2);
+    ctx.quadraticCurveTo(cx, cy - lensH / 2 - 4, rx, cy - 2);
+    ctx.stroke();
+
+    // Temples (arms)
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(lx, cy);
+    ctx.lineTo(lx - 18, cy - 4);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(rx + lensW, cy);
+    ctx.lineTo(rx + lensW + 18, cy - 4);
+    ctx.stroke();
+
+    // Lens labels
+    ctx.font = '10px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = alpha * 0.9;
+    ctx.fillText('LCP', lx + lensW / 2, cy + 3);
+    ctx.fillText('RCP', rx + lensW / 2, cy + 3);
+    ctx.restore();
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + r);
+    c.lineTo(x + w, y + h - r);
+    c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    c.lineTo(x + r, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+  }
+
+  function tick() {
+    if (!canvas.isConnected) return;
+    t += 0.04;
+    const sep = parseFloat(sepSlider?.value || 14);
+    document.getElementById('tdm-separation-val')?.replaceChildren(
+      document.createTextNode(Math.round(sep) + ' px')
+    );
+    draw(sep);
+    requestAnimationFrame(tick);
+  }
+
+  function draw(sep) {
+    wClear(ctx, W, H);
+
+    const screenY = 60;
+    const screenH = 140;
+    const screenW = 320;
+    const screenX = (W - screenW) / 2;
+    const sceneCX = W / 2;
+    const sceneCY = screenY + screenH / 2;
+
+    // --- Movie screen ---
+    ctx.fillStyle = '#1a1a2e';
+    ctx.beginPath();
+    roundRect(ctx, screenX, screenY, screenW, screenH, 6);
+    ctx.fill();
+
+    // Screen border
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    roundRect(ctx, screenX, screenY, screenW, screenH, 6);
+    ctx.stroke();
+
+    // Label
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText('Screen (two overlapping images)', sceneCX, screenY - 8);
+
+    // Clip to screen area
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(screenX + 2, screenY + 2, screenW - 4, screenH - 4);
+    ctx.clip();
+
+    const lcpColor = 'rgba(220,38,38,0.85)';   // red for LCP
+    const rcpColor = 'rgba(37,99,235,0.85)';    // blue for RCP
+
+    if (glassesOn) {
+      // With glasses: show only one image per "eye" panel
+      // Left eye panel: sees LCP image only
+      const panelW = screenW / 2 - 6;
+
+      // Left eye (LCP only) — show in normal position
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(screenX + 2, screenY + 2, panelW, screenH - 4);
+      ctx.clip();
+      drawScene(screenX + panelW / 2, sceneCY, 1.0, -sep / 2, lcpColor, 1.0);
+      ctx.restore();
+
+      // Divider
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(sceneCX, screenY + 8);
+      ctx.lineTo(sceneCX, screenY + screenH - 8);
+      ctx.stroke();
+
+      // Right eye (RCP only)
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sceneCX + 4, screenY + 2, panelW, screenH - 4);
+      ctx.clip();
+      drawScene(sceneCX + 4 + panelW / 2, sceneCY, 1.0, sep / 2, rcpColor, 1.0);
+      ctx.restore();
+
+      // Eye labels
+      ctx.font = '10px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.textAlign = 'center';
+      ctx.fillText('Left eye sees', screenX + panelW / 2, screenY + screenH - 8);
+      ctx.fillText('Right eye sees', sceneCX + 4 + panelW / 2, screenY + screenH - 8);
+    } else {
+      // Without glasses: both images overlap on screen
+      drawScene(sceneCX, sceneCY, 1.0, -sep / 2, lcpColor, 0.8);
+      drawScene(sceneCX, sceneCY, 1.0, sep / 2, rcpColor, 0.8);
+
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.textAlign = 'center';
+      ctx.fillText('Both images overlap \u2014 blurry!', sceneCX, screenY + screenH - 10);
+    }
+
+    ctx.restore(); // unclip
+
+    // --- Polarization indicators ---
+    const polY = screenY + screenH + 50;
+    const polR = 16;
+    drawPolIndicator(sceneCX - 80, polY, polR, 'L', t, lcpColor);
+    drawPolIndicator(sceneCX + 80, polY, polR, 'R', t, rcpColor);
+
+    // Arrows from screen to polarization indicators
+    ctx.strokeStyle = WCOLORS.textDim;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(sceneCX - 40, screenY + screenH + 4);
+    ctx.lineTo(sceneCX - 80, polY - polR - 16);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sceneCX + 40, screenY + screenH + 4);
+    ctx.lineTo(sceneCX + 80, polY - polR - 16);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText('Projector 1', sceneCX - 80, polY + polR + 28);
+    ctx.fillText('Projector 2', sceneCX + 80, polY + polR + 28);
+
+    // --- Glasses diagram ---
+    const glassesY = polY + polR + 60;
+    if (glassesOn) {
+      drawGlasses(sceneCX, glassesY, 48, 30,
+        'rgba(220,38,38,0.45)', 'rgba(37,99,235,0.45)', 1.0);
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.textAlign = 'center';
+      ctx.fillText('Each lens passes only its handedness \u2192 stereo depth!', sceneCX, glassesY + 30);
+    } else {
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = WCOLORS.textDim;
+      ctx.textAlign = 'center';
+      ctx.fillText('Without glasses, both images overlap on your retina.', sceneCX, glassesY);
+      ctx.fillText('The brain can\'t separate them \u2014 you see a blurry double image.', sceneCX, glassesY + 18);
+    }
+
+    // Advantage note
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = WCOLORS.textDim;
+    ctx.textAlign = 'center';
+    ctx.fillText('Circular polarization advantage: tilting your head doesn\'t break the effect (unlike linear).', sceneCX, H - 10);
+  }
+
+  tick();
+}
+
+// =========================================================================
 // CHAPTER 15 - REFRACTION
 // =========================================================================
 
