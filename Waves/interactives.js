@@ -7762,222 +7762,346 @@ function initEmSpectrum() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // Spectrum bands: name, log10(wavelength in m) range, color, description
   const bands = [
-    { name: 'Radio',      logMin: -1,   logMax: 4,    color: '#6366f1', desc: 'AM/FM broadcasting, cell phones' },
-    { name: 'Microwave',  logMin: -3,   logMax: -1,   color: '#8b5cf6', desc: 'Rotational modes of water, radar' },
-    { name: 'Infrared',   logMin: -5.2, logMax: -3,   color: '#ef4444', desc: 'Vibrational modes, thermal imaging' },
-    { name: 'Visible',    logMin: -6.15,logMax: -5.2,  color: null, desc: 'Electronic transitions in atoms' },
-    { name: 'UV',         logMin: -8,   logMax: -6.15, color: '#7c3aed', desc: 'Ionizing, sunburn, fluorescence' },
-    { name: 'X-ray',      logMin: -12,  logMax: -8,   color: '#0ea5e9', desc: 'Crystallography, medical imaging' },
-    { name: 'Gamma',      logMin: -16,  logMax: -12,  color: '#14b8a6', desc: 'Nuclear decay, cosmic rays' },
+    { name: 'Radio',      logMin: -1,   logMax: 4,    color: '#6366f1' },
+    { name: 'Microwave',  logMin: -3,   logMax: -1,   color: '#8b5cf6' },
+    { name: 'Infrared',   logMin: -5.2, logMax: -3,   color: '#ef4444' },
+    { name: 'Visible',    logMin: -6.15,logMax: -5.2,  color: null },
+    { name: 'UV',         logMin: -8,   logMax: -6.15, color: '#7c3aed' },
+    { name: 'X-ray',      logMin: -12,  logMax: -8,   color: '#0ea5e9' },
+    { name: 'Gamma',      logMin: -16,  logMax: -12,  color: '#14b8a6' },
   ];
 
-  const logLambdaMin = -16;  // 10^-16 m (gamma)
-  const logLambdaMax = 4;    // 10^4 m (radio)
-  const specLeft = 60;
-  const specRight = W - 20;
-  const specW = specRight - specLeft;
-  const barTop = 70;
-  const barH = 50;
+  const logLambdaMin = -16, logLambdaMax = 4;
+  const specLeft = 50, specRight = W - 14, specW = specRight - specLeft;
+  const freqAxisY = 38, barTop = 62, barH = 50;
+  const lambdaAxisY = barTop + barH + 14;
+  const iconRowTop = lambdaAxisY + 30, iconRowH = 90;
+  const infoY = iconRowTop + iconRowH + 8;
 
-  let markerLogLambda = -6.6; // start in visible (green-ish)
-  let dragging = false;
+  let markerLogLambda = -6.6, dragging = false;
 
-  function logToX(logL) {
-    return specLeft + (logL - logLambdaMin) / (logLambdaMax - logLambdaMin) * specW;
-  }
-  function xToLog(x) {
-    return logLambdaMin + (x - specLeft) / specW * (logLambdaMax - logLambdaMin);
-  }
+  function logToX(logL) { return specLeft + (logL - logLambdaMin) / (logLambdaMax - logLambdaMin) * specW; }
+  function xToLog(x) { return logLambdaMin + (x - specLeft) / specW * (logLambdaMax - logLambdaMin); }
 
-  // Visible spectrum: wavelength (nm) to RGB
   function wavelengthToRGB(nm) {
-    let r = 0, g = 0, b = 0;
+    var r = 0, g = 0, b = 0;
     if (nm >= 380 && nm < 440) { r = -(nm - 440) / 60; b = 1; }
     else if (nm < 490) { g = (nm - 440) / 50; b = 1; }
     else if (nm < 510) { g = 1; b = -(nm - 510) / 20; }
     else if (nm < 580) { r = (nm - 510) / 70; g = 1; }
     else if (nm < 645) { r = 1; g = -(nm - 645) / 65; }
     else if (nm <= 780) { r = 1; }
-    // intensity falloff at edges
-    let f = 1;
+    var f = 1;
     if (nm >= 380 && nm < 420) f = 0.3 + 0.7 * (nm - 380) / 40;
     else if (nm > 700 && nm <= 780) f = 0.3 + 0.7 * (780 - nm) / 80;
     else if (nm < 380 || nm > 780) f = 0;
-    return `rgb(${Math.round(r * f * 255)},${Math.round(g * f * 255)},${Math.round(b * f * 255)})`;
+    return 'rgb(' + Math.round(r*f*255) + ',' + Math.round(g*f*255) + ',' + Math.round(b*f*255) + ')';
   }
 
   function getBandAt(logL) {
-    for (const b of bands) {
-      if (logL >= b.logMin && logL <= b.logMax) return b;
-    }
+    for (var i = 0; i < bands.length; i++) { if (logL >= bands[i].logMin && logL <= bands[i].logMax) return bands[i]; }
     return null;
   }
 
+  function sup(n) {
+    return String(n).split('').map(function(d) { return d === '-' ? '\u207B' : '\u2070\u00B9\u00B2\u00B3\u2074\u2075\u2076\u2077\u2078\u2079'[d]; }).join('');
+  }
+
   function formatSI(val, unit) {
-    const prefixes = [
-      { exp: -15, sym: 'fm' }, { exp: -12, sym: 'pm' }, { exp: -10, sym: 'Å' },
-      { exp: -9, sym: 'nm' }, { exp: -6, sym: 'μm' }, { exp: -3, sym: 'mm' },
-      { exp: -2, sym: 'cm' }, { exp: 0, sym: 'm' }, { exp: 3, sym: 'km' },
+    var prefixes = [
+      { exp: -15, sym: 'fm' }, { exp: -12, sym: 'pm' }, { exp: -10, sym: '\u00C5' },
+      { exp: -9, sym: 'nm' }, { exp: -6, sym: '\u03BCm' }, { exp: -3, sym: 'mm' },
+      { exp: -2, sym: 'cm' }, { exp: 0, sym: 'm' }, { exp: 3, sym: 'km' }
     ];
     if (unit === 'm') {
-      for (let i = prefixes.length - 1; i >= 0; i--) {
+      for (var i = prefixes.length - 1; i >= 0; i--) {
         if (val >= Math.pow(10, prefixes[i].exp) * 0.95) {
-          const scaled = val / Math.pow(10, prefixes[i].exp);
-          return scaled < 100 ? scaled.toPrecision(3) + ' ' + prefixes[i].sym
-                              : Math.round(scaled) + ' ' + prefixes[i].sym;
+          var sc = val / Math.pow(10, prefixes[i].exp);
+          return (sc < 100 ? sc.toPrecision(3) : Math.round(sc)) + ' ' + prefixes[i].sym;
         }
       }
       return val.toExponential(1) + ' m';
     }
-    // Frequency
-    if (val >= 1e18) return (val / 1e18).toPrecision(3) + ' EHz';
-    if (val >= 1e15) return (val / 1e15).toPrecision(3) + ' PHz';
-    if (val >= 1e12) return (val / 1e12).toPrecision(3) + ' THz';
-    if (val >= 1e9) return (val / 1e9).toPrecision(3) + ' GHz';
-    if (val >= 1e6) return (val / 1e6).toPrecision(3) + ' MHz';
-    if (val >= 1e3) return (val / 1e3).toPrecision(3) + ' kHz';
-    return val.toPrecision(3) + ' Hz';
+    if (val >= 1e18) return (val/1e18).toPrecision(3)+' EHz';
+    if (val >= 1e15) return (val/1e15).toPrecision(3)+' PHz';
+    if (val >= 1e12) return (val/1e12).toPrecision(3)+' THz';
+    if (val >= 1e9) return (val/1e9).toPrecision(3)+' GHz';
+    if (val >= 1e6) return (val/1e6).toPrecision(3)+' MHz';
+    if (val >= 1e3) return (val/1e3).toPrecision(3)+' kHz';
+    return val.toPrecision(3)+' Hz';
   }
 
   function formatEnergy(eV) {
-    if (eV >= 1e6) return (eV / 1e6).toPrecision(3) + ' MeV';
-    if (eV >= 1e3) return (eV / 1e3).toPrecision(3) + ' keV';
-    if (eV >= 0.1) return eV.toPrecision(3) + ' eV';
-    if (eV >= 1e-3) return (eV * 1e3).toPrecision(3) + ' meV';
-    return (eV * 1e6).toPrecision(3) + ' μeV';
+    if (eV >= 1e6) return (eV/1e6).toPrecision(3)+' MeV';
+    if (eV >= 1e3) return (eV/1e3).toPrecision(3)+' keV';
+    if (eV >= 0.1) return eV.toPrecision(3)+' eV';
+    if (eV >= 1e-3) return (eV*1e3).toPrecision(3)+' meV';
+    return (eV*1e6).toPrecision(3)+' \u03BCeV';
   }
 
+  // ---- Icon drawing functions ----
+  function drawRadioTower(cx, cy, s) {
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s * 1.2); ctx.lineTo(cx - s * 0.5, cy + s); ctx.lineTo(cx + s * 0.5, cy + s);
+    ctx.closePath(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx, cy - s * 1.2); ctx.lineTo(cx, cy - s * 1.7); ctx.stroke();
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 1;
+    for (var i = 1; i <= 3; i++) {
+      var r = s * 0.35 * i;
+      ctx.beginPath(); ctx.arc(cx, cy - s * 1.7, r, -Math.PI * 0.7, -Math.PI * 0.3); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy - s * 1.7, r, Math.PI * 0.3, Math.PI * 0.7); ctx.stroke();
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Radio tower', cx, cy + s + 12);
+  }
+
+  function drawMicrowaveOven(cx, cy, s) {
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5;
+    var bx = cx - s, by = cy - s * 0.7, bw = s * 2, bh = s * 1.4;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.strokeRect(bx + 3, by + 3, bw * 0.6, bh - 6);
+    ctx.beginPath(); ctx.moveTo(bx + bw * 0.68, by + bh * 0.3); ctx.lineTo(bx + bw * 0.68, by + bh * 0.7); ctx.stroke();
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.beginPath(); ctx.arc(bx + bw * 0.82, by + bh * 0.35, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bx + bw * 0.82, by + bh * 0.55, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
+    for (var j = 0; j < 3; j++) {
+      var wy = by + bh * 0.3 + j * bh * 0.2;
+      ctx.beginPath();
+      for (var p = 0; p <= 6; p++) {
+        var wx = bx + 8 + p * (bw * 0.5 / 6), wvy = wy + Math.sin(p * 1.5) * 3;
+        if (p === 0) ctx.moveTo(wx, wvy); else ctx.lineTo(wx, wvy);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Microwave oven', cx, cy + s * 0.7 + 12);
+  }
+
+  function drawThermalCamera(cx, cy, s) {
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - s, cy - s * 0.6, s * 2, s * 1.2);
+    ctx.beginPath(); ctx.arc(cx, cy, s * 0.4, 0, Math.PI * 2); ctx.stroke();
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, s * 0.35);
+    grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(0.3, 'rgba(255,200,0,0.6)');
+    grad.addColorStop(0.6, 'rgba(255,80,0,0.5)');
+    grad.addColorStop(1, 'rgba(180,0,0,0.3)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, s * 0.35, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text; ctx.fillRect(cx + s * 0.5, cy - s * 0.6, s * 0.3, s * 0.25);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Thermal camera', cx, cy + s * 0.6 + 12);
+  }
+
+  function drawRainbowEye(cx, cy, s) {
+    var colors = ['#ff0000','#ff8800','#ffff00','#00cc00','#0066ff','#4400cc','#8800aa'];
+    for (var i = 0; i < colors.length; i++) {
+      ctx.strokeStyle = colors[i]; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(cx, cy + s * 0.3, s * (0.6 + i * 0.15), -Math.PI * 0.85, -Math.PI * 0.15); ctx.stroke();
+    }
+    var ey = cy + s * 0.5;
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.5, ey);
+    ctx.quadraticCurveTo(cx, ey - s * 0.4, cx + s * 0.5, ey);
+    ctx.quadraticCurveTo(cx, ey + s * 0.4, cx - s * 0.5, ey);
+    ctx.stroke();
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath(); ctx.arc(cx, ey, s * 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.text;
+    ctx.beginPath(); ctx.arc(cx, ey, s * 0.07, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Human eye', cx, cy + s + 12);
+  }
+
+  function drawSunburn(cx, cy, s) {
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.arc(cx, cy - s * 0.2, s * 0.35, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.5;
+    for (var a = 0; a < 8; a++) {
+      var ang = a * Math.PI / 4, r1 = s * 0.45, r2 = s * 0.65;
+      ctx.beginPath();
+      ctx.moveTo(cx + r1 * Math.cos(ang), cy - s * 0.2 + r1 * Math.sin(ang));
+      ctx.lineTo(cx + r2 * Math.cos(ang), cy - s * 0.2 + r2 * Math.sin(ang));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#7c3aed'; ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('UV', cx, cy + s * 0.55);
+    ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.6, cy + s * 0.7);
+    ctx.quadraticCurveTo(cx, cy + s * 0.5, cx + s * 0.6, cy + s * 0.7);
+    ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Sunburn', cx, cy + s + 12);
+  }
+
+  function drawXrayHand(cx, cy, s) {
+    ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1;
+    var px0 = cx - s * 0.5, py0 = cy - s * 0.3, pw = s, ph = s * 1.1;
+    ctx.beginPath();
+    ctx.moveTo(px0 + 4, py0); ctx.lineTo(px0 + pw - 4, py0);
+    ctx.quadraticCurveTo(px0 + pw, py0, px0 + pw, py0 + 4);
+    ctx.lineTo(px0 + pw, py0 + ph - 4);
+    ctx.quadraticCurveTo(px0 + pw, py0 + ph, px0 + pw - 4, py0 + ph);
+    ctx.lineTo(px0 + 4, py0 + ph);
+    ctx.quadraticCurveTo(px0, py0 + ph, px0, py0 + ph - 4);
+    ctx.lineTo(px0, py0 + 4);
+    ctx.quadraticCurveTo(px0, py0, px0 + 4, py0);
+    ctx.stroke();
+    ctx.strokeStyle = '#0ea5e9'; ctx.lineWidth = 2;
+    var fxArr = [cx - s * 0.3, cx - s * 0.1, cx + s * 0.1, cx + s * 0.3];
+    for (var fi = 0; fi < fxArr.length; fi++) {
+      ctx.beginPath(); ctx.moveTo(fxArr[fi], py0 + ph * 0.15); ctx.lineTo(fxArr[fi], py0 + ph * 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fxArr[fi], py0 + ph * 0.55); ctx.lineTo(fxArr[fi], py0 + ph * 0.8); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(cx - s * 0.2, py0 + ph * 0.85); ctx.lineTo(cx - s * 0.2, py0 + ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + s * 0.2, py0 + ph * 0.85); ctx.lineTo(cx + s * 0.2, py0 + ph); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('X-ray image', cx, cy + s + 12);
+  }
+
+  function drawNuclearSymbol(cx, cy, s) {
+    ctx.fillStyle = '#14b8a6';
+    var r = s * 0.8;
+    for (var i = 0; i < 3; i++) {
+      var a = i * Math.PI * 2 / 3 - Math.PI / 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, a - 0.45, a + 0.45); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = WCOLORS.bg;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 0.22, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#14b8a6'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 1.05, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Nuclear decay', cx, cy + s + 12);
+  }
+
+  // ---- Main draw ----
   function draw() {
     wClear(ctx, W, H);
 
-    // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('The Electromagnetic Spectrum', W / 2, 16);
 
-    // Draw bands
-    for (const b of bands) {
-      const x1 = logToX(b.logMin);
-      const x2 = logToX(b.logMax);
+    // ---- Frequency axis (top) ----
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(specLeft, freqAxisY); ctx.lineTo(specRight, freqAxisY); ctx.stroke();
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('frequency (Hz)', W / 2, freqAxisY - 12);
+    for (var logF = 4; logF <= 24; logF++) {
+      var logLf = 8.477 - logF, xf = logToX(logLf);
+      if (xf < specLeft + 2 || xf > specRight - 2) continue;
+      ctx.strokeStyle = WCOLORS.axis;
+      ctx.beginPath(); ctx.moveTo(xf, freqAxisY - 3); ctx.lineTo(xf, freqAxisY + 3); ctx.stroke();
+      if (logF % 3 === 0) {
+        ctx.fillStyle = WCOLORS.text; ctx.textAlign = 'center'; ctx.font = '9px system-ui';
+        ctx.fillText('10' + sup(logF), xf, freqAxisY + 13);
+      }
+    }
+
+    // ---- Spectrum bar with rainbow ----
+    for (var bi = 0; bi < bands.length; bi++) {
+      var b = bands[bi], x1 = logToX(b.logMin), x2 = logToX(b.logMax);
       if (b.name === 'Visible') {
-        // Draw actual visible spectrum colors
-        for (let px = Math.floor(x1); px <= Math.ceil(x2); px++) {
-          const logL = xToLog(px);
-          const nm = Math.pow(10, logL) * 1e9;
-          ctx.fillStyle = wavelengthToRGB(nm);
-          ctx.fillRect(px, barTop, 1, barH);
+        for (var rpx = Math.floor(x1); rpx <= Math.ceil(x2); rpx++) {
+          ctx.fillStyle = wavelengthToRGB(Math.pow(10, xToLog(rpx)) * 1e9);
+          ctx.fillRect(rpx, barTop, 1, barH);
         }
+        ctx.globalAlpha = 0.18; ctx.fillStyle = '#fff';
+        ctx.fillRect(x1, barTop + 2, x2 - x1, barH * 0.25);
+        ctx.globalAlpha = 1;
       } else {
-        ctx.fillStyle = b.color;
-        ctx.globalAlpha = 0.25;
+        ctx.fillStyle = b.color; ctx.globalAlpha = 0.22;
         ctx.fillRect(x1, barTop, x2 - x1, barH);
         ctx.globalAlpha = 1;
       }
-      // Band label
-      const cx = (x1 + x2) / 2;
-      ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(b.name, cx, barTop - 5);
+      ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(b.name, (x1 + x2) / 2, barTop + barH / 2 + 3);
     }
-
-    // Border around bar
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.strokeRect(specLeft, barTop, specW, barH);
 
-    // Wavelength axis (log scale) - below the bar
-    const axisY = barTop + barH + 18;
+    // ---- Wavelength axis (bottom) ----
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(specLeft, axisY); ctx.lineTo(specRight, axisY); ctx.stroke();
-
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    for (let logL = -15; logL <= 4; logL += 1) {
-      const x = logToX(logL);
-      if (x < specLeft || x > specRight) continue;
-      ctx.beginPath(); ctx.moveTo(x, axisY - 3); ctx.lineTo(x, axisY + 3); ctx.stroke();
-      if (logL % 3 === 0 || (logL >= -8 && logL <= 0)) {
-        ctx.fillText('10' + (logL < 0 ? '\u207B' : '') + String(Math.abs(logL)).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join(''), x, axisY + 14);
+    ctx.beginPath(); ctx.moveTo(specLeft, lambdaAxisY); ctx.lineTo(specRight, lambdaAxisY); ctx.stroke();
+    for (var logLw = -15; logLw <= 4; logLw++) {
+      var xw = logToX(logLw);
+      if (xw < specLeft + 2 || xw > specRight - 2) continue;
+      ctx.strokeStyle = WCOLORS.axis;
+      ctx.beginPath(); ctx.moveTo(xw, lambdaAxisY - 3); ctx.lineTo(xw, lambdaAxisY + 3); ctx.stroke();
+      if (logLw % 3 === 0 || (logLw >= -7 && logLw <= -1 && logLw % 2 === 0)) {
+        ctx.fillStyle = WCOLORS.text; ctx.textAlign = 'center'; ctx.font = '9px system-ui';
+        ctx.fillText('10' + sup(logLw), xw, lambdaAxisY + 13);
       }
     }
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
-    ctx.fillText('wavelength (m)', W / 2, axisY + 26);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('wavelength (m)', W / 2, lambdaAxisY + 24);
 
-    // Arrows showing direction
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText('← higher energy', specLeft, barTop + barH + 48);
-    ctx.textAlign = 'right';
-    ctx.fillText('lower energy →', specRight, barTop + barH + 48);
+    // ---- Icon row ----
+    ctx.fillStyle = 'rgba(31,42,46,0.025)';
+    ctx.fillRect(specLeft, iconRowTop, specW, iconRowH);
+    ctx.strokeStyle = 'rgba(31,42,46,0.08)'; ctx.lineWidth = 0.5;
+    ctx.strokeRect(specLeft, iconRowTop, specW, iconRowH);
 
-    // Marker line
-    const mx = logToX(markerLogLambda);
+    var iconCy = iconRowTop + iconRowH * 0.45;
+    var iconS = Math.min(14, iconRowH * 0.3);
+    for (var ib = 0; ib < bands.length; ib++) {
+      var band = bands[ib], icx = (logToX(band.logMin) + logToX(band.logMax)) / 2;
+      if (band.name === 'Radio')     drawRadioTower(icx, iconCy, iconS);
+      if (band.name === 'Microwave') drawMicrowaveOven(icx, iconCy, iconS);
+      if (band.name === 'Infrared')  drawThermalCamera(icx, iconCy, iconS);
+      if (band.name === 'Visible')   drawRainbowEye(icx, iconCy, iconS);
+      if (band.name === 'UV')        drawSunburn(icx, iconCy, iconS);
+      if (band.name === 'X-ray')     drawXrayHand(icx, iconCy, iconS);
+      if (band.name === 'Gamma')     drawNuclearSymbol(icx, iconCy, iconS);
+    }
+
+    // ---- Marker ----
+    var mx = logToX(markerLogLambda);
     if (mx >= specLeft && mx <= specRight) {
-      ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(mx, barTop - 2); ctx.lineTo(mx, barTop + barH + 2); ctx.stroke();
-
-      // Triangle indicator on top
+      ctx.strokeStyle = WCOLORS.text; ctx.lineWidth = 1.5; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(mx, freqAxisY); ctx.lineTo(mx, barTop); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(mx, barTop + barH); ctx.lineTo(mx, lambdaAxisY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(mx, barTop); ctx.lineTo(mx, barTop + barH); ctx.stroke();
       ctx.fillStyle = WCOLORS.text;
-      ctx.beginPath(); ctx.moveTo(mx, barTop - 2); ctx.lineTo(mx - 5, barTop - 10); ctx.lineTo(mx + 5, barTop - 10); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(mx, barTop + barH + 2); ctx.lineTo(mx - 5, barTop + barH + 9); ctx.lineTo(mx + 5, barTop + barH + 9); ctx.closePath(); ctx.fill();
 
-      // Compute values
-      const lambda = Math.pow(10, markerLogLambda);
-      const c = 3e8;
-      const h = 6.626e-34;
-      const eVconv = 1.602e-19;
-      const freq = c / lambda;
-      const energy = h * freq / eVconv;
-      const band = getBandAt(markerLogLambda);
+      var lambda = Math.pow(10, markerLogLambda);
+      var freq = 3e8 / lambda;
+      var energy = 6.626e-34 * freq / 1.602e-19;
+      var mBand = getBandAt(markerLogLambda);
 
-      // Info panel
-      const panelY = barTop + barH + 60;
-      const panelCx = W / 2;
+      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+      if (mBand) ctx.fillText(mBand.name, W / 2, infoY);
 
-      ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-      if (band) ctx.fillText(band.name + ' waves', panelCx, panelY);
+      ctx.font = '11px system-ui';
+      ctx.fillText('\u03BB = ' + formatSI(lambda, 'm') + '      \u03BD = ' + formatSI(freq, 'Hz') + '      E = ' + formatEnergy(energy), W / 2, infoY + 16);
 
-      ctx.font = '12px system-ui'; ctx.fillStyle = WCOLORS.text;
-      const line1 = 'λ = ' + formatSI(lambda, 'm') + '      ν = ' + formatSI(freq, 'Hz') + '      E = ' + formatEnergy(energy);
-      ctx.fillText(line1, panelCx, panelY + 18);
-
-      if (band) {
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '11px system-ui';
-        ctx.fillText(band.desc, panelCx, panelY + 36);
-      }
-
-      // Show visible color swatch if in visible range
-      const nm = lambda * 1e9;
-      if (nm >= 380 && nm <= 780) {
-        const swatchY = panelY + 44;
-        ctx.fillStyle = wavelengthToRGB(nm);
-        ctx.beginPath();
-        ctx.arc(panelCx, swatchY + 8, 8, 0, 2 * Math.PI);
-        ctx.fill();
+      var nmVis = lambda * 1e9;
+      if (nmVis >= 380 && nmVis <= 780) {
+        ctx.fillStyle = wavelengthToRGB(nmVis);
+        ctx.beginPath(); ctx.arc(W / 2 + W * 0.3, infoY + 10, 6, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 0.5; ctx.stroke();
-        ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-        ctx.fillText(Math.round(nm) + ' nm', panelCx + 18, swatchY + 12);
       }
     }
 
-    // Instruction
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Click or drag across the spectrum to explore', W / 2, H - 4);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Click or drag across the spectrum to explore', W / 2, H - 3);
   }
 
   function handlePointer(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const logL = xToLog(x);
-    markerLogLambda = Math.max(logLambdaMin, Math.min(logLambdaMax, logL));
+    var rect = canvas.getBoundingClientRect();
+    markerLogLambda = Math.max(logLambdaMin, Math.min(logLambdaMax, xToLog(e.clientX - rect.left)));
     draw();
   }
 
-  canvas.addEventListener('pointerdown', function(e) {
-    dragging = true;
-    canvas.setPointerCapture(e.pointerId);
-    handlePointer(e);
-  });
-  canvas.addEventListener('pointermove', function(e) {
-    if (dragging) handlePointer(e);
-  });
+  canvas.addEventListener('pointerdown', function(e) { dragging = true; canvas.setPointerCapture(e.pointerId); handlePointer(e); });
+  canvas.addEventListener('pointermove', function(e) { if (dragging) handlePointer(e); });
   canvas.addEventListener('pointerup', function() { dragging = false; });
   canvas.addEventListener('pointercancel', function() { dragging = false; });
 
