@@ -3938,6 +3938,18 @@ function sceneMarkup(type) {
         </div>
       `;
 
+    case "shear-wave-solid-liquid":
+      return `
+        <div class="scene-label">Shear Waves in Solids vs Liquids</div>
+        <p class="scene-caption">A shear (transverse) wave propagates through the solid where rigid bonds transmit sideways motion. At the liquid boundary, particles slip freely and the wave reflects.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-shear-wave" width="600" height="340"></canvas>
+          <div class="scene-controls">
+            <button id="shear-play" style="padding:2px 10px;cursor:pointer">Pause</button>
+          </div>
+        </div>
+      `;
+
     case "seismic-earth-core":
       return `
         <div class="scene-label">Seismic Waves Through Earth's Interior</div>
@@ -3972,7 +3984,7 @@ function sceneMarkup(type) {
         <div class="scene-label">Interactive 2: The Electromagnetic Spectrum</div>
         <p class="scene-caption">Click or drag across the spectrum to explore wavelength, frequency, and photon energy at each scale.</p>
         <div class="interactive-scene">
-          <canvas id="scene-em-spectrum" width="600" height="320"></canvas>
+          <canvas id="scene-em-spectrum" width="600" height="500"></canvas>
         </div>
       `;
 

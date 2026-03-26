@@ -296,6 +296,7 @@ function initSceneInteractives() {
   initWaveTransportEnergy();
   initTransverseLongitudinalDemo();
   initSoundRefractionAtmosphere();
+  initShearWaveSolidLiquid();
   initSeismicEarthCore();
   // Chapter 13 - Light
   initEmPlaneWave();
@@ -19609,6 +19610,214 @@ function initDopplerSpectroscopyExoplanet() {
   }
 
   tick();
+}
+
+// =========================================================================
+// SHEAR WAVE IN SOLID VS LIQUID
+// =========================================================================
+function initShearWaveSolidLiquid() {
+  const canvas = document.getElementById('scene-shear-wave');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  let playing = true;
+  let t = 0;
+
+  const playBtn = document.getElementById('shear-play');
+  if (playBtn) playBtn.addEventListener('click', function() {
+    playing = !playing;
+    playBtn.textContent = playing ? 'Pause' : 'Play';
+  });
+
+  // Grid parameters
+  const rows = 11;
+  const cols = 21;
+  const spacingX = 24;
+  const spacingY = 22;
+  const gridW = (cols - 1) * spacingX;
+  const gridH = (rows - 1) * spacingY;
+  const ox = (W - gridW) / 2;
+  const oy = (H - gridH) / 2 + 10;
+  const boundaryCol = 11; // column index where liquid starts (0-based)
+  const boundaryX = ox + boundaryCol * spacingX;
+
+  // Wave parameters
+  const waveSpeed = 60;  // pixels per second
+  const waveFreq = 1.8;
+  const waveAmp = 10;
+  const waveK = waveFreq * 2 * Math.PI / waveSpeed;
+  const omega = waveFreq * 2 * Math.PI;
+
+  // Total loop time: wave travels across solid, reflects, returns
+  const solidWidth = boundaryCol * spacingX;
+  const loopTime = 2 * solidWidth / waveSpeed + 2.5;
+
+  function draw() {
+    if (!canvas.isConnected) return;
+    wClear(ctx, W, H);
+
+    // Background regions
+    // Solid region
+    ctx.fillStyle = 'rgba(139,105,20,0.12)';
+    ctx.fillRect(ox - 12, oy - 18, boundaryX - ox + 12, gridH + 36);
+    // Liquid region
+    ctx.fillStyle = 'rgba(37,99,235,0.08)';
+    ctx.fillRect(boundaryX, oy - 18, gridW - (boundaryCol * spacingX) + 12, gridH + 36);
+
+    // Boundary line
+    ctx.strokeStyle = 'rgba(37,99,235,0.5)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(boundaryX, oy - 18);
+    ctx.lineTo(boundaryX, oy + gridH + 18);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = 'bold 13px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#8B6914';
+    ctx.fillText('SOLID', ox + (boundaryCol * spacingX) / 2, oy - 26);
+    ctx.fillStyle = '#2563eb';
+    ctx.fillText('LIQUID', boundaryX + (gridW - boundaryCol * spacingX) / 2, oy - 26);
+
+    // Compute particle displacements (transverse = vertical offset)
+    // Wave travels left-to-right, reflects at boundary
+    const waveX = waveSpeed * t; // how far the wavefront has traveled
+
+    for (let c = 0; c < cols; c++) {
+      for (let r = 0; r < rows; r++) {
+        const baseX = ox + c * spacingX;
+        const baseY = oy + r * spacingY;
+        let dy = 0;
+
+        if (c < boundaryCol) {
+          // Solid: shear wave propagates and reflects
+          const px = c * spacingX; // position in solid
+          // Incident wave (traveling right)
+          const phaseInc = omega * t - waveK * px;
+          if (waveX > px) {
+            // Envelope that fades in smoothly
+            const distBehind = waveX - px;
+            const env = Math.min(1, distBehind / 30);
+            dy += waveAmp * env * Math.sin(phaseInc);
+          }
+          // Reflected wave (traveling left, from boundary)
+          const reflectDist = 2 * solidWidth - px;
+          if (waveX > solidWidth) {
+            const refWaveX = waveX - solidWidth; // how far reflected wave has traveled from boundary
+            const refPx = solidWidth - px; // distance from boundary to this particle
+            if (refWaveX > refPx) {
+              const phaseRef = omega * t + waveK * px - 2 * waveK * solidWidth;
+              const distBehind = refWaveX - refPx;
+              const env = Math.min(1, distBehind / 30);
+              // Reflected with phase flip (fixed boundary reflection)
+              dy -= waveAmp * env * Math.sin(phaseRef);
+            }
+          }
+        } else {
+          // Liquid: particles jiggle randomly a tiny bit near boundary, no coherent wave
+          const distFromBoundary = (c - boundaryCol) * spacingX;
+          if (distFromBoundary < 40 && waveX > solidWidth) {
+            const decay = Math.exp(-distFromBoundary / 12);
+            const jitter = Math.sin(omega * t * 0.7 + c * 1.3 + r * 0.9) * 1.5;
+            dy = decay * jitter;
+          }
+        }
+
+        // Draw bonds in solid (to neighbors)
+        if (c < boundaryCol) {
+          ctx.strokeStyle = 'rgba(139,105,20,0.25)';
+          ctx.lineWidth = 1;
+          // Bond to right neighbor (if also in solid)
+          if (c + 1 < boundaryCol) {
+            const nx = ox + (c + 1) * spacingX;
+            // neighbor dy computed inline
+            let ndy = 0;
+            const npx = (c + 1) * spacingX;
+            const nPhaseInc = omega * t - waveK * npx;
+            if (waveX > npx) {
+              const nDistBehind = waveX - npx;
+              const nEnv = Math.min(1, nDistBehind / 30);
+              ndy += waveAmp * nEnv * Math.sin(nPhaseInc);
+            }
+            if (waveX > solidWidth) {
+              const nRefWaveX = waveX - solidWidth;
+              const nRefPx = solidWidth - npx;
+              if (nRefWaveX > nRefPx) {
+                const nPhaseRef = omega * t + waveK * npx - 2 * waveK * solidWidth;
+                const nDistBehind = nRefWaveX - nRefPx;
+                const nEnv = Math.min(1, nDistBehind / 30);
+                ndy -= waveAmp * nEnv * Math.sin(nPhaseRef);
+              }
+            }
+            ctx.beginPath();
+            ctx.moveTo(baseX, baseY + dy);
+            ctx.lineTo(nx, baseY + ndy);
+            ctx.stroke();
+          }
+          // Bond to bottom neighbor
+          if (r + 1 < rows) {
+            ctx.beginPath();
+            ctx.moveTo(baseX, baseY + dy);
+            ctx.lineTo(baseX, oy + (r + 1) * spacingY + dy);
+            ctx.stroke();
+          }
+        }
+
+        // Draw particle
+        const radius = c < boundaryCol ? 4 : 3.5;
+        ctx.beginPath();
+        ctx.arc(baseX, baseY + dy, radius, 0, Math.PI * 2);
+        if (c < boundaryCol) {
+          ctx.fillStyle = '#8B6914';
+        } else {
+          ctx.fillStyle = '#2563eb';
+        }
+        ctx.fill();
+        ctx.strokeStyle = c < boundaryCol ? '#6B4F10' : '#1d4ed8';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+
+    // Arrow showing wave direction
+    if (waveX < solidWidth) {
+      // Incident arrow
+      const arrowX = ox + Math.min(waveX, solidWidth - 20);
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('shear wave \u2192', arrowX, oy + gridH + 32);
+    } else if (waveX > solidWidth && waveX < solidWidth * 2 + waveSpeed * 1.5) {
+      // Reflected arrow
+      const refDist = waveX - solidWidth;
+      const arrowX = boundaryX - Math.min(refDist, solidWidth - 20);
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('\u2190 reflected', arrowX, oy + gridH + 32);
+
+      // Annotation at boundary
+      ctx.fillStyle = '#2563eb';
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('liquid cannot sustain shear', boundaryX + 60, oy + gridH + 32);
+    }
+
+    // Advance time
+    if (playing) {
+      t += 1 / 60;
+      if (t > loopTime) t = 0;
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  draw();
 }
 
 // =========================================================================
