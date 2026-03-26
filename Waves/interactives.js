@@ -5311,7 +5311,7 @@ function initTravelingVsStanding() {
 }
 
 // =========================================================================
-// CHAPTER 6: String Transverse Wave
+// CHAPTER 6: String Transverse Wave (pulse on a string under tension)
 // =========================================================================
 function initStringTransverseWave() {
   const canvas = document.getElementById('scene-string-transverse-wave');
@@ -5320,164 +5320,187 @@ function initStringTransverseWave() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let t = 0;
+  const tensionSlider = document.getElementById('stw-tension');
+  const densitySlider = document.getElementById('stw-density');
+  const pulseBtn = document.getElementById('stw-pulse');
 
-  const freqSlider = document.getElementById('stw-freq');
-  const ampSlider = document.getElementById('stw-amp');
-  const speedSlider = document.getElementById('stw-speed');
+  // String layout
+  const stringY = H * 0.5;
+  const anchorL = 60;            // left fixed point
+  const anchorR = W - 20;        // right fixed point
+  const stringLen = anchorR - anchorL;
+  const N = 400;                 // simulation nodes
+  const dx = stringLen / (N - 1);
 
-  // String geometry
-  const stringY = H / 2;
-  const stringLeft = 40;
-  const stringRight = W - 40;
-  const stringLen = stringRight - stringLeft;
-  const nSegments = 200;
-  const nMasses = 30; // number of visible "test masses" on the string
+  // Winch/clamp drawing constants
+  const winchX = anchorR + 0;    // winch centre
+  const winchR = 12;
 
-  // Positions of the highlighted masses along the string
-  const massPositions = [];
-  for (let i = 0; i < nMasses; i++) {
-    massPositions.push(stringLeft + (i + 1) * stringLen / (nMasses + 1));
+  // State arrays: displacement and velocity at each node
+  let y = new Float64Array(N);
+  let vy = new Float64Array(N);
+
+  // Pulse queue
+  let pendingPulse = false;
+
+  pulseBtn?.addEventListener('click', () => { pendingPulse = true; });
+
+  // Inject a Gaussian pulse near the left end
+  function injectPulse() {
+    const pulseWidth = 18;  // nodes
+    const amp = 55;         // px
+    for (let i = 0; i < N; i++) {
+      const dist = i - 15;
+      const env = Math.exp(-0.5 * (dist / pulseWidth) * (dist / pulseWidth));
+      y[i] += amp * env;
+    }
+  }
+
+  // Physics step (leapfrog / Verlet-style)
+  function physicsStep(T, mu) {
+    const v2 = T / mu;                       // wave speed squared (px^2/frame^2)
+    const dt = 1.0;
+    const c = v2 * dt * dt / (dx * dx);      // Courant number squared
+
+    // Cap Courant number for stability
+    const cClamped = Math.min(c, 0.9);
+
+    // Interior nodes
+    for (let i = 1; i < N - 1; i++) {
+      const accel = cClamped * (y[i + 1] - 2 * y[i] + y[i - 1]);
+      vy[i] += accel;
+      vy[i] *= 0.9997; // very slight damping
+    }
+    for (let i = 1; i < N - 1; i++) {
+      y[i] += vy[i] * dt;
+    }
+
+    // Fixed boundary conditions
+    y[0] = 0; y[N - 1] = 0;
+    vy[0] = 0; vy[N - 1] = 0;
   }
 
   function tick() {
     if (!canvas.isConnected) return;
-    const freq = parseFloat(freqSlider?.value || 1.2);
-    const A = parseFloat(ampSlider?.value || 0.8);
-    const speed = parseFloat(speedSlider?.value || 0.015);
-    document.getElementById('stw-freq-val')?.replaceChildren(document.createTextNode(freq.toFixed(1)));
-    document.getElementById('stw-amp-val')?.replaceChildren(document.createTextNode(A.toFixed(1)));
-    document.getElementById('stw-speed-val')?.replaceChildren(document.createTextNode((speed / 0.03).toFixed(2) + 'x'));
 
-    t += speed;
-    wClear(ctx, W, H);
+    const T = parseFloat(tensionSlider?.value || 8);
+    const mu = parseFloat(densitySlider?.value || 4);
+    document.getElementById('stw-tension-val')?.replaceChildren(document.createTextNode(T.toFixed(1) + ' N'));
+    document.getElementById('stw-density-val')?.replaceChildren(document.createTextNode(mu.toFixed(1) + ' g/m'));
 
-    const k = freq * 0.12;       // wavenumber
-    const omega = freq * 2.0;    // angular frequency
-    const maxAmp = 50 * A;       // max transverse displacement in px
-
-    // Draw equilibrium line (dashed)
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(stringLeft, stringY);
-    ctx.lineTo(stringRight, stringY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Compute displacement at each point along the string
-    function displacement(x) {
-      return maxAmp * Math.sin(k * (x - stringLeft) - omega * t);
+    if (pendingPulse) {
+      injectPulse();
+      pendingPulse = false;
     }
 
-    // Draw the string as a smooth curve
+    // Run several physics sub-steps per frame for accuracy
+    const subSteps = 8;
+    const scaledT = T * 0.6;   // scale so slider range gives visible speed differences
+    for (let s = 0; s < subSteps; s++) {
+      physicsStep(scaledT, mu);
+    }
+
+    // Compute wave speed for display
+    const vWave = Math.sqrt(T / mu);
+
+    wClear(ctx, W, H);
+
+    // --- Draw left clamp (fixed wall) ---
+    ctx.fillStyle = '#5a5a5a';
+    ctx.fillRect(anchorL - 8, stringY - 35, 8, 70);
+    // Hatch marks
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1;
+    for (let yy = stringY - 32; yy <= stringY + 32; yy += 8) {
+      ctx.beginPath();
+      ctx.moveTo(anchorL - 8, yy);
+      ctx.lineTo(anchorL - 1, yy + 6);
+      ctx.stroke();
+    }
+
+    // --- Draw right winch ---
+    // Axle
+    ctx.fillStyle = '#5a5a5a';
+    ctx.beginPath();
+    ctx.arc(winchX, stringY, winchR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Inner circle
+    ctx.fillStyle = '#4a4a4a';
+    ctx.beginPath();
+    ctx.arc(winchX, stringY, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Winch handle — angle based on tension (visual cue that you're tightening)
+    const handleAngle = -Math.PI / 2 + (T - 1) * 0.15;
     ctx.strokeStyle = WCOLORS.amber;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    for (let i = 0; i <= nSegments; i++) {
-      const x = stringLeft + (i / nSegments) * stringLen;
-      const y = stringY - displacement(x);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
+    ctx.moveTo(winchX, stringY);
+    ctx.lineTo(winchX + (winchR + 8) * Math.cos(handleAngle),
+               stringY + (winchR + 8) * Math.sin(handleAngle));
     ctx.stroke();
-
-    // Draw fixed endpoints
-    ctx.fillStyle = WCOLORS.text;
-    ctx.beginPath();
-    ctx.arc(stringLeft, stringY, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(stringRight, stringY, 5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw test masses on the string with velocity arrows
-    for (let i = 0; i < nMasses; i++) {
-      const mx = massPositions[i];
-      const dy = displacement(mx);
-      const my = stringY - dy;
-
-      // Velocity is d(displacement)/dt = maxAmp * omega * cos(k*(x-stringLeft) - omega*t)
-      const vy = -maxAmp * omega * Math.cos(k * (mx - stringLeft) - omega * t);
-
-      // Draw mass
-      ctx.fillStyle = WCOLORS.cyan;
-      ctx.beginPath();
-      ctx.arc(mx, my, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw velocity arrow (vertical, scaled down for display)
-      const arrowLen = vy * 0.15;
-      if (Math.abs(arrowLen) > 2) {
-        ctx.strokeStyle = 'rgba(100, 200, 255, 0.6)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(mx, my);
-        ctx.lineTo(mx, my + arrowLen);
-        ctx.stroke();
-        // Arrowhead
-        const dir = arrowLen > 0 ? 1 : -1;
-        ctx.beginPath();
-        ctx.moveTo(mx - 3, my + arrowLen - dir * 4);
-        ctx.lineTo(mx, my + arrowLen);
-        ctx.lineTo(mx + 3, my + arrowLen - dir * 4);
-        ctx.stroke();
-      }
-    }
-
-    // Highlight one mass to show force diagram
-    const highlightIdx = Math.floor(nMasses / 2);
-    const hx = massPositions[highlightIdx];
-    const hdy = displacement(hx);
-    const hy = stringY - hdy;
-
-    // Draw slope lines (tension direction) at highlighted mass
-    const dx = 2;
-    const slopeLeft = (displacement(hx) - displacement(hx - dx)) / dx;
-    const slopeRight = (displacement(hx + dx) - displacement(hx)) / dx;
-
-    // Draw tension arrows from both sides
-    const tLen = 35;
-    ctx.lineWidth = 1.5;
-
-    // Left tension arrow (pulling toward left neighbor)
-    const angL = Math.atan2(-slopeLeft, -1);
-    ctx.strokeStyle = 'rgba(255, 180, 50, 0.7)';
-    ctx.beginPath();
-    ctx.moveTo(hx, hy);
-    ctx.lineTo(hx + tLen * Math.cos(angL), hy + tLen * Math.sin(angL));
-    ctx.stroke();
-
-    // Right tension arrow (pulling toward right neighbor)
-    const angR = Math.atan2(-slopeRight, 1);
-    ctx.beginPath();
-    ctx.moveTo(hx, hy);
-    ctx.lineTo(hx + tLen * Math.cos(angR), hy + tLen * Math.sin(angR));
-    ctx.stroke();
-
-    // Highlight the mass
+    // Small knob at end
     ctx.fillStyle = WCOLORS.amber;
     ctx.beginPath();
-    ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+    ctx.arc(winchX + (winchR + 8) * Math.cos(handleAngle),
+            stringY + (winchR + 8) * Math.sin(handleAngle), 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 1;
+
+    // String wrapping onto winch (short line from anchor to winch edge)
+    ctx.strokeStyle = WCOLORS.text;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(anchorR, stringY + y[N - 1]);
+    ctx.lineTo(winchX - winchR, stringY);
     ctx.stroke();
 
-    // Title
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Transverse Oscillations on a String', W / 2, 14);
+    // --- Draw equilibrium line (faint dashed) ---
+    ctx.setLineDash([4, 6]);
+    ctx.strokeStyle = 'rgba(31, 42, 46, 0.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(anchorL, stringY);
+    ctx.lineTo(anchorR, stringY);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Labels
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('T (tension)', 10, H - 10);
-    ctx.fillStyle = 'rgba(100, 200, 255, 0.6)';
-    ctx.fillText('\u2191\u2193 velocity', 100, H - 10);
+    // --- Draw the string ---
+    ctx.strokeStyle = WCOLORS.text;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for (let i = 0; i < N; i++) {
+      const px = anchorL + i * dx;
+      const py = stringY - y[i];
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // --- Draw small masses along the string (every ~20 nodes) ---
+    const massSpacing = Math.round(N / 25);
+    const massRadius = 2.5 + mu * 0.2; // bigger dots for heavier string
+    ctx.fillStyle = WCOLORS.teal;
+    for (let i = massSpacing; i < N - 1; i += massSpacing) {
+      const px = anchorL + i * dx;
+      const py = stringY - y[i];
+      ctx.beginPath();
+      ctx.arc(px, py, massRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // --- Speed readout ---
+    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Transverse Pulse on a String', W / 2, 16);
+
+    ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = WCOLORS.teal;
+    ctx.fillText('v = \u221A(T/\u03BC) = ' + vWave.toFixed(2) + ' m/s', anchorL, H - 8);
+
     ctx.textAlign = 'right';
-    ctx.fillStyle = WCOLORS.textDim;
-    ctx.fillText('Net force \u221D curvature (\u2202\u00B2A/\u2202x\u00B2)', W - 10, H - 10);
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.fillText('T = ' + T.toFixed(1) + ' N    \u03BC = ' + mu.toFixed(1) + ' g/m', anchorR, H - 8);
 
     requestAnimationFrame(tick);
   }

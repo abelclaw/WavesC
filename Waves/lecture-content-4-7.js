@@ -269,7 +269,7 @@ window.LECTURE_CONTENT_4_7 = {
 <p>Note an important physical point: the acceleration is due to a <strong>difference of forces</strong>. The force pulling up from the right has to be different from the force pulling down from the left to get an acceleration. Each force is proportional to a first derivative of $A$ (the slope), so the acceleration is proportional to a <em>second</em> derivative of $A$ (the curvature). A straight string, no matter what its slope, feels no net force. Only a curved string accelerates.</p>
 <span class="inline-math-link" data-math="small-angle-approximations">Small Angle Approximations &rarr;</span>`,
     interactive: "string-transverse-wave",
-    interactiveCaption: "Forces on a small segment of string under tension: the net transverse force arises from the difference in slope at the two ends",
+    interactiveCaption: "A string under tension: adjust the tension T and linear mass density \u03BC, then send a transverse pulse and watch it propagate at v = \u221A(T/\u03BC)",
     mathLinks: ["small-angle-approximations", "partial-derivatives"]
   },
   {
