@@ -19691,16 +19691,14 @@ function initShearWaveSolidLiquid() {
     }
   }
 
-  // Wave parameters
-  const waveSpeed = 60;  // pixels per second
-  const waveFreq = 1.8;
+  // Wave packet parameters
+  const waveSpeed = 120; // pixels per second
   const waveAmp = 10;
-  const waveK = waveFreq * 2 * Math.PI / waveSpeed;
-  const omega = waveFreq * 2 * Math.PI;
-
-  // Total loop time: wave travels across solid, reflects, returns
+  const sigma = 35;      // Gaussian envelope width
+  const waveK = 0.18;    // carrier wavenumber
   const solidWidth = boundaryCol * spacingX;
-  const loopTime = 2 * solidWidth / waveSpeed + 2.5;
+  // Loop: pulse crosses solid, reflects, returns, plus pause
+  const loopTime = 2 * solidWidth / waveSpeed + 1.5;
 
   function draw() {
     if (!canvas.isConnected) return;
@@ -19732,27 +19730,24 @@ function initShearWaveSolidLiquid() {
     ctx.fillStyle = '#2563eb';
     ctx.fillText('LIQUID', boundaryX + (gridW - boundaryCol * spacingX) / 2, oy - 26);
 
-    // Compute particle displacements (transverse = vertical offset)
-    // Wave travels left-to-right, reflects at boundary
-    const waveX = waveSpeed * t; // how far the wavefront has traveled
+    // Wave packet: Gaussian envelope with sinusoidal carrier
+    // Incident pulse center travels right; reflected pulse center travels left from boundary
+    const pulseCenter = waveSpeed * t; // incident pulse position (px from left edge of solid)
+    const reflectCenter = 2 * solidWidth - pulseCenter; // reflected pulse mirror position
+
+    function gaussPulse(x, center) {
+      return Math.exp(-(x - center) * (x - center) / (2 * sigma * sigma));
+    }
 
     // Helper: compute solid particle dy at column c
     function solidDy(c) {
       const px = c * spacingX;
       let dy = 0;
-      const phaseInc = omega * t - waveK * px;
-      if (waveX > px) {
-        const env = Math.min(1, (waveX - px) / 30);
-        dy += waveAmp * env * Math.sin(phaseInc);
-      }
-      if (waveX > solidWidth) {
-        const refWaveX = waveX - solidWidth;
-        const refPx = solidWidth - px;
-        if (refWaveX > refPx) {
-          const phaseRef = omega * t + waveK * px - 2 * waveK * solidWidth;
-          const env = Math.min(1, (refWaveX - refPx) / 30);
-          dy -= waveAmp * env * Math.sin(phaseRef);
-        }
+      // Incident (traveling right)
+      dy += waveAmp * gaussPulse(px, pulseCenter) * Math.sin(waveK * (px - pulseCenter));
+      // Reflected (traveling left, phase-flipped)
+      if (pulseCenter > solidWidth) {
+        dy -= waveAmp * gaussPulse(px, reflectCenter) * Math.sin(waveK * (px - reflectCenter));
       }
       return dy;
     }
@@ -19798,12 +19793,13 @@ function initShearWaveSolidLiquid() {
       // Gentle random drift (Brownian-like)
       const dx = Math.sin(t * 0.8 + lp.phase) * 2;
       const dy = Math.cos(t * 0.6 + lp.phase * 1.7) * 2;
-      // Near boundary: slight jiggle when wave hits
+      // Near boundary: slight jiggle when pulse hits
       let jy = 0;
       const distFromBound = lp.x - boundaryX;
-      if (distFromBound < 40 && waveX > solidWidth) {
+      if (distFromBound < 40 && Math.abs(pulseCenter - solidWidth) < sigma * 2.5) {
+        const proximity = gaussPulse(solidWidth, pulseCenter);
         const decay = Math.exp(-distFromBound / 12);
-        jy = decay * Math.sin(omega * t * 0.7 + lp.phase) * 1.5;
+        jy = decay * proximity * Math.sin(t * 8 + lp.phase) * 3;
       }
 
       ctx.beginPath();
@@ -19816,26 +19812,22 @@ function initShearWaveSolidLiquid() {
     }
 
     // Arrow showing wave direction
-    if (waveX < solidWidth) {
-      // Incident arrow
-      const arrowX = ox + Math.min(waveX, solidWidth - 20);
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'center';
+    if (pulseCenter < solidWidth) {
+      // Incident arrow follows pulse
+      const arrowX = ox + Math.min(pulseCenter, solidWidth - 30);
       ctx.fillStyle = '#dc2626';
-      ctx.font = 'bold 11px system-ui';
-      ctx.textAlign = 'center';
       ctx.fillText('shear wave \u2192', arrowX, oy + gridH + 32);
-    } else if (waveX > solidWidth && waveX < solidWidth * 2 + waveSpeed * 1.5) {
-      // Reflected arrow
-      const refDist = waveX - solidWidth;
-      const arrowX = boundaryX - Math.min(refDist, solidWidth - 20);
+    } else if (pulseCenter < solidWidth * 2 + sigma * 2) {
+      // Reflected arrow follows pulse back
+      const arrowX = ox + Math.max(reflectCenter, 30);
       ctx.fillStyle = '#dc2626';
-      ctx.font = 'bold 11px system-ui';
-      ctx.textAlign = 'center';
       ctx.fillText('\u2190 reflected', arrowX, oy + gridH + 32);
 
       // Annotation at boundary
       ctx.fillStyle = '#2563eb';
       ctx.font = '10px system-ui';
-      ctx.textAlign = 'center';
       ctx.fillText('liquid cannot sustain shear', boundaryX + 60, oy + gridH + 32);
     }
 
