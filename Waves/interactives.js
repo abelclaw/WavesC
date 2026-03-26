@@ -7766,9 +7766,9 @@ function initEmSpectrum() {
   const bands = [
     { name: 'Radio',      logMin: -1,    logMax: 4,     color: '#6366f1' },
     { name: 'Microwave',  logMin: -3,    logMax: -1,    color: '#8b5cf6' },
-    { name: 'Infrared',   logMin: -5.15, logMax: -3,    color: '#ef4444' },
-    { name: 'Visible',    logMin: -6.42, logMax: -5.15, color: null },
-    { name: 'UV',         logMin: -8,    logMax: -6.42, color: '#7c3aed' },
+    { name: 'Infrared',   logMin: -5,   logMax: -3,    color: '#ef4444' },
+    { name: 'Visible',    logMin: -7,   logMax: -5,    color: null },
+    { name: 'UV',         logMin: -8,   logMax: -7,    color: '#7c3aed' },
     { name: 'X-ray',      logMin: -12,   logMax: -8,    color: '#0ea5e9' },
     { name: 'Gamma',      logMin: -16,   logMax: -12,   color: '#14b8a6' },
   ];
