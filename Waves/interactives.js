@@ -10179,7 +10179,8 @@ function initBrewsterAngle() {
 
 // =========================================================================
 // Microscopic Origin of the Index of Refraction
-// Incoming (red) + re-radiated (blue) = superposition (purple), all inside material
+// Waves enter from left (vacuum), cross boundary into material (right).
+// Red incoming + blue re-radiated = purple superposition. No exit on right.
 // =========================================================================
 function initMicroscopicIndex() {
   const canvas = document.getElementById('scene-microscopic-index');
@@ -10194,16 +10195,17 @@ function initMicroscopicIndex() {
   let t = 0;
   let animId = null;
 
-  // The entire canvas represents the interior of the material
-  const margin = 15;
+  // Boundary: vacuum on left, material on right (no exit)
+  const boundary = W * 0.22;
+  const margin = 10;
 
-  // Charge positions (grid of dots for row 2)
+  // Charge positions inside material (for row 2)
   const charges = [];
-  const chRows = 3, chCols = 10;
+  const chRows = 3, chCols = 8;
   for (var r = 0; r < chRows; r++) {
     for (var c = 0; c < chCols; c++) {
       charges.push({
-        x: margin + (c + 0.5) * (W - 2 * margin) / chCols,
+        x: boundary + (c + 0.5) * (W - margin - boundary) / chCols,
         yFrac: (r + 0.5) / chRows
       });
     }
@@ -10231,16 +10233,24 @@ function initMicroscopicIndex() {
 
     // Title
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Inside the material: how interference produces a slower wave', W / 2, 16);
+    ctx.fillText('Waves entering a medium: how interference produces a slower wave', W / 2, 16);
 
-    // Material background tint
-    ctx.fillStyle = 'rgba(100,160,220,0.05)';
-    ctx.fillRect(0, 25, W, row3Y + 40 - 25);
+    // Material background tint (right of boundary)
+    ctx.fillStyle = 'rgba(100,160,220,0.07)';
+    ctx.fillRect(boundary, 25, W - boundary, row3Y + 40 - 25);
 
+    // Boundary line
+    ctx.strokeStyle = 'rgba(100,160,220,0.4)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(boundary, 25); ctx.lineTo(boundary, row3Y + 40); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Region labels
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u2014 inside the material \u2014', W / 2, 30);
+    ctx.fillText('vacuum', (margin + boundary) / 2, 35);
+    ctx.fillText('material', (boundary + W - margin) / 2, 35);
 
-    // Helper to draw a wave across the full canvas width
+    // Helper to draw a wave
     function drawWave(yBase, color, waveFn, label, lw) {
       ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
       ctx.beginPath();
@@ -10265,18 +10275,22 @@ function initMicroscopicIndex() {
       }
     }
 
-    // 1) Incoming wave: travels at c through the material (same k as vacuum)
+    // 1) Incoming wave: same speed c everywhere (unchanged by medium)
     drawWave(row1Y, colIncoming, function(px) {
       return Math.sin(k * px - omega * t);
-    }, 'Incoming wave (speed c, unchanged)');
+    }, 'Incoming wave (speed c, same everywhere)');
 
-    // 2) Re-radiated wave from charges: small amplitude, phase-shifted by ~90\u00b0
+    // 2) Re-radiated wave: only inside material, builds up from boundary
     var reRadAmp = Math.min(n - 1, 0.9);
     drawWave(row2Y, colReradiated, function(px) {
-      return reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
-    }, 'Re-radiated by electrons (small, phase-shifted)');
+      if (px < boundary) return 0;
+      // Builds up over ~2 wavelengths from boundary
+      var dist = px - boundary;
+      var buildUp = Math.min(dist / (2 * 90), 1);  // 90 = wavelength in px
+      return reRadAmp * buildUp * Math.sin(k * px - omega * t - Math.PI / 2);
+    }, 'Re-radiated by electrons (phase-shifted, builds up)');
 
-    // Draw charge dots oscillating with the wave
+    // Draw charge dots oscillating with the wave (only in material region)
     for (var i = 0; i < charges.length; i++) {
       var ch = charges[i];
       var displacement = 4 * Math.sin(k * ch.x - omega * t);
@@ -10287,40 +10301,41 @@ function initMicroscopicIndex() {
       ctx.fill();
     }
 
-    // 3) Superposition = actual sum of incoming + re-radiated
+    // 3) Superposition: in vacuum just incoming, in material the sum
     drawWave(row3Y, colSuper, function(px) {
-      var incoming = Math.sin(k * px - omega * t);
-      var rerad = reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
-      return incoming + rerad;
-    }, 'Superposition (crests shifted back \u2192 effective speed c/n)', 2.5);
+      if (px < boundary) {
+        return Math.sin(k * px - omega * t);
+      }
+      // Inside material: effective wavenumber n*k
+      var phaseIn = k * boundary + n * k * (px - boundary) - omega * t;
+      return Math.sin(phaseIn);
+    }, 'Superposition (effective speed c/n in material)', 2.5);
 
-    // Faint copies of individual waves on the third row for comparison
+    // Faint incoming wave on row 3 for comparison (shows how crests are shifted)
     ctx.globalAlpha = 0.2;
     drawWave(row3Y, colIncoming, function(px) {
       return Math.sin(k * px - omega * t);
-    }, '', 1);
-    drawWave(row3Y, colReradiated, function(px) {
-      return reRadAmp * Math.sin(k * px - omega * t - Math.PI / 2);
     }, '', 1);
     ctx.globalAlpha = 1;
 
     // + and = signs between rows
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('+', W - 30, (row1Y + row2Y) / 2 + 4);
-    ctx.fillText('=', W - 30, (row2Y + row3Y) / 2 + 4);
+    ctx.fillText('+', W - 25, (row1Y + row2Y) / 2 + 4);
+    ctx.fillText('=', W - 25, (row2Y + row3Y) / 2 + 4);
 
-    // Phase shift annotation
-    var phaseShift = Math.atan2(reRadAmp, 1);
-    var phaseShiftDeg = (phaseShift * 180 / Math.PI).toFixed(1);
+    // Wavelength comparison annotation
+    var lambdaVac = 2 * Math.PI / k;
+    var lambdaMed = lambdaVac / n;
     ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(
-      'Crests shifted back by ' + phaseShiftDeg + '\u00b0 per wavelength  (n = ' + n.toFixed(2) + ')',
+      'Wavelength in vacuum: \u03bb     In material: \u03bb/' + n.toFixed(2) +
+      '     (crests compressed, wave appears slower)',
       W / 2, row3Y + amp + 20
     );
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(
-      'Red + blue = purple.  Adding a small phase-shifted wave pulls the crests back.',
+      'Red + blue = purple.  The re-radiated wave shifts the crests back \u2192 shorter wavelength inside.',
       W / 2, H - 8
     );
   }

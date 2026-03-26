@@ -4542,6 +4542,7 @@ function renderLearnMode(chapter) {
             ? `<div class="scene lecture-scene" data-interactive="${section.interactive}">${sceneMarkup(section.interactive) || sceneMarkup(chapter.scene)}</div>`
             : ""
         }
+        ${section.afterInteractive ? `<div class="lecture-section-body">${section.afterInteractive}</div>` : ""}
         ${
           (section.mathLinks || []).length
             ? `
