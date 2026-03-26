@@ -17823,12 +17823,12 @@ function initInterferometerResolution() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let baseline = 15, starSep = 0.06, nAnt = 5, dragging = null;
+  let baseline = 60, starSep = 0.06, nAnt = 3, dragging = null;
 
   // Layout: left column = image + dishes, right column = profile + sliders
   const colL = 12, colW = Math.round(W * 0.41);
-  const imgT = 18, imgH = 126;
-  const gndTop = imgT + imgH + 6, groundY = gndTop + 32;
+  const imgT = 18, imgH = 108;
+  const gndTop = imgT + imgH + 6, groundY = gndTop + 44;
   const pltL = colL + colW + 22, pltW = W - pltL - 10, pltT = imgT, pltH = imgH;
   const slX = pltL, slW = Math.min(pltW - 10, 210);
   const sl1Y = pltT + pltH + 18, sl2Y = sl1Y + 22, sl3Y = sl2Y + 22;
@@ -18062,7 +18062,7 @@ function initInterferometerResolution() {
     var span = Math.max(20, baseline / 200 * (colW - 24));
     var midX = colL + colW / 2;
     var startX = midX - span / 2;
-    var s = nAnt > 14 ? 0.6 : (nAnt > 8 ? 0.8 : 1.1);
+    var s = nAnt > 14 ? 1.0 : (nAnt > 8 ? 1.3 : 1.8);
 
     for (var i = 0; i < nAnt; i++) {
       var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : midX;
