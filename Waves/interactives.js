@@ -1842,8 +1842,7 @@ function initTransientDecay() {
   const wdVal = document.getElementById('transient-wd-val');
   const w0Val = document.getElementById('transient-w0-val');
   const gammaVal = document.getElementById('transient-gamma-val');
-  const playBtn = document.getElementById('transient-play');
-  let transientPlaying = true;
+  const restartBtn = document.getElementById('transient-restart');
 
   // Driven oscillator math: x_total = x_ss + x_transient
   // x_ss = A cos(wd t) + B sin(wd t)
@@ -1893,10 +1892,7 @@ function initTransientDecay() {
   if (wdSlider) wdSlider.addEventListener('input', onSliderChange);
   if (w0Slider) w0Slider.addEventListener('input', onSliderChange);
   if (gammaSlider) gammaSlider.addEventListener('input', onSliderChange);
-  if (playBtn) playBtn.addEventListener('click', () => {
-    transientPlaying = !transientPlaying;
-    playBtn.textContent = transientPlaying ? 'Pause' : 'Play';
-  });
+  if (restartBtn) restartBtn.addEventListener('click', () => { x0 = 0; recompute(); t = 0; });
 
   // --- Drag the mass to set initial displacement ---
   // The pixel-to-physics scale factor used in draw
@@ -1967,7 +1963,7 @@ function initTransientDecay() {
 
   function tick() {
     if (!canvas.isConnected) return;
-    if (!dragging && transientPlaying) {
+    if (!dragging) {
       t += 0.025;
       if (t > tMax) t = 0;
     }
@@ -12097,8 +12093,7 @@ function initStringJunction() {
     both: document.getElementById('sj-both'),
     'phase-flip': document.getElementById('sj-phase-flip'),
   };
-  const btnPlay = document.getElementById('sj-play');
-  let sjPlaying = true;
+  const btnRestart = document.getElementById('sj-restart');
 
   let mode = 'physical';
   let t = 0;
@@ -12111,10 +12106,7 @@ function initStringJunction() {
   }
 
   Object.entries(btns).forEach(([m, b]) => b && b.addEventListener('click', () => setMode(m)));
-  if (btnPlay) btnPlay.addEventListener('click', () => {
-    sjPlaying = !sjPlaying;
-    btnPlay.textContent = sjPlaying ? 'Pause' : 'Play';
-  });
+  if (btnRestart) btnRestart.addEventListener('click', () => { t = 0; });
   setMode('physical');
 
   function tick() {
@@ -19774,10 +19766,6 @@ function initSeismicEarthCore() {
   canvas.addEventListener('click', handleClick);
   canvas.addEventListener('touchstart', function(e) { e.preventDefault(); handleClick(e); });
 
-  // Reset button
-  const resetBtn = document.getElementById('seismic-reset');
-  if (resetBtn) resetBtn.addEventListener('click', function() { t = 0; });
-
   // Play/pause
   const playBtn = document.getElementById('seismic-play');
   if (playBtn) playBtn.addEventListener('click', function() {
@@ -19931,8 +19919,11 @@ function initSeismicEarthCore() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('Click the surface to move the earthquake', W - 10, 16);
 
-    // Advance time
-    if (playing) t += 1.8 * getSpeed();
+    // Advance time and loop
+    if (playing) {
+      t += 1.8 * getSpeed();
+      if (t > maxT + 60) t = 0;
+    }
 
     requestAnimationFrame(draw);
   }

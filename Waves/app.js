@@ -3946,7 +3946,6 @@ function sceneMarkup(type) {
           <canvas id="scene-seismic-earth-core" width="600" height="420"></canvas>
           <div class="scene-controls">
             <label><span>Speed: </span><input type="range" id="seismic-speed" min="0.3" max="3" step="0.1" value="1"><span class="scene-val" id="seismic-speed-val">1.0x</span></label>
-            <button id="seismic-reset" style="padding:2px 10px;cursor:pointer">Restart</button>
             <button id="seismic-play" style="padding:2px 10px;cursor:pointer">Pause</button>
           </div>
         </div>
