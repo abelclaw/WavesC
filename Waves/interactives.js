@@ -10256,6 +10256,438 @@ function initViolinSpectrum() {
 }
 
 // =========================================================================
+// 1b. Real Instrument Spectrum (realistic synthesis + live FFT)
+// =========================================================================
+function initRealInstrumentSpectrum() {
+  const canvas = document.getElementById('scene-real-instrument-spectrum');
+  if (!canvas) return;
+  if (canvas._risInit) return;
+  canvas._risInit = true;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  // --- Instrument data: many harmonics, ADSR envelopes, vibrato, inharmonicity ---
+  // Amplitudes from published measurements (normalized to fundamental or strongest partial).
+  // Each instrument has: amps (up to 16 harmonics), envelope params, vibrato, inharmonicity, noise.
+  const instruments = {
+    violin: {
+      label: 'Violin', f0: 440, nH: 16,
+      amps: [1,.72,.55,.42,.38,.28,.22,.18,.14,.11,.09,.07,.06,.05,.04,.03],
+      // Per-harmonic decay multiplier: higher harmonics decay faster
+      decayMul: [1,1.1,1.3,1.5,1.7,2,2.3,2.6,3,3.4,3.8,4.2,4.6,5,5.5,6],
+      env: { attack: 0.08, decay: 0.15, sustain: 0.75, release: 0.3 },
+      vibRate: 5.5, vibDepth: 0.004, // vibrato: 5.5 Hz, ±0.4% freq
+      inharm: 0, // strings are nearly harmonic
+      noiseAmt: 0.06, noiseDur: 0.05, // bow scratch
+    },
+    cello: {
+      label: 'Cello', f0: 220, nH: 16,
+      amps: [1,.68,.58,.45,.40,.32,.26,.20,.16,.13,.10,.08,.07,.06,.05,.04],
+      decayMul: [1,1.1,1.2,1.4,1.6,1.9,2.2,2.5,2.8,3.1,3.5,3.9,4.3,4.7,5.1,5.5],
+      env: { attack: 0.12, decay: 0.2, sustain: 0.7, release: 0.4 },
+      vibRate: 5, vibDepth: 0.005,
+      inharm: 0,
+      noiseAmt: 0.07, noiseDur: 0.06,
+    },
+    flute: {
+      label: 'Flute', f0: 523, nH: 8,
+      amps: [1,.12,.06,.03,.01,.005,0,0,0,0,0,0,0,0,0,0],
+      decayMul: [1,2,3,4,5,6,7,8,8,8,8,8,8,8,8,8],
+      env: { attack: 0.06, decay: 0.1, sustain: 0.85, release: 0.15 },
+      vibRate: 5, vibDepth: 0.003,
+      inharm: 0,
+      noiseAmt: 0.12, noiseDur: 0.04, // breath chiff
+    },
+    clarinet: {
+      label: 'Clarinet', f0: 311, nH: 16,
+      amps: [1,.05,.75,.04,.42,.03,.22,.02,.12,.01,.07,.005,.04,.003,.02,.001],
+      decayMul: [1,1.5,1.2,2,1.4,2.5,1.8,3,2.2,3.5,2.8,4,3.2,4.5,3.8,5],
+      env: { attack: 0.04, decay: 0.1, sustain: 0.8, release: 0.2 },
+      vibRate: 5, vibDepth: 0.002,
+      inharm: 0,
+      noiseAmt: 0.08, noiseDur: 0.03,
+    },
+    trumpet: {
+      label: 'Trumpet', f0: 349, nH: 16,
+      amps: [.55,1,.92,.7,.52,.38,.28,.2,.14,.1,.07,.05,.04,.03,.02,.015],
+      decayMul: [1,1,1.1,1.2,1.4,1.6,1.9,2.2,2.6,3,3.5,4,4.5,5,5.5,6],
+      env: { attack: 0.03, decay: 0.08, sustain: 0.85, release: 0.15 },
+      vibRate: 5.5, vibDepth: 0.003,
+      inharm: 0,
+      noiseAmt: 0.04, noiseDur: 0.02,
+    },
+    piano: {
+      label: 'Piano', f0: 262, nH: 16,
+      amps: [1,.85,.55,.4,.32,.22,.18,.14,.11,.09,.07,.06,.05,.04,.035,.03],
+      decayMul: [1,1.2,1.5,1.8,2.2,2.7,3.2,3.8,4.5,5.2,6,7,8,9,10,11],
+      env: { attack: 0.005, decay: 0.8, sustain: 0.15, release: 0.6 },
+      vibRate: 0, vibDepth: 0,
+      inharm: 0.0005, // piano strings have slight inharmonicity: f_n = n*f0*sqrt(1 + B*n^2)
+      noiseAmt: 0.15, noiseDur: 0.008, // hammer strike
+    },
+    oboe: {
+      label: 'Oboe', f0: 440, nH: 16,
+      amps: [1,.6,.82,.52,.6,.38,.3,.22,.18,.14,.11,.09,.07,.06,.05,.04],
+      decayMul: [1,1.1,1.1,1.3,1.3,1.6,1.8,2.1,2.4,2.8,3.2,3.6,4,4.5,5,5.5],
+      env: { attack: 0.03, decay: 0.12, sustain: 0.82, release: 0.18 },
+      vibRate: 5, vibDepth: 0.003,
+      inharm: 0,
+      noiseAmt: 0.05, noiseDur: 0.025,
+    },
+    bell: {
+      label: 'Bell', f0: 440, nH: 12,
+      // Bell partials are highly inharmonic; we model with effective inharmonicity
+      amps: [.6,1,.35,.8,.15,.55,.1,.35,.08,.25,.06,.18,0,0,0,0],
+      decayMul: [1,.8,1.5,.9,2,1.1,2.5,1.3,3,1.5,3.5,1.8,4,4,4,4],
+      env: { attack: 0.001, decay: 1.5, sustain: 0.05, release: 1.2 },
+      vibRate: 0, vibDepth: 0,
+      inharm: 0.003, // strong inharmonicity
+      noiseAmt: 0.2, noiseDur: 0.003, // strike
+    },
+  };
+
+  let activeInst = 'violin';
+  let animId = null;
+  let analyser = null;
+  let liveActx = null;
+  let liveMaster = null;
+  let liveNodes = [];
+  let noteStartTime = 0;
+  let noteActive = false;
+
+  // Build controls
+  const parent = canvas.parentElement;
+  const ctrlRow = document.createElement('div');
+  ctrlRow.className = 'scene-controls';
+  // Instrument buttons
+  const presetSpan = document.createElement('span');
+  presetSpan.style.cssText = 'font-size:11px;color:var(--muted);';
+  presetSpan.textContent = 'Instrument:';
+  ctrlRow.appendChild(presetSpan);
+  for (const key in instruments) {
+    const btn = document.createElement('button');
+    btn.className = 'scene-btn';
+    btn.id = 'ris-' + key;
+    btn.textContent = instruments[key].label;
+    btn.style.cssText = 'font-size:11px;padding:2px 10px;';
+    btn.addEventListener('click', () => {
+      activeInst = key;
+      updateBtns();
+      // If playing, restart with new instrument
+      if (noteActive) { stopNote(); playNote(); }
+      else drawStatic();
+    });
+    ctrlRow.appendChild(btn);
+  }
+  parent.appendChild(ctrlRow);
+
+  // Play button row
+  const playRow = document.createElement('div');
+  playRow.className = 'scene-controls';
+  const playBtn = document.createElement('button');
+  playBtn.className = 'scene-btn w-play-btn';
+  playBtn.id = 'ris-play';
+  playBtn.textContent = '\u25B6 Play Note';
+  playBtn.addEventListener('click', () => {
+    if (noteActive) { stopNote(); }
+    else { playNote(); }
+  });
+  playRow.appendChild(playBtn);
+  parent.appendChild(playRow);
+
+  function updateBtns() {
+    for (const key in instruments) {
+      const btn = document.getElementById('ris-' + key);
+      if (btn) {
+        btn.style.fontWeight = (key === activeInst) ? 'bold' : 'normal';
+        btn.style.opacity = (key === activeInst) ? '1' : '0.65';
+      }
+    }
+  }
+  updateBtns();
+
+  function playNote() {
+    stopNote();
+    const inst = instruments[activeInst];
+    const actx = wGetAudioCtx();
+    liveActx = actx;
+    const now = actx.currentTime;
+    noteStartTime = now;
+
+    // Analyser for live FFT
+    analyser = actx.createAnalyser();
+    analyser.fftSize = 4096;
+    analyser.smoothingTimeConstant = 0.8;
+
+    // Master gain
+    liveMaster = actx.createGain();
+    liveMaster.gain.value = 0.3;
+    liveMaster.connect(analyser);
+    analyser.connect(actx.destination);
+
+    const { f0, nH, amps, decayMul, env, vibRate, vibDepth, inharm, noiseAmt, noiseDur } = inst;
+    liveNodes = [];
+
+    // Vibrato LFO (shared)
+    let lfo = null;
+    let lfoGain = null;
+    if (vibRate > 0 && vibDepth > 0) {
+      lfo = actx.createOscillator();
+      lfo.type = 'sine';
+      lfo.frequency.value = vibRate;
+      lfo.start(now);
+      liveNodes.push(lfo);
+    }
+
+    // Per-harmonic oscillators with individual envelopes
+    for (let n = 1; n <= nH; n++) {
+      if (amps[n - 1] <= 0) continue;
+
+      // Compute partial frequency with inharmonicity
+      const fn = f0 * n * Math.sqrt(1 + inharm * n * n);
+
+      const osc = actx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = fn;
+
+      // Connect vibrato LFO to this oscillator's frequency
+      if (lfo) {
+        const vGain = actx.createGain();
+        vGain.gain.value = fn * vibDepth;
+        lfo.connect(vGain);
+        vGain.connect(osc.frequency);
+      }
+
+      // Per-harmonic gain with ADSR envelope
+      const g = actx.createGain();
+      g.gain.value = 0;
+
+      const amp = amps[n - 1] * 0.5;
+      const dm = decayMul[n - 1] || 1;
+      const aTime = env.attack * (1 + (n - 1) * 0.02); // higher harmonics attack slightly slower
+      const dTime = env.decay * dm;
+      const sLevel = amp * env.sustain * Math.pow(0.85, n - 1); // higher harmonics sustain less
+      const rTime = env.release / dm; // higher harmonics release faster
+
+      // Attack
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(amp, now + aTime);
+      // Decay to sustain
+      g.gain.setTargetAtTime(sLevel, now + aTime, dTime * 0.3);
+
+      osc.connect(g);
+      g.connect(liveMaster);
+      osc.start(now);
+      liveNodes.push(osc);
+      liveNodes.push({ gain: g, amp, sLevel, rTime }); // store for release
+    }
+
+    // Attack noise burst
+    if (noiseAmt > 0) {
+      const bufLen = Math.ceil(actx.sampleRate * Math.max(noiseDur, 0.01));
+      const buf = actx.createBuffer(1, bufLen, actx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        data[i] = (Math.random() * 2 - 1) * noiseAmt;
+      }
+      const noiseSrc = actx.createBufferSource();
+      noiseSrc.buffer = buf;
+
+      // Band-pass filter the noise around the instrument's frequency range
+      const bpf = actx.createBiquadFilter();
+      bpf.type = 'bandpass';
+      bpf.frequency.value = f0 * 3;
+      bpf.Q.value = 1;
+
+      const noiseGain = actx.createGain();
+      noiseGain.gain.value = 1;
+
+      noiseSrc.connect(bpf);
+      bpf.connect(noiseGain);
+      noiseGain.connect(liveMaster);
+      noiseSrc.start(now);
+      liveNodes.push(noiseSrc);
+    }
+
+    noteActive = true;
+    playBtn.textContent = '\u25A0 Stop';
+    playBtn.style.background = '#dc2626';
+    _wavesAudioActive['ris-play'] = { master: liveMaster, nodes: liveNodes, actx };
+    startAnimation();
+  }
+
+  function stopNote() {
+    if (!noteActive) return;
+    const actx = liveActx;
+    if (actx && liveMaster) {
+      const now = actx.currentTime;
+      // Trigger release on all gain nodes
+      for (const item of liveNodes) {
+        if (item.gain) {
+          item.gain.gain.cancelScheduledValues(now);
+          item.gain.gain.setTargetAtTime(0, now, item.rTime * 0.3 || 0.05);
+        }
+      }
+      liveMaster.gain.setTargetAtTime(0, now, 0.08);
+      const nodes = liveNodes.slice();
+      const master = liveMaster;
+      setTimeout(() => {
+        for (const n of nodes) {
+          try { if (n.stop) n.stop(); else if (n.gain) {} } catch(e) {}
+        }
+        try { master.disconnect(); } catch(e) {}
+      }, 500);
+    }
+    noteActive = false;
+    liveNodes = [];
+    liveMaster = null;
+    analyser = null;
+    liveActx = null;
+    delete _wavesAudioActive['ris-play'];
+    playBtn.textContent = '\u25B6 Play Note';
+    playBtn.style.background = '';
+    // Let animation run a bit more to show decay, then stop
+    setTimeout(() => {
+      if (!noteActive) { cancelAnimationFrame(animId); animId = null; drawStatic(); }
+    }, 600);
+  }
+
+  // --- Drawing ---
+  const plotL = 60, plotR = W - 20, plotT = 30, plotB = H - 40;
+  const plotW = plotR - plotL, plotH = plotB - plotT;
+
+  function drawAxes(fMax) {
+    wClear(ctx, W, H);
+    // Axes
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotR, plotB); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plotL, plotB); ctx.lineTo(plotL, plotT); ctx.stroke();
+    // Labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Frequency (Hz)', plotL + plotW / 2, H - 4);
+    ctx.save(); ctx.translate(plotL - 40, plotT + plotH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Amplitude', 0, 0); ctx.restore();
+    // Frequency ticks
+    const step = fMax <= 2000 ? 500 : 1000;
+    for (let f = step; f < fMax; f += step) {
+      const fx = plotL + (f / fMax) * plotW;
+      ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT); ctx.stroke();
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(f.toFixed(0), fx, plotB + 12);
+    }
+  }
+
+  function drawLiveFFT() {
+    if (!analyser) return;
+    const inst = instruments[activeInst];
+    const fMax = inst.f0 * (inst.nH + 1);
+    const binCount = analyser.frequencyBinCount;
+    const freqData = new Float32Array(binCount);
+    analyser.getFloatFrequencyData(freqData); // dB values
+
+    drawAxes(fMax);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(inst.label + ' — Live Spectrum', plotL + plotW / 2, 18);
+
+    // Convert FFT bins to our plot range
+    const sampleRate = liveActx?.sampleRate || 44100;
+    const binWidth = sampleRate / (analyser.fftSize);
+
+    // Find max in range for normalization
+    let maxDb = -100;
+    const maxBin = Math.min(binCount, Math.ceil(fMax / binWidth));
+    for (let i = 1; i < maxBin; i++) {
+      if (freqData[i] > maxDb) maxDb = freqData[i];
+    }
+    if (maxDb < -80) maxDb = -20;
+
+    // Draw spectrum as filled curve
+    ctx.beginPath();
+    ctx.moveTo(plotL, plotB);
+    for (let i = 1; i < maxBin; i++) {
+      const f = i * binWidth;
+      const fx = plotL + (f / fMax) * plotW;
+      const db = freqData[i];
+      const norm = Math.max(0, (db - (maxDb - 60)) / 60); // 60 dB dynamic range
+      const fy = plotB - norm * plotH * 0.9;
+      ctx.lineTo(fx, fy);
+    }
+    ctx.strokeStyle = WCOLORS.teal; ctx.lineWidth = 2;
+    ctx.stroke();
+    // Fill
+    ctx.lineTo(plotL + (maxBin * binWidth / fMax) * plotW, plotB);
+    ctx.lineTo(plotL, plotB);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(15,118,110,0.1)';
+    ctx.fill();
+
+    // Mark harmonic positions
+    for (let n = 1; n <= inst.nH; n++) {
+      if (inst.amps[n - 1] <= 0) continue;
+      const fn = inst.f0 * n * Math.sqrt(1 + inst.inharm * n * n);
+      const fx = plotL + (fn / fMax) * plotW;
+      ctx.strokeStyle = 'rgba(217,119,6,0.4)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(fx, plotB); ctx.lineTo(fx, plotT + 10); ctx.stroke();
+      ctx.setLineDash([]);
+      if (n <= 8) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('n=' + n, fx, plotT + 6);
+      }
+    }
+
+    // Time indicator
+    if (liveActx) {
+      const elapsed = liveActx.currentTime - noteStartTime;
+      ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+      ctx.fillText('t = ' + elapsed.toFixed(1) + 's', plotR, 18);
+    }
+  }
+
+  function drawStatic() {
+    // Draw the expected spectrum (theoretical) when not playing
+    const inst = instruments[activeInst];
+    const fMax = inst.f0 * (inst.nH + 1);
+    drawAxes(fMax);
+
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(inst.label + ' — Expected Spectrum', plotL + plotW / 2, 18);
+
+    // Draw harmonic bars
+    for (let n = 1; n <= inst.nH; n++) {
+      if (inst.amps[n - 1] <= 0) continue;
+      const fn = inst.f0 * n * Math.sqrt(1 + inst.inharm * n * n);
+      const fx = plotL + (fn / fMax) * plotW;
+      const barH = inst.amps[n - 1] * plotH * 0.85;
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillRect(fx - 3, plotB - barH, 6, barH);
+      if (n <= 10) {
+        ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+        ctx.fillText('n=' + n, fx, plotT + 6);
+      }
+    }
+
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText('Press Play to hear & see live FFT', plotR, 18);
+  }
+
+  function startAnimation() {
+    function loop() {
+      if (!noteActive) return;
+      drawLiveFFT();
+      animId = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+
+  drawStatic();
+}
+
+// =========================================================================
 // 2. Fourier Transform Derivation (discrete → continuous)
 // =========================================================================
 function initFourierTransformDerivation() {
