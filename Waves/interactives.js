@@ -19643,6 +19643,36 @@ function initShearWaveSolidLiquid() {
   const boundaryCol = 11; // column index where liquid starts (0-based)
   const boundaryX = ox + boundaryCol * spacingX;
 
+  // Pre-generate random liquid particle positions (amorphous)
+  const liquidParticles = [];
+  const liquidRegionW = gridW - boundaryCol * spacingX + 12;
+  const liquidRegionH = gridH + 20;
+  // Seeded pseudo-random for consistency
+  function seededRand(seed) {
+    let s = seed;
+    return function() {
+      s = (s * 16807 + 0) % 2147483647;
+      return s / 2147483647;
+    };
+  }
+  const rand = seededRand(42);
+  // Use Poisson-disk-like placement: place particles with minimum spacing
+  const minDist = 16;
+  const maxAttempts = 2000;
+  for (let i = 0; i < maxAttempts && liquidParticles.length < 80; i++) {
+    const px = boundaryX + 8 + rand() * (liquidRegionW - 16);
+    const py = oy - 10 + rand() * liquidRegionH;
+    let tooClose = false;
+    for (let j = 0; j < liquidParticles.length; j++) {
+      const dx = px - liquidParticles[j].x;
+      const dy2 = py - liquidParticles[j].y;
+      if (dx * dx + dy2 * dy2 < minDist * minDist) { tooClose = true; break; }
+    }
+    if (!tooClose) {
+      liquidParticles.push({ x: px, y: py, phase: rand() * Math.PI * 2 });
+    }
+  }
+
   // Wave parameters
   const waveSpeed = 60;  // pixels per second
   const waveFreq = 1.8;
@@ -19688,100 +19718,83 @@ function initShearWaveSolidLiquid() {
     // Wave travels left-to-right, reflects at boundary
     const waveX = waveSpeed * t; // how far the wavefront has traveled
 
-    for (let c = 0; c < cols; c++) {
+    // Helper: compute solid particle dy at column c
+    function solidDy(c) {
+      const px = c * spacingX;
+      let dy = 0;
+      const phaseInc = omega * t - waveK * px;
+      if (waveX > px) {
+        const env = Math.min(1, (waveX - px) / 30);
+        dy += waveAmp * env * Math.sin(phaseInc);
+      }
+      if (waveX > solidWidth) {
+        const refWaveX = waveX - solidWidth;
+        const refPx = solidWidth - px;
+        if (refWaveX > refPx) {
+          const phaseRef = omega * t + waveK * px - 2 * waveK * solidWidth;
+          const env = Math.min(1, (refWaveX - refPx) / 30);
+          dy -= waveAmp * env * Math.sin(phaseRef);
+        }
+      }
+      return dy;
+    }
+
+    // Draw solid particles with bonds
+    for (let c = 0; c < boundaryCol; c++) {
       for (let r = 0; r < rows; r++) {
         const baseX = ox + c * spacingX;
         const baseY = oy + r * spacingY;
-        let dy = 0;
+        const dy = solidDy(c);
 
-        if (c < boundaryCol) {
-          // Solid: shear wave propagates and reflects
-          const px = c * spacingX; // position in solid
-          // Incident wave (traveling right)
-          const phaseInc = omega * t - waveK * px;
-          if (waveX > px) {
-            // Envelope that fades in smoothly
-            const distBehind = waveX - px;
-            const env = Math.min(1, distBehind / 30);
-            dy += waveAmp * env * Math.sin(phaseInc);
-          }
-          // Reflected wave (traveling left, from boundary)
-          const reflectDist = 2 * solidWidth - px;
-          if (waveX > solidWidth) {
-            const refWaveX = waveX - solidWidth; // how far reflected wave has traveled from boundary
-            const refPx = solidWidth - px; // distance from boundary to this particle
-            if (refWaveX > refPx) {
-              const phaseRef = omega * t + waveK * px - 2 * waveK * solidWidth;
-              const distBehind = refWaveX - refPx;
-              const env = Math.min(1, distBehind / 30);
-              // Reflected with phase flip (fixed boundary reflection)
-              dy -= waveAmp * env * Math.sin(phaseRef);
-            }
-          }
-        } else {
-          // Liquid: particles jiggle randomly a tiny bit near boundary, no coherent wave
-          const distFromBoundary = (c - boundaryCol) * spacingX;
-          if (distFromBoundary < 40 && waveX > solidWidth) {
-            const decay = Math.exp(-distFromBoundary / 12);
-            const jitter = Math.sin(omega * t * 0.7 + c * 1.3 + r * 0.9) * 1.5;
-            dy = decay * jitter;
-          }
+        // Bonds
+        ctx.strokeStyle = 'rgba(139,105,20,0.25)';
+        ctx.lineWidth = 1;
+        if (c + 1 < boundaryCol) {
+          const ndy = solidDy(c + 1);
+          ctx.beginPath();
+          ctx.moveTo(baseX, baseY + dy);
+          ctx.lineTo(ox + (c + 1) * spacingX, baseY + ndy);
+          ctx.stroke();
+        }
+        if (r + 1 < rows) {
+          ctx.beginPath();
+          ctx.moveTo(baseX, baseY + dy);
+          ctx.lineTo(baseX, oy + (r + 1) * spacingY + dy);
+          ctx.stroke();
         }
 
-        // Draw bonds in solid (to neighbors)
-        if (c < boundaryCol) {
-          ctx.strokeStyle = 'rgba(139,105,20,0.25)';
-          ctx.lineWidth = 1;
-          // Bond to right neighbor (if also in solid)
-          if (c + 1 < boundaryCol) {
-            const nx = ox + (c + 1) * spacingX;
-            // neighbor dy computed inline
-            let ndy = 0;
-            const npx = (c + 1) * spacingX;
-            const nPhaseInc = omega * t - waveK * npx;
-            if (waveX > npx) {
-              const nDistBehind = waveX - npx;
-              const nEnv = Math.min(1, nDistBehind / 30);
-              ndy += waveAmp * nEnv * Math.sin(nPhaseInc);
-            }
-            if (waveX > solidWidth) {
-              const nRefWaveX = waveX - solidWidth;
-              const nRefPx = solidWidth - npx;
-              if (nRefWaveX > nRefPx) {
-                const nPhaseRef = omega * t + waveK * npx - 2 * waveK * solidWidth;
-                const nDistBehind = nRefWaveX - nRefPx;
-                const nEnv = Math.min(1, nDistBehind / 30);
-                ndy -= waveAmp * nEnv * Math.sin(nPhaseRef);
-              }
-            }
-            ctx.beginPath();
-            ctx.moveTo(baseX, baseY + dy);
-            ctx.lineTo(nx, baseY + ndy);
-            ctx.stroke();
-          }
-          // Bond to bottom neighbor
-          if (r + 1 < rows) {
-            ctx.beginPath();
-            ctx.moveTo(baseX, baseY + dy);
-            ctx.lineTo(baseX, oy + (r + 1) * spacingY + dy);
-            ctx.stroke();
-          }
-        }
-
-        // Draw particle
-        const radius = c < boundaryCol ? 4 : 3.5;
+        // Particle
         ctx.beginPath();
-        ctx.arc(baseX, baseY + dy, radius, 0, Math.PI * 2);
-        if (c < boundaryCol) {
-          ctx.fillStyle = '#8B6914';
-        } else {
-          ctx.fillStyle = '#2563eb';
-        }
+        ctx.arc(baseX, baseY + dy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#8B6914';
         ctx.fill();
-        ctx.strokeStyle = c < boundaryCol ? '#6B4F10' : '#1d4ed8';
+        ctx.strokeStyle = '#6B4F10';
         ctx.lineWidth = 0.8;
         ctx.stroke();
       }
+    }
+
+    // Draw amorphous liquid particles
+    for (let i = 0; i < liquidParticles.length; i++) {
+      const lp = liquidParticles[i];
+      // Gentle random drift (Brownian-like)
+      const dx = Math.sin(t * 0.8 + lp.phase) * 2;
+      const dy = Math.cos(t * 0.6 + lp.phase * 1.7) * 2;
+      // Near boundary: slight jiggle when wave hits
+      let jy = 0;
+      const distFromBound = lp.x - boundaryX;
+      if (distFromBound < 40 && waveX > solidWidth) {
+        const decay = Math.exp(-distFromBound / 12);
+        jy = decay * Math.sin(omega * t * 0.7 + lp.phase) * 1.5;
+      }
+
+      ctx.beginPath();
+      ctx.arc(lp.x + dx, lp.y + dy + jy, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#2563eb';
+      ctx.fill();
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
     }
 
     // Arrow showing wave direction
