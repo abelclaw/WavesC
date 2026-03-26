@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 220" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 750 320" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
   <defs>
     <marker id="arrowL2" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
       <path d="M8,0 L0,3 L8,6" fill="#e63946" stroke="none"/>
@@ -6,70 +6,78 @@
     <marker id="arrowR2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
       <path d="M0,0 L8,3 L0,6" fill="#e63946" stroke="none"/>
     </marker>
+    <clipPath id="photoClip2">
+      <rect x="15" y="15" width="320" height="290" rx="8"/>
+    </clipPath>
   </defs>
 
   <!-- Background -->
-  <rect width="440" height="220" fill="#f5f5f5" rx="6"/>
+  <rect width="750" height="320" fill="#f5f5f5" rx="8"/>
 
-  <!-- Zoom-in indicator: converging lines from top -->
-  <line x1="140" y1="0" x2="20" y2="30" stroke="#e63946" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <line x1="300" y1="0" x2="420" y2="30" stroke="#e63946" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text x="220" y="16" text-anchor="middle" font-size="11" fill="#e63946" font-weight="600" font-style="italic">zoom in on dish surface</text>
+  <!-- === LEFT: Photo === -->
+  <image href="arecibo-photo.jpg" x="15" y="15" width="320" height="290" clip-path="url(#photoClip2)" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="15" y="15" width="320" height="290" rx="8" fill="none" stroke="#ddd" stroke-width="1.5"/>
 
-  <!-- Zoomed grid panel -->
-  <rect x="20" y="30" width="400" height="150" rx="6" fill="#a0a0a0" stroke="#e63946" stroke-width="2"/>
+  <!-- Zoom circle on the grid area of the photo -->
+  <circle cx="175" cy="200" r="45" fill="none" stroke="#e63946" stroke-width="3" stroke-dasharray="6,3"/>
+
+  <!-- Size label ON the photo -->
+  <rect x="60" y="260" width="175" height="28" rx="5" fill="rgba(230,57,70,0.9)"/>
+  <text x="147" y="279" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Grid spacing d ~ 10 cm</text>
+
+  <!-- === Connector lines === -->
+  <line x1="220" y1="178" x2="420" y2="50" stroke="#e63946" stroke-width="1.8" stroke-dasharray="6,3"/>
+  <line x1="220" y1="222" x2="420" y2="270" stroke="#e63946" stroke-width="1.8" stroke-dasharray="6,3"/>
+
+  <!-- === RIGHT: Zoomed-in grid === -->
+  <rect x="420" y="30" width="310" height="250" rx="8" fill="#a0a0a0" stroke="#e63946" stroke-width="2.5"/>
 
   <!-- Metal grid bars -->
   <g>
     <!-- Horizontal bars -->
-    <rect x="20" y="67" width="400" height="5" fill="#808080" rx="1"/>
-    <rect x="20" y="112" width="400" height="5" fill="#808080" rx="1"/>
-    <rect x="20" y="157" width="400" height="5" fill="#808080" rx="1"/>
+    <rect x="420" y="96" width="310" height="6" fill="#808080"/>
+    <rect x="420" y="162" width="310" height="6" fill="#808080"/>
+    <rect x="420" y="228" width="310" height="6" fill="#808080"/>
     <!-- Vertical bars -->
-    <rect x="90" y="30" width="5" height="150" fill="#808080" rx="1"/>
-    <rect x="160" y="30" width="5" height="150" fill="#808080" rx="1"/>
-    <rect x="230" y="30" width="5" height="150" fill="#808080" rx="1"/>
-    <rect x="300" y="30" width="5" height="150" fill="#808080" rx="1"/>
-    <rect x="370" y="30" width="5" height="150" fill="#808080" rx="1"/>
+    <rect x="486" y="30" width="6" height="250" fill="#808080"/>
+    <rect x="558" y="30" width="6" height="250" fill="#808080"/>
+    <rect x="630" y="30" width="6" height="250" fill="#808080"/>
+    <rect x="702" y="30" width="6" height="250" fill="#808080"/>
   </g>
 
   <!-- Sky through gaps -->
   <g fill="#87CEEB" opacity="0.4">
-    <rect x="95" y="72" width="65" height="40" rx="1"/>
-    <rect x="165" y="72" width="65" height="40" rx="1"/>
-    <rect x="235" y="72" width="65" height="40" rx="1"/>
-    <rect x="305" y="72" width="65" height="40" rx="1"/>
-    <rect x="95" y="117" width="65" height="40" rx="1"/>
-    <rect x="165" y="117" width="65" height="40" rx="1"/>
-    <rect x="235" y="117" width="65" height="40" rx="1"/>
-    <rect x="305" y="117" width="65" height="40" rx="1"/>
-    <rect x="95" y="35" width="65" height="32" rx="1"/>
-    <rect x="165" y="35" width="65" height="32" rx="1"/>
-    <rect x="235" y="35" width="65" height="32" rx="1"/>
-    <rect x="305" y="35" width="65" height="32" rx="1"/>
+    <!-- Row 1 -->
+    <rect x="492" y="36" width="66" height="60" rx="1"/>
+    <rect x="564" y="36" width="66" height="60" rx="1"/>
+    <rect x="636" y="36" width="66" height="60" rx="1"/>
+    <!-- Row 2 -->
+    <rect x="492" y="102" width="66" height="60" rx="1"/>
+    <rect x="564" y="102" width="66" height="60" rx="1"/>
+    <rect x="636" y="102" width="66" height="60" rx="1"/>
+    <!-- Row 3 -->
+    <rect x="492" y="168" width="66" height="60" rx="1"/>
+    <rect x="564" y="168" width="66" height="60" rx="1"/>
+    <rect x="636" y="168" width="66" height="60" rx="1"/>
+    <!-- Row 4 -->
+    <rect x="492" y="234" width="66" height="40" rx="1"/>
+    <rect x="564" y="234" width="66" height="40" rx="1"/>
+    <rect x="636" y="234" width="66" height="40" rx="1"/>
   </g>
 
-  <!-- Dimension arrow: horizontal spacing (center to center) -->
-  <line x1="92" y1="46" x2="162" y2="46" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
-  <!-- Tick marks -->
-  <line x1="92" y1="40" x2="92" y2="52" stroke="#e63946" stroke-width="1.5"/>
-  <line x1="162" y1="40" x2="162" y2="52" stroke="#e63946" stroke-width="1.5"/>
-
-  <!-- Spacing label -->
-  <rect x="100" y="35" width="52" height="16" rx="3" fill="#e63946"/>
-  <text x="126" y="47" text-anchor="middle" font-size="10" fill="white" font-weight="bold">~10 cm</text>
+  <!-- Dimension arrow: horizontal spacing -->
+  <line x1="489" y1="50" x2="561" y2="50" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
+  <line x1="489" y1="44" x2="489" y2="56" stroke="#e63946" stroke-width="1.5"/>
+  <line x1="561" y1="44" x2="561" y2="56" stroke="#e63946" stroke-width="1.5"/>
+  <rect x="500" y="55" width="50" height="16" rx="3" fill="#e63946"/>
+  <text x="525" y="67" text-anchor="middle" font-size="10" fill="white" font-weight="bold">~10 cm</text>
 
   <!-- Vertical dimension -->
-  <line x1="348" y1="70" x2="348" y2="115" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
-  <line x1="342" y1="70" x2="354" y2="70" stroke="#e63946" stroke-width="1.5"/>
-  <line x1="342" y1="115" x2="354" y2="115" stroke="#e63946" stroke-width="1.5"/>
-  <rect x="355" y="83" width="52" height="16" rx="3" fill="#e63946"/>
-  <text x="381" y="95" text-anchor="middle" font-size="10" fill="white" font-weight="bold">d ~ 10 cm</text>
+  <line x1="716" y1="99" x2="716" y2="165" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL2)" marker-end="url(#arrowR2)"/>
+  <line x1="710" y1="99" x2="722" y2="99" stroke="#e63946" stroke-width="1.5"/>
+  <line x1="710" y1="165" x2="722" y2="165" stroke="#e63946" stroke-width="1.5"/>
 
   <!-- Key inequality -->
-  <rect x="50" y="187" width="150" height="24" rx="4" fill="white" stroke="#e63946" stroke-width="1.5"/>
-  <text x="125" y="203" text-anchor="middle" font-size="12" fill="#e63946" font-weight="700">d ~ 10 cm ≪ λ ~ 1 m</text>
-
-  <!-- Bottom caption -->
-  <text x="320" y="203" text-anchor="middle" font-size="11" fill="#666">Grid spacing vs. radio wavelength (400 MHz)</text>
+  <rect x="440" y="252" width="150" height="22" rx="4" fill="white" stroke="#e63946" stroke-width="1.5"/>
+  <text x="515" y="267" text-anchor="middle" font-size="11" fill="#e63946" font-weight="700">d ~ 10 cm ≪ λ ~ 1 m</text>
 </svg>

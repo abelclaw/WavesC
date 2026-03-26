@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 200" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 750 320" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
   <defs>
     <marker id="arrowL" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
       <path d="M8,0 L0,3 L8,6" fill="#e63946" stroke="none"/>
@@ -6,53 +6,72 @@
     <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
       <path d="M0,0 L8,3 L0,6" fill="#e63946" stroke="none"/>
     </marker>
+    <clipPath id="photoClip">
+      <rect x="15" y="15" width="320" height="290" rx="8"/>
+    </clipPath>
   </defs>
 
   <!-- Background -->
-  <rect width="440" height="200" fill="#f5f5f5" rx="6"/>
+  <rect width="750" height="320" fill="#f5f5f5" rx="8"/>
 
-  <!-- Zoom-in indicator: converging lines from top -->
-  <line x1="140" y1="0" x2="20" y2="30" stroke="#e63946" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <line x1="300" y1="0" x2="420" y2="30" stroke="#e63946" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text x="220" y="16" text-anchor="middle" font-size="11" fill="#e63946" font-weight="600" font-style="italic">zoom in on door mesh</text>
+  <!-- === LEFT: Photo === -->
+  <image href="microwave-photo.jpg" x="15" y="15" width="320" height="290" clip-path="url(#photoClip)" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="15" y="15" width="320" height="290" rx="8" fill="none" stroke="#ddd" stroke-width="1.5"/>
 
-  <!-- Zoomed mesh panel -->
-  <rect x="20" y="30" width="400" height="130" rx="6" fill="#1a1a1a" stroke="#e63946" stroke-width="2"/>
+  <!-- Zoom circle on the door mesh area of the photo -->
+  <circle cx="155" cy="165" r="45" fill="none" stroke="#e63946" stroke-width="3" stroke-dasharray="6,3"/>
 
-  <!-- Grid of holes: 8 columns x 3 rows -->
+  <!-- Size label ON the photo -->
+  <rect x="72" y="228" width="165" height="28" rx="5" fill="rgba(230,57,70,0.9)"/>
+  <text x="154" y="247" text-anchor="middle" font-size="13" fill="white" font-weight="bold">Hole spacing d ~ 1 mm</text>
+
+  <!-- === Connector lines === -->
+  <line x1="200" y1="145" x2="420" y2="50" stroke="#e63946" stroke-width="1.8" stroke-dasharray="6,3"/>
+  <line x1="200" y1="185" x2="420" y2="270" stroke="#e63946" stroke-width="1.8" stroke-dasharray="6,3"/>
+
+  <!-- === RIGHT: Zoomed-in mesh === -->
+  <rect x="420" y="30" width="310" height="250" rx="8" fill="#1a1a1a" stroke="#e63946" stroke-width="2.5"/>
+
+  <!-- Grid of holes: 6 columns x 4 rows -->
   <g>
     <!-- Row 1 -->
-    <circle cx="60" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="110" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="160" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="210" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="260" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="310" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="360" cy="60" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="462" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="512" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="562" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="612" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="662" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="712" cy="72" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
     <!-- Row 2 -->
-    <circle cx="60" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="110" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="160" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="210" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="260" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="310" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
-    <circle cx="360" cy="110" r="13" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="462" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="512" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="562" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="612" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="662" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="712" cy="122" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <!-- Row 3 -->
+    <circle cx="462" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="512" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="562" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="612" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="662" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="712" cy="172" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <!-- Row 4 -->
+    <circle cx="462" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="512" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="562" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="612" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="662" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
+    <circle cx="712" cy="222" r="16" fill="#3a3a3a" stroke="#2a2a2a" stroke-width="1"/>
   </g>
 
   <!-- Dimension arrow: hole-to-hole spacing -->
-  <line x1="110" y1="140" x2="160" y2="140" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
-  <!-- Tick marks -->
-  <line x1="110" y1="135" x2="110" y2="145" stroke="#e63946" stroke-width="1.5"/>
-  <line x1="160" y1="135" x2="160" y2="145" stroke="#e63946" stroke-width="1.5"/>
+  <line x1="512" y1="252" x2="562" y2="252" stroke="#e63946" stroke-width="2.5" marker-start="url(#arrowL)" marker-end="url(#arrowR)"/>
+  <line x1="512" y1="246" x2="512" y2="258" stroke="#e63946" stroke-width="1.5"/>
+  <line x1="562" y1="246" x2="562" y2="258" stroke="#e63946" stroke-width="1.5"/>
+  <rect x="513" y="259" width="48" height="16" rx="3" fill="#e63946"/>
+  <text x="537" y="271" text-anchor="middle" font-size="10" fill="white" font-weight="bold">d ~ 1 mm</text>
 
-  <!-- Spacing label -->
-  <rect x="109" y="147" width="62" height="18" rx="3" fill="#e63946"/>
-  <text x="140" y="160" text-anchor="middle" font-size="11" fill="white" font-weight="bold">d ~ 1 mm</text>
-
-  <!-- Key inequality -->
-  <rect x="270" y="140" width="140" height="22" rx="4" fill="white" stroke="#e63946" stroke-width="1.5"/>
-  <text x="340" y="155" text-anchor="middle" font-size="12" fill="#e63946" font-weight="700">d ≪ λ = 12 cm</text>
-
-  <!-- Bottom caption -->
-  <text x="220" y="190" text-anchor="middle" font-size="11" fill="#666">Hole spacing vs. microwave wavelength (2.5 GHz)</text>
+  <!-- Key inequality on zoom panel -->
+  <rect x="620" y="250" width="100" height="22" rx="4" fill="white" stroke="#e63946" stroke-width="1.5"/>
+  <text x="670" y="265" text-anchor="middle" font-size="11" fill="#e63946" font-weight="700">d ≪ λ = 12 cm</text>
 </svg>
