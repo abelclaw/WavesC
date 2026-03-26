@@ -277,6 +277,20 @@ const mathLessons = [
       { question: "Compute $\\partial^2/\\partial x^2$ of $\\sin(kx - \\omega t)$ and verify it satisfies the wave equation with $v = \\omega/k$.", answer: "$\\partial^2 f/\\partial x^2 = -k^2\\sin(kx - \\omega t)$. $\\partial^2 f/\\partial t^2 = -\\omega^2\\sin(kx - \\omega t)$. The wave equation requires $-\\omega^2 = v^2(-k^2)$, i.e. $v = \\omega/k$." },
       { question: "Why does the wave equation involve $\\partial^2 A/\\partial x^2$ (curvature) rather than $\\partial A/\\partial x$ (slope)?", answer: "A straight segment of string, no matter how tilted, has equal and opposite tension forces at its two ends. Only when the string is curved do the forces fail to cancel, producing a net transverse force. The net force is proportional to the difference of slopes, which is the second spatial derivative." }
     ]
+  },
+  {
+    id: "wave-energy-math",
+    title: "Wave Energy on a String",
+    sections: [
+      { heading: "Kinetic energy density", body: "A small element of string of length $\\Delta x$ has mass $\\mu\\,\\Delta x$ and transverse velocity $\\partial A/\\partial t$. Its kinetic energy is $\\frac{1}{2}\\mu\\,\\Delta x\\,(\\partial A/\\partial t)^2$, so the kinetic energy per unit length is: $$\\frac{KE}{\\text{length}} = \\frac{1}{2}\\mu\\left(\\frac{\\partial A}{\\partial t}\\right)^2$$", interactive: null },
+      { heading: "Potential energy density", body: "The potential energy comes from the extra stretching of the string. A segment of length $\\Delta x$ is stretched to $\\sqrt{\\Delta x^2 + \\Delta A^2}$. The extra length is: $$\\Delta L = \\Delta x\\sqrt{1 + (\\partial A/\\partial x)^2} - \\Delta x \\approx \\frac{1}{2}\\Delta x\\left(\\frac{\\partial A}{\\partial x}\\right)^2$$ where we Taylor-expanded for small slopes. The work done against tension $T$ is $T\\,\\Delta L$, giving: $$\\frac{PE}{\\text{length}} = \\frac{1}{2}T\\left(\\frac{\\partial A}{\\partial x}\\right)^2$$", interactive: null },
+      { heading: "Total energy and equipartition", body: "The total energy per unit length is: $$\\frac{E}{\\text{length}} = \\frac{1}{2}\\mu\\left(\\frac{\\partial A}{\\partial t}\\right)^2 + \\frac{1}{2}T\\left(\\frac{\\partial A}{\\partial x}\\right)^2$$ For a traveling wave $A = f(x \\pm vt)$, we have $\\partial A/\\partial t = \\pm v\\,\\partial A/\\partial x$, so $(\\partial A/\\partial t)^2 = v^2(\\partial A/\\partial x)^2 = (T/\\mu)(\\partial A/\\partial x)^2$. The KE and PE are exactly equal at every point — this is equipartition for traveling waves. The total simplifies to: $$\\frac{E}{\\text{length}} = \\mu\\left(\\frac{\\partial A}{\\partial t}\\right)^2 = \\frac{Z}{v}\\left(\\frac{\\partial A}{\\partial t}\\right)^2$$ where $Z = T/v = \\sqrt{T\\mu}$ is the impedance.", interactive: null }
+    ],
+    exercises: [
+      { question: "For a sinusoidal wave $A = A_0\\sin(kx - \\omega t)$, compute the time-averaged total energy per unit length.", answer: "$(\\partial A/\\partial t)^2 = \\omega^2 A_0^2\\cos^2(kx - \\omega t)$. Time-averaging gives $\\langle\\cos^2\\rangle = 1/2$. So $\\langle E/\\text{length}\\rangle = \\frac{1}{2}\\mu\\omega^2 A_0^2$." },
+      { question: "Why is potential energy proportional to $(\\partial A/\\partial x)^2$ rather than $(\\partial^2 A/\\partial x^2)^2$?", answer: "PE comes from stretching, which depends on the slope (how tilted the string is), not the curvature. A straight but tilted segment is stretched; a curved segment at zero slope is not." },
+      { question: "Show that KE = PE for a traveling wave but not for a standing wave.", answer: "For a traveling wave $f(x - vt)$, $\\partial A/\\partial t = -v\\,\\partial A/\\partial x$, so $KE = \\frac{1}{2}\\mu v^2(\\partial A/\\partial x)^2 = \\frac{1}{2}T(\\partial A/\\partial x)^2 = PE$. For a standing wave $\\sin(kx)\\cos(\\omega t)$, KE $\\propto \\sin^2(kx)\\sin^2(\\omega t)$ and PE $\\propto \\cos^2(kx)\\cos^2(\\omega t)$, which are not equal." }
+    ]
   }
 ];
 
