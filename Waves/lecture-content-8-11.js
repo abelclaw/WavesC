@@ -218,7 +218,7 @@ window.LECTURE_CONTENT_8_11 = {
       mathLinks: ["complex-impedance-math"]
     },
     {
-      heading: "Circuits (optional)",
+      heading: "Circuits",
       body: `<p>An important use of complex impedances is in <strong>circuits</strong>. Recall that the equation of motion for an LRC circuit is just like a damped harmonic oscillator. The total voltage for a circuit with an inductor, resistor, and capacitor is:</p>
 <p style="text-align:center;">$$V_{tot} = L\\ddot{Q} + Q/C + \\dotQ R$$</p>
 <p>This is the direct analog of F = m$\\ddot{x}$ + kx + $\\gamma \\dot{x}$. Instead of driving with an external force, we drive with an external voltage V = $V_{0}$e<sup>i$\\omega$t</sup>. The correspondence is:</p>
