@@ -20736,7 +20736,14 @@ function initRelativisticDopplerRedshift() {
 
   let betaVal = 0.3;
   let draggingSlider = false;
-  const sliderX = 30, sliderW = W * 0.5, sliderY = H - 16;
+  let time = 0;
+  const sliderX = 30, sliderW = W * 0.45, sliderY = H - 16;
+
+  // Fixed background stars
+  const bgStars = [];
+  for (var si = 0; si < 60; si++) {
+    bgStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + 0.3, b: Math.random() * 0.4 + 0.3 });
+  }
 
   canvas.addEventListener('mousedown', function(e) {
     const rect = canvas.getBoundingClientRect();
@@ -20751,95 +20758,146 @@ function initRelativisticDopplerRedshift() {
 
   function handleDrag(mx) {
     betaVal = Math.max(0.01, Math.min(0.95, (mx - sliderX) / sliderW * 0.95));
-    draw();
   }
 
-  function draw() {
-    wClear(ctx, W, H);
+  function starColor(wl) {
+    if (wl < 380) return 'rgb(120,80,220)';
+    if (wl > 780) return 'rgb(120,20,20)';
+    return wavelengthToCSS(wl);
+  }
 
-    const f0_wl = 550; // reference wavelength (green)
+  function drawStar(cx, cy, radius, color, glowColor) {
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 4);
+    grad.addColorStop(0, glowColor);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, radius * 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath(); ctx.arc(cx, cy, radius * 0.35, 0, Math.PI * 2); ctx.fill();
+  }
 
-    // Approaching: blueshift
-    const fRatioApproach = Math.sqrt((1 + betaVal) / (1 - betaVal));
-    const wlApproach = f0_wl / fRatioApproach;
-    // Receding: redshift
-    const fRatioRecede = Math.sqrt((1 - betaVal) / (1 + betaVal));
-    const wlRecede = f0_wl / fRatioRecede;
+  function tick() {
+    if (!canvas.isConnected) return;
+    time += 0.02;
 
-    const cy = H * 0.35;
-    const observerX = W * 0.5;
+    // Dark sky background
+    ctx.fillStyle = '#0a0e1a';
+    ctx.fillRect(0, 0, W, H);
 
-    // Observer
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.beginPath(); ctx.arc(observerX, cy, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Observer', observerX, cy + 22);
+    // Background stars
+    for (var i = 0; i < bgStars.length; i++) {
+      var s = bgStars[i];
+      var twinkle = 0.6 + 0.4 * Math.sin(time * 1.5 + i * 2.3);
+      ctx.fillStyle = 'rgba(200,210,230,' + (s.b * twinkle).toFixed(2) + ')';
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
 
-    // Approaching source (left)
-    const appX = W * 0.15;
-    ctx.fillStyle = WCOLORS.blue;
-    ctx.beginPath(); ctx.arc(appX, cy, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = WCOLORS.blue; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(appX + 10, cy); ctx.lineTo(appX + 35, cy); ctx.stroke();
-    ctx.fillStyle = WCOLORS.blue;
-    ctx.beginPath(); ctx.moveTo(appX + 35, cy); ctx.lineTo(appX + 30, cy - 4); ctx.lineTo(appX + 30, cy + 4); ctx.closePath(); ctx.fill();
+    var f0_wl = 550;
+    var fRatioApproach = Math.sqrt((1 + betaVal) / (1 - betaVal));
+    var wlApproach = f0_wl / fRatioApproach;
+    var fRatioRecede = Math.sqrt((1 - betaVal) / (1 + betaVal));
+    var wlRecede = f0_wl / fRatioRecede;
 
-    // Approaching color swatch
-    const swW = 70, swH = 40;
-    ctx.fillStyle = (wlApproach >= 380 && wlApproach <= 780) ? wavelengthToCSS(wlApproach) : '#7c3aed';
-    ctx.fillRect(appX - swW/2, cy - 60, swW, swH);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(appX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.blue; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Approaching', appX, cy - 65);
-    ctx.fillText(Math.round(wlApproach) + ' nm', appX, cy + 36);
-    ctx.fillText('Blueshift', appX, cy + 48);
+    var centerY = H * 0.38;
 
-    // Receding source (right)
-    const recX = W * 0.85;
-    ctx.fillStyle = WCOLORS.red;
-    ctx.beginPath(); ctx.arc(recX, cy, 7, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = WCOLORS.red; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(recX - 10, cy); ctx.lineTo(recX - 35, cy); ctx.stroke();
+    // Approaching star (left)
+    var appX = W * 0.2;
+    var appColor = starColor(wlApproach);
+    var appGlow = (wlApproach >= 380 && wlApproach <= 780) ? wavelengthToCSS(Math.max(380, Math.min(780, wlApproach))) : 'rgba(100,60,200,0.25)';
+    if (appGlow.indexOf('rgb(') === 0) appGlow = appGlow.replace('rgb(', 'rgba(').replace(')', ',0.25)');
+    drawStar(appX, centerY, 10, appColor, appGlow);
 
-    // Receding color swatch
-    ctx.fillStyle = (wlRecede >= 380 && wlRecede <= 780) ? wavelengthToCSS(wlRecede) : '#991b1b';
-    ctx.fillRect(recX - swW/2, cy - 60, swW, swH);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(recX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.red; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Receding', recX, cy - 65);
-    ctx.fillText(Math.round(wlRecede) + ' nm', recX, cy + 36);
-    ctx.fillText('Redshift', recX, cy + 48);
+    // Arrow towards observer
+    ctx.strokeStyle = 'rgba(100,160,255,0.7)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(appX + 18, centerY); ctx.lineTo(appX + 50, centerY); ctx.stroke();
+    ctx.fillStyle = 'rgba(100,160,255,0.7)';
+    ctx.beginPath(); ctx.moveTo(appX + 50, centerY); ctx.lineTo(appX + 44, centerY - 4); ctx.lineTo(appX + 44, centerY + 4); ctx.closePath(); ctx.fill();
 
-    // Rest color swatch (center)
-    ctx.fillStyle = wavelengthToCSS(f0_wl);
-    ctx.fillRect(observerX - swW/2, cy - 60, swW, swH);
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
-    ctx.strokeRect(observerX - swW/2, cy - 60, swW, swH);
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Rest: ' + f0_wl + ' nm', observerX, cy - 65);
+    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Approaching star', appX, centerY - 30);
+    ctx.fillStyle = '#7cb3ff';
+    ctx.fillText(Math.round(wlApproach) + ' nm \u2014 blueshifted', appX, centerY + 28);
+
+    // Receding star (right)
+    var recX = W * 0.8;
+    var recColor = starColor(wlRecede);
+    var recGlow = (wlRecede >= 380 && wlRecede <= 780) ? wavelengthToCSS(Math.min(780, Math.max(380, wlRecede))) : 'rgba(150,20,20,0.25)';
+    if (recGlow.indexOf('rgb(') === 0) recGlow = recGlow.replace('rgb(', 'rgba(').replace(')', ',0.25)');
+    drawStar(recX, centerY, 10, recColor, recGlow);
+
+    // Arrow away from observer
+    ctx.strokeStyle = 'rgba(255,120,100,0.7)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(recX + 18, centerY); ctx.lineTo(recX + 50, centerY); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,120,100,0.7)';
+    ctx.beginPath(); ctx.moveTo(recX + 50, centerY); ctx.lineTo(recX + 44, centerY - 4); ctx.lineTo(recX + 44, centerY + 4); ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Receding star', recX, centerY - 30);
+    ctx.fillStyle = '#ff9080';
+    ctx.fillText(Math.round(wlRecede) + ' nm \u2014 redshifted', recX, centerY + 28);
+
+    // Observer / Earth (center)
+    var obsX = W * 0.5;
+    ctx.strokeStyle = '#c0cad0'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(obsX - 8, centerY + 6); ctx.lineTo(obsX + 8, centerY - 6); ctx.stroke();
+    ctx.beginPath(); ctx.arc(obsX + 10, centerY - 8, 5, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#c0cad0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Earth', obsX, centerY + 22);
+
+    // Rest-frame reference star
+    var refY = H * 0.68;
+    var restColor = starColor(f0_wl);
+    drawStar(obsX, refY, 6, restColor, 'rgba(180,200,100,0.15)');
+    ctx.fillStyle = '#8090a0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('At rest: ' + f0_wl + ' nm', obsX, refY + 18);
+
+    // Spectrum bar
+    var barY = refY + 28, barH = 8, barW = W * 0.5, barX = (W - barW) / 2;
+    drawSpectrumBar(ctx, barX, barY, barW, barH);
+    ctx.strokeStyle = 'rgba(200,210,220,0.4)'; ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    // Tick marks on spectrum
+    function specTick(wl, color, label, above) {
+      if (wl < 380 || wl > 780) return;
+      var tx = barX + (wl - 380) / 400 * barW;
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (above) { ctx.moveTo(tx, barY - 2); ctx.lineTo(tx, barY - 10); }
+      else { ctx.moveTo(tx, barY + barH + 2); ctx.lineTo(tx, barY + barH + 10); }
+      ctx.stroke();
+      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(label, tx, above ? barY - 12 : barY + barH + 19);
+    }
+    specTick(f0_wl, '#c0cad0', 'rest', true);
+    specTick(wlApproach, '#7cb3ff', 'blue', false);
+    specTick(wlRecede, '#ff9080', 'red', false);
 
     // Formula
-    ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText("\u03BD' = \u03BD\u2080\u221A((1\u2212\u03B2)/(1+\u03B2))  (receding)", W / 2, H * 0.7);
-    ctx.fillText("\u03BD' = \u03BD\u2080\u221A((1+\u03B2)/(1\u2212\u03B2))  (approaching)", W / 2, H * 0.7 + 18);
+    ctx.fillStyle = '#708090'; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1\u2212\u03B2)/(1+\u03B2))  approach", W - 14, H * 0.68);
+    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))  recede", W - 14, H * 0.68 + 16);
 
     // Slider
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+    ctx.strokeStyle = '#405060'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = betaVal / 0.95;
+    var st = betaVal / 0.95;
     ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
-    ctx.fillStyle = WCOLORS.teal; ctx.fill();
-    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('\u03B2 = v/c = ' + betaVal.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
+    ctx.fillStyle = '#0f766e'; ctx.fill();
+    ctx.strokeStyle = '#a0b0c0'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('v/c = ' + betaVal.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('Relativistic Doppler Effect', 10, 18);
+    // Title
+    ctx.fillStyle = '#c0cad0'; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Relativistic Doppler: Starlight', 10, 18);
+
+    requestAnimationFrame(tick);
   }
 
-  draw();
+  tick();
 }
 
 // =========================================================================
