@@ -4102,7 +4102,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "rayleigh-scattering":
       return `
-        <div class="scene-label">Interactive 1: Rayleigh Scattering</div>
+        <div class="scene-label">Figure 1: Rayleigh Scattering</div>
         <p class="scene-caption">Scattering intensity scales as 1/&lambda;&sup4;. Blue light scatters much more than red, making the sky blue and sunsets red.</p>
         <div class="interactive-scene">
           <canvas id="scene-rayleigh-scattering" width="600" height="300"></canvas>
@@ -4110,7 +4110,7 @@ function sceneMarkup(type) {
       `;
     case "prism-dispersion":
       return `
-        <div class="scene-label">Interactive 2: Prism Dispersion</div>
+        <div class="scene-label">Interactive 1: Prism Dispersion</div>
         <p class="scene-caption">White light separates into colors because n(&lambda;) differs for each wavelength. Blue bends more than red.</p>
         <div class="interactive-scene">
           <canvas id="scene-prism-dispersion" width="600" height="300"></canvas>
@@ -4135,7 +4135,7 @@ function sceneMarkup(type) {
       `;
     case "cie-tristimulus-curves":
       return `
-        <div class="scene-label">Interactive 2: CIE Tristimulus Curves</div>
+        <div class="scene-label">Figure 1: CIE Tristimulus Curves</div>
         <p class="scene-caption">The CIE color matching functions x&#772;(&lambda;), y&#772;(&lambda;), z&#772;(&lambda;) describe how the eye responds to each wavelength.</p>
         <div class="interactive-scene">
           <canvas id="scene-cie-tristimulus-curves" width="600" height="300"></canvas>
@@ -4143,7 +4143,7 @@ function sceneMarkup(type) {
       `;
     case "cie-color-space-gamut":
       return `
-        <div class="scene-label">Interactive 3: CIE Color Space &amp; Gamut</div>
+        <div class="scene-label">Interactive 2: CIE Color Space &amp; Gamut</div>
         <p class="scene-caption">The horseshoe-shaped CIE chromaticity diagram with the sRGB gamut triangle. Not all visible colors can be displayed by RGB monitors.</p>
         <div class="interactive-scene">
           <canvas id="scene-cie-color-space-gamut" width="600" height="340"></canvas>
@@ -4151,7 +4151,7 @@ function sceneMarkup(type) {
       `;
     case "blackbody-planckian-locus":
       return `
-        <div class="scene-label">Interactive 4: Blackbody &amp; Planckian Locus</div>
+        <div class="scene-label">Interactive 3: Blackbody &amp; Planckian Locus</div>
         <p class="scene-caption">A blackbody&rsquo;s color traces a curve on the CIE diagram as temperature changes from red-hot to blue-white.</p>
         <div class="interactive-scene">
           <canvas id="scene-blackbody-planckian-locus" width="600" height="340"></canvas>
@@ -4159,7 +4159,7 @@ function sceneMarkup(type) {
       `;
     case "hsv-color-explorer":
       return `
-        <div class="scene-label">Interactive 5: HSV Color Explorer</div>
+        <div class="scene-label">Interactive 4: HSV Color Explorer</div>
         <p class="scene-caption">Click the color wheel to pick hue &amp; saturation, or drag any of the six sliders — HSV on the left, RGB on the right. Everything stays linked.</p>
         <div class="interactive-scene">
           <canvas id="scene-hsv-color-explorer" width="600" height="400"></canvas>
@@ -4167,15 +4167,23 @@ function sceneMarkup(type) {
       `;
     case "additive-subtractive-mixing":
       return `
-        <div class="scene-label">Interactive 6: Additive &amp; Subtractive Mixing</div>
+        <div class="scene-label">Figure 2: Additive &amp; Subtractive Mixing</div>
         <p class="scene-caption">Left: RGB additive mixing (light) produces white at center. Right: CMY subtractive mixing (pigments) produces black.</p>
         <div class="interactive-scene">
           <canvas id="scene-additive-subtractive-mixing" width="600" height="300"></canvas>
         </div>
       `;
+    case "grassmann-additivity":
+      return `
+        <div class="scene-label">Interactive: Grassmann&rsquo;s Law</div>
+        <p class="scene-caption">Two different spectra (A and B) that look identical. Add any color C to both&mdash;the match is always preserved, demonstrating the additivity of color perception.</p>
+        <div class="interactive-scene">
+          <canvas id="scene-grassmann-additivity" width="600" height="340"></canvas>
+        </div>
+      `;
     case "eye-anatomy-diagram":
       return `
-        <div class="scene-label">Interactive 7: Anatomy of the Human Eye</div>
+        <div class="scene-label">Figure 3: Anatomy of the Human Eye</div>
         <p class="scene-caption">Cross-section showing the major structures: cornea, iris, pupil, lens, vitreous humor, retina, fovea, and optic nerve.</p>
         <div class="interactive-scene">
           <canvas id="scene-eye-anatomy-diagram" width="600" height="380"></canvas>
@@ -4183,7 +4191,7 @@ function sceneMarkup(type) {
       `;
     case "rod-cone-sensitivity":
       return `
-        <div class="scene-label">Interactive 8: Rod &amp; Cone Sensitivity</div>
+        <div class="scene-label">Figure 4: Rod &amp; Cone Sensitivity</div>
         <p class="scene-caption">Spectral sensitivity curves for rods (scotopic vision) and the three cone types (S, M, L).</p>
         <div class="interactive-scene">
           <canvas id="scene-rod-cone-sensitivity" width="600" height="300"></canvas>

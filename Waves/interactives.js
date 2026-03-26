@@ -269,6 +269,7 @@ function initSceneInteractives() {
   initBlackbodyPlanckianLocus();
   initHsvColorExplorer();
   initAdditiveSubtractiveMixing();
+  initGrassmannAdditivity();
   initEyeAnatomyDiagram();
   initRodConeSensitivity();
   // Chapter 18 - Antennas
@@ -16566,6 +16567,312 @@ function initAdditiveSubtractiveMixing() {
     ctx.beginPath(); ctx.moveTo(midX, 30); ctx.lineTo(midX, H - 25); ctx.stroke();
     ctx.setLineDash([]);
   }
+
+  draw();
+}
+
+// =========================================================================
+// 6b. Grassmann's Law – Additivity of Color
+// =========================================================================
+function initGrassmannAdditivity() {
+  const canvas = document.getElementById('scene-grassmann-additivity');
+  if (!canvas) return;
+  const setup = wSetupCanvas(canvas);
+  if (!setup) return;
+  const { ctx, W, H } = setup;
+
+  const cie = getCIEData();
+
+  // --- Metamer pair definition ---
+  // Spectrum A: narrow peak at 575 nm (yellow)
+  // Spectrum B: mix of 540 nm (green) + 610 nm (red-orange) that matches
+  function makeGaussianSpectrum(center, sigma, amp) {
+    return cie.wavelengths.map(w => amp * Math.exp(-0.5 * Math.pow((w - center) / sigma, 2)));
+  }
+
+  // Compute perceived XYZ from a spectrum
+  function spectrumToXYZ(spectrum) {
+    let X = 0, Y = 0, Z = 0;
+    for (let i = 0; i < cie.wavelengths.length; i++) {
+      X += spectrum[i] * cie.xbar[i];
+      Y += spectrum[i] * cie.ybar[i];
+      Z += spectrum[i] * cie.zbar[i];
+    }
+    return [X, Y, Z];
+  }
+
+  // XYZ to linear sRGB
+  function xyzToLinearRGB(X, Y, Z) {
+    let r =  3.2406 * X - 1.5372 * Y - 0.4986 * Z;
+    let g = -0.9689 * X + 1.8758 * Y + 0.0415 * Z;
+    let b =  0.0557 * X - 0.2040 * Y + 1.0570 * Z;
+    return [r, g, b];
+  }
+
+  function gammaCorrect(c) {
+    return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+  }
+
+  function spectrumToCSS(spectrum) {
+    const [X, Y, Z] = spectrumToXYZ(spectrum);
+    let [r, g, b] = xyzToLinearRGB(X, Y, Z);
+    // Normalize so max channel is 1
+    const mx = Math.max(r, g, b, 0.001);
+    r /= mx; g /= mx; b /= mx;
+    r = Math.max(0, Math.min(1, r));
+    g = Math.max(0, Math.min(1, g));
+    b = Math.max(0, Math.min(1, b));
+    return 'rgb(' + Math.round(gammaCorrect(r) * 255) + ',' +
+                     Math.round(gammaCorrect(g) * 255) + ',' +
+                     Math.round(gammaCorrect(b) * 255) + ')';
+  }
+
+  function spectrumToRGBArray(spectrum) {
+    const [X, Y, Z] = spectrumToXYZ(spectrum);
+    let [r, g, b] = xyzToLinearRGB(X, Y, Z);
+    const mx = Math.max(r, g, b, 0.001);
+    r /= mx; g /= mx; b /= mx;
+    r = Math.max(0, Math.min(1, r));
+    g = Math.max(0, Math.min(1, g));
+    b = Math.max(0, Math.min(1, b));
+    return [Math.round(gammaCorrect(r) * 255), Math.round(gammaCorrect(g) * 255), Math.round(gammaCorrect(b) * 255)];
+  }
+
+  // Spectrum A: monochromatic-ish yellow
+  const specA_base = makeGaussianSpectrum(575, 12, 1.0);
+
+  // Spectrum B: green + red-orange mix tuned to match A's perceived color
+  // We calibrate the amplitudes so they produce the same XYZ
+  function makeSpecB(greenAmp, redAmp) {
+    return cie.wavelengths.map((w, i) =>
+      greenAmp * Math.exp(-0.5 * Math.pow((w - 535) / 15, 2)) +
+      redAmp * Math.exp(-0.5 * Math.pow((w - 615) / 15, 2))
+    );
+  }
+
+  // Calibrate B to match A's color by matching XYZ
+  function calibrateSpecB() {
+    const [Xa, Ya, Za] = spectrumToXYZ(specA_base);
+    // Use least-squares: find greenAmp, redAmp to minimize |XYZ_B - XYZ_A|
+    // Two unknowns, three equations -> overdetermined, solve approximately
+    const greenSpec = makeGaussianSpectrum(535, 15, 1.0);
+    const redSpec = makeGaussianSpectrum(615, 15, 1.0);
+    const [Xg, Yg, Zg] = spectrumToXYZ(greenSpec);
+    const [Xr, Yr, Zr] = spectrumToXYZ(redSpec);
+    // Solve: greenAmp*[Xg,Yg] + redAmp*[Xr,Yr] = [Xa,Ya]
+    const det = Xg * Yr - Xr * Yg;
+    const gA = (Xa * Yr - Xr * Ya) / det;
+    const rA = (Xg * Ya - Xa * Yg) / det;
+    return makeSpecB(Math.max(0, gA), Math.max(0, rA));
+  }
+
+  const specB_base = calibrateSpecB();
+
+  // Added color C: controlled by user
+  let cWavelength = 480; // nm
+  let cIntensity = 0.0;  // 0 to 1
+
+  let draggingSlider = null;
+
+  // Layout
+  const graphH = H * 0.32;
+  const graphY = 40;
+  const swatchY = graphY + graphH + 8;
+  const swatchH = 45;
+  const ctrlY = swatchY + swatchH + 18;
+  const leftX = 20, midGap = 30;
+  const graphW = (W - leftX * 2 - midGap) / 2;
+  const rightX = leftX + graphW + midGap;
+
+  const sliderX = leftX + 60;
+  const sliderW = W - sliderX - 30;
+  const slider1Y = ctrlY + 8;
+  const slider2Y = ctrlY + 38;
+
+  function getAddedSpectrum() {
+    return makeGaussianSpectrum(cWavelength, 15, cIntensity);
+  }
+
+  function addSpectra(a, b) {
+    return a.map((v, i) => v + b[i]);
+  }
+
+  function drawSpectrum(spectrum, x, y, w, h, label) {
+    // Background
+    ctx.fillStyle = 'rgba(31,42,46,0.03)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = WCOLORS.grid; ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+
+    // Draw spectrum filled area with color at each wavelength
+    const maxVal = Math.max(...spectrum, 0.001);
+    for (let i = 0; i < spectrum.length - 1; i++) {
+      const wl = cie.wavelengths[i];
+      const px = x + (wl - 380) / 400 * w;
+      const pw = (cie.wavelengths[i + 1] - wl) / 400 * w + 0.5;
+      const barH = (spectrum[i] / maxVal) * (h - 8);
+      const [cr, cg, cb] = wavelengthToRGB(wl);
+      ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.5)';
+      ctx.fillRect(px, y + h - 4 - barH, pw, barH);
+    }
+
+    // Outline of the spectrum curve
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < spectrum.length; i++) {
+      const wl = cie.wavelengths[i];
+      const px = x + (wl - 380) / 400 * w;
+      const py = y + h - 4 - (spectrum[i] / maxVal) * (h - 8);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(label, x + w / 2, y - 4);
+  }
+
+  function drawSwatch(color, x, y, w, h) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 6);
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, 6);
+    ctx.stroke();
+  }
+
+  function drawSlider(y, val, minV, maxV, label, showSpectrum) {
+    const t = (val - minV) / (maxV - minV);
+    // Track
+    if (showSpectrum) {
+      // Draw spectrum colors along the track
+      for (let i = 0; i < sliderW; i++) {
+        const wl = minV + (i / sliderW) * (maxV - minV);
+        ctx.fillStyle = wavelengthToCSS(wl);
+        ctx.fillRect(sliderX + i, y - 3, 1, 6);
+      }
+    } else {
+      ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(sliderX, y); ctx.lineTo(sliderX + sliderW, y); ctx.stroke();
+      // Fill bar
+      ctx.fillStyle = WCOLORS.teal;
+      ctx.fillRect(sliderX, y - 3, sliderW * t, 6);
+    }
+    // Thumb
+    ctx.beginPath();
+    ctx.arc(sliderX + sliderW * t, y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = showSpectrum ? wavelengthToCSS(val) : WCOLORS.teal;
+    ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    // Label
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(label, sliderX - 8, y + 4);
+  }
+
+  function colorDiff(rgb1, rgb2) {
+    return Math.abs(rgb1[0] - rgb2[0]) + Math.abs(rgb1[1] - rgb2[1]) + Math.abs(rgb1[2] - rgb2[2]);
+  }
+
+  function draw() {
+    wClear(ctx, W, H);
+
+    const cSpec = getAddedSpectrum();
+    const specA = addSpectra(specA_base, cSpec);
+    const specB = addSpectra(specB_base, cSpec);
+    const colorA = spectrumToCSS(specA);
+    const colorB = spectrumToCSS(specB);
+    const rgbA = spectrumToRGBArray(specA);
+    const rgbB = spectrumToRGBArray(specB);
+
+    // Title
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("Grassmann\u2019s Law: Additivity of Color Matching", W / 2, 16);
+
+    // Draw spectra
+    drawSpectrum(specA, leftX, graphY, graphW, graphH, 'Spectrum A (yellow peak)');
+    drawSpectrum(specB, rightX, graphY, graphW, graphH, 'Spectrum B (green + red mix)');
+
+    // Draw color swatches
+    drawSwatch(colorA, leftX, swatchY, graphW, swatchH);
+    drawSwatch(colorB, rightX, swatchY, graphW, swatchH);
+
+    // Match indicator
+    const diff = colorDiff(rgbA, rgbB);
+    const matchText = diff <= 8 ? '\u2713 Match!' : 'Diff: ' + diff;
+    const matchColor = diff <= 8 ? '#16a34a' : '#dc2626';
+    ctx.fillStyle = matchColor; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(matchText, leftX + graphW + midGap / 2, swatchY + swatchH / 2 + 4);
+
+    // Swatch labels
+    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('A' + (cIntensity > 0.01 ? ' + C' : ''), leftX + graphW / 2, swatchY + swatchH + 12);
+    ctx.fillText('B' + (cIntensity > 0.01 ? ' + C' : ''), rightX + graphW / 2, swatchY + swatchH + 12);
+
+    // Controls
+    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText('Add color C to both sides:', leftX, ctrlY - 2);
+
+    drawSlider(slider1Y, cWavelength, 400, 700, '\u03bb_C', true);
+    drawSlider(slider2Y, cIntensity, 0, 1, 'Intensity', false);
+
+    // Value labels on right
+    ctx.fillStyle = WCOLORS.text; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+    ctx.fillText(Math.round(cWavelength) + ' nm', sliderX + sliderW + 10, slider1Y + 4);
+    ctx.fillText((cIntensity * 100).toFixed(0) + '%', sliderX + sliderW + 10, slider2Y + 4);
+  }
+
+  function getSliderVal(mx, minV, maxV) {
+    const t = Math.max(0, Math.min(1, (mx - sliderX) / sliderW));
+    return minV + t * (maxV - minV);
+  }
+
+  function handlePointer(mx, my) {
+    if (draggingSlider === 0) {
+      cWavelength = Math.round(getSliderVal(mx, 400, 700));
+      draw();
+    } else if (draggingSlider === 1) {
+      cIntensity = Math.round(getSliderVal(mx, 0, 1) * 100) / 100;
+      draw();
+    }
+  }
+
+  function hitTestSlider(mx, my) {
+    if (Math.abs(my - slider1Y) < 14 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) return 0;
+    if (Math.abs(my - slider2Y) < 14 && mx >= sliderX - 5 && mx <= sliderX + sliderW + 5) return 1;
+    return null;
+  }
+
+  canvas.addEventListener('mousedown', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    draggingSlider = hitTestSlider(mx, my);
+    if (draggingSlider !== null) handlePointer(mx, my);
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (draggingSlider === null) return;
+    const rect = canvas.getBoundingClientRect();
+    handlePointer(e.clientX - rect.left, e.clientY - rect.top);
+  });
+  canvas.addEventListener('mouseup', function() { draggingSlider = null; });
+  canvas.addEventListener('mouseleave', function() { draggingSlider = null; });
+
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.touches[0].clientX - rect.left, my = e.touches[0].clientY - rect.top;
+    draggingSlider = hitTestSlider(mx, my);
+    if (draggingSlider !== null) handlePointer(mx, my);
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) {
+    if (draggingSlider === null) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    handlePointer(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+  }, { passive: false });
+  canvas.addEventListener('touchend', function() { draggingSlider = null; });
 
   draw();
 }
