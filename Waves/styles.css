@@ -4539,10 +4539,10 @@ a {
 /* ===== Interactive Scene Labels & Captions ===== */
 .scene-label {
   font-family: var(--display);
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--accent);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   margin: 16px 18px 2px;
 }
