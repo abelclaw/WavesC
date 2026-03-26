@@ -3931,7 +3931,7 @@ function sceneMarkup(type) {
       `;
     case "sound-refraction-atmosphere":
       return `
-        <div class="scene-label">Interactive 3: Sound Refraction in the Atmosphere</div>
+        <div class="scene-label">Figure 3: Sound Refraction in the Atmosphere</div>
         <p class="scene-caption">Sound bends toward slower regions. Daytime: rays bend up (shadow zone). Evening: rays bend down (sound carries far).</p>
         <div class="interactive-scene">
           <canvas id="scene-sound-refraction-atmosphere" width="600" height="300"></canvas>
