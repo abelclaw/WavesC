@@ -2755,7 +2755,7 @@ function sceneMarkup(type) {
       `;
     case "driven-oscillator":
       return `
-        <div class="scene-label">Interactive 2: Driven Oscillator</div>
+        <div class="scene-label">Interactive 1: Driven Oscillator</div>
         <p class="scene-caption">Sweep the driving frequency &omega;<sub>d</sub> through resonance. The left panel shows the mass responding to the sinusoidal force; the right shows the steady-state amplitude and phase vs &omega;<sub>d</sub>. At resonance (&omega;<sub>d</sub> = &omega;<sub>0</sub>), amplitude peaks and phase crosses &minus;90&deg;.</p>
         <div class="interactive-scene">
           <canvas id="scene-driven-oscillator" width="600" height="300"></canvas>
@@ -2768,7 +2768,7 @@ function sceneMarkup(type) {
       `;
     case "transient-decay":
       return `
-        <div class="scene-label">Interactive 3: Transient Decay</div>
+        <div class="scene-label">Interactive 2: Transient Decay</div>
         <p class="scene-caption">Drag the mass to set an initial displacement, then release. The transient dies away exponentially, leaving only the steady-state driven response.</p>
         <div class="interactive-scene">
           <canvas id="scene-transient-decay" width="600" height="340"></canvas>
@@ -2782,7 +2782,7 @@ function sceneMarkup(type) {
       `;
     case "phase-lag":
       return `
-        <div class="scene-label">Interactive 4: Phase Lag</div>
+        <div class="scene-label">Interactive 3: Phase Lag</div>
         <p class="scene-caption">Observe how the phase relationship between the driving force and the oscillator response changes as the driving frequency crosses the natural frequency.</p>
         <div class="interactive-scene">
           <canvas id="scene-phase-lag" width="600" height="300"></canvas>
@@ -2790,7 +2790,7 @@ function sceneMarkup(type) {
       `;
     case "power-absorption":
       return `
-        <div class="scene-label">Interactive 5: Where Does the Energy Go?</div>
+        <div class="scene-label">Interactive 4: Where Does the Energy Go?</div>
         <p class="scene-caption">Watch the force (red) and velocity (blue) arrows on the driven oscillator. The right panel tracks cumulative energy: the absorptive part steadily extracts energy from the driver, while the elastic part just borrows and returns it — its integral stays near zero.</p>
         <div class="interactive-scene">
           <canvas id="scene-power-absorption" width="600" height="300"></canvas>
@@ -2798,7 +2798,7 @@ function sceneMarkup(type) {
       `;
     case "resonance-curve":
       return `
-        <div class="scene-label">Interactive 6: Resonance Curve</div>
+        <div class="scene-label">Interactive 5: Resonance Curve</div>
         <p class="scene-caption">The Lorentzian resonance curve. The peak is at the natural frequency and the width at half-maximum equals the damping coefficient.</p>
         <div class="interactive-scene">
           <canvas id="scene-resonance-curve" width="600" height="300"></canvas>
@@ -3280,7 +3280,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "coupled-oscillators":
       return `
-        <div class="scene-label">Coupled Oscillators</div>
+        <div class="scene-label">Interactive 1: Coupled Oscillators</div>
         <p class="scene-caption">Drag either mass and release. Adjust the coupling strength &kappa;/k to see how the interaction changes.</p>
         <div class="interactive-scene">
           <canvas id="scene-coupled-oscillators" width="600" height="320"></canvas>
@@ -3291,7 +3291,7 @@ function sceneMarkup(type) {
       `;
     case "normal-modes":
       return `
-        <div class="scene-label">Normal Modes</div>
+        <div class="scene-label">Interactive 2: Normal Modes</div>
         <p class="scene-caption">The symmetric mode (left) and antisymmetric mode (right). Each oscillates at a single frequency determined by the coupling.</p>
         <div class="interactive-scene">
           <canvas id="scene-normal-modes" width="600" height="280"></canvas>
@@ -3302,7 +3302,7 @@ function sceneMarkup(type) {
       `;
     case "beats":
       return `
-        <div class="scene-label">Beats from Coupled Oscillators</div>
+        <div class="scene-label">Interactive 3: Beats from Coupled Oscillators</div>
         <p class="scene-caption">Two normal modes at slightly different frequencies combine to produce beats. Adjust each frequency to see and hear how the beat pattern changes.</p>
         <div class="interactive-scene">
           <canvas id="scene-beats" width="600" height="440"></canvas>
@@ -3314,7 +3314,7 @@ function sceneMarkup(type) {
       `;
     case "eigenvalue-solver":
       return `
-        <div class="scene-label">Diagonalization: Why Eigenvectors Matter</div>
+        <div class="scene-label">Interactive 4: Diagonalization: Why Eigenvectors Matter</div>
         <p class="scene-caption">In the original basis x&#x2081;, x&#x2082; (left), each mass's motion is a messy mix of two frequencies. In the eigenbasis &xi;<sub>s</sub>, &xi;<sub>a</sub> (right), each coordinate oscillates at a single clean frequency. That's what diagonalization does.</p>
         <div class="interactive-scene">
           <canvas id="scene-eigenvalue-solver" width="700" height="340"></canvas>
@@ -3329,7 +3329,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "two-mass-normal-modes":
       return `
-        <div class="scene-label">Two-Mass Mode Shapes</div>
+        <div class="scene-label">Interactive 1: Two-Mass Mode Shapes</div>
         <p class="scene-caption">Select a mode to see the displacement pattern. The symmetric mode has both masses moving together; the antisymmetric mode has them moving in opposite directions.</p>
         <div class="interactive-scene">
           <canvas id="scene-two-mass-normal-modes" width="600" height="300"></canvas>
@@ -3342,7 +3342,7 @@ function sceneMarkup(type) {
       `;
     case "three-mass-normal-modes":
       return `
-        <div class="scene-label">Three-Mass Normal Modes</div>
+        <div class="scene-label">Interactive 2: Three-Mass Normal Modes</div>
         <p class="scene-caption">Three normal modes from slowest (top) to fastest (bottom). Higher modes have more nodes and higher frequencies.</p>
         <div class="interactive-scene">
           <canvas id="scene-three-mass-normal-modes" width="600" height="340"></canvas>
@@ -3362,7 +3362,7 @@ function sceneMarkup(type) {
       `;
     case "dispersion-relation-discrete":
       return `
-        <div class="scene-label">Discrete Dispersion Relation</div>
+        <div class="scene-label">Interactive 4: Discrete Dispersion Relation</div>
         <p class="scene-caption">The dispersion curve &omega;(p) = 2&omega;<sub>0</sub>|sin(p/2)| with allowed modes as dots. The dashed line shows the linear approximation.</p>
         <div class="interactive-scene">
           <canvas id="scene-dispersion-relation-discrete" width="600" height="300"></canvas>
@@ -3374,7 +3374,7 @@ function sceneMarkup(type) {
       `;
     case "continuum-limit":
       return `
-        <div class="scene-label">Continuum Limit</div>
+        <div class="scene-label">Interactive 5: Continuum Limit</div>
         <p class="scene-caption">As N increases, the discrete masses approach a continuous string and the dispersion relation becomes linear.</p>
         <div class="interactive-scene">
           <canvas id="scene-continuum-limit" width="600" height="320"></canvas>
@@ -3386,7 +3386,7 @@ function sceneMarkup(type) {
       `;
     case "traveling-vs-standing":
       return `
-        <div class="scene-label">Traveling vs Standing Waves</div>
+        <div class="scene-label">Interactive 6: Traveling vs Standing Waves</div>
         <p class="scene-caption">Compare a traveling wave (moves to the right) with a standing wave (oscillates in place with fixed nodes).</p>
         <div class="interactive-scene">
           <canvas id="scene-traveling-vs-standing" width="600" height="300"></canvas>
@@ -3402,7 +3402,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "fourier-decomposition":
       return `
-        <div class="scene-label">Fourier Series Builder</div>
+        <div class="scene-label">Interactive 1: Fourier Series Builder</div>
         <p class="scene-caption">Choose a function and add terms to see the Fourier series converge. Individual harmonics shown in light colors.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-decomposition" width="600" height="300"></canvas>
@@ -3416,7 +3416,7 @@ function sceneMarkup(type) {
       `;
     case "fourier-sawtooth":
       return `
-        <div class="scene-label">Sawtooth Fourier Series</div>
+        <div class="scene-label">Interactive 2: Sawtooth Fourier Series</div>
         <p class="scene-caption">Building the sawtooth function term by term. Notice the Gibbs overshoot at the discontinuity that persists even with many terms.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-sawtooth" width="600" height="300"></canvas>
@@ -3427,7 +3427,7 @@ function sceneMarkup(type) {
       `;
     case "plucked-string":
       return `
-        <div class="scene-label">Plucked String</div>
+        <div class="scene-label">Interactive 3: Plucked String</div>
         <p class="scene-caption">Click on the string to pluck it! The pluck point determines which harmonics are excited. Each mode oscillates at its own frequency, producing the evolving shape.</p>
         <div class="interactive-scene">
           <canvas id="scene-plucked-string" width="600" height="300"></canvas>
@@ -3443,7 +3443,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "string-transverse-wave":
       return `
-        <div class="scene-label">Transverse Pulse on a String</div>
+        <div class="scene-label">Interactive 1: Transverse Pulse on a String</div>
         <p class="scene-caption">A string under tension. Adjust the tension and linear mass density, then send a pulse. The pulse travels at $v = \\sqrt{T/\\mu}$.</p>
         <div class="interactive-scene">
           <canvas id="scene-string-transverse-wave" width="600" height="280"></canvas>
@@ -3456,7 +3456,7 @@ function sceneMarkup(type) {
       `;
     case "sound-wave-longitudinal":
       return `
-        <div class="scene-label">Spherical Wave from a Point Source</div>
+        <div class="scene-label">Interactive 2: Spherical Wave from a Point Source</div>
         <p class="scene-caption">Circular wavefronts emanate from a small speaker. Compression (dense, bright) and rarefaction (sparse, dim) regions spread outward, with amplitude falling off as 1/&radic;r.</p>
         <div class="interactive-scene">
           <canvas id="scene-sound-wave-longitudinal" width="600" height="280"></canvas>
@@ -3469,7 +3469,7 @@ function sceneMarkup(type) {
       `;
     case "boundary-conditions-demo":
       return `
-        <div class="scene-label">Boundary Conditions</div>
+        <div class="scene-label">Interactive 3: Boundary Conditions</div>
         <p class="scene-caption">Compare how different boundary conditions change the allowed standing wave modes. Nodes (&bull;) and antinodes (&circ;) are marked.</p>
         <div class="interactive-scene">
           <canvas id="scene-boundary-conditions-demo" width="600" height="280"></canvas>
@@ -3483,7 +3483,7 @@ function sceneMarkup(type) {
       `;
     case "standing-wave-modes":
       return `
-        <div class="scene-label">Standing Wave Frequency Spectra</div>
+        <div class="scene-label">Interactive 4: Standing Wave Frequency Spectra</div>
         <p class="scene-caption">The first four modes for each boundary type. Fixed-free is missing even harmonics. Frequencies shown as multiples of the fundamental.</p>
         <div class="interactive-scene">
           <canvas id="scene-standing-wave-modes" width="600" height="340"></canvas>
@@ -3491,7 +3491,7 @@ function sceneMarkup(type) {
       `;
     case "helmholtz-resonator":
       return `
-        <div class="scene-label">Helmholtz Resonator</div>
+        <div class="scene-label">Interactive 5: Helmholtz Resonator</div>
         <p class="scene-caption">A cavity with a neck: air in the neck oscillates as a mass, air in the body acts as a spring. Adjust geometry to change the resonant frequency.</p>
         <div class="interactive-scene">
           <canvas id="scene-helmholtz-resonator" width="600" height="320"></canvas>
@@ -3508,7 +3508,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "beats-demo":
       return `
-        <div class="scene-label">Beats</div>
+        <div class="scene-label">Interactive 4: Beats</div>
         <p class="scene-caption">Two waves of slightly different frequencies produce a slowly varying beat pattern. Adjust &Delta;f to change the beat rate.</p>
         <div class="interactive-scene">
           <canvas id="scene-beats-demo" width="600" height="300"></canvas>
@@ -3519,7 +3519,7 @@ function sceneMarkup(type) {
       `;
     case "consonance-dissonance":
       return `
-        <div class="scene-label">Consonance &amp; Dissonance</div>
+        <div class="scene-label">Interactive 2: Consonance &amp; Dissonance</div>
         <p class="scene-caption">Slide the frequency ratio to see where harmonics align (consonant, green) or nearly collide (dissonant, red).</p>
         <div class="interactive-scene">
           <canvas id="scene-consonance-dissonance" width="600" height="320"></canvas>
@@ -3530,7 +3530,7 @@ function sceneMarkup(type) {
       `;
     case "harmonic-alignment":
       return `
-        <div class="scene-label">Harmonic Alignment</div>
+        <div class="scene-label">Interactive 3: Harmonic Alignment</div>
         <p class="scene-caption">Select an interval to see which harmonics of the two notes align. Simpler ratios have more alignments.</p>
         <div class="interactive-scene">
           <canvas id="scene-harmonic-alignment" width="600" height="300"></canvas>
@@ -3545,7 +3545,7 @@ function sceneMarkup(type) {
       `;
     case "circle-of-fifths":
       return `
-        <div class="scene-label">Circle of Fifths</div>
+        <div class="scene-label">Interactive 4: Circle of Fifths</div>
         <p class="scene-caption">In equal temperament the circle closes exactly. In Pythagorean tuning, 12 fifths overshoot 7 octaves by the Pythagorean comma.</p>
         <div class="interactive-scene">
           <canvas id="scene-circle-of-fifths" width="600" height="340"></canvas>
@@ -3558,7 +3558,7 @@ function sceneMarkup(type) {
       `;
     case "scale-comparison":
       return `
-        <div class="scene-label">Scale Comparison</div>
+        <div class="scene-label">Interactive 5: Scale Comparison</div>
         <p class="scene-caption">Three tuning systems compared on a cents axis. Just intonation is purest in one key; equal temperament works equally in all keys.</p>
         <div class="interactive-scene">
           <canvas id="scene-scale-comparison" width="600" height="300"></canvas>
@@ -3570,7 +3570,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "violin-spectrum":
       return `
-        <div class="scene-label">Instrument Spectra (Idealized)</div>
+        <div class="scene-label">Interactive 1: Instrument Spectra (Idealized)</div>
         <p class="scene-caption">Drag harmonic bars up and down to reshape the timbre, or choose an instrument preset. Hit Listen to hear how the spectrum sounds.</p>
         <div class="interactive-scene">
           <canvas id="scene-violin-spectrum" width="600" height="300"></canvas>
@@ -3581,7 +3581,7 @@ function sceneMarkup(type) {
       `;
     case "real-instrument-spectrum":
       return `
-        <div class="scene-label">Instrument Spectra (Realistic)</div>
+        <div class="scene-label">Interactive 2: Instrument Spectra (Realistic)</div>
         <p class="scene-caption">Realistic instrument synthesis with time-varying harmonics, vibrato, and attack transients. The spectrum updates live as the note plays.</p>
         <div class="interactive-scene">
           <canvas id="scene-real-instrument-spectrum" width="600" height="300"></canvas>
@@ -3589,7 +3589,7 @@ function sceneMarkup(type) {
       `;
     case "fourier-transform-derivation":
       return `
-        <div class="scene-label">From Series to Transform</div>
+        <div class="scene-label">Interactive 3: From Series to Transform</div>
         <p class="scene-caption">As L increases, discrete Fourier series bars crowd together and approach the continuous Fourier transform.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-transform-derivation" width="600" height="300"></canvas>
@@ -3600,7 +3600,7 @@ function sceneMarkup(type) {
       `;
     case "underdamped-fourier-transform":
       return `
-        <div class="scene-label">Underdamped Oscillator &amp; Power Spectrum</div>
+        <div class="scene-label">Interactive 4: Underdamped Oscillator &amp; Power Spectrum</div>
         <p class="scene-caption">Left: decaying oscillation. Right: its Lorentzian power spectrum with peak at &omega;<sub>0</sub> and width &gamma;.</p>
         <div class="interactive-scene">
           <canvas id="scene-underdamped-fourier-transform" width="600" height="300"></canvas>
@@ -3670,7 +3670,7 @@ function sceneMarkup(type) {
       `;
     case "fourier-filtering":
       return `
-        <div class="scene-label">Fourier Filtering</div>
+        <div class="scene-label">Interactive 6: Fourier Filtering</div>
         <p class="scene-caption">Low-pass filtering removes sharp features; high-pass filtering keeps only the rapid variations.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-filtering" width="600" height="300"></canvas>
@@ -3681,7 +3681,7 @@ function sceneMarkup(type) {
       `;
     case "dirac-delta-visualization":
       return `
-        <div class="scene-label">Dirac Delta Function</div>
+        <div class="scene-label">Interactive 7: Dirac Delta Function</div>
         <p class="scene-caption">The delta function as a limit of narrowing Gaussians. Area stays 1 while the peak grows. Its FT is constant (all frequencies equally present).</p>
         <div class="interactive-scene">
           <canvas id="scene-dirac-delta-visualization" width="600" height="300"></canvas>
@@ -3714,7 +3714,7 @@ function sceneMarkup(type) {
       `;
     case "mass-collision-impedance":
       return `
-        <div class="scene-label">Mass Collision &amp; Impedance</div>
+        <div class="scene-label">Interactive 2: Mass Collision &amp; Impedance</div>
         <p class="scene-caption">Elastic collisions between masses: energy transfer depends on mass ratio, analogous to impedance matching.</p>
         <div class="interactive-scene">
           <canvas id="scene-mass-collision-impedance" width="600" height="300"></canvas>
@@ -3725,7 +3725,7 @@ function sceneMarkup(type) {
       `;
     case "complex-impedance":
       return `
-        <div class="scene-label">Complex Impedance</div>
+        <div class="scene-label">Interactive 3: Complex Impedance</div>
         <p class="scene-caption">Sweep \u03C9 to see how impedance mismatch controls the response. At resonance, there is no mismatch and the driver couples perfectly to the oscillator.</p>
         <div class="interactive-scene">
           <canvas id="scene-complex-impedance" width="600" height="440"></canvas>
@@ -3743,7 +3743,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "impedance-materials":
       return `
-        <div class="scene-label">Material Impedances</div>
+        <div class="scene-label">Interactive 4: Material Impedances</div>
         <p class="scene-caption">Acoustic impedance values for common materials. Large mismatch means strong reflection at boundaries.</p>
         <div class="interactive-scene">
           <canvas id="scene-impedance-materials" width="600" height="300"></canvas>
@@ -3751,7 +3751,7 @@ function sceneMarkup(type) {
       `;
     case "wave-energy-string":
       return `
-        <div class="scene-label">Wave Energy on a String</div>
+        <div class="scene-label">Interactive 1: Wave Energy on a String</div>
         <p class="scene-caption">For a traveling wave, kinetic and potential energy densities are equal everywhere and move with the wave.</p>
         <div class="interactive-scene">
           <canvas id="scene-wave-energy-string" width="600" height="300"></canvas>
@@ -3763,7 +3763,7 @@ function sceneMarkup(type) {
       `;
     case "power-reflection-transmission":
       return `
-        <div class="scene-label">Power Reflection &amp; Transmission</div>
+        <div class="scene-label">Interactive 2: Power Reflection &amp; Transmission</div>
         <p class="scene-caption">R + T = 1 always. Matched impedances (Z<sub>2</sub>/Z<sub>1</sub> = 1) give zero reflection.</p>
         <div class="interactive-scene">
           <canvas id="scene-power-reflection-transmission" width="600" height="300"></canvas>
@@ -3774,7 +3774,7 @@ function sceneMarkup(type) {
       `;
     case "decibel-scale":
       return `
-        <div class="scene-label">Decibel Scale</div>
+        <div class="scene-label">Interactive 3: Decibel Scale</div>
         <p class="scene-caption">Select a sound source and drag the listener to see how intensity drops with distance. Each doubling of distance costs 6 dB.</p>
         <div class="interactive-scene">
           <canvas id="scene-decibel-scale" width="600" height="320"></canvas>
@@ -3782,7 +3782,7 @@ function sceneMarkup(type) {
       `;
     case "plane-wave-3d":
       return `
-        <div class="scene-label">3D Plane Wave</div>
+        <div class="scene-label">Interactive 4: 3D Plane Wave</div>
         <p class="scene-caption">Parallel wavefronts propagate perpendicular to the wave vector k. Adjust the propagation angle.</p>
         <div class="interactive-scene">
           <canvas id="scene-plane-wave-3d" width="600" height="300"></canvas>
@@ -3797,7 +3797,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "interference-demo":
       return `
-        <div class="scene-label">Two-Source Interference</div>
+        <div class="scene-label">Interactive 5: Two-Source Interference</div>
         <p class="scene-caption">Two point sources produce constructive (bright) and destructive (dark) interference. Adjust source separation.</p>
         <div class="interactive-scene">
           <canvas id="scene-interference-demo" width="600" height="300"></canvas>
@@ -3808,7 +3808,7 @@ function sceneMarkup(type) {
       `;
     case "gaussian-wavepacket":
       return `
-        <div class="scene-label">Gaussian Wavepacket</div>
+        <div class="scene-label">Interactive 1: Gaussian Wavepacket</div>
         <p class="scene-caption">A narrow wavepacket in x-space has a wide spectrum in k-space, and vice versa. &Delta;x&middot;&Delta;k &ge; 1/2.</p>
         <div class="interactive-scene">
           <canvas id="scene-gaussian-wavepacket" width="600" height="300"></canvas>
@@ -3819,7 +3819,7 @@ function sceneMarkup(type) {
       `;
     case "amplitude-modulation":
       return `
-        <div class="scene-label">AM Radio: Bandwidth &amp; Information</div>
+        <div class="scene-label">Interactive 2: AM Radio: Bandwidth &amp; Information</div>
         <p class="scene-caption">Gaussian wavepackets encode information on a carrier. Narrower pulses carry more data but require more bandwidth: &Delta;f = 1/(2&pi;&sigma;<sub>t</sub>).</p>
         <div class="interactive-scene">
           <canvas id="scene-amplitude-modulation" width="600" height="400"></canvas>
@@ -3834,7 +3834,7 @@ function sceneMarkup(type) {
       `;
     case "dispersion-relations":
       return `
-        <div class="scene-label">Dispersion Relations</div>
+        <div class="scene-label">Interactive 3: Dispersion Relations</div>
         <p class="scene-caption">The &omega;(k) curve encodes everything: slope from origin = v<sub>p</sub>, tangent slope = v<sub>g</sub>, curvature = spreading.</p>
         <div class="interactive-scene">
           <div style="display:flex;gap:4px;align-items:start;">
@@ -3855,7 +3855,7 @@ function sceneMarkup(type) {
       `;
     case "phase-velocity-demo":
       return `
-        <div class="scene-label">Phase Velocity</div>
+        <div class="scene-label">Interactive 4: Phase Velocity</div>
         <p class="scene-caption">In a dispersive medium, different Fourier components travel at different phase velocities v<sub>p</sub> = &omega;/k.</p>
         <div class="interactive-scene">
           <canvas id="scene-phase-velocity-demo" width="600" height="280"></canvas>
@@ -3867,7 +3867,7 @@ function sceneMarkup(type) {
       `;
     case "group-velocity-demo":
       return `
-        <div class="scene-label">Group Velocity</div>
+        <div class="scene-label">Interactive 5: Group Velocity</div>
         <p class="scene-caption">The envelope moves at v<sub>g</sub> = d&omega;/dk while crests move at v<sub>p</sub>. Increase dispersion to see them differ.</p>
         <div class="interactive-scene">
           <canvas id="scene-group-velocity-demo" width="600" height="280"></canvas>
@@ -3878,7 +3878,7 @@ function sceneMarkup(type) {
       `;
     case "wavepacket-dispersion":
       return `
-        <div class="scene-label">Wavepacket Dispersion</div>
+        <div class="scene-label">Interactive 6: Wavepacket Dispersion</div>
         <p class="scene-caption">Top: non-dispersive (shape preserved). Bottom: dispersive (pulse broadens over time).</p>
         <div class="interactive-scene">
           <canvas id="scene-wavepacket-dispersion" width="600" height="300"></canvas>
@@ -3893,7 +3893,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "wave-transport-energy":
       return `
-        <div class="scene-label">Wave Energy Transport</div>
+        <div class="scene-label">Interactive 1: Wave Energy Transport</div>
         <p class="scene-caption">Medium particles oscillate in place while the wave pulse carries energy forward.</p>
         <div class="interactive-scene">
           <canvas id="scene-wave-transport-energy" width="600" height="280"></canvas>
@@ -3905,7 +3905,7 @@ function sceneMarkup(type) {
       `;
     case "transverse-longitudinal-demo":
       return `
-        <div class="scene-label">Transverse vs Longitudinal</div>
+        <div class="scene-label">Interactive 2: Transverse vs Longitudinal</div>
         <p class="scene-caption">Top: transverse wave (displacement perpendicular to propagation). Bottom: longitudinal (displacement parallel).</p>
         <div class="interactive-scene">
           <canvas id="scene-transverse-longitudinal-demo" width="600" height="300"></canvas>
@@ -3917,7 +3917,7 @@ function sceneMarkup(type) {
       `;
     case "sound-refraction-atmosphere":
       return `
-        <div class="scene-label">Sound Refraction in the Atmosphere</div>
+        <div class="scene-label">Interactive 3: Sound Refraction in the Atmosphere</div>
         <p class="scene-caption">Sound bends toward slower regions. Daytime: rays bend up (shadow zone). Evening: rays bend down (sound carries far).</p>
         <div class="interactive-scene">
           <canvas id="scene-sound-refraction-atmosphere" width="600" height="300"></canvas>
@@ -3929,7 +3929,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "em-plane-wave":
       return `
-        <div class="scene-label">Electromagnetic Plane Wave</div>
+        <div class="scene-label">Interactive 1: Electromagnetic Plane Wave</div>
         <p class="scene-caption">E (blue, vertical) and B (red, horizontal) oscillate perpendicular to each other and to the propagation direction k.</p>
         <div class="interactive-scene">
           <canvas id="scene-em-plane-wave" width="600" height="300"></canvas>
@@ -3945,7 +3945,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "phonon-polarizations":
       return `
-        <div class="scene-label">Phonon Polarizations</div>
+        <div class="scene-label">Interactive 1: Phonon Polarizations</div>
         <p class="scene-caption">A crystal lattice vibrating in three polarization modes. Click each button to switch between longitudinal and two transverse directions.</p>
         <div class="interactive-scene">
           <canvas id="scene-phonon-polarizations" width="600" height="340"></canvas>
@@ -3955,7 +3955,7 @@ function sceneMarkup(type) {
     case "circular-polarization":
     case "em-polarization":
       return `
-        <div class="scene-label">Polarization</div>
+        <div class="scene-label">Interactive 2: Polarization</div>
         <p class="scene-caption">E and B fields propagating as a plane wave. Switch between linear and circular polarization. Drag to rotate; shift-drag to tilt.</p>
         <div class="interactive-scene">
           <canvas id="scene-em-polarization" width="600" height="340"></canvas>
@@ -3969,7 +3969,7 @@ function sceneMarkup(type) {
       `;
     case "malus-law":
       return `
-        <div class="scene-label">Malus&rsquo; Law</div>
+        <div class="scene-label">Interactive 3: Malus&rsquo; Law</div>
         <p class="scene-caption">Unpolarized light passes through a vertical polarizer, then through a rotatable analyzer. Drag the analyzer to change &theta;.</p>
         <div class="interactive-scene">
           <canvas id="scene-malus-law" width="700" height="340"></canvas>
@@ -3981,7 +3981,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "snells-law-demo":
       return `
-        <div class="scene-label">Snell&rsquo;s Law</div>
+        <div class="scene-label">Interactive 1: Snell&rsquo;s Law</div>
         <p class="scene-caption">Light refracting at a boundary. Adjust the angle and index ratio to see the refracted ray bend.</p>
         <div class="interactive-scene">
           <canvas id="scene-snells-law-demo" width="600" height="300"></canvas>
@@ -3993,7 +3993,7 @@ function sceneMarkup(type) {
       `;
     case "total-internal-reflection":
       return `
-        <div class="scene-label">Total Internal Reflection</div>
+        <div class="scene-label">Interactive 2: Total Internal Reflection</div>
         <p class="scene-caption">Beyond the critical angle, all light reflects. An evanescent wave decays exponentially in the second medium.</p>
         <div class="interactive-scene">
           <canvas id="scene-total-internal-reflection" width="600" height="300"></canvas>
@@ -4004,7 +4004,7 @@ function sceneMarkup(type) {
       `;
     case "thin-film-interference":
       return `
-        <div class="scene-label">Thin Film Interference</div>
+        <div class="scene-label">Interactive 3: Thin Film Interference</div>
         <p class="scene-caption">White light enters the film. Adjust thickness to see which color is selectively reflected.</p>
         <div class="interactive-scene">
           <canvas id="scene-thin-film-interference" width="600" height="400"></canvas>
@@ -4015,7 +4015,7 @@ function sceneMarkup(type) {
       `;
     case "brewster-angle":
       return `
-        <div class="scene-label">Brewster&rsquo;s Angle</div>
+        <div class="scene-label">Interactive 4: Brewster&rsquo;s Angle</div>
         <p class="scene-caption">Fresnel coefficients vs angle. At Brewster&rsquo;s angle, the p-polarized reflection vanishes completely.</p>
         <div class="interactive-scene">
           <canvas id="scene-brewster-angle" width="600" height="300"></canvas>
@@ -4030,7 +4030,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "rayleigh-scattering":
       return `
-        <div class="scene-label">Rayleigh Scattering</div>
+        <div class="scene-label">Interactive 1: Rayleigh Scattering</div>
         <p class="scene-caption">Scattering intensity scales as 1/&lambda;&sup4;. Blue light scatters much more than red, making the sky blue and sunsets red.</p>
         <div class="interactive-scene">
           <canvas id="scene-rayleigh-scattering" width="600" height="300"></canvas>
@@ -4038,7 +4038,7 @@ function sceneMarkup(type) {
       `;
     case "prism-dispersion":
       return `
-        <div class="scene-label">Prism Dispersion</div>
+        <div class="scene-label">Interactive 2: Prism Dispersion</div>
         <p class="scene-caption">White light separates into colors because n(&lambda;) differs for each wavelength. Blue bends more than red.</p>
         <div class="interactive-scene">
           <canvas id="scene-prism-dispersion" width="600" height="300"></canvas>
@@ -4053,7 +4053,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "color-matching-metamers":
       return `
-        <div class="scene-label">Color Matching &amp; Metamers</div>
+        <div class="scene-label">Interactive 1: Color Matching &amp; Metamers</div>
         <p class="scene-caption">Mix RGB to match a monochromatic target. When they look the same despite different spectra, they are metamers.</p>
         <div class="interactive-scene">
           <canvas id="scene-color-matching-metamers" width="600" height="300"></canvas>
@@ -4061,7 +4061,7 @@ function sceneMarkup(type) {
       `;
     case "cie-tristimulus-curves":
       return `
-        <div class="scene-label">CIE Tristimulus Curves</div>
+        <div class="scene-label">Interactive 2: CIE Tristimulus Curves</div>
         <p class="scene-caption">The CIE color matching functions x&#772;(&lambda;), y&#772;(&lambda;), z&#772;(&lambda;) describe how the eye responds to each wavelength.</p>
         <div class="interactive-scene">
           <canvas id="scene-cie-tristimulus-curves" width="600" height="300"></canvas>
@@ -4069,7 +4069,7 @@ function sceneMarkup(type) {
       `;
     case "cie-color-space-gamut":
       return `
-        <div class="scene-label">CIE Color Space &amp; Gamut</div>
+        <div class="scene-label">Interactive 3: CIE Color Space &amp; Gamut</div>
         <p class="scene-caption">The horseshoe-shaped CIE chromaticity diagram with the sRGB gamut triangle. Not all visible colors can be displayed by RGB monitors.</p>
         <div class="interactive-scene">
           <canvas id="scene-cie-color-space-gamut" width="600" height="340"></canvas>
@@ -4077,7 +4077,7 @@ function sceneMarkup(type) {
       `;
     case "blackbody-planckian-locus":
       return `
-        <div class="scene-label">Blackbody &amp; Planckian Locus</div>
+        <div class="scene-label">Interactive 4: Blackbody &amp; Planckian Locus</div>
         <p class="scene-caption">A blackbody&rsquo;s color traces a curve on the CIE diagram as temperature changes from red-hot to blue-white.</p>
         <div class="interactive-scene">
           <canvas id="scene-blackbody-planckian-locus" width="600" height="340"></canvas>
@@ -4085,7 +4085,7 @@ function sceneMarkup(type) {
       `;
     case "hsv-color-explorer":
       return `
-        <div class="scene-label">HSV Color Explorer</div>
+        <div class="scene-label">Interactive 5: HSV Color Explorer</div>
         <p class="scene-caption">Click the color wheel to pick hue &amp; saturation, or drag any of the six sliders — HSV on the left, RGB on the right. Everything stays linked.</p>
         <div class="interactive-scene">
           <canvas id="scene-hsv-color-explorer" width="600" height="400"></canvas>
@@ -4093,7 +4093,7 @@ function sceneMarkup(type) {
       `;
     case "additive-subtractive-mixing":
       return `
-        <div class="scene-label">Additive &amp; Subtractive Mixing</div>
+        <div class="scene-label">Interactive 6: Additive &amp; Subtractive Mixing</div>
         <p class="scene-caption">Left: RGB additive mixing (light) produces white at center. Right: CMY subtractive mixing (pigments) produces black.</p>
         <div class="interactive-scene">
           <canvas id="scene-additive-subtractive-mixing" width="600" height="300"></canvas>
@@ -4101,7 +4101,7 @@ function sceneMarkup(type) {
       `;
     case "eye-anatomy-diagram":
       return `
-        <div class="scene-label">Anatomy of the Human Eye</div>
+        <div class="scene-label">Interactive 7: Anatomy of the Human Eye</div>
         <p class="scene-caption">Cross-section showing the major structures: cornea, iris, pupil, lens, vitreous humor, retina, fovea, and optic nerve.</p>
         <div class="interactive-scene">
           <canvas id="scene-eye-anatomy-diagram" width="600" height="380"></canvas>
@@ -4109,7 +4109,7 @@ function sceneMarkup(type) {
       `;
     case "rod-cone-sensitivity":
       return `
-        <div class="scene-label">Rod &amp; Cone Sensitivity</div>
+        <div class="scene-label">Interactive 8: Rod &amp; Cone Sensitivity</div>
         <p class="scene-caption">Spectral sensitivity curves for rods (scotopic vision) and the three cone types (S, M, L).</p>
         <div class="interactive-scene">
           <canvas id="scene-rod-cone-sensitivity" width="600" height="300"></canvas>
@@ -4121,7 +4121,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "monopole-radiation-pattern":
       return `
-        <div class="scene-label">Dipole Radiation Pattern</div>
+        <div class="scene-label">Interactive 1: Dipole Radiation Pattern</div>
         <p class="scene-caption">An oscillating dipole radiates with a sin<sup>n</sup>&theta; pattern. Adjust the exponent to see how directivity changes.</p>
         <div class="interactive-scene">
           <canvas id="scene-monopole-radiation-pattern" width="600" height="300"></canvas>
@@ -4132,7 +4132,7 @@ function sceneMarkup(type) {
       `;
     case "two-source-interference":
       return `
-        <div class="scene-label">Two-Source Interference</div>
+        <div class="scene-label">Interactive 2: Two-Source Interference</div>
         <p class="scene-caption">Two coherent sources produce an interference pattern. Adjust d/&lambda; to change the number of lobes.</p>
         <div class="interactive-scene">
           <canvas id="scene-two-source-interference" width="600" height="300"></canvas>
@@ -4140,7 +4140,7 @@ function sceneMarkup(type) {
       `;
     case "phased-array-radiation":
       return `
-        <div class="scene-label">Phased Array</div>
+        <div class="scene-label">Interactive 3: Phased Array</div>
         <p class="scene-caption">N sources with adjustable spacing and phase offset. The beam direction steers with phase.</p>
         <div class="interactive-scene">
           <canvas id="scene-phased-array-radiation" width="600" height="300"></canvas>
@@ -4148,7 +4148,7 @@ function sceneMarkup(type) {
       `;
     case "interferometer-resolution":
       return `
-        <div class="scene-label">Interferometer Resolution</div>
+        <div class="scene-label">Interactive 4: Interferometer Resolution</div>
         <p class="scene-caption">Two antennas separated by d. Angular resolution improves as d/&lambda; increases.</p>
         <div class="interactive-scene">
           <canvas id="scene-interferometer-resolution" width="600" height="300"></canvas>
@@ -4160,7 +4160,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "huygens-principle-demo":
       return `
-        <div class="scene-label">Huygens&rsquo; Principle</div>
+        <div class="scene-label">Interactive 1: Huygens&rsquo; Principle</div>
         <p class="scene-caption">Plane waves pass through a slit. Each point in the slit acts as a new point source. Narrower slits spread more.</p>
         <div class="interactive-scene">
           <canvas id="scene-huygens-principle-demo" width="600" height="300"></canvas>
@@ -4168,7 +4168,7 @@ function sceneMarkup(type) {
       `;
     case "diffraction-grating-pattern":
       return `
-        <div class="scene-label">Diffraction Grating</div>
+        <div class="scene-label">Interactive 2: Diffraction Grating</div>
         <p class="scene-caption">More slits produce sharper principal maxima. With N slits, peaks are N&sup2; times as intense.</p>
         <div class="interactive-scene">
           <canvas id="scene-diffraction-grating-pattern" width="600" height="300"></canvas>
@@ -4176,7 +4176,7 @@ function sceneMarkup(type) {
       `;
     case "single-slit-diffraction":
       return `
-        <div class="scene-label">Single-Slit Diffraction</div>
+        <div class="scene-label">Interactive 3: Single-Slit Diffraction</div>
         <p class="scene-caption">The sinc&sup2; pattern: a central maximum with side lobes. Narrower slits produce wider patterns.</p>
         <div class="interactive-scene">
           <canvas id="scene-single-slit-diffraction" width="600" height="300"></canvas>
@@ -4184,7 +4184,7 @@ function sceneMarkup(type) {
       `;
     case "fourier-optics-demo":
       return `
-        <div class="scene-label">Fourier Optics</div>
+        <div class="scene-label">Interactive 4: Fourier Optics</div>
         <p class="scene-caption">The diffraction pattern is the Fourier transform of the aperture. Select different aperture shapes to see.</p>
         <div class="interactive-scene">
           <canvas id="scene-fourier-optics-demo" width="600" height="300"></canvas>
@@ -4196,7 +4196,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "photoelectric-effect-demo":
       return `
-        <div class="scene-label">Photoelectric Effect</div>
+        <div class="scene-label">Interactive 1: Photoelectric Effect</div>
         <p class="scene-caption">Below the threshold frequency, no electrons are ejected. Above it, KE = hf &minus; &phi; increases linearly with frequency.</p>
         <div class="interactive-scene">
           <canvas id="scene-photoelectric-effect-demo" width="600" height="300"></canvas>
@@ -4204,7 +4204,7 @@ function sceneMarkup(type) {
       `;
     case "double-slit-photon-buildup":
       return `
-        <div class="scene-label">Double-Slit Electron Buildup</div>
+        <div class="scene-label">Interactive 2: Double-Slit Electron Buildup</div>
         <p class="scene-caption">Each electron is a single particle, yet where it lands on the detector is governed by wave interference. One by one, the interference pattern emerges. Click the doors to close a slit and watch the pattern change to single-slit diffraction.</p>
         <div class="interactive-scene">
           <canvas id="scene-double-slit-photon-buildup" width="600" height="460"></canvas>
@@ -4212,7 +4212,7 @@ function sceneMarkup(type) {
       `;
     case "hydrogen-energy-levels":
       return `
-        <div class="scene-label">Hydrogen Energy Levels</div>
+        <div class="scene-label">Interactive 3: Hydrogen Energy Levels</div>
         <p class="scene-caption">Energy levels at E<sub>n</sub> = &minus;13.6/n&sup2; eV. Select a spectral series to see transitions.</p>
         <div class="interactive-scene">
           <canvas id="scene-hydrogen-energy-levels" width="600" height="450"></canvas>
@@ -4223,7 +4223,7 @@ function sceneMarkup(type) {
       `;
     case "quantum-wavepacket-dispersion":
       return `
-        <div class="scene-label">Quantum Wavepacket Spreading</div>
+        <div class="scene-label">Interactive 4: Quantum Wavepacket Spreading</div>
         <p class="scene-caption">For a free particle, the momentum distribution |&psi;&#x0303;(k)|&sup2; never changes &mdash; each k-component just picks up a phase. But different momenta travel at different speeds, so the position-space packet spreads. Narrower &sigma;<sub>x</sub> means wider &sigma;<sub>k</sub> (uncertainty principle), so more spread in velocities and faster broadening.</p>
         <div class="interactive-scene">
           <canvas id="scene-quantum-wavepacket-dispersion" width="600" height="350"></canvas>
@@ -4235,7 +4235,7 @@ function sceneMarkup(type) {
     // =====================================================================
     case "doppler-moving-source":
       return `
-        <div class="scene-label">Doppler: Moving Source</div>
+        <div class="scene-label">Interactive 1: Doppler: Moving Source</div>
         <p class="scene-caption">Wave crests bunch up ahead of a moving source and spread out behind it. Adjust source velocity.</p>
         <div class="interactive-scene">
           <canvas id="scene-doppler-moving-source" width="600" height="300"></canvas>
@@ -4243,7 +4243,7 @@ function sceneMarkup(type) {
       `;
     case "doppler-angle":
       return `
-        <div class="scene-label">Doppler: Angle Dependence</div>
+        <div class="scene-label">Interactive 2: Doppler: Angle Dependence</div>
         <p class="scene-caption">As a source passes an observer, the received frequency drops from high (approach) to low (recession).</p>
         <div class="interactive-scene">
           <canvas id="scene-doppler-angle" width="600" height="300"></canvas>
@@ -4254,7 +4254,7 @@ function sceneMarkup(type) {
       `;
     case "sonic-boom-mach-cone":
       return `
-        <div class="scene-label">Sonic Boom &amp; Mach Cone</div>
+        <div class="scene-label">Interactive 3: Sonic Boom &amp; Mach Cone</div>
         <p class="scene-caption">At supersonic speeds, wavefronts pile up into a Mach cone. The half-angle is arcsin(1/M).</p>
         <div class="interactive-scene">
           <canvas id="scene-sonic-boom-mach-cone" width="600" height="300"></canvas>
@@ -4262,7 +4262,7 @@ function sceneMarkup(type) {
       `;
     case "relativistic-doppler-redshift":
       return `
-        <div class="scene-label">Relativistic Doppler</div>
+        <div class="scene-label">Interactive 4: Relativistic Doppler</div>
         <p class="scene-caption">For light, the Doppler shift depends only on relative velocity: f&rsquo; = f&radic;((1&minus;&beta;)/(1+&beta;)).</p>
         <div class="interactive-scene">
           <canvas id="scene-relativistic-doppler-redshift" width="600" height="300"></canvas>
@@ -4270,7 +4270,7 @@ function sceneMarkup(type) {
       `;
     case "doppler-spectroscopy-exoplanet":
       return `
-        <div class="scene-label">Exoplanet Doppler Spectroscopy</div>
+        <div class="scene-label">Interactive 5: Exoplanet Doppler Spectroscopy</div>
         <p class="scene-caption">A planet&rsquo;s gravity causes periodic Doppler shifts in its host star&rsquo;s spectral lines, revealing the planet&rsquo;s orbit.</p>
         <div class="interactive-scene">
           <canvas id="scene-doppler-spectroscopy-exoplanet" width="600" height="300"></canvas>
