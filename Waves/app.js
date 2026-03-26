@@ -4231,7 +4231,7 @@ function sceneMarkup(type) {
     case "interferometer-resolution":
       return `
         <div class="scene-label">Interactive 4: Resolve Two Stars</div>
-        <p class="scene-caption">Adjust the interferometer baseline and star separation to see when two stars can be distinguished</p>
+        <p class="scene-caption">Drag the stars apart in the sky, then drag the telescope dishes apart on the ground to resolve them</p>
         <div class="interactive-scene">
           <canvas id="scene-interferometer-resolution" width="600" height="300"></canvas>
         </div>
