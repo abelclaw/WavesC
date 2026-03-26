@@ -4103,7 +4103,9 @@ function sceneMarkup(type) {
         <div class="interactive-scene">
           <canvas id="scene-prism-dispersion" width="600" height="300"></canvas>
           <div class="scene-controls">
-            <label><span>Apex angle: </span><input type="range" id="prism-apex" min="20" max="80" step="1" value="60"><span class="scene-val" id="prism-apex-val">60&deg;</span></label>
+            <label><span>Apex angle: </span><input type="range" id="prism-apex" min="30" max="75" step="1" value="60"><span class="scene-val" id="prism-apex-val">60&deg;</span></label>
+            <label><span>Incidence angle: </span><input type="range" id="prism-incidence" min="20" max="80" step="1" value="45"><span class="scene-val" id="prism-incidence-val">45&deg;</span></label>
+            <label><span>Index n<sub>0</sub>: </span><input type="range" id="prism-n0" min="1.30" max="1.80" step="0.01" value="1.52"><span class="scene-val" id="prism-n0-val">1.52</span></label>
           </div>
         </div>
       `;

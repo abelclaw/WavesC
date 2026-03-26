@@ -10326,17 +10326,23 @@ function initPrismDispersion() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
+  // --- Sliders ---
   let apexSlider = document.getElementById('prism-apex');
   if (!apexSlider) {
     const parent = canvas.parentElement;
     if (parent) {
       const controls = document.createElement('div');
       controls.className = 'scene-controls';
-      controls.innerHTML = '<label>Apex angle: <input type="range" id="prism-apex" min="30" max="75" step="1" value="60"><span class="scene-val" id="prism-apex-val">60°</span></label>';
+      controls.innerHTML =
+        '<label>Apex angle: <input type="range" id="prism-apex" min="30" max="75" step="1" value="60"><span class="scene-val" id="prism-apex-val">60°</span></label>' +
+        '<label>Incidence angle: <input type="range" id="prism-incidence" min="20" max="80" step="1" value="45"><span class="scene-val" id="prism-incidence-val">45°</span></label>' +
+        '<label>Index n<sub>0</sub>: <input type="range" id="prism-n0" min="1.30" max="1.80" step="0.01" value="1.52"><span class="scene-val" id="prism-n0-val">1.52</span></label>';
       parent.appendChild(controls);
       apexSlider = document.getElementById('prism-apex');
     }
   }
+  const incSlider = document.getElementById('prism-incidence');
+  const n0Slider = document.getElementById('prism-n0');
 
   function wavelengthToRGB(wl) {
     let r = 0, g = 0, b = 0;
@@ -10353,35 +10359,93 @@ function initPrismDispersion() {
     return `rgb(${Math.round(r * factor * 255)},${Math.round(g * factor * 255)},${Math.round(b * factor * 255)})`;
   }
 
-  // Cauchy dispersion: n(λ) ≈ A + B/λ²
-  function cauchyN(wlNm) {
-    const A = 1.52, B = 4500;
-    return A + B / (wlNm * wlNm);
+  // Cauchy dispersion: n(λ) ≈ n0 + B/λ²
+  function cauchyN(wlNm, n0) {
+    const B = 4500;
+    return n0 + B / (wlNm * wlNm);
   }
+
+  // Snell's law: returns refraction angle, or null for total internal reflection
+  function snellRefract(thetaI, n1, n2) {
+    const sinT = n1 * Math.sin(thetaI) / n2;
+    if (Math.abs(sinT) > 1) return null; // TIR
+    return Math.asin(sinT);
+  }
+
+  // Line-line intersection: p1->p2 with p3->p4, returns t parameter on first line
+  function lineIntersect(x1,y1,x2,y2, x3,y3,x4,y4) {
+    const d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4);
+    if (Math.abs(d) < 1e-10) return null;
+    const t = ((x1-x3)*(y3-y4) - (y1-y3)*(x3-x4)) / d;
+    return t;
+  }
+
+  // Draw a sinusoidal wave along a path from (x0,y0) to (x1,y1)
+  // perpAmplitude: transverse amplitude in pixels
+  // wlPx: wavelength in pixels
+  // phase: phase offset (animated)
+  function drawWaveAlongPath(x0, y0, x1, y1, perpAmplitude, wlPx, phase, color, lineW) {
+    const dx = x1 - x0, dy = y1 - y0;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    if (len < 2) return;
+    // Unit vectors: along path and perpendicular
+    const ux = dx/len, uy = dy/len;
+    const nx = -uy, ny = ux;
+    const steps = Math.max(Math.ceil(len / 1.5), 20);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineW;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const frac = i / steps;
+      const s = frac * len;
+      const wave = perpAmplitude * Math.sin(2 * Math.PI * s / wlPx + phase);
+      const px = x0 + ux * s + nx * wave;
+      const py = y0 + uy * s + ny * wave;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  const spectralWavelengths = [
+    { wl: 400, name: 'Violet' },
+    { wl: 440, name: 'Blue' },
+    { wl: 490, name: 'Cyan' },
+    { wl: 530, name: 'Green' },
+    { wl: 570, name: 'Yellow' },
+    { wl: 610, name: 'Orange' },
+    { wl: 700, name: 'Red' },
+  ];
+
+  let phase = 0;
+  let animId = null;
 
   function draw() {
     wClear(ctx, W, H);
 
     const apexDeg = parseFloat(apexSlider?.value || 60);
+    const incDeg = parseFloat(incSlider?.value || 45);
+    const n0 = parseFloat(n0Slider?.value || 1.52);
     const apex = apexDeg * Math.PI / 180;
+    const thetaI1 = incDeg * Math.PI / 180;
+
     document.getElementById('prism-apex-val')?.replaceChildren(document.createTextNode(apexDeg + '°'));
+    document.getElementById('prism-incidence-val')?.replaceChildren(document.createTextNode(incDeg + '°'));
+    document.getElementById('prism-n0-val')?.replaceChildren(document.createTextNode(n0.toFixed(2)));
 
-    ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Prism dispersion', W / 2, 16);
+    // --- Prism geometry ---
+    // Triangle with apex at top, base horizontal
+    const prismCx = W * 0.40, prismCy = H * 0.50;
+    const prismH = Math.min(W, H) * 0.52;
+    // Half-base from apex angle
+    const halfBase = prismH * Math.tan(apex / 2);
 
-    // Prism geometry (equilateral-ish triangle)
-    const prismCx = W * 0.38, prismCy = H * 0.52;
-    const prismSize = Math.min(W, H) * 0.28;
+    const topX = prismCx, topY = prismCy - prismH * 0.45;
+    const blX = prismCx - halfBase, blY = prismCy + prismH * 0.55;
+    const brX = prismCx + halfBase, brY = prismCy + prismH * 0.55;
 
-    // Triangle vertices: top, bottom-left, bottom-right
-    const topX = prismCx, topY = prismCy - prismSize * Math.cos(apex / 2) * 0.8;
-    const blX = prismCx - prismSize * Math.sin(apex / 2);
-    const blY = prismCy + prismSize * 0.4;
-    const brX = prismCx + prismSize * Math.sin(apex / 2);
-    const brY = prismCy + prismSize * 0.4;
-
-    // Draw prism
-    ctx.fillStyle = 'rgba(200, 220, 255, 0.3)';
+    // Draw prism fill
+    ctx.fillStyle = 'rgba(180, 210, 240, 0.25)';
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(topX, topY);
@@ -10390,76 +10454,147 @@ function initPrismDispersion() {
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
-    // Entry point on left face
+    // Left face: top -> bottom-left
+    // Outward normal of left face (pointing left/outward)
+    const lfDx = blX - topX, lfDy = blY - topY;
+    const lfLen = Math.sqrt(lfDx*lfDx + lfDy*lfDy);
+    // Normal pointing outward (to the left of the face direction)
+    const lfNx = -lfDy / lfLen, lfNy = lfDx / lfLen;
+
+    // Right face: top -> bottom-right
+    const rfDx = brX - topX, rfDy = brY - topY;
+    const rfLen = Math.sqrt(rfDx*rfDx + rfDy*rfDy);
+    // Normal pointing outward (to the right)
+    const rfNx = rfDy / rfLen, rfNy = -rfDx / rfLen;
+
+    // --- Incident ray hits left face ---
+    // Entry point: midway along left face
     const entryFrac = 0.5;
-    const entryX = topX + (blX - topX) * entryFrac;
-    const entryY = topY + (blY - topY) * entryFrac;
+    const entryX = topX + lfDx * entryFrac;
+    const entryY = topY + lfDy * entryFrac;
 
-    // Incident white beam
-    const beamLen = 80;
-    const incidentAngle = Math.PI * 0.15;
-    const beamStartX = entryX - beamLen * Math.cos(incidentAngle);
-    const beamStartY = entryY - beamLen * Math.sin(incidentAngle);
+    // Incident direction: thetaI1 measured from inward normal of left face
+    // Inward normal = -lfN
+    const inNx = -lfNx, inNy = -lfNy;
+    // Rotate inward normal by thetaI1 to get incident direction (pointing into prism)
+    // We want the ray coming from the left, so incident direction points right/down
+    // The tangent along the left face (downward) direction:
+    const lfTx = lfDx / lfLen, lfTy = lfDy / lfLen;
+    // Incident ray direction (into the surface): rotate inNormal by -thetaI1 around face
+    const incDirX = inNx * Math.cos(thetaI1) - lfTx * Math.sin(thetaI1);
+    const incDirY = inNy * Math.cos(thetaI1) - lfTy * Math.sin(thetaI1);
+    // Beam origin: extend backward from entry point
+    const beamLen = 100;
+    const beamStartX = entryX - incDirX * beamLen;
+    const beamStartY = entryY - incDirY * beamLen;
 
-    ctx.strokeStyle = '#888'; ctx.lineWidth = 4;
-    ctx.beginPath(); ctx.moveTo(beamStartX, beamStartY); ctx.lineTo(entryX, entryY); ctx.stroke();
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(beamStartX, beamStartY); ctx.lineTo(entryX, entryY); ctx.stroke();
+    // --- For each wavelength, trace through prism ---
+    let totalInternalReflection = false;
+    const rays = [];
+
+    for (const spec of spectralWavelengths) {
+      const n = cauchyN(spec.wl, n0);
+
+      // Refraction at left face (air -> glass): Snell's law
+      const thetaR1 = snellRefract(thetaI1, 1.0, n);
+      if (thetaR1 === null) { totalInternalReflection = true; continue; }
+
+      // Refracted direction inside prism
+      // Rotate inward normal by thetaR1 (same sign convention)
+      const refDirX = inNx * Math.cos(thetaR1) - lfTx * Math.sin(thetaR1);
+      const refDirY = inNy * Math.cos(thetaR1) - lfTy * Math.sin(thetaR1);
+
+      // Find where this ray hits the right face
+      // Right face goes from topX,topY to brX,brY
+      const t = lineIntersect(entryX, entryY, entryX + refDirX * 1000, entryY + refDirY * 1000,
+                              topX, topY, brX, brY);
+      if (t === null || t < 0.001) continue;
+      const exitX = entryX + refDirX * t * 1000;
+      const exitY = entryY + refDirY * t * 1000;
+
+      // Angle of incidence at right face (from inward normal of right face)
+      // Inward normal of right face = -rfN
+      const inRNx = -rfNx, inRNy = -rfNy;
+      // cosine of angle between refracted ray and inward normal
+      const cosI2 = refDirX * inRNx + refDirY * inRNy;
+      // If cosI2 < 0, ray is going the wrong way relative to normal
+      const thetaI2 = Math.acos(Math.abs(cosI2));
+
+      // Refraction at right face (glass -> air)
+      const thetaR2 = snellRefract(thetaI2, n, 1.0);
+      if (thetaR2 === null) { totalInternalReflection = true; continue; }
+
+      // Exit direction: rotate outward normal of right face by thetaR2
+      // Tangent along right face (downward)
+      const rfTx = rfDx / rfLen, rfTy = rfDy / rfLen;
+      // Determine which side the refracted ray bends
+      const cross = refDirX * inRNy - refDirY * inRNx;
+      const sign = cross > 0 ? 1 : -1;
+      const exitDirX = rfNx * Math.cos(thetaR2) + sign * rfTx * Math.sin(thetaR2);
+      const exitDirY = rfNy * Math.cos(thetaR2) + sign * rfTy * Math.sin(thetaR2);
+
+      const exitLen = 120;
+      const exitEndX = exitX + exitDirX * exitLen;
+      const exitEndY = exitY + exitDirY * exitLen;
+
+      rays.push({
+        wl: spec.wl,
+        name: spec.name,
+        color: wavelengthToRGB(spec.wl),
+        entryX, entryY,
+        exitX, exitY,
+        exitEndX, exitEndY,
+        refDirX, refDirY,
+        exitDirX, exitDirY,
+        n,
+      });
+    }
+
+    // --- Draw incident white beam as overlapping color waves ---
+    const waveAmp = 5;
+    const baseWlPx = 18; // base visual wavelength in pixels
+
+    // White beam: draw all colors overlapping (they look white together)
+    for (const ray of rays) {
+      // Visual wavelength proportional to actual wavelength
+      const wlPx = baseWlPx * (ray.wl / 550);
+      drawWaveAlongPath(beamStartX, beamStartY, entryX, entryY,
+        waveAmp, wlPx, phase, ray.color, 1.5);
+    }
+
+    // --- Draw waves inside prism (they separate gradually) ---
+    for (let i = 0; i < rays.length; i++) {
+      const ray = rays[i];
+      const intLen = Math.sqrt((ray.exitX - entryX)**2 + (ray.exitY - entryY)**2);
+      const wlPx = baseWlPx * (ray.wl / 550) / ray.n; // wavelength shorter in glass
+      drawWaveAlongPath(ray.entryX, ray.entryY, ray.exitX, ray.exitY,
+        waveAmp, wlPx, phase, ray.color, 1.5);
+    }
+
+    // --- Draw exit waves (dispersed, fanning out) ---
+    for (const ray of rays) {
+      const wlPx = baseWlPx * (ray.wl / 550);
+      drawWaveAlongPath(ray.exitX, ray.exitY, ray.exitEndX, ray.exitEndY,
+        waveAmp * 1.2, wlPx, phase, ray.color, 2);
+    }
+
+    // --- Labels ---
+    if (rays.length > 0) {
+      // Label first (violet) and last (red)
+      const first = rays[0], last = rays[rays.length - 1];
+      ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+      ctx.fillStyle = first.color;
+      ctx.fillText(first.name, first.exitEndX + 4, first.exitEndY - 4);
+      ctx.fillStyle = last.color;
+      ctx.fillText(last.name, last.exitEndX + 4, last.exitEndY + 10);
+    }
+
+    // White light label
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
     ctx.fillText('White light', beamStartX + 5, beamStartY - 8);
 
-    // Exit point on right face
-    const exitFrac = 0.5;
-    const exitX = topX + (brX - topX) * exitFrac;
-    const exitY = topY + (brY - topY) * exitFrac;
-
-    // Right face normal direction
-    const rfDx = brX - topX, rfDy = brY - topY;
-    const rfLen = Math.sqrt(rfDx * rfDx + rfDy * rfDy);
-    const normalX = rfDy / rfLen, normalY = -rfDx / rfLen;
-
-    // Dispersed rays
-    const colors = [
-      { wl: 400, name: 'Violet', label: '400nm' },
-      { wl: 450, name: 'Blue',   label: '450nm' },
-      { wl: 500, name: 'Cyan',   label: '500nm' },
-      { wl: 550, name: 'Green',  label: '550nm' },
-      { wl: 580, name: 'Yellow', label: '580nm' },
-      { wl: 620, name: 'Orange', label: '620nm' },
-      { wl: 700, name: 'Red',    label: '700nm' },
-    ];
-
-    // Draw path through prism (simplified) and exit rays
-    const rayLen2 = 120;
-    const baseDeviation = apex * 0.6; // approximate minimum deviation
-
-    for (let i = 0; i < colors.length; i++) {
-      const c = colors[i];
-      const n = cauchyN(c.wl);
-      // More dispersion for shorter wavelengths
-      const deviation = baseDeviation + (n - 1.52) * 8;
-      const spread = (i - 3) * 0.035 * (apexDeg / 60);
-
-      // Exit direction
-      const exitAngle = -0.3 + spread + deviation * 0.15;
-      const endX = exitX + rayLen2 * Math.cos(exitAngle);
-      const endY = exitY + rayLen2 * Math.sin(exitAngle);
-
-      const color = wavelengthToRGB(c.wl);
-      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(exitX, exitY); ctx.lineTo(endX, endY); ctx.stroke();
-
-      // Label
-      ctx.fillStyle = color; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-      ctx.fillText(c.name + ' ' + c.label, endX + 5, endY + 3);
-    }
-
-    // Internal beam (white fanning into colors)
-    ctx.strokeStyle = 'rgba(150,150,150,0.4)'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.moveTo(entryX, entryY); ctx.lineTo(exitX, exitY); ctx.stroke();
-
     // Apex angle arc
-    const arcR = 20;
+    const arcR = 22;
     const leftAngle = Math.atan2(blY - topY, blX - topX);
     const rightAngle = Math.atan2(brY - topY, brX - topX);
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1.5;
@@ -10467,13 +10602,33 @@ function initPrismDispersion() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(apexDeg + '°', topX, topY + arcR + 14);
 
-    // Note
-    ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Shorter wavelengths refract more (higher n)', W / 2, H - 8);
+    // TIR warning
+    if (totalInternalReflection) {
+      ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Total internal reflection!', W / 2, H - 10);
+    }
   }
 
-  apexSlider?.addEventListener('input', draw);
-  draw();
+  function tick() {
+    phase -= 0.08;
+    draw();
+    animId = requestAnimationFrame(tick);
+  }
+
+  // Pause when not visible
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      if (!animId) tick();
+    } else {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+    }
+  }, { threshold: 0.1 });
+  observer.observe(canvas);
+
+  apexSlider?.addEventListener('input', () => {});
+  incSlider?.addEventListener('input', () => {});
+  n0Slider?.addEventListener('input', () => {});
+  tick();
 }
 
 // =========================================================================
