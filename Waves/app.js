@@ -4443,7 +4443,7 @@ function renderLearnMode(chapter) {
       <details class="lecture-toc">
         <summary class="toc-toggle">Contents</summary>
         <ol>
-          ${lectureContent.map((section, index) => `<li><a href="#lecture-section-${index}">${section.heading}</a></li>`).join("")}
+          ${lectureContent.map((section, index) => `<li><a href="javascript:void(0)" data-scroll-to="lecture-section-${index}">${section.heading}</a></li>`).join("")}
         </ol>
       </details>
     `
@@ -4698,6 +4698,15 @@ function attachEvents() {
   });
 
   document.body.addEventListener("click", (event) => {
+    const scrollLink = event.target.closest("[data-scroll-to]");
+    if (scrollLink) {
+      const target = document.getElementById(scrollLink.dataset.scrollTo);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
     const jumpButton = event.target.closest("[data-jump-target]");
     if (jumpButton) {
       const target = document.getElementById(jumpButton.dataset.jumpTarget);
