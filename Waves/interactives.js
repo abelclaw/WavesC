@@ -17823,7 +17823,7 @@ function initInterferometerResolution() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let baseline = 60, starSep = 0.06, nAnt = 3, dragging = null;
+  let baseline = 3, starSep = 0.063, nAnt = 4, dragging = null;
 
   // Layout: left column = image + dishes, right column = profile + sliders
   const colL = 12, colW = Math.round(W * 0.41);
