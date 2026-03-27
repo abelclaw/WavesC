@@ -20735,13 +20735,20 @@ function initRelativisticDopplerRedshift() {
   let dragging = false;
   let time = 0;
 
-  // Hydrogen Balmer series rest wavelengths (nm)
+  // Hydrogen Balmer series rest wavelengths (nm) with relative heights
   var balmer = [
-    { wl: 410.2, name: 'H\u03B4' },
-    { wl: 434.0, name: 'H\u03B3' },
-    { wl: 486.1, name: 'H\u03B2' },
-    { wl: 656.3, name: 'H\u03B1' }
+    { wl: 410.2, name: 'H\u03B4', h: 0.35 },
+    { wl: 434.0, name: 'H\u03B3', h: 0.50 },
+    { wl: 486.1, name: 'H\u03B2', h: 0.72 },
+    { wl: 656.3, name: 'H\u03B1', h: 1.0 }
   ];
+
+  // Pre-generate fixed noise per pixel column (seeded, stable across frames)
+  var noiseLen = 600;
+  var noise = [];
+  for (var ni = 0; ni < noiseLen; ni++) {
+    noise.push((Math.random() - 0.5) * 2); // -1..1
+  }
 
   // Background stars
   var bgStars = [];
@@ -20786,43 +20793,87 @@ function initRelativisticDopplerRedshift() {
     ctx.beginPath(); ctx.arc(cx, cy, radius * 0.35, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Draw a spectrum with emission peaks (Gaussian bumps)
-  function drawSpectrum(x, y, w, h, lines, lineColor, label, dimBg) {
-    // Background: dark strip with faint rainbow
-    ctx.fillStyle = dimBg || 'rgba(10,14,26,0.9)';
+  // Draw a realistic emission spectrum: continuous curve with Gaussian peaks + noise
+  function drawSpectrum(x, y, w, h, lines, accentColor, label) {
+    // Dark background
+    ctx.fillStyle = '#080c16';
     ctx.fillRect(x, y, w, h);
-    // Faint continuous spectrum underneath
+
+    // Faint rainbow underlay
     for (var px = 0; px < w; px++) {
       var wl = 380 + (px / w) * 400;
       ctx.fillStyle = wavelengthToCSS(wl);
-      ctx.globalAlpha = 0.12;
+      ctx.globalAlpha = 0.06;
       ctx.fillRect(x + px, y, 1, h);
     }
     ctx.globalAlpha = 1.0;
 
-    // Draw emission lines as bright Gaussian peaks
-    for (var li = 0; li < lines.length; li++) {
-      var lw = lines[li].wl;
-      if (lw < 370 || lw > 790) continue;
-      var lx = x + ((lw - 380) / 400) * w;
-      // Bright line
-      var lc = (lw >= 380 && lw <= 780) ? wavelengthToCSS(lw) : lineColor;
-      ctx.strokeStyle = lc; ctx.lineWidth = 2.5;
-      ctx.globalAlpha = 0.9;
-      ctx.beginPath(); ctx.moveTo(lx, y + h); ctx.lineTo(lx, y + 2); ctx.stroke();
-      // Glow
-      var grd = ctx.createRadialGradient(lx, y + h * 0.5, 0, lx, y + h * 0.5, 8);
-      grd.addColorStop(0, lc); grd.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = grd; ctx.globalAlpha = 0.35;
-      ctx.fillRect(lx - 8, y, 16, h);
-      ctx.globalAlpha = 1.0;
-      // Label above
-      ctx.fillStyle = '#c0cad0'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(lines[li].name, lx, y - 3);
+    // Build the intensity curve: baseline continuum + Gaussian peaks + noise
+    var nPx = Math.floor(w);
+    var vals = new Array(nPx);
+    var peakSigma = w * 0.012; // width of each Gaussian peak in px
+
+    for (var px2 = 0; px2 < nPx; px2++) {
+      var wl2 = 380 + (px2 / nPx) * 400;
+      // Gentle blackbody-ish continuum (hump around 500-550 nm)
+      var cont = 0.08 + 0.06 * Math.exp(-0.5 * Math.pow((wl2 - 520) / 120, 2));
+      // Add emission peaks
+      var peak = 0;
+      for (var li = 0; li < lines.length; li++) {
+        var lpx = ((lines[li].wl - 380) / 400) * nPx;
+        var d = px2 - lpx;
+        peak += lines[li].h * Math.exp(-0.5 * (d / peakSigma) * (d / peakSigma));
+      }
+      // Noise (fixed per column, scaled small)
+      var n = noise[px2 % noiseLen] * 0.025;
+      vals[px2] = Math.max(0, Math.min(1, cont + peak * 0.85 + n));
+    }
+
+    // Draw filled area under the curve
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    for (var px3 = 0; px3 < nPx; px3++) {
+      ctx.lineTo(x + px3, y + h - vals[px3] * (h - 4));
+    }
+    ctx.lineTo(x + nPx - 1, y + h);
+    ctx.closePath();
+    // Fill with a subtle gradient
+    var fillGrad = ctx.createLinearGradient(x, y, x + w, y);
+    fillGrad.addColorStop(0, 'rgba(80,60,180,0.25)');
+    fillGrad.addColorStop(0.3, 'rgba(60,120,200,0.20)');
+    fillGrad.addColorStop(0.5, 'rgba(60,180,120,0.15)');
+    fillGrad.addColorStop(0.7, 'rgba(200,180,60,0.15)');
+    fillGrad.addColorStop(1, 'rgba(180,50,50,0.20)');
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+
+    // Draw the curve line itself
+    ctx.beginPath();
+    ctx.moveTo(x, y + h - vals[0] * (h - 4));
+    for (var px4 = 1; px4 < nPx; px4++) {
+      ctx.lineTo(x + px4, y + h - vals[px4] * (h - 4));
+    }
+    ctx.strokeStyle = accentColor; ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Label the peaks
+    for (var li2 = 0; li2 < lines.length; li2++) {
+      var lw2 = lines[li2].wl;
+      if (lw2 < 375 || lw2 > 785) continue;
+      var lx2 = x + ((lw2 - 380) / 400) * w;
+      var peakY = y + h - lines[li2].h * 0.85 * (h - 4);
+      // Thin vertical dashed line from peak to label
+      ctx.setLineDash([2, 2]);
+      ctx.strokeStyle = 'rgba(200,210,220,0.3)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(lx2, peakY); ctx.lineTo(lx2, y - 1); ctx.stroke();
+      ctx.setLineDash([]);
+      // Label
+      ctx.fillStyle = '#b0c0d0'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(lines[li2].name, lx2, y - 4);
     }
 
     // Border
-    ctx.strokeStyle = 'rgba(200,210,220,0.3)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(200,210,220,0.2)'; ctx.lineWidth = 1;
     ctx.strokeRect(x, y, w, h);
 
     // Label on left
@@ -20928,34 +20979,34 @@ function initRelativisticDopplerRedshift() {
     ctx.fillText('receding \u2192', sliderX + sliderW * 0.8, sliderY + 15);
 
     // --- Spectra ---
-    var specW = W * 0.78, specX = (W - specW) / 2;
-    var specH = 28;
+    var specW = W * 0.75, specX = (W - specW) / 2 + 16;
+    var specH = 50;
 
     // Rest spectrum (reference)
-    var restY = H * 0.50;
-    drawSpectrum(specX, restY, specW, specH, balmer, '#c0cad0', 'Rest', 'rgba(10,14,26,0.95)');
+    var restY = H * 0.48;
+    drawSpectrum(specX, restY, specW, specH, balmer, 'rgba(180,200,220,0.8)', 'Rest');
     // nm labels at ends
     ctx.fillStyle = '#506070'; ctx.font = '8px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('380', specX, restY + specH + 10);
+    ctx.fillText('380 nm', specX, restY + specH + 10);
     ctx.fillText('780 nm', specX + specW, restY + specH + 10);
 
     // Observed (shifted) spectrum
-    var obsY = H * 0.72;
+    var obsY = H * 0.74;
     var shiftedLines = [];
     for (var j = 0; j < balmer.length; j++) {
-      shiftedLines.push({ wl: dopplerShift(balmer[j].wl, beta), name: balmer[j].name });
+      shiftedLines.push({ wl: dopplerShift(balmer[j].wl, beta), name: balmer[j].name, h: balmer[j].h });
     }
-    var obsColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#c0cad0');
-    drawSpectrum(specX, obsY, specW, specH, shiftedLines, obsColor, 'Observed', 'rgba(10,14,26,0.95)');
+    var obsColor = beta < -0.02 ? 'rgba(120,180,255,0.9)' : (beta > 0.02 ? 'rgba(255,140,120,0.9)' : 'rgba(180,200,220,0.8)');
+    drawSpectrum(specX, obsY, specW, specH, shiftedLines, obsColor, 'Observed');
 
-    // Draw dashed lines connecting rest lines to shifted lines
+    // Draw dashed lines connecting rest peaks to shifted peaks
     ctx.setLineDash([3, 3]);
-    ctx.strokeStyle = 'rgba(150,170,190,0.25)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(150,170,190,0.2)'; ctx.lineWidth = 1;
     for (var k = 0; k < balmer.length; k++) {
       var restLx = specX + ((balmer[k].wl - 380) / 400) * specW;
       var shiftWl = shiftedLines[k].wl;
-      if (shiftWl < 370 || shiftWl > 790) continue;
+      if (shiftWl < 375 || shiftWl > 785) continue;
       var shiftLx = specX + ((shiftWl - 380) / 400) * specW;
       ctx.beginPath(); ctx.moveTo(restLx, restY + specH); ctx.lineTo(shiftLx, obsY); ctx.stroke();
     }
@@ -20963,7 +21014,7 @@ function initRelativisticDopplerRedshift() {
 
     // Formula
     ctx.fillStyle = '#607080'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))     \u03B2 = v/c", W / 2, H * 0.95);
+    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))     \u03B2 = v/c", W / 2, H * 0.96);
 
     requestAnimationFrame(tick);
   }
