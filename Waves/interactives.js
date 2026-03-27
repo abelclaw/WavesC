@@ -17918,7 +17918,7 @@ function initInterferometerResolution() {
 
   // --- Pixel-rendered observed image using array beam ---
   function drawObservedImage() {
-    var fov = Math.max(starSep * 3.5, 0.5 / baseline * 5, 0.08);
+    var fov = Math.max(0.5 / baseline * 8, 0.22);
     var scale = colW / fov;
     var img = imgBufCtx.createImageData(colW, imgH);
     var d = img.data;
