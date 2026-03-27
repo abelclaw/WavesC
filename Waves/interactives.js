@@ -18525,10 +18525,15 @@ function initSingleSlitDiffraction() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let aOverLambda = 3.0;
+  const aOverLambda = 3.0;
   let time = 0;
   let draggingSlider = false;
   const sliderX = 20, sliderW = W * 0.28, sliderY = H - 10;
+
+  // Pulse timing
+  var pulseInterval = 8; // frames between pulses (2=fast, 30=slow)
+  var pulseTimer = 0;
+  var lastPulseFired = false; // true on the frame a dot is emitted
 
   // Dot accumulation state
   var detectedDots = [];
@@ -18575,19 +18580,14 @@ function initSingleSlitDiffraction() {
   canvas.addEventListener('touchend', function() { draggingSlider = false; });
 
   function handleDrag(mx) {
-    var newVal = 0.5 + Math.max(0, Math.min(1, (mx - sliderX) / sliderW)) * 9.5;
-    if (Math.abs(newVal - aOverLambda) > 0.05) {
-      aOverLambda = newVal;
-      detectedDots = [];
-      rebuildCDF();
-    }
+    pulseInterval = 2 + Math.round((1 - Math.max(0, Math.min(1, (mx - sliderX) / sliderW))) * 28);
   }
 
   // Layout constants
   const lambda = 18;
   const slitX = W * 0.22;
-  const screenX = W * 0.52;
-  const screenW = W * 0.20;
+  const screenX = W * 0.42;
+  const screenW = W * 0.30;
   const histX = W * 0.75;
   const histW = W - histX - 10;
   const areaTop = 24;
@@ -18602,25 +18602,29 @@ function initSingleSlitDiffraction() {
 
     const slitOpenH = Math.min(areaH * 0.7, aOverLambda * lambda);
 
-    // --- Emit new dots ---
-    var dotsPerFrame = 8;
-    for (var d = 0; d < dotsPerFrame; d++) {
-      if (detectedDots.length >= maxDots) break;
+    // --- Pulse and emit one dot per pulse ---
+    pulseTimer++;
+    lastPulseFired = false;
+    if (pulseTimer >= pulseInterval && detectedDots.length < maxDots) {
+      pulseTimer = 0;
+      lastPulseFired = true;
       var yNorm = sampleY();
       detectedDots.push({ y: yNorm, x: (Math.random() - 0.5) * 0.8 });
     }
+    // Pulse glow phase: bright flash that decays
+    var pulsePhase = 1 - pulseTimer / pulseInterval; // 1 at pulse, 0 at next
+    pulsePhase = Math.max(0, pulsePhase);
+    var glowStrength = Math.pow(pulsePhase, 2);
 
     // --- Box with hole and pulsing light behind it ---
     const boxL = 10, boxR = slitX + 2;
     const boxW = boxR - boxL;
 
-    // Pulsing light glow behind the box (visible through the slit)
-    const pulse = 0.5 + 0.5 * Math.sin(time * 2.5);
-    const glowAlpha = 0.25 + pulse * 0.35;
-
-    // Light glow visible through slit opening
     const slitTop = slitCY - slitOpenH / 2;
     const slitBot = slitCY + slitOpenH / 2;
+
+    // Light glow visible through slit opening (pulses with emission)
+    var glowAlpha = 0.08 + glowStrength * 0.5;
     const grad = ctx.createRadialGradient(boxL + boxW * 0.4, slitCY, 2, boxL + boxW * 0.4, slitCY, slitOpenH * 0.8);
     grad.addColorStop(0, 'rgba(15,118,110,' + (glowAlpha * 0.9) + ')');
     grad.addColorStop(0.6, 'rgba(15,118,110,' + (glowAlpha * 0.4) + ')');
@@ -18635,23 +18639,18 @@ function initSingleSlitDiffraction() {
 
     // Box walls (opaque)
     ctx.fillStyle = WCOLORS.axis;
-    // Top wall
     ctx.fillRect(boxL, areaTop, boxW, slitTop - areaTop);
-    // Bottom wall
     ctx.fillRect(boxL, slitBot, boxW, areaBot - slitBot);
-    // Back wall (left edge)
     ctx.fillRect(boxL, areaTop, 3, areaH);
-    // Top edge
     ctx.fillRect(boxL, areaTop, boxW, 3);
-    // Bottom edge
     ctx.fillRect(boxL, areaBot - 3, boxW, 3);
 
-    // Pulsing light source indicator on back wall
-    const bulbR = 6 + pulse * 3;
-    const glowR = 18 + pulse * 10;
-    const bulbGrad = ctx.createRadialGradient(boxL + 8, slitCY, 0, boxL + 8, slitCY, glowR);
-    bulbGrad.addColorStop(0, 'rgba(15,118,110,' + (0.5 + pulse * 0.4) + ')');
-    bulbGrad.addColorStop(0.4, 'rgba(15,118,110,' + (0.15 + pulse * 0.15) + ')');
+    // Pulsing light source on back wall
+    var bulbR = 4 + glowStrength * 5;
+    var glowR = 12 + glowStrength * 18;
+    var bulbGrad = ctx.createRadialGradient(boxL + 8, slitCY, 0, boxL + 8, slitCY, glowR);
+    bulbGrad.addColorStop(0, 'rgba(15,118,110,' + (0.3 + glowStrength * 0.6) + ')');
+    bulbGrad.addColorStop(0.4, 'rgba(15,118,110,' + (0.08 + glowStrength * 0.2) + ')');
     bulbGrad.addColorStop(1, 'rgba(15,118,110,0)');
     ctx.save();
     ctx.beginPath();
@@ -18662,13 +18661,13 @@ function initSingleSlitDiffraction() {
     ctx.restore();
     // Bright center dot
     ctx.beginPath(); ctx.arc(boxL + 8, slitCY, bulbR, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15,118,110,' + (0.6 + pulse * 0.4) + ')';
+    ctx.fillStyle = 'rgba(15,118,110,' + (0.4 + glowStrength * 0.6) + ')';
     ctx.fill();
     ctx.beginPath(); ctx.arc(boxL + 8, slitCY, 2, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
 
-    // Front wall edges around slit (right edge of box)
+    // Front wall edges around slit
     ctx.fillStyle = WCOLORS.axis;
     ctx.fillRect(boxR - 3, areaTop, 3, slitTop - areaTop);
     ctx.fillRect(boxR - 3, slitBot, 3, areaBot - slitBot);
@@ -18681,20 +18680,18 @@ function initSingleSlitDiffraction() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('a', boxR + 10, slitCY + 3);
 
-    // --- Screen area: accumulated dots ---
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    // --- Screen area: white background, black dots ---
+    ctx.fillStyle = '#fff';
     ctx.fillRect(screenX, areaTop, screenW, areaH);
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
+    ctx.strokeRect(screenX, areaTop, screenW, areaH);
 
-    // Detector line (left edge of screen)
-    ctx.strokeStyle = 'rgba(31,42,46,0.3)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(screenX, areaTop); ctx.lineTo(screenX, areaBot); ctx.stroke();
-
-    // Draw detected dots
+    // Draw detected dots (black on white)
     for (var i = 0; i < detectedDots.length; i++) {
       var dot = detectedDots[i];
       var py = areaTop + dot.y * areaH;
       var px = screenX + screenW * 0.5 + dot.x * screenW * 0.5;
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
       ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI * 2); ctx.fill();
     }
 
@@ -18724,15 +18721,15 @@ function initSingleSlitDiffraction() {
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Photons: ' + detectedDots.length, screenX, areaTop - 8);
 
-    // --- Slider ---
+    // --- Slider (pulse speed) ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = (aOverLambda - 0.5) / 9.5;
+    const st = 1 - (pulseInterval - 2) / 28; // left=slow, right=fast
     ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
     ctx.fillStyle = WCOLORS.teal; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('a/\u03BB = ' + aOverLambda.toFixed(1), sliderX + sliderW + 10, sliderY + 4);
+    ctx.fillText('Speed', sliderX + sliderW + 10, sliderY + 4);
 
     // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
