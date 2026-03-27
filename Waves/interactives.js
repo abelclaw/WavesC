@@ -18600,7 +18600,7 @@ function initSingleSlitDiffraction() {
     time += 0.05;
     wClear(ctx, W, H);
 
-    const slitOpenH = Math.min(areaH * 0.7, aOverLambda * lambda);
+    const slitOpenH = Math.min(areaH * 0.3, aOverLambda * lambda);
 
     // --- Pulse and emit one dot per pulse ---
     pulseTimer++;
