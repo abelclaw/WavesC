@@ -4594,13 +4594,6 @@ function renderLearnMode(chapter) {
     </div>
   `;
 
-  const problemsHtml = `
-    <div class="lecture-problems">
-      <p class="mini-label">Problems &amp; Prompts</p>
-      ${chapter.prompts.map((prompt) => `<p class="lecture-problem">${prompt}</p>`).join("")}
-    </div>
-  `;
-
   learnContainer.innerHTML = `
     <div class="learn-mode-inner">
       ${tocHtml}
@@ -4613,7 +4606,6 @@ function renderLearnMode(chapter) {
         ${derivationsHtml}
       </div>
       ${summaryHtml}
-      ${problemsHtml}
     </div>
   `;
   setTimeout(initSceneInteractives, 0);
@@ -4668,7 +4660,12 @@ function renderDiscoveryMode(chapter) {
     </div>
   `;
 
-  setTimeout(initSceneInteractives, 0);
+  setTimeout(() => {
+    const _c = container.querySelector("canvas");
+    if (_c) console.log("[Lab] canvas:", _c.id, "w:", _c.getBoundingClientRect().width);
+    else console.warn("[Lab] NO canvas. id:", interactiveId, "markup:", !!sceneMarkup(interactiveId));
+    initSceneInteractives();
+  }, 0);
 
   container.querySelector(".discovery-prev")?.addEventListener("click", () => {
     if (discoveryState.stepIndex > 0) {
@@ -4747,6 +4744,85 @@ function renderMathTab(chapter) {
   setTimeout(initSceneInteractives, 0);
 }
 
+function renderTestTab(chapter) {
+  const testContainer = document.getElementById("test-tab-container");
+  if (!testContainer) return;
+
+  const source = getSourceForChapter(chapter);
+  const quizCards = source?.quizCards?.length
+    ? source.quizCards
+    : [
+        {
+          title: "Chapter checkpoint",
+          prompt: chapter.prompts[0],
+          answer: chapter.quickActions.quiz,
+          source: chapter.title,
+          anchor: ""
+        }
+      ];
+
+  const items = getMasteryItems(chapter);
+  const completed = masteryState[chapter.slug] || [];
+
+  testContainer.innerHTML = `
+    <div class="test-tab-section">
+      <p class="mini-label">Problems</p>
+      ${chapter.prompts
+        .map(
+          (prompt, i) => `
+          <details class="test-problem">
+            <summary><strong>${i + 1}.</strong> ${prompt}</summary>
+            <div class="test-problem-hint">
+              <p>${chapter.quickActions.quiz}</p>
+            </div>
+          </details>
+        `
+        )
+        .join("")}
+    </div>
+    <div class="test-tab-section">
+      <p class="mini-label">Quiz Cards</p>
+      ${quizCards
+        .map(
+          (card) => `
+          <details class="test-problem">
+            <summary>${card.prompt}</summary>
+            <div class="test-problem-hint"><p>${card.answer}</p></div>
+          </details>
+        `
+        )
+        .join("")}
+    </div>
+    <div class="test-tab-section">
+      <p class="mini-label">Mastery Checklist</p>
+      <div class="test-mastery">
+        ${items
+          .map(
+            (item, index) => `
+            <label class="mastery-item ${completed[index] ? "checked" : ""}">
+              <input type="checkbox" data-mastery-index="${index}" ${completed[index] ? "checked" : ""} />
+              <span>${item}</span>
+            </label>
+          `
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+
+  // Wire up mastery checkboxes
+  testContainer.querySelectorAll("[data-mastery-index]").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const idx = Number(checkbox.dataset.masteryIndex);
+      if (!masteryState[chapter.slug]) masteryState[chapter.slug] = [];
+      masteryState[chapter.slug][idx] = checkbox.checked;
+      checkbox.closest(".mastery-item").classList.toggle("checked", checkbox.checked);
+    });
+  });
+
+  setTimeout(renderMath, 0);
+}
+
 function applyModeVisibility() {
   const learnContainer = document.getElementById("learn-mode-container");
   const discoveryContainer = document.getElementById("discovery-mode-container");
@@ -4762,49 +4838,30 @@ function applyModeVisibility() {
   const derivationPanel = document.getElementById("derivations-section");
   const quizSection = document.getElementById("quiz-section");
 
-  const isExclusive = state.mode === "learn" || state.mode === "intuition" || state.mode === "math";
+  const testContainer = document.getElementById("test-tab-container");
 
   // Always hide hero
   if (heroSection) heroSection.hidden = true;
 
-  // Hide all exclusive containers first
+  // Hide all exclusive containers
   if (learnContainer) learnContainer.hidden = true;
   if (discoveryContainer) discoveryContainer.hidden = true;
   if (mathTabContainer) mathTabContainer.hidden = true;
+  if (testContainer) testContainer.hidden = true;
 
-  if (isExclusive) {
-    // Hide the default study-guide content (but chapter header + tabs stay visible)
-    if (chapterOverviewBody) chapterOverviewBody.hidden = true;
-    if (labSection) labSection.hidden = true;
-    studyGuideSections.forEach((el) => { if (el) el.hidden = true; });
-    detailGrids.forEach((el) => { if (el) el.hidden = true; });
-    if (derivationPanel) derivationPanel.hidden = true;
-    if (quizSection) quizSection.hidden = true;
+  // Hide the default study-guide content (but chapter header + tabs stay visible)
+  if (chapterOverviewBody) chapterOverviewBody.hidden = true;
+  if (labSection) labSection.hidden = true;
+  studyGuideSections.forEach((el) => { if (el) el.hidden = true; });
+  detailGrids.forEach((el) => { if (el) el.hidden = true; });
+  if (derivationPanel) derivationPanel.hidden = true;
+  if (quizSection) quizSection.hidden = true;
 
-    // Show the right container
-    if (state.mode === "learn" && learnContainer) learnContainer.hidden = false;
-    if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
-    if (state.mode === "math" && mathTabContainer) mathTabContainer.hidden = false;
-  } else {
-    // exam / default — show standard view
-    if (chapterOverviewBody) chapterOverviewBody.hidden = false;
-    studyGuideSections.forEach((el) => { if (el) el.hidden = false; });
-    detailGrids.forEach((el) => { if (el) el.hidden = false; });
-    if (derivationPanel) derivationPanel.hidden = false;
-    if (quizSection) quizSection.hidden = false;
-  }
-
-  if (state.mode === "exam") {
-    const quizEl = document.getElementById("quiz-section");
-    const masteryEl = document.getElementById("mastery-section");
-    if (quizEl) quizEl.style.borderColor = "rgba(217, 119, 6, 0.3)";
-    if (masteryEl) masteryEl.style.borderColor = "rgba(217, 119, 6, 0.3)";
-  } else {
-    const quizEl = document.getElementById("quiz-section");
-    const masteryEl = document.getElementById("mastery-section");
-    if (quizEl) quizEl.style.borderColor = "";
-    if (masteryEl) masteryEl.style.borderColor = "";
-  }
+  // Show the right container
+  if (state.mode === "learn" && learnContainer) learnContainer.hidden = false;
+  if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
+  if (state.mode === "math" && mathTabContainer) mathTabContainer.hidden = false;
+  if (state.mode === "exam" && testContainer) testContainer.hidden = false;
 }
 
 function renderChapter() {
@@ -4847,6 +4904,9 @@ function renderChapter() {
   }
   if (state.mode === "math") {
     renderMathTab(chapter);
+  }
+  if (state.mode === "exam") {
+    renderTestTab(chapter);
   }
   renderModes();
   applyModeVisibility();
