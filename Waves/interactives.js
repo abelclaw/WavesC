@@ -17886,7 +17886,7 @@ function initInterferometerResolution() {
   function beam(theta) {
     if (nAnt <= 1) {
       // Single dish: broad Gaussian (no interferometric resolution)
-      return Math.exp(-theta * theta / (2 * 0.5 * 0.5));
+      return Math.exp(-theta * theta / (2 * 0.15 * 0.15));
     }
     var spacing = baseline / (nAnt - 1);
     var beta = Math.PI * spacing * theta;
@@ -17922,15 +17922,16 @@ function initInterferometerResolution() {
 
   // --- Pixel-rendered observed image using array beam ---
   function drawObservedImage() {
-    var fov = Math.max(0.5 / baseline * 8, 0.22);
+    // FOV based on beam width only (not star sep) so θ slider moves stars visibly
+    var beamW = nAnt <= 1 ? 0.15 : Math.max(3 / baseline, 0.08);
+    var fov = Math.min(Math.max(beamW * 6, 0.3), 2.0);
     var scale = colW / fov;
     var img = imgBufCtx.createImageData(colW, imgH);
     var d = img.data;
     var icx = colW / 2, icy = imgH / 2;
     var sepPx = starSep * scale;
     var s1x = icx - sepPx / 2, s2x = icx + sepPx / 2;
-    var envSig = Math.max(3 / baseline, 0.08);
-    var cutPx = envSig * 4.5 * scale;
+    var cutPx = beamW * 4.5 * scale;
     var cutSq = cutPx * cutPx;
 
     for (var py = 0; py < imgH; py++) {
