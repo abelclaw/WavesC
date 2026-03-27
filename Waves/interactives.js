@@ -20756,8 +20756,10 @@ function initRelativisticDopplerRedshift() {
     bgStars.push({ x: Math.random() * W, y: Math.random() * (H * 0.42), r: Math.random() * 1.2 + 0.3, b: Math.random() * 0.4 + 0.3 });
   }
 
-  // Velocity slider layout — centered, horizontal
-  var sliderW = W * 0.55, sliderX = (W - sliderW) / 2, sliderY = H * 0.37;
+  // Velocity slider layout — under the star
+  var sliderW = W * 0.30;
+  var sliderY = H * 0.15 + 24; // starY + 24
+  var sliderX = W * 0.18 - (W * 0.30) / 2; // starX - sliderW/2
 
   function getMouseBeta(mx) {
     var t = (mx - sliderX) / sliderW; // 0..1
@@ -20902,17 +20904,35 @@ function initRelativisticDopplerRedshift() {
     ctx.fillText('Relativistic Doppler: Starlight', 10, 18);
 
     // --- Star + arrow scene ---
-    var starY = H * 0.17;
-    var earthX = W * 0.5;
-    var starX = W * 0.15;
+    var starY = H * 0.15;
+    var earthX = W * 0.55;
+    var starX = W * 0.18;
     var absBeta = Math.abs(beta);
 
-    // Earth (telescope)
-    ctx.strokeStyle = '#c0cad0'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(earthX - 8, starY + 6); ctx.lineTo(earthX + 8, starY - 6); ctx.stroke();
-    ctx.beginPath(); ctx.arc(earthX + 10, starY - 8, 5, 0, Math.PI * 2); ctx.stroke();
+    // Update slider position to be centered under the star
+    sliderX = starX - sliderW / 2;
+
+    // Earth — small sphere with land/ocean
+    var eR = 9;
+    var earthGrad = ctx.createRadialGradient(earthX - 2, starY - 2, 1, earthX, starY, eR);
+    earthGrad.addColorStop(0, '#5b9bd5');
+    earthGrad.addColorStop(0.5, '#2e6db4');
+    earthGrad.addColorStop(1, '#1a3a5c');
+    ctx.fillStyle = earthGrad;
+    ctx.beginPath(); ctx.arc(earthX, starY, eR, 0, Math.PI * 2); ctx.fill();
+    // Land patches
+    ctx.fillStyle = 'rgba(80,160,60,0.6)';
+    ctx.beginPath(); ctx.arc(earthX - 2, starY - 2, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earthX + 3, starY + 2, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earthX - 4, starY + 3, 1.8, 0, Math.PI * 2); ctx.fill();
+    // Atmosphere rim
+    ctx.strokeStyle = 'rgba(120,180,255,0.3)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(earthX, starY, eR + 1, 0, Math.PI * 2); ctx.stroke();
+    // Specular highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.18)';
+    ctx.beginPath(); ctx.arc(earthX - 3, starY - 3, 4, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#8090a0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Earth', earthX, starY + 20);
+    ctx.fillText('Earth', earthX, starY + eR + 12);
 
     // Star — color shifts with Doppler
     var dominantWl = dopplerShift(550, beta);
@@ -20925,7 +20945,6 @@ function initRelativisticDopplerRedshift() {
     drawStar(starX, starY, 10, sColor, sGlow);
 
     // Velocity arrow from star toward/away from Earth
-    // Length proportional to |beta|, direction: towards Earth if approaching, away if receding
     var arrowLen = 15 + absBeta * 80;
     var arrowStartX = starX + 16;
     if (beta < 0) {
@@ -20946,37 +20965,36 @@ function initRelativisticDopplerRedshift() {
       ctx.beginPath(); ctx.moveTo(arrowEndX2, starY); ctx.lineTo(arrowEndX2 + 7, starY - 4); ctx.lineTo(arrowEndX2 + 7, starY + 4); ctx.closePath(); ctx.fill();
     }
 
-    // Velocity label near star
-    var velLabel = beta === 0 ? 'at rest' : (beta < 0 ? 'approaching' : 'receding');
-    var velColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#8090a0');
-    ctx.fillStyle = velColor; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(velLabel + '  v/c = ' + Math.abs(beta).toFixed(2), starX, starY + 28);
-
-    // --- Velocity slider ---
+    // --- Velocity slider (under the star) ---
+    var slY = starY + 24;
     // Track
     ctx.strokeStyle = '#405060'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sliderX, slY); ctx.lineTo(sliderX + sliderW, slY); ctx.stroke();
     // Center tick (v=0)
     ctx.strokeStyle = '#607080'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(sliderX + sliderW / 2, sliderY - 5); ctx.lineTo(sliderX + sliderW / 2, sliderY + 5); ctx.stroke();
-    // Handle position: beta in [-0.95, 0.95] maps to [0, sliderW]
-    var handleX = sliderX + (beta / 1.9 + 0.5) * sliderW;
+    ctx.beginPath(); ctx.moveTo(sliderX + sliderW / 2, slY - 4); ctx.lineTo(sliderX + sliderW / 2, slY + 4); ctx.stroke();
     // Gradient track coloring
     for (var px = 0; px < sliderW; px++) {
       var tb = ((px / sliderW) - 0.5) * 1.9;
       if (tb < 0) ctx.fillStyle = 'rgba(100,160,255,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
       else ctx.fillStyle = 'rgba(255,120,100,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
-      ctx.fillRect(sliderX + px, sliderY - 2, 1, 4);
+      ctx.fillRect(sliderX + px, slY - 2, 1, 4);
     }
-    ctx.beginPath(); ctx.arc(handleX, sliderY, 7, 0, Math.PI * 2);
+    // Handle
+    var handleX = sliderX + (beta / 1.9 + 0.5) * sliderW;
+    ctx.beginPath(); ctx.arc(handleX, slY, 6, 0, Math.PI * 2);
     ctx.fillStyle = beta < -0.02 ? '#4a90d9' : (beta > 0.02 ? '#d94a4a' : '#0f766e');
     ctx.fill();
     ctx.strokeStyle = '#a0b0c0'; ctx.lineWidth = 1; ctx.stroke();
-    // Labels
-    ctx.fillStyle = '#7cb3ff'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('\u2190 approaching', sliderX + sliderW * 0.2, sliderY + 15);
-    ctx.fillStyle = '#ff9080';
-    ctx.fillText('receding \u2192', sliderX + sliderW * 0.8, sliderY + 15);
+    // Velocity readout + labels
+    var velLabel = beta === 0 ? 'at rest' : (beta < 0 ? 'approaching' : 'receding');
+    var velColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#8090a0');
+    ctx.fillStyle = velColor; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(velLabel + '  v/c = ' + Math.abs(beta).toFixed(2), starX, slY + 14);
+    ctx.fillStyle = '#506878'; ctx.font = '8px system-ui';
+    ctx.fillText('\u2190 blue', sliderX + 14, slY - 8);
+    ctx.textAlign = 'center';
+    ctx.fillText('red \u2192', sliderX + sliderW - 14, slY - 8);
 
     // --- Spectra ---
     var specW = W * 0.75, specX = (W - specW) / 2 + 16;
