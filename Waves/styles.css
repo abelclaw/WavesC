@@ -4881,22 +4881,30 @@ a {
   display: none;
 }
 
-.discovery-header {
+.discovery-lab-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.discovery-lab-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-}
-.discovery-header h3 {
-  margin: 4px 0 0;
-  font-size: 20px;
-}
-.discovery-progress-text {
-  font-size: 13px;
+  background: var(--bg);
   color: var(--muted);
-  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.discovery-lab-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.discovery-lab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
 }
 
 .discovery-interactive {
@@ -4908,9 +4916,15 @@ a {
   min-height: 200px;
 }
 
-.discovery-step {
+.discovery-questions {
+  display: grid;
+  gap: 16px;
+}
+
+.discovery-question-card {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
+  padding: 20px 24px;
   display: grid;
   gap: 0;
 }
@@ -4926,17 +4940,7 @@ a {
   color: var(--ink);
 }
 
-.discovery-try,
-.discovery-reveal {
-  border-bottom: 1px solid var(--line);
-}
-.discovery-try:last-child,
-.discovery-reveal:last-child {
-  border-bottom: none;
-}
-
-.discovery-try summary,
-.discovery-reveal summary {
+.discovery-try summary {
   padding: 14px 0;
   cursor: pointer;
   font-weight: 600;
@@ -4948,8 +4952,7 @@ a {
   gap: 8px;
   user-select: none;
 }
-.discovery-try summary::-webkit-details-marker,
-.discovery-reveal summary::-webkit-details-marker {
+.discovery-try summary::-webkit-details-marker {
   display: none;
 }
 .discovery-try summary::before {
@@ -4960,25 +4963,8 @@ a {
 .discovery-try[open] summary::before {
   transform: rotate(90deg);
 }
-.discovery-reveal summary::before {
-  content: "◆";
-  font-size: 9px;
-  color: var(--accent-2);
-  transition: transform 0.2s;
-}
-.discovery-reveal[open] summary::before {
-  transform: rotate(90deg);
-}
 
-.discovery-try summary {
-  color: var(--accent);
-}
-.discovery-reveal summary {
-  color: var(--accent-2);
-}
-
-.discovery-try p,
-.discovery-reveal-body p {
+.discovery-try p {
   padding: 0 0 16px;
   margin: 0;
   font-size: 14.5px;
@@ -4986,51 +4972,46 @@ a {
   color: var(--ink);
 }
 
-.discovery-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 4px;
+.discovery-answer-wrapper {
+  padding-top: 14px;
 }
-
-.discovery-dots {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.discovery-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.discovery-dot.visited {
-  background: var(--accent);
-  border-color: var(--accent);
-  opacity: 0.4;
-}
-.discovery-dot.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  opacity: 1;
-  transform: scale(1.25);
-}
-.discovery-dot:hover:not(.active) {
-  border-color: var(--accent);
-}
-
-.discovery-prev,
-.discovery-next {
+.discovery-answer-btn {
+  padding: 8px 18px;
   font-size: 13px;
-  min-width: 90px;
+  font-weight: 600;
+  border: 1px solid var(--accent-2);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--accent-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.discovery-answer-btn:hover {
+  background: var(--accent-2);
+  color: #fff;
+}
+.discovery-answer-btn.revealed {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+}
+.discovery-answer-btn.revealed:hover {
+  border-color: var(--muted);
+  background: transparent;
+  color: var(--ink);
+}
+.discovery-answer-body {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-card, var(--bg));
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+}
+.discovery-answer-body p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
 }
 
 .discovery-empty {
