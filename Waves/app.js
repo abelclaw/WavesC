@@ -4541,9 +4541,35 @@ function renderLearnMode(chapter) {
     `
     : "";
 
+  function derivationCard(derivation) {
+    return `
+      <details class="derivation-card">
+        <summary>
+          <div>
+            <h4>${derivation.title}</h4>
+            <p class="derivation-meta">${derivation.teaser}</p>
+          </div>
+          <span>Expand</span>
+        </summary>
+        <div class="derivation-body">
+          <ol>
+            ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
+          </ol>
+          <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
+        </div>
+      </details>`;
+  }
+
+  const placedDerivations = new Set();
+
   const sectionsHtml = lectureContent
     .map(
-      (section, index) => `
+      (section, index) => {
+        const matchingDerivations = chapter.derivations
+          .filter((d) => d.afterHeading === section.heading)
+          .map((d) => { placedDerivations.add(d); return derivationCard(d); })
+          .join("");
+        return `
       <div class="lecture-section" id="lecture-section-${index}">
         <h3>${section.heading.replace(/^Interactive \d+:\s*/, "")}</h3>
         <div class="lecture-section-body">${section.body}</div>
@@ -4571,31 +4597,16 @@ function renderLearnMode(chapter) {
             `
             : ""
         }
+        ${matchingDerivations}
       </div>
-    `
+    `;
+      }
     )
     .join("");
 
-  const derivationsHtml = chapter.derivations
-    .map(
-      (derivation, index) => `
-      <details class="derivation-card" ${index === 0 ? "open" : ""}>
-        <summary>
-          <div>
-            <h4>${derivation.title}</h4>
-            <p class="derivation-meta">${derivation.teaser}</p>
-          </div>
-          <span>Expand</span>
-        </summary>
-        <div class="derivation-body">
-          <ol>
-            ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
-          </ol>
-          <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
-        </div>
-      </details>
-    `
-    )
+  const unplacedDerivationsHtml = chapter.derivations
+    .filter((d) => !placedDerivations.has(d))
+    .map((d) => derivationCard(d))
     .join("");
 
   const summaryHtml = `
@@ -4622,10 +4633,10 @@ function renderLearnMode(chapter) {
       <div class="lecture-sections">
         ${sectionsHtml}
       </div>
-      <div class="lecture-derivations">
+      ${unplacedDerivationsHtml ? `<div class="lecture-derivations">
         <p class="mini-label">Derivations</p>
-        ${derivationsHtml}
-      </div>
+        ${unplacedDerivationsHtml}
+      </div>` : ""}
       ${summaryHtml}
     </div>
   `;
