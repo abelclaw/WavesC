@@ -4765,12 +4765,7 @@ function renderTestTab(chapter) {
       ${chapter.prompts
         .map(
           (prompt, i) => `
-          <details class="test-problem">
-            <summary><strong>${i + 1}.</strong> ${prompt}</summary>
-            <div class="test-problem-hint">
-              <p>${chapter.quickActions.quiz}</p>
-            </div>
-          </details>
+          <div class="test-problem-item"><strong>${i + 1}.</strong> ${prompt}</div>
         `
         )
         .join("")}
