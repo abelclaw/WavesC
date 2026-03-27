@@ -4660,6 +4660,16 @@ function renderDiscoveryMode(chapter) {
     </div>
   `;
 
+  // Remove any canvases outside this container that share IDs with ours,
+  // so initSceneInteractives (which uses getElementById) finds the right one
+  const ourCanvasIds = new Set(Array.from(container.querySelectorAll("canvas")).map(c => c.id).filter(Boolean));
+  if (ourCanvasIds.size) {
+    document.querySelectorAll("canvas").forEach(c => {
+      if (c.id && ourCanvasIds.has(c.id) && !container.contains(c)) {
+        c.remove();
+      }
+    });
+  }
   setTimeout(initSceneInteractives, 0);
 
   container.querySelector(".discovery-prev")?.addEventListener("click", () => {
