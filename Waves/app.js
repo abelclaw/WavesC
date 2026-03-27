@@ -4660,12 +4660,7 @@ function renderDiscoveryMode(chapter) {
     </div>
   `;
 
-  setTimeout(() => {
-    const _c = container.querySelector("canvas");
-    if (_c) console.log("[Lab] canvas:", _c.id, "w:", _c.getBoundingClientRect().width);
-    else console.warn("[Lab] NO canvas. id:", interactiveId, "markup:", !!sceneMarkup(interactiveId));
-    initSceneInteractives();
-  }, 0);
+  setTimeout(initSceneInteractives, 0);
 
   container.querySelector(".discovery-prev")?.addEventListener("click", () => {
     if (discoveryState.stepIndex > 0) {
@@ -4894,6 +4889,13 @@ function renderChapter() {
     sourcePanel.open = false;
   }
   applyFocusTarget(chapter);
+
+  // Clear inactive mode containers so their canvases don't steal IDs
+  // from the active mode's canvases via getElementById
+  const learnC = document.getElementById("learn-mode-container");
+  const discoveryC = document.getElementById("discovery-mode-container");
+  if (state.mode !== "learn" && learnC) learnC.innerHTML = "";
+  if (state.mode !== "intuition" && discoveryC) discoveryC.innerHTML = "";
 
   if (state.mode === "learn") {
     renderLearnMode(chapter);
