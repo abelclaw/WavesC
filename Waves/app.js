@@ -4499,7 +4499,7 @@ function renderLearnMode(chapter) {
         <div class="lecture-section-body">${section.body}</div>
         ${
           section.interactive
-            ? `<div class="scene lecture-scene" data-interactive="${section.interactive}">${sceneMarkup(section.interactive) || sceneMarkup(chapter.scene)}</div>`
+            ? `<div class="scene lecture-scene" id="interactive-${section.interactive}" data-interactive="${section.interactive}">${sceneMarkup(section.interactive) || sceneMarkup(chapter.scene)}</div>`
             : ""
         }
         ${section.afterInteractive ? `<div class="lecture-section-body">${section.afterInteractive}</div>` : ""}
@@ -4565,6 +4565,38 @@ function renderLearnMode(chapter) {
     </div>
   `;
   setTimeout(initSceneInteractives, 0);
+  setTimeout(linkifyInteractiveTitles, 0);
+}
+
+function linkifyInteractiveTitles() {
+  document.querySelectorAll(".scene.lecture-scene[id]").forEach((scene) => {
+    const id = scene.id;
+    const title = scene.querySelector(".scene-title, .scene-label");
+    if (!title || title.dataset.linked) return;
+    title.dataset.linked = "1";
+    const anchor = document.createElement("a");
+    anchor.href = "#" + id;
+    anchor.className = "interactive-anchor";
+    anchor.innerHTML = title.innerHTML;
+    anchor.addEventListener("click", (e) => {
+      e.preventDefault();
+      history.replaceState(null, "", "#" + id);
+      scene.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    title.innerHTML = "";
+    title.appendChild(anchor);
+  });
+}
+
+function scrollToHashInteractive() {
+  const hash = location.hash.replace("#", "");
+  if (!hash.startsWith("interactive-")) return;
+  const el = document.getElementById(hash);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.add("interactive-highlight");
+    setTimeout(() => el.classList.remove("interactive-highlight"), 2000);
+  }
 }
 
 const discoveryState = { labIndex: 0 };
@@ -5187,3 +5219,5 @@ attachEvents();
 if (!location.hash) {
   history.replaceState(null, "", "#" + chapters[state.chapterIndex].slug);
 }
+setTimeout(scrollToHashInteractive, 500);
+window.addEventListener("hashchange", scrollToHashInteractive);

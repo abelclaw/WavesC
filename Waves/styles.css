@@ -4898,6 +4898,30 @@ a {
   margin: 16px 18px 2px;
 }
 
+.interactive-anchor {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.interactive-anchor:visited,
+.interactive-anchor:hover,
+.interactive-anchor:active {
+  color: inherit;
+  text-decoration: none;
+}
+
+.interactive-highlight {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+  transition: outline-color 0.5s;
+}
+
+.interactive-highlight.fade {
+  outline-color: transparent;
+}
+
 .scene-caption {
   font-size: 13px;
   color: var(--muted);
