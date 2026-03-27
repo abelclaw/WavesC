@@ -20734,36 +20734,48 @@ function initRelativisticDopplerRedshift() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  let betaVal = 0.3;
-  let draggingSlider = false;
+  // beta: -0.95 (approaching) to +0.95 (receding), 0 = at rest
+  let beta = 0.0;
+  let dragging = false;
   let time = 0;
-  const sliderX = 30, sliderW = W * 0.45, sliderY = H - 16;
 
-  // Fixed background stars
-  const bgStars = [];
-  for (var si = 0; si < 60; si++) {
-    bgStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + 0.3, b: Math.random() * 0.4 + 0.3 });
+  // Hydrogen Balmer series rest wavelengths (nm)
+  var balmer = [
+    { wl: 410.2, name: 'H\u03B4' },
+    { wl: 434.0, name: 'H\u03B3' },
+    { wl: 486.1, name: 'H\u03B2' },
+    { wl: 656.3, name: 'H\u03B1' }
+  ];
+
+  // Background stars
+  var bgStars = [];
+  for (var si = 0; si < 50; si++) {
+    bgStars.push({ x: Math.random() * W, y: Math.random() * (H * 0.42), r: Math.random() * 1.2 + 0.3, b: Math.random() * 0.4 + 0.3 });
+  }
+
+  // Velocity slider layout — centered, horizontal
+  var sliderW = W * 0.55, sliderX = (W - sliderW) / 2, sliderY = H * 0.37;
+
+  function getMouseBeta(mx) {
+    var t = (mx - sliderX) / sliderW; // 0..1
+    return Math.max(-0.95, Math.min(0.95, (t - 0.5) * 1.9));
   }
 
   canvas.addEventListener('mousedown', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+    var rect = canvas.getBoundingClientRect();
+    var my = e.clientY - rect.top;
+    if (Math.abs(my - sliderY) < 15) { dragging = true; beta = getMouseBeta(e.clientX - rect.left); }
   });
-  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
-  canvas.addEventListener('mouseup', function() { draggingSlider = false; });
-  canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
-  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
-  canvas.addEventListener('touchend', function() { draggingSlider = false; });
+  canvas.addEventListener('mousemove', function(e) { if (!dragging) return; beta = getMouseBeta(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mouseup', function() { dragging = false; });
+  canvas.addEventListener('mouseleave', function() { dragging = false; });
+  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); var rect = canvas.getBoundingClientRect(); var my = e.touches[0].clientY - rect.top; if (Math.abs(my - sliderY) < 20) { dragging = true; beta = getMouseBeta(e.touches[0].clientX - rect.left); } }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!dragging) return; e.preventDefault(); beta = getMouseBeta(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchend', function() { dragging = false; });
 
-  function handleDrag(mx) {
-    betaVal = Math.max(0.01, Math.min(0.95, (mx - sliderX) / sliderW * 0.95));
-  }
-
-  function starColor(wl) {
-    if (wl < 380) return 'rgb(120,80,220)';
-    if (wl > 780) return 'rgb(120,20,20)';
-    return wavelengthToCSS(wl);
+  function dopplerShift(wl0, b) {
+    // b > 0 receding (redshift), b < 0 approaching (blueshift)
+    return wl0 * Math.sqrt((1 + b) / (1 - b));
   }
 
   function drawStar(cx, cy, radius, color, glowColor) {
@@ -20778,15 +20790,59 @@ function initRelativisticDopplerRedshift() {
     ctx.beginPath(); ctx.arc(cx, cy, radius * 0.35, 0, Math.PI * 2); ctx.fill();
   }
 
+  // Draw a spectrum with emission peaks (Gaussian bumps)
+  function drawSpectrum(x, y, w, h, lines, lineColor, label, dimBg) {
+    // Background: dark strip with faint rainbow
+    ctx.fillStyle = dimBg || 'rgba(10,14,26,0.9)';
+    ctx.fillRect(x, y, w, h);
+    // Faint continuous spectrum underneath
+    for (var px = 0; px < w; px++) {
+      var wl = 380 + (px / w) * 400;
+      ctx.fillStyle = wavelengthToCSS(wl);
+      ctx.globalAlpha = 0.12;
+      ctx.fillRect(x + px, y, 1, h);
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Draw emission lines as bright Gaussian peaks
+    for (var li = 0; li < lines.length; li++) {
+      var lw = lines[li].wl;
+      if (lw < 370 || lw > 790) continue;
+      var lx = x + ((lw - 380) / 400) * w;
+      // Bright line
+      var lc = (lw >= 380 && lw <= 780) ? wavelengthToCSS(lw) : lineColor;
+      ctx.strokeStyle = lc; ctx.lineWidth = 2.5;
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.moveTo(lx, y + h); ctx.lineTo(lx, y + 2); ctx.stroke();
+      // Glow
+      var grd = ctx.createRadialGradient(lx, y + h * 0.5, 0, lx, y + h * 0.5, 8);
+      grd.addColorStop(0, lc); grd.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grd; ctx.globalAlpha = 0.35;
+      ctx.fillRect(lx - 8, y, 16, h);
+      ctx.globalAlpha = 1.0;
+      // Label above
+      ctx.fillStyle = '#c0cad0'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText(lines[li].name, lx, y - 3);
+    }
+
+    // Border
+    ctx.strokeStyle = 'rgba(200,210,220,0.3)'; ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, w, h);
+
+    // Label on left
+    ctx.fillStyle = '#8090a0'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    ctx.fillText(label, x - 6, y + h / 2 + 3);
+  }
+
   function tick() {
     if (!canvas.isConnected) return;
     time += 0.02;
 
-    // Dark sky background
+    // Dark sky
     ctx.fillStyle = '#0a0e1a';
     ctx.fillRect(0, 0, W, H);
 
-    // Background stars
+    // Background stars (top region only)
     for (var i = 0; i < bgStars.length; i++) {
       var s = bgStars[i];
       var twinkle = 0.6 + 0.4 * Math.sin(time * 1.5 + i * 2.3);
@@ -20794,105 +20850,124 @@ function initRelativisticDopplerRedshift() {
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
     }
 
-    var f0_wl = 550;
-    var fRatioApproach = Math.sqrt((1 + betaVal) / (1 - betaVal));
-    var wlApproach = f0_wl / fRatioApproach;
-    var fRatioRecede = Math.sqrt((1 - betaVal) / (1 + betaVal));
-    var wlRecede = f0_wl / fRatioRecede;
-
-    var centerY = H * 0.38;
-
-    // Approaching star (left)
-    var appX = W * 0.2;
-    var appColor = starColor(wlApproach);
-    var appGlow = (wlApproach >= 380 && wlApproach <= 780) ? wavelengthToCSS(Math.max(380, Math.min(780, wlApproach))) : 'rgba(100,60,200,0.25)';
-    if (appGlow.indexOf('rgb(') === 0) appGlow = appGlow.replace('rgb(', 'rgba(').replace(')', ',0.25)');
-    drawStar(appX, centerY, 10, appColor, appGlow);
-
-    // Arrow towards observer
-    ctx.strokeStyle = 'rgba(100,160,255,0.7)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(appX + 18, centerY); ctx.lineTo(appX + 50, centerY); ctx.stroke();
-    ctx.fillStyle = 'rgba(100,160,255,0.7)';
-    ctx.beginPath(); ctx.moveTo(appX + 50, centerY); ctx.lineTo(appX + 44, centerY - 4); ctx.lineTo(appX + 44, centerY + 4); ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Approaching star', appX, centerY - 30);
-    ctx.fillStyle = '#7cb3ff';
-    ctx.fillText(Math.round(wlApproach) + ' nm \u2014 blueshifted', appX, centerY + 28);
-
-    // Receding star (right)
-    var recX = W * 0.8;
-    var recColor = starColor(wlRecede);
-    var recGlow = (wlRecede >= 380 && wlRecede <= 780) ? wavelengthToCSS(Math.min(780, Math.max(380, wlRecede))) : 'rgba(150,20,20,0.25)';
-    if (recGlow.indexOf('rgb(') === 0) recGlow = recGlow.replace('rgb(', 'rgba(').replace(')', ',0.25)');
-    drawStar(recX, centerY, 10, recColor, recGlow);
-
-    // Arrow away from observer
-    ctx.strokeStyle = 'rgba(255,120,100,0.7)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(recX + 18, centerY); ctx.lineTo(recX + 50, centerY); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,120,100,0.7)';
-    ctx.beginPath(); ctx.moveTo(recX + 50, centerY); ctx.lineTo(recX + 44, centerY - 4); ctx.lineTo(recX + 44, centerY + 4); ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Receding star', recX, centerY - 30);
-    ctx.fillStyle = '#ff9080';
-    ctx.fillText(Math.round(wlRecede) + ' nm \u2014 redshifted', recX, centerY + 28);
-
-    // Observer / Earth (center)
-    var obsX = W * 0.5;
-    ctx.strokeStyle = '#c0cad0'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(obsX - 8, centerY + 6); ctx.lineTo(obsX + 8, centerY - 6); ctx.stroke();
-    ctx.beginPath(); ctx.arc(obsX + 10, centerY - 8, 5, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#c0cad0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('Earth', obsX, centerY + 22);
-
-    // Rest-frame reference star
-    var refY = H * 0.68;
-    var restColor = starColor(f0_wl);
-    drawStar(obsX, refY, 6, restColor, 'rgba(180,200,100,0.15)');
-    ctx.fillStyle = '#8090a0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText('At rest: ' + f0_wl + ' nm', obsX, refY + 18);
-
-    // Spectrum bar
-    var barY = refY + 28, barH = 8, barW = W * 0.5, barX = (W - barW) / 2;
-    drawSpectrumBar(ctx, barX, barY, barW, barH);
-    ctx.strokeStyle = 'rgba(200,210,220,0.4)'; ctx.lineWidth = 1;
-    ctx.strokeRect(barX, barY, barW, barH);
-
-    // Tick marks on spectrum
-    function specTick(wl, color, label, above) {
-      if (wl < 380 || wl > 780) return;
-      var tx = barX + (wl - 380) / 400 * barW;
-      ctx.strokeStyle = color; ctx.lineWidth = 2;
-      ctx.beginPath();
-      if (above) { ctx.moveTo(tx, barY - 2); ctx.lineTo(tx, barY - 10); }
-      else { ctx.moveTo(tx, barY + barH + 2); ctx.lineTo(tx, barY + barH + 10); }
-      ctx.stroke();
-      ctx.fillStyle = color; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
-      ctx.fillText(label, tx, above ? barY - 12 : barY + barH + 19);
-    }
-    specTick(f0_wl, '#c0cad0', 'rest', true);
-    specTick(wlApproach, '#7cb3ff', 'blue', false);
-    specTick(wlRecede, '#ff9080', 'red', false);
-
-    // Formula
-    ctx.fillStyle = '#708090'; ctx.font = '11px system-ui'; ctx.textAlign = 'right';
-    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1\u2212\u03B2)/(1+\u03B2))  approach", W - 14, H * 0.68);
-    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))  recede", W - 14, H * 0.68 + 16);
-
-    // Slider
-    ctx.strokeStyle = '#405060'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    var st = betaVal / 0.95;
-    ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#0f766e'; ctx.fill();
-    ctx.strokeStyle = '#a0b0c0'; ctx.lineWidth = 1; ctx.stroke();
-    ctx.fillStyle = '#a0b8d0'; ctx.font = '11px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('v/c = ' + betaVal.toFixed(2), sliderX + sliderW + 10, sliderY + 4);
-
     // Title
     ctx.fillStyle = '#c0cad0'; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Relativistic Doppler: Starlight', 10, 18);
+
+    // --- Star + arrow scene ---
+    var starY = H * 0.17;
+    var earthX = W * 0.5;
+    var starX = W * 0.15;
+    var absBeta = Math.abs(beta);
+
+    // Earth (telescope)
+    ctx.strokeStyle = '#c0cad0'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(earthX - 8, starY + 6); ctx.lineTo(earthX + 8, starY - 6); ctx.stroke();
+    ctx.beginPath(); ctx.arc(earthX + 10, starY - 8, 5, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#8090a0'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Earth', earthX, starY + 20);
+
+    // Star — color shifts with Doppler
+    var dominantWl = dopplerShift(550, beta);
+    var sColor;
+    if (dominantWl < 380) sColor = 'rgb(120,80,220)';
+    else if (dominantWl > 780) sColor = 'rgb(120,20,20)';
+    else sColor = wavelengthToCSS(dominantWl);
+    var sGlow = sColor.replace('rgb(', 'rgba(').replace(')', ',0.25)');
+    if (sGlow.indexOf('rgba') < 0) sGlow = 'rgba(200,200,100,0.2)';
+    drawStar(starX, starY, 10, sColor, sGlow);
+
+    // Velocity arrow from star toward/away from Earth
+    // Length proportional to |beta|, direction: towards Earth if approaching, away if receding
+    var arrowLen = 15 + absBeta * 80;
+    var arrowStartX = starX + 16;
+    if (beta < 0) {
+      // Approaching: arrow points right (towards Earth)
+      var arrowEndX = arrowStartX + arrowLen;
+      var arrowColor = 'rgba(100,160,255,' + (0.4 + absBeta * 0.6).toFixed(2) + ')';
+      ctx.strokeStyle = arrowColor; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(arrowStartX, starY); ctx.lineTo(arrowEndX, starY); ctx.stroke();
+      ctx.fillStyle = arrowColor;
+      ctx.beginPath(); ctx.moveTo(arrowEndX, starY); ctx.lineTo(arrowEndX - 7, starY - 4); ctx.lineTo(arrowEndX - 7, starY + 4); ctx.closePath(); ctx.fill();
+    } else if (beta > 0) {
+      // Receding: arrow points left (away from Earth)
+      var arrowEndX2 = arrowStartX - arrowLen - 16;
+      var arrowColor2 = 'rgba(255,120,100,' + (0.4 + absBeta * 0.6).toFixed(2) + ')';
+      ctx.strokeStyle = arrowColor2; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(starX - 16, starY); ctx.lineTo(arrowEndX2, starY); ctx.stroke();
+      ctx.fillStyle = arrowColor2;
+      ctx.beginPath(); ctx.moveTo(arrowEndX2, starY); ctx.lineTo(arrowEndX2 + 7, starY - 4); ctx.lineTo(arrowEndX2 + 7, starY + 4); ctx.closePath(); ctx.fill();
+    }
+
+    // Velocity label near star
+    var velLabel = beta === 0 ? 'at rest' : (beta < 0 ? 'approaching' : 'receding');
+    var velColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#8090a0');
+    ctx.fillStyle = velColor; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText(velLabel + '  v/c = ' + Math.abs(beta).toFixed(2), starX, starY + 28);
+
+    // --- Velocity slider ---
+    // Track
+    ctx.strokeStyle = '#405060'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
+    // Center tick (v=0)
+    ctx.strokeStyle = '#607080'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sliderX + sliderW / 2, sliderY - 5); ctx.lineTo(sliderX + sliderW / 2, sliderY + 5); ctx.stroke();
+    // Handle position: beta in [-0.95, 0.95] maps to [0, sliderW]
+    var handleX = sliderX + (beta / 1.9 + 0.5) * sliderW;
+    // Gradient track coloring
+    for (var px = 0; px < sliderW; px++) {
+      var tb = ((px / sliderW) - 0.5) * 1.9;
+      if (tb < 0) ctx.fillStyle = 'rgba(100,160,255,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
+      else ctx.fillStyle = 'rgba(255,120,100,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
+      ctx.fillRect(sliderX + px, sliderY - 2, 1, 4);
+    }
+    ctx.beginPath(); ctx.arc(handleX, sliderY, 7, 0, Math.PI * 2);
+    ctx.fillStyle = beta < -0.02 ? '#4a90d9' : (beta > 0.02 ? '#d94a4a' : '#0f766e');
+    ctx.fill();
+    ctx.strokeStyle = '#a0b0c0'; ctx.lineWidth = 1; ctx.stroke();
+    // Labels
+    ctx.fillStyle = '#7cb3ff'; ctx.font = '9px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('\u2190 approaching', sliderX + sliderW * 0.2, sliderY + 15);
+    ctx.fillStyle = '#ff9080';
+    ctx.fillText('receding \u2192', sliderX + sliderW * 0.8, sliderY + 15);
+
+    // --- Spectra ---
+    var specW = W * 0.78, specX = (W - specW) / 2;
+    var specH = 28;
+
+    // Rest spectrum (reference)
+    var restY = H * 0.50;
+    drawSpectrum(specX, restY, specW, specH, balmer, '#c0cad0', 'Rest', 'rgba(10,14,26,0.95)');
+    // nm labels at ends
+    ctx.fillStyle = '#506070'; ctx.font = '8px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('380', specX, restY + specH + 10);
+    ctx.fillText('780 nm', specX + specW, restY + specH + 10);
+
+    // Observed (shifted) spectrum
+    var obsY = H * 0.72;
+    var shiftedLines = [];
+    for (var j = 0; j < balmer.length; j++) {
+      shiftedLines.push({ wl: dopplerShift(balmer[j].wl, beta), name: balmer[j].name });
+    }
+    var obsColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#c0cad0');
+    drawSpectrum(specX, obsY, specW, specH, shiftedLines, obsColor, 'Observed', 'rgba(10,14,26,0.95)');
+
+    // Draw dashed lines connecting rest lines to shifted lines
+    ctx.setLineDash([3, 3]);
+    ctx.strokeStyle = 'rgba(150,170,190,0.25)'; ctx.lineWidth = 1;
+    for (var k = 0; k < balmer.length; k++) {
+      var restLx = specX + ((balmer[k].wl - 380) / 400) * specW;
+      var shiftWl = shiftedLines[k].wl;
+      if (shiftWl < 370 || shiftWl > 790) continue;
+      var shiftLx = specX + ((shiftWl - 380) / 400) * specW;
+      ctx.beginPath(); ctx.moveTo(restLx, restY + specH); ctx.lineTo(shiftLx, obsY); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Formula
+    ctx.fillStyle = '#607080'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))     \u03B2 = v/c", W / 2, H * 0.95);
 
     requestAnimationFrame(tick);
   }
