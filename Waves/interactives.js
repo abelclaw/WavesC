@@ -18598,11 +18598,11 @@ function initSingleSlitDiffraction() {
 
   // Layout constants
   const lambda = 18;
-  const slitX = W * 0.14;
-  const screenX = W * 0.22;
-  const screenW = W * 0.28;
-  const histX = W * 0.54;
-  const histW = W - histX - 15;
+  const slitX = W * 0.22;
+  const screenX = W * 0.52;
+  const screenW = W * 0.20;
+  const histX = W * 0.75;
+  const histW = W - histX - 10;
   const areaTop = 24;
   const areaBot = H - 28;
   const areaH = areaBot - areaTop;
@@ -18629,69 +18629,70 @@ function initSingleSlitDiffraction() {
     pulsePhase = Math.max(0, pulsePhase);
     var glowStrength = Math.pow(pulsePhase, 2);
 
-    // --- Box with hole and pulsing light behind it ---
+    // --- Box with front wall and small slit ---
     const boxL = 10, boxR = slitX + 2;
     const boxW = boxR - boxL;
+    const wallThick = 3;
 
     const slitTop = slitCY - slitOpenH / 2;
     const slitBot = slitCY + slitOpenH / 2;
 
-    // Light glow visible through slit opening (pulses with emission)
+    // Interior glow visible only through the tiny slit (pulses with emission)
     var glowAlpha = 0.08 + glowStrength * 0.5;
-    const grad = ctx.createRadialGradient(boxL + boxW * 0.4, slitCY, 2, boxL + boxW * 0.4, slitCY, slitOpenH * 0.8);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(boxR - wallThick, slitTop, wallThick, slitOpenH);
+    ctx.clip();
+    var grad = ctx.createRadialGradient(boxL + boxW * 0.5, slitCY, 2, boxL + boxW * 0.5, slitCY, boxW * 0.6);
     grad.addColorStop(0, 'rgba(15,118,110,' + (glowAlpha * 0.9) + ')');
     grad.addColorStop(0.6, 'rgba(15,118,110,' + (glowAlpha * 0.4) + ')');
     grad.addColorStop(1, 'rgba(15,118,110,0)');
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(boxL, slitTop, boxW, slitOpenH);
-    ctx.clip();
     ctx.fillStyle = grad;
-    ctx.fillRect(boxL, slitTop - slitOpenH, boxW, slitOpenH * 3);
+    ctx.fillRect(boxL, areaTop, boxW, areaH);
     ctx.restore();
 
-    // Box walls (opaque)
+    // Box walls — fully enclosed except for the slit
     ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(boxL, areaTop, boxW, slitTop - areaTop);
-    ctx.fillRect(boxL, slitBot, boxW, areaBot - slitBot);
-    ctx.fillRect(boxL, areaTop, 3, areaH);
-    ctx.fillRect(boxL, areaTop, boxW, 3);
-    ctx.fillRect(boxL, areaBot - 3, boxW, 3);
+    // Back wall (left)
+    ctx.fillRect(boxL, areaTop, wallThick, areaH);
+    // Top wall
+    ctx.fillRect(boxL, areaTop, boxW, wallThick);
+    // Bottom wall
+    ctx.fillRect(boxL, areaBot - wallThick, boxW, wallThick);
+    // Front wall (right) — with slit gap
+    ctx.fillRect(boxR - wallThick, areaTop, wallThick, slitTop - areaTop);
+    ctx.fillRect(boxR - wallThick, slitBot, wallThick, areaBot - slitBot);
 
-    // Pulsing light source on back wall
+    // Pulsing light source inside box
     var bulbR = 4 + glowStrength * 5;
     var glowR = 12 + glowStrength * 18;
-    var bulbGrad = ctx.createRadialGradient(boxL + 8, slitCY, 0, boxL + 8, slitCY, glowR);
+    // Clip glow to box interior
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(boxL + wallThick, areaTop + wallThick, boxW - 2 * wallThick, areaH - 2 * wallThick);
+    ctx.clip();
+    var bulbGrad = ctx.createRadialGradient(boxL + boxW * 0.35, slitCY, 0, boxL + boxW * 0.35, slitCY, glowR);
     bulbGrad.addColorStop(0, 'rgba(15,118,110,' + (0.3 + glowStrength * 0.6) + ')');
     bulbGrad.addColorStop(0.4, 'rgba(15,118,110,' + (0.08 + glowStrength * 0.2) + ')');
     bulbGrad.addColorStop(1, 'rgba(15,118,110,0)');
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(boxL, slitTop, boxW, slitOpenH);
-    ctx.clip();
     ctx.fillStyle = bulbGrad;
     ctx.fillRect(boxL, slitCY - glowR, glowR * 2, glowR * 2);
     ctx.restore();
-    // Bright center dot
-    ctx.beginPath(); ctx.arc(boxL + 8, slitCY, bulbR, 0, Math.PI * 2);
+    // Bright center dot of light source
+    ctx.beginPath(); ctx.arc(boxL + boxW * 0.35, slitCY, bulbR, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(15,118,110,' + (0.4 + glowStrength * 0.6) + ')';
     ctx.fill();
-    ctx.beginPath(); ctx.arc(boxL + 8, slitCY, 2, 0, Math.PI * 2);
+    ctx.beginPath(); ctx.arc(boxL + boxW * 0.35, slitCY, 2, 0, Math.PI * 2);
     ctx.fillStyle = '#fff';
     ctx.fill();
-
-    // Front wall edges around slit
-    ctx.fillStyle = WCOLORS.axis;
-    ctx.fillRect(boxR - 3, areaTop, 3, slitTop - areaTop);
-    ctx.fillRect(boxR - 3, slitBot, 3, areaBot - slitBot);
 
     // Slit width label
     ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(boxR + 6, slitTop); ctx.lineTo(boxR + 6, slitBot); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(boxR + 5, slitTop); ctx.lineTo(boxR + 5, slitBot); ctx.stroke();
     ctx.setLineDash([]);
     ctx.fillStyle = WCOLORS.amber; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('a', boxR + 10, slitCY + 3);
+    ctx.fillText('a', boxR + 9, slitCY + 3);
 
     // --- Screen area: white background, black dots ---
     ctx.fillStyle = '#fff';
