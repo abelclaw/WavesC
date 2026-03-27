@@ -4492,7 +4492,8 @@ function renderLearnMode(chapter) {
   if (!learnContainer) return;
 
   const prereqsHtml = renderMathPrereqs(chapter);
-  const lectureContent = chapter.lectureContent || [];
+  const allLectureContent = chapter.lectureContent || [];
+  const lectureContent = allLectureContent.filter((s) => s.heading !== "Problems");
 
   const chapterSceneHtml = chapter.scene
     ? `<div class="chapter-lab panel">
@@ -4553,6 +4554,28 @@ function renderLearnMode(chapter) {
     )
     .join("");
 
+  const derivationsHtml = chapter.derivations
+    .map(
+      (derivation, index) => `
+      <details class="derivation-card" ${index === 0 ? "open" : ""}>
+        <summary>
+          <div>
+            <h4>${derivation.title}</h4>
+            <p class="derivation-meta">${derivation.teaser}</p>
+          </div>
+          <span>Expand</span>
+        </summary>
+        <div class="derivation-body">
+          <ol>
+            ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
+          </ol>
+          <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
+        </div>
+      </details>
+    `
+    )
+    .join("");
+
   const summaryHtml = `
     <div class="lecture-summary">
       <p class="mini-label">Chapter Summary</p>
@@ -4576,6 +4599,10 @@ function renderLearnMode(chapter) {
       ${prereqsHtml}
       <div class="lecture-sections">
         ${sectionsHtml}
+      </div>
+      <div class="lecture-derivations">
+        <p class="mini-label">Derivations</p>
+        ${derivationsHtml}
       </div>
       ${summaryHtml}
     </div>
@@ -4744,17 +4771,14 @@ function renderTestTab(chapter) {
   const items = getMasteryItems(chapter);
   const completed = masteryState[chapter.slug] || [];
 
+  const problemSections = (chapter.lectureContent || []).filter((s) => s.heading === "Problems");
+
   testContainer.innerHTML = `
+    ${problemSections.length ? `
     <div class="test-tab-section">
       <p class="mini-label">Problems</p>
-      ${chapter.prompts
-        .map(
-          (prompt, i) => `
-          <div class="test-problem-item"><strong>${i + 1}.</strong> ${prompt}</div>
-        `
-        )
-        .join("")}
-    </div>
+      ${problemSections.map((s) => `<div class="lecture-section-body">${s.body}</div>`).join("")}
+    </div>` : ""}
     <div class="test-tab-section">
       <p class="mini-label">Quiz Cards</p>
       ${quizCards
@@ -4763,30 +4787,6 @@ function renderTestTab(chapter) {
           <details class="test-problem">
             <summary>${card.prompt}</summary>
             <div class="test-problem-hint"><p>${card.answer}</p></div>
-          </details>
-        `
-        )
-        .join("")}
-    </div>
-    <div class="test-tab-section">
-      <p class="mini-label">Derivations</p>
-      ${chapter.derivations
-        .map(
-          (derivation, index) => `
-          <details class="derivation-card" ${index === 0 ? "open" : ""}>
-            <summary>
-              <div>
-                <h4>${derivation.title}</h4>
-                <p class="derivation-meta">${derivation.teaser}</p>
-              </div>
-              <span>Expand</span>
-            </summary>
-            <div class="derivation-body">
-              <ol>
-                ${derivation.steps.map((step) => `<li>${step}</li>`).join("")}
-              </ol>
-              <div class="derivation-result"><strong>Key result:</strong> ${derivation.result}</div>
-            </div>
           </details>
         `
         )
