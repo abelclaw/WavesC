@@ -18581,20 +18581,43 @@ function initSingleSlitDiffraction() {
 
   rebuildCDF();
 
+  // Reset button layout
+  var resetX = W - 60, resetY = H - 18, resetW = 50, resetH = 16;
+
+  function hitReset(mx, my) {
+    return mx >= resetX && mx <= resetX + resetW && my >= resetY && my <= resetY + resetH;
+  }
+
+  function doReset() {
+    detectedDots = [];
+    pulseTimer = 0;
+  }
+
   // Event handling
+  function getPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+  }
+
   canvas.addEventListener('mousedown', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    if (Math.abs(e.clientY - rect.top - sliderY) < 15) { draggingSlider = true; handleDrag(e.clientX - rect.left); }
+    var p = getPos(e);
+    if (hitReset(p.x, p.y)) { doReset(); return; }
+    if (Math.abs(p.y - sliderY) < 15) { draggingSlider = true; handleDrag(p.x); }
   });
-  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(e.clientX - canvas.getBoundingClientRect().left); });
+  canvas.addEventListener('mousemove', function(e) { if (!draggingSlider) return; handleDrag(getPos(e).x); });
   canvas.addEventListener('mouseup', function() { draggingSlider = false; });
   canvas.addEventListener('mouseleave', function() { draggingSlider = false; });
-  canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const rect = canvas.getBoundingClientRect(); if (Math.abs(e.touches[0].clientY - rect.top - sliderY) < 20) { draggingSlider = true; handleDrag(e.touches[0].clientX - rect.left); } }, { passive: false });
-  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(e.touches[0].clientX - canvas.getBoundingClientRect().left); }, { passive: false });
+  canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault(); var p = getPos(e);
+    if (hitReset(p.x, p.y)) { doReset(); return; }
+    if (Math.abs(p.y - sliderY) < 20) { draggingSlider = true; handleDrag(p.x); }
+  }, { passive: false });
+  canvas.addEventListener('touchmove', function(e) { if (!draggingSlider) return; e.preventDefault(); handleDrag(getPos(e).x); }, { passive: false });
   canvas.addEventListener('touchend', function() { draggingSlider = false; });
 
   function handleDrag(mx) {
-    pulseInterval = 2 + Math.round((1 - Math.max(0, Math.min(1, (mx - sliderX) / sliderW))) * 28);
+    pulseInterval = 1 + Math.round((1 - Math.max(0, Math.min(1, (mx - sliderX) / sliderW))) * 19);
   }
 
   // Layout constants
@@ -18745,12 +18768,24 @@ function initSingleSlitDiffraction() {
     // --- Slider (pulse speed) ---
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(sliderX, sliderY); ctx.lineTo(sliderX + sliderW, sliderY); ctx.stroke();
-    const st = 1 - (pulseInterval - 2) / 28; // left=slow, right=fast
+    const st = 1 - (pulseInterval - 1) / 19; // left=slow, right=fast
     ctx.beginPath(); ctx.arc(sliderX + sliderW * st, sliderY, 5, 0, Math.PI * 2);
     ctx.fillStyle = WCOLORS.teal; ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Speed', sliderX + sliderW + 10, sliderY + 4);
+
+    // --- Reset button ---
+    ctx.fillStyle = '#e5e0d6';
+    ctx.beginPath();
+    ctx.moveTo(resetX + 3, resetY); ctx.arcTo(resetX + resetW, resetY, resetX + resetW, resetY + resetH, 3);
+    ctx.arcTo(resetX + resetW, resetY + resetH, resetX, resetY + resetH, 3);
+    ctx.arcTo(resetX, resetY + resetH, resetX, resetY, 3);
+    ctx.arcTo(resetX, resetY, resetX + resetW, resetY, 3);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Reset', resetX + resetW / 2, resetY + 12);
 
     // --- Title ---
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
