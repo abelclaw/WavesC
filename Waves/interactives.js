@@ -17877,13 +17877,17 @@ function initInterferometerResolution() {
     } else if (dragging === 'base') {
       baseline = Math.max(2, Math.round(Math.exp(t * Math.log(200))));
     } else if (dragging === 'nant') {
-      nAnt = 2 + Math.round(t * 25);
+      nAnt = 1 + Math.round(t * 26);
     }
     draw();
   }
 
   // --- Array beam: sin²(Nβ) / (N² sin²(β)) with Gaussian envelope ---
   function beam(theta) {
+    if (nAnt <= 1) {
+      // Single dish: broad Gaussian (no interferometric resolution)
+      return Math.exp(-theta * theta / (2 * 0.5 * 0.5));
+    }
     var spacing = baseline / (nAnt - 1);
     var beta = Math.PI * spacing * theta;
     var af;
@@ -17902,7 +17906,7 @@ function initInterferometerResolution() {
   function draw() {
     wClear(ctx, W, H);
     var resAngle = 0.5 / baseline;
-    var resolved = starSep > resAngle * 1.22;
+    var resolved = nAnt >= 2 && starSep > resAngle * 1.22;
 
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Interferometer Array', 10, 13);
@@ -18068,10 +18072,15 @@ function initInterferometerResolution() {
     }
 
     // Dish array
-    var span = Math.max(20, baseline / 200 * (colW - 24));
     var midX = colL + colW / 2;
-    var startX = midX - span / 2;
     var s = nAnt > 18 ? 0.8 : (nAnt > 10 ? 1.1 : (nAnt > 5 ? 1.5 : 2.0));
+    var dishWidth = 15 * s; // approximate width of one dish
+    // Span: at baseline=0 dishes are side-by-side, at baseline=200 they fill the column
+    var minSpan = nAnt > 1 ? dishWidth * 1.1 : 0;
+    var maxSpan = colW - 20;
+    var t2 = Math.log(Math.max(2, baseline)) / Math.log(200);
+    var span = nAnt > 1 ? minSpan + t2 * (maxSpan - minSpan) : 0;
+    var startX = midX - span / 2;
 
     for (var i = 0; i < nAnt; i++) {
       var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : midX;
@@ -18143,13 +18152,17 @@ function initInterferometerResolution() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
     fillTextSub(ctx, 'd/\u03BB = ' + baseline, slX + slW + 10, sl2Y + 4);
 
-    var t3 = (nAnt - 2) / 25;
+    var t3 = (nAnt - 1) / 26;
     drawSlider(slX, sl3Y, slW, t3, WCOLORS.blue);
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    ctx.fillText('N = ' + nAnt + ' antennas', slX + slW + 10, sl3Y + 4);
+    ctx.fillText('N = ' + nAnt + (nAnt === 1 ? ' antenna' : ' antennas'), slX + slW + 10, sl3Y + 4);
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
-    fillTextSub(ctx, '\u03B8_{res} = \u03BB/2d = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', slX, sl3Y + 18);
+    if (nAnt >= 2) {
+      fillTextSub(ctx, '\u03B8_{res} = \u03BB/2d = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', slX, sl3Y + 18);
+    } else {
+      ctx.fillText('Single dish \u2014 no angular resolution', slX, sl3Y + 18);
+    }
   }
 
   function drawSlider(x, y, w, t, color) {
