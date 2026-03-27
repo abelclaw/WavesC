@@ -1,7 +1,7 @@
 // Guided Discovery steps for each chapter (keyed by chapter slug)
 // Each step: { question, tryThis, reveal, interactive? (optional override) }
 
-const discoverySteps = {
+var discoverySteps = {
   "oscillators-linearity": [
     {
       question: "Does pulling the mass further from equilibrium change how fast it oscillates?",

@@ -4650,7 +4650,6 @@ const discoveryState = { stepIndex: 0 };
 function renderDiscoveryMode(chapter) {
   const container = document.getElementById("discovery-mode-container");
   if (!container) return;
-  container.hidden = false;
 
   const steps = (typeof discoverySteps !== "undefined" && discoverySteps[chapter.slug]) || [];
   if (!steps.length) {
@@ -4699,9 +4698,7 @@ function renderDiscoveryMode(chapter) {
     </div>
   `;
 
-  requestAnimationFrame(() => {
-    initSceneInteractives();
-  });
+  setTimeout(initSceneInteractives, 0);
 
   container.querySelector(".discovery-prev")?.addEventListener("click", () => {
     if (discoveryState.stepIndex > 0) {
