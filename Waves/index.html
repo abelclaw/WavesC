@@ -28,11 +28,6 @@
         </div>
 
         <div class="sidebar-section">
-          <p class="section-label">Reading Modes</p>
-          <div class="mode-pills" id="mode-pills"></div>
-        </div>
-
-        <div class="sidebar-section">
           <p class="section-label">Search The Notes</p>
           <div class="sidebar-search">
             <label class="sr-only" for="search-query">Search chapters, sections, and derivations</label>
@@ -78,6 +73,8 @@
 
         <section id="discovery-mode-container" class="discovery-mode-container" hidden></section>
 
+        <section id="math-tab-container" class="math-tab-container panel" hidden></section>
+
         <section class="panel roadmap-panel" id="roadmap-section">
           <div class="section-heading">
             <div>
@@ -122,7 +119,10 @@
               </div>
               <a id="chapter-pdf-link" class="pdf-link" target="_blank" rel="noreferrer">Open chapter PDF</a>
             </div>
+            <div class="chapter-tabs" id="chapter-tabs"></div>
+          </div>
 
+          <div id="chapter-overview-body" class="chapter-summary panel" style="border-top:none;margin-top:0;">
             <div id="source-summary-note" class="source-summary-note"></div>
             <div class="chapter-opening">
               <p id="chapter-lede" class="chapter-lede"></p>

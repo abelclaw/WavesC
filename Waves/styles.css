@@ -165,7 +165,6 @@ a {
   margin-top: 30px;
 }
 
-.mode-pills,
 .assistant-quick-actions,
 .term-cloud {
   display: flex;
@@ -173,7 +172,6 @@ a {
   gap: 10px;
 }
 
-.mode-pill,
 .quick-action,
 .term-chip,
 .chapter-link,
@@ -183,17 +181,6 @@ a {
   border: 1px solid transparent;
   border-radius: 999px;
   transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
-}
-
-.mode-pill {
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff3df;
-}
-
-.mode-pill.active {
-  background: linear-gradient(135deg, rgba(244, 171, 47, 0.25), rgba(255, 255, 255, 0.12));
-  border-color: rgba(255, 238, 206, 0.35);
 }
 
 .chapter-nav {
@@ -392,6 +379,106 @@ a {
   font-size: 2.2rem;
 }
 
+/* Chapter Tabs */
+
+.chapter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0;
+}
+
+.chapter-tab {
+  padding: 10px 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: rgba(248, 240, 228, 0.5);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.chapter-tab:hover {
+  color: rgba(248, 240, 228, 0.8);
+}
+
+.chapter-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Math Tab */
+
+.math-tab-container {
+  margin-top: 8px;
+}
+
+.math-tab-empty {
+  padding: 24px 0;
+  color: rgba(248, 240, 228, 0.5);
+  font-style: italic;
+}
+
+.math-tab-topic {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  background: var(--paper);
+}
+
+.math-tab-topic > summary {
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.math-tab-topic > summary::-webkit-details-marker {
+  display: none;
+}
+
+.math-tab-topic > summary h4 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+
+.math-tab-topic[open] > summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.math-tab-topic-body {
+  padding: 16px 20px;
+}
+
+.math-tab-section {
+  margin-bottom: 18px;
+}
+
+.math-tab-section h5 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 0.95rem;
+  color: #f8f0e4;
+}
+
+.math-tab-section p {
+  margin: 0;
+  line-height: 1.7;
+  color: rgba(248, 240, 228, 0.82);
+}
+
+.math-tab-exercises {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .pdf-link {
   align-self: start;
   padding: 10px 14px;
@@ -461,7 +548,6 @@ a {
 .term-chip.active,
 .action-button:hover,
 .nav-button:hover,
-.mode-pill:hover,
 .chapter-link:hover {
   transform: translateY(-2px);
 }

@@ -1,28 +1,8 @@
 const modes = [
-  {
-    id: "learn",
-    label: "Learn",
-    hero: "Follow the lecture from start to finish, with interactives along the way.",
-    subtitle: "A linear walkthrough of Schwartz's notes with inline animations, derivation boxes, and math lesson links."
-  },
-  {
-    id: "intuition",
-    label: "Discover",
-    hero: "Predict, experiment, understand.",
-    subtitle: "Build intuition by playing with the simulations. Each step poses a question, lets you explore, then reveals the physics."
-  },
-  {
-    id: "math",
-    label: "Math",
-    hero: "Derivations stay collapsed until you ask them to speak.",
-    subtitle: "Move between compact statements and the algebra underneath without losing your place."
-  },
-  {
-    id: "exam",
-    label: "Exam",
-    hero: "Turn the notes into checkpoints, prompts, and recoverable errors.",
-    subtitle: "Use the chapter prompts and common pitfalls to rehearse reasoning instead of memorizing results."
-  }
+  { id: "learn", label: "Learn" },
+  { id: "intuition", label: "Lab" },
+  { id: "math", label: "Math" },
+  { id: "exam", label: "Test" }
 ];
 
 const mathLessons = [
@@ -2048,7 +2028,8 @@ const sourceData = window.WAVES_SOURCE_DATA || {};
 
 const chapterNav = document.getElementById("chapter-nav");
 const chapterCount = document.getElementById("chapter-count");
-const modePills = document.getElementById("mode-pills");
+const chapterTabs = document.getElementById("chapter-tabs");
+const mathTabContainer = document.getElementById("math-tab-container");
 const searchQuery = document.getElementById("search-query");
 const searchResults = document.getElementById("search-results");
 const heroTitle = document.getElementById("hero-title");
@@ -2146,10 +2127,10 @@ function syncSidebarDrawer() {
 }
 
 function renderModes() {
-  modePills.innerHTML = modes
+  chapterTabs.innerHTML = modes
     .map(
       (mode) => `
-        <button class="mode-pill ${state.mode === mode.id ? "active" : ""}" data-mode="${mode.id}">
+        <button class="chapter-tab ${state.mode === mode.id ? "active" : ""}" data-mode="${mode.id}">
           ${mode.label}
         </button>
       `
@@ -4724,12 +4705,67 @@ function renderDiscoveryMode(chapter) {
   setTimeout(renderMath, 0);
 }
 
+function renderMathTab(chapter) {
+  const prereqs = chapter.mathPrereqs || [];
+  if (!prereqs.length) {
+    mathTabContainer.innerHTML = `<p class="math-tab-empty">No math prerequisites for this chapter.</p>`;
+    return;
+  }
+
+  mathTabContainer.innerHTML = prereqs
+    .map((prereqId) => {
+      const lesson = getMathLesson(prereqId);
+      if (!lesson) return "";
+      return `
+        <details class="math-tab-topic">
+          <summary><h4>${lesson.title}</h4></summary>
+          <div class="math-tab-topic-body">
+            ${lesson.sections
+              .map(
+                (section) => `
+                <div class="math-tab-section">
+                  <h5>${section.heading}</h5>
+                  <p>${section.body}</p>
+                  ${section.interactive ? `<div class="scene math-lesson-interactive" data-interactive="${section.interactive}"><canvas id="scene-${section.interactive}" style="width:100%;height:280px;"></canvas></div>` : ""}
+                </div>
+              `
+              )
+              .join("")}
+            ${
+              lesson.exercises.length
+                ? `<div class="math-tab-exercises">
+                    <p class="mini-label">Exercises</p>
+                    ${lesson.exercises
+                      .map(
+                        (ex, i) => `
+                        <details class="math-exercise">
+                          <summary><strong>Exercise ${i + 1}.</strong> ${ex.question}</summary>
+                          <div class="math-exercise-answer"><p>${ex.answer}</p></div>
+                        </details>
+                      `
+                      )
+                      .join("")}
+                  </div>`
+                : ""
+            }
+          </div>
+        </details>
+      `;
+    })
+    .join("");
+
+  setTimeout(renderMath, 0);
+  setTimeout(initSceneInteractives, 0);
+}
+
 function applyModeVisibility() {
   const learnContainer = document.getElementById("learn-mode-container");
   const discoveryContainer = document.getElementById("discovery-mode-container");
+  const heroSection = document.querySelector(".hero");
+  const chapterOverviewBody = document.getElementById("chapter-overview-body");
+  const labSection = document.getElementById("lab-section");
   const studyGuideSections = [
     document.getElementById("roadmap-section"),
-    document.getElementById("overview-section"),
     document.getElementById("section-guide-section"),
     document.getElementById("mastery-section")
   ];
@@ -4737,32 +4773,36 @@ function applyModeVisibility() {
   const derivationPanel = document.getElementById("derivations-section");
   const quizSection = document.getElementById("quiz-section");
 
-  const heroSection = document.querySelector(".hero");
+  const isExclusive = state.mode === "learn" || state.mode === "intuition" || state.mode === "math";
 
-  const isExclusive = state.mode === "learn" || state.mode === "intuition";
+  // Always hide hero
+  if (heroSection) heroSection.hidden = true;
+
+  // Hide all exclusive containers first
+  if (learnContainer) learnContainer.hidden = true;
+  if (discoveryContainer) discoveryContainer.hidden = true;
+  if (mathTabContainer) mathTabContainer.hidden = true;
 
   if (isExclusive) {
-    if (learnContainer) learnContainer.hidden = state.mode !== "learn";
-    if (discoveryContainer) discoveryContainer.hidden = state.mode !== "intuition";
-    if (heroSection) heroSection.hidden = true;
+    // Hide the default study-guide content (but chapter header + tabs stay visible)
+    if (chapterOverviewBody) chapterOverviewBody.hidden = true;
+    if (labSection) labSection.hidden = true;
     studyGuideSections.forEach((el) => { if (el) el.hidden = true; });
     detailGrids.forEach((el) => { if (el) el.hidden = true; });
     if (derivationPanel) derivationPanel.hidden = true;
     if (quizSection) quizSection.hidden = true;
+
+    // Show the right container
+    if (state.mode === "learn" && learnContainer) learnContainer.hidden = false;
+    if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
+    if (state.mode === "math" && mathTabContainer) mathTabContainer.hidden = false;
   } else {
-    if (learnContainer) learnContainer.hidden = true;
-    if (discoveryContainer) discoveryContainer.hidden = true;
-    if (heroSection) heroSection.hidden = false;
+    // exam / default — show standard view
+    if (chapterOverviewBody) chapterOverviewBody.hidden = false;
     studyGuideSections.forEach((el) => { if (el) el.hidden = false; });
     detailGrids.forEach((el) => { if (el) el.hidden = false; });
     if (derivationPanel) derivationPanel.hidden = false;
     if (quizSection) quizSection.hidden = false;
-  }
-
-  if (state.mode === "math") {
-    document.querySelectorAll(".derivation-card").forEach((card) => {
-      card.open = true;
-    });
   }
 
   if (state.mode === "exam") {
@@ -4780,10 +4820,7 @@ function applyModeVisibility() {
 
 function renderChapter() {
   const chapter = chapters[state.chapterIndex];
-  const mode = modes.find((item) => item.id === state.mode);
 
-  heroTitle.textContent = mode.hero;
-  heroSubtitle.textContent = mode.subtitle;
   chapterKicker.textContent = `Chapter ${chapter.number}`;
   chapterTitle.textContent = chapter.title;
   chapterPdfLink.href = chapter.pdf;
@@ -4819,6 +4856,10 @@ function renderChapter() {
     discoveryState.stepIndex = 0;
     renderDiscoveryMode(chapter);
   }
+  if (state.mode === "math") {
+    renderMathTab(chapter);
+  }
+  renderModes();
   applyModeVisibility();
 
   prevChapter.disabled = state.chapterIndex === 0;
@@ -4841,13 +4882,12 @@ function hideTooltip() {
 }
 
 function attachEvents() {
-  modePills.addEventListener("click", (event) => {
+  chapterTabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-mode]");
     if (!button) return;
     state.mode = button.dataset.mode;
     renderModes();
     renderChapter();
-    closeSidebarDrawer();
   });
 
   chapterNav.addEventListener("click", (event) => {
