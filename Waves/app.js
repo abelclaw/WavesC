@@ -4788,43 +4788,57 @@ function renderTestTab(chapter) {
   const testContainer = document.getElementById("test-tab-container");
   if (!testContainer) return;
 
-  const source = getSourceForChapter(chapter);
-  const quizCards = source?.quizCards?.length
-    ? source.quizCards
-    : [
-        {
-          title: "Chapter checkpoint",
-          prompt: chapter.prompts[0],
-          answer: chapter.quickActions.quiz,
-          source: chapter.title,
-          anchor: ""
-        }
-      ];
-
   const items = getMasteryItems(chapter);
   const completed = masteryState[chapter.slug] || [];
 
-  const problemSections = (chapter.lectureContent || []).filter((s) => s.heading === "Problems");
+  const problems = window.WAVES_TEST_PROBLEMS?.[chapter.slug] || {};
+  const readingQuiz = problems.readingQuiz || [];
+  const shortAnswer = problems.shortAnswer || [];
+  const longProblems = problems.longProblems || [];
 
   testContainer.innerHTML = `
-    ${problemSections.length ? `
+    ${readingQuiz.length ? `
+    <div class="test-tab-section">
+      <p class="mini-label">Reading Quiz</p>
+      ${readingQuiz.map((item) => `
+        <details class="test-problem">
+          <summary>${item.q}</summary>
+          <div class="test-problem-hint"><p>${item.a}</p></div>
+        </details>
+      `).join("")}
+    </div>` : ""}
+    ${shortAnswer.length ? `
+    <div class="test-tab-section">
+      <p class="mini-label">Short Answer</p>
+      ${shortAnswer.map((item) => `
+        <details class="test-problem">
+          <summary>${item.q}</summary>
+          <div class="test-problem-hint"><p>${item.a}</p></div>
+        </details>
+      `).join("")}
+    </div>` : ""}
+    ${longProblems.length ? `
     <div class="test-tab-section">
       <p class="mini-label">Problems</p>
-      ${problemSections.map((s) => `<div class="lecture-section-body">${s.body}</div>`).join("")}
+      ${longProblems.map((prob) => `
+        <details class="long-problem">
+          <summary class="long-problem-header">${prob.title}</summary>
+          <div class="long-problem-body">
+            ${prob.image ? `<img class="long-problem-image" src="${prob.image}" alt="${prob.imageAlt || ""}" loading="lazy" onerror="this.style.display='none'">` : ""}
+            <p class="long-problem-context">${prob.context}</p>
+            ${prob.parts.map((part) => `
+              <div class="long-problem-part">
+                <p class="long-problem-part-q"><strong>${part.label}</strong> ${part.q}</p>
+                <details class="long-problem-part-a">
+                  <summary>Show answer</summary>
+                  <p>${part.a}</p>
+                </details>
+              </div>
+            `).join("")}
+          </div>
+        </details>
+      `).join("")}
     </div>` : ""}
-    <div class="test-tab-section">
-      <p class="mini-label">Quiz Cards</p>
-      ${quizCards
-        .map(
-          (card) => `
-          <details class="test-problem">
-            <summary>${card.prompt}</summary>
-            <div class="test-problem-hint"><p>${card.answer}</p></div>
-          </details>
-        `
-        )
-        .join("")}
-    </div>
     <div class="test-tab-section">
       <p class="mini-label">Mastery Checklist</p>
       <div class="test-mastery">

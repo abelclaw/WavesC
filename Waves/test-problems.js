@@ -3,6 +3,304 @@
 
 window.WAVES_TEST_PROBLEMS = {
 
+"oscillators-linearity": {
+  readingQuiz: [
+    { q: "Why can nearly any potential energy minimum be approximated by a quadratic (Hooke's law) potential?", a: "Because the Taylor expansion of any smooth potential about a stable equilibrium has zero first derivative, making the quadratic term the leading non-vanishing contribution." },
+    { q: "What are the three independent parameters needed to fully specify the motion of a simple harmonic oscillator?", a: "Amplitude $A$, angular frequency $\\omega_0$, and phase constant $\\phi$." },
+    { q: "What is the relationship between the natural frequency $\\omega_0$ and the spring constant $k$ and mass $m$ of a simple harmonic oscillator?", a: "$\\omega_0 = \\sqrt{k/m}$." },
+    { q: "In a damped oscillator described by $\\ddot{x} + \\gamma \\dot{x} + \\omega_0^2 x = 0$, what physical quantity does $\\gamma$ represent?", a: "The damping coefficient (damping rate), which characterizes the strength of the velocity-dependent resistive force per unit mass." },
+    { q: "What distinguishes underdamped motion from overdamped motion?", a: "Underdamped motion ($\\gamma < 2\\omega_0$) oscillates with a decaying envelope, while overdamped motion ($\\gamma > 2\\omega_0$) returns to equilibrium exponentially without oscillating." },
+    { q: "What is critical damping and why is it special?", a: "Critical damping occurs when $\\gamma = 2\\omega_0$; it is the boundary between oscillatory and non-oscillatory decay and provides the fastest return to equilibrium without overshoot." },
+    { q: "What does it mean for a differential equation to be linear?", a: "If $x_1(t)$ and $x_2(t)$ are both solutions, then any linear combination $c_1 x_1(t) + c_2 x_2(t)$ is also a solution." },
+    { q: "How does the total mechanical energy of an undamped SHO vary with time?", a: "It remains constant; kinetic and potential energy exchange back and forth, but their sum $E = \\frac{1}{2}m\\dot{x}^2 + \\frac{1}{2}kx^2$ is conserved." },
+    { q: "Why does the period of a simple harmonic oscillator not depend on amplitude?", a: "Because the restoring force is exactly linear in displacement, so the equation of motion has solutions with frequency determined solely by $\\omega_0 = \\sqrt{k/m}$, independent of amplitude." },
+    { q: "What is the general solution for an underdamped oscillator?", a: "$x(t) = A e^{-\\gamma t/2}\\cos(\\omega_1 t + \\phi)$ where $\\omega_1 = \\sqrt{\\omega_0^2 - \\gamma^2/4}$." }
+  ],
+  shortAnswer: [
+    { q: "A particle moves in the potential $V(x) = V_0\\left(\\frac{x}{a}\\right)^2\\left(\\frac{x}{a} - 1\\right)^2$. Find the equilibrium positions and the frequency of small oscillations about each stable equilibrium.", a: "Setting $V'(x) = 0$ gives equilibria at $x = 0$, $x = a$, and $x = a/2$. The second derivative is $V''(x) = \\frac{2V_0}{a^2}$ at $x = 0$ and $x = a$ (both stable minima), and $V''(a/2) = -\\frac{V_0}{2a^2}$ (unstable). For each stable equilibrium, $\\omega_0 = \\sqrt{V''(x_{\\rm eq})/m} = \\sqrt{2V_0/(ma^2)}$." },
+    { q: "Show that for an underdamped oscillator with $\\gamma \\ll \\omega_0$, the fractional energy lost per cycle is $\\Delta E / E \\approx 2\\pi\\gamma/\\omega_0$.", a: "The energy is $E(t) \\propto A^2 e^{-\\gamma t}$, so $dE/dt = -\\gamma E$. Over one period $T = 2\\pi/\\omega_1 \\approx 2\\pi/\\omega_0$, the fractional loss is $\\Delta E/E = 1 - e^{-\\gamma T} \\approx \\gamma T = 2\\pi\\gamma/\\omega_0$." },
+    { q: "A 0.5 kg mass on a spring ($k = 200$ N/m) is released from rest at $x = 0.1$ m. Write the complete solution $x(t)$ and find the maximum speed.", a: "Here $\\omega_0 = \\sqrt{200/0.5} = 20$ rad/s. Initial conditions $x(0) = 0.1$ m, $\\dot{x}(0) = 0$ give $x(t) = 0.1\\cos(20t)$ m. The maximum speed is $v_{\\max} = A\\omega_0 = 0.1 \\times 20 = 2.0$ m/s." },
+    { q: "An overdamped system has $\\omega_0 = 3$ rad/s and $\\gamma = 10$ s$^{-1}$. If $x(0) = 1$ m and $\\dot{x}(0) = 0$, find $x(t)$.", a: "The exponents are $r_{\\pm} = -\\gamma/2 \\pm \\sqrt{\\gamma^2/4 - \\omega_0^2} = -5 \\pm 4$, giving $r_+ = -1$, $r_- = -9$. From initial conditions: $x(t) = c_1 e^{-t} + c_2 e^{-9t}$ with $c_1 + c_2 = 1$ and $-c_1 - 9c_2 = 0$, so $c_1 = 9/8$, $c_2 = -1/8$. Thus $x(t) = \\frac{9}{8}e^{-t} - \\frac{1}{8}e^{-9t}$." },
+    { q: "Prove that the time-averaged kinetic energy equals the time-averaged potential energy for an undamped SHO.", a: "With $x = A\\cos(\\omega_0 t + \\phi)$: $\\langle KE \\rangle = \\frac{1}{2}m\\omega_0^2 A^2 \\langle \\sin^2(\\omega_0 t + \\phi)\\rangle = \\frac{1}{4}m\\omega_0^2 A^2$. Similarly $\\langle PE \\rangle = \\frac{1}{2}k A^2 \\langle \\cos^2(\\omega_0 t + \\phi)\\rangle = \\frac{1}{4}kA^2 = \\frac{1}{4}m\\omega_0^2 A^2$. So $\\langle KE\\rangle = \\langle PE \\rangle$." },
+    { q: "A damped oscillator loses 5% of its energy each cycle. Estimate the quality factor $Q$.", a: "The fractional energy loss per cycle is $\\Delta E/E = 2\\pi/Q$, so $Q = 2\\pi/(\\Delta E/E) = 2\\pi/0.05 \\approx 126$." }
+  ],
+  longProblems: [
+    {
+      title: "Seismometer as a Damped Harmonic Oscillator",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Seismometer_-_USGS_Photo.jpg/640px-Seismometer_-_USGS_Photo.jpg",
+      imageAlt: "A USGS broadband seismometer instrument used to detect ground motion",
+      context: "A seismometer works by suspending a mass on a spring inside a housing attached to the ground. When an earthquake shakes the ground, the housing moves but the mass tends to stay still due to inertia. The relative displacement between mass and housing is recorded. A typical broadband seismometer has a 1.0 kg proof mass, a restoring spring constant of $k = 40$ N/m, and a damping coefficient chosen to optimize transient response.",
+      parts: [
+        { label: "(a)", q: "Find the natural frequency $\\omega_0$ and natural period $T_0$ of this seismometer.", a: "$\\omega_0 = \\sqrt{k/m} = \\sqrt{40/1.0} = 6.32$ rad/s. The period is $T_0 = 2\\pi/\\omega_0 = 2\\pi/6.32 \\approx 0.99$ s." },
+        { label: "(b)", q: "Engineers want the seismometer to be critically damped so it returns to equilibrium quickly after a transient pulse without ringing. What damping constant $b$ (in the force $F = -b\\dot{x}$) is required?", a: "Critical damping requires $\\gamma = 2\\omega_0$, where $\\gamma = b/m$. So $b = 2m\\omega_0 = 2(1.0)(6.32) = 12.6$ kg/s." },
+        { label: "(c)", q: "In practice, seismometers are slightly underdamped with $b = 11.0$ kg/s. Find the damped oscillation frequency $\\omega_1$ and the $1/e$ decay time of the amplitude.", a: "$\\gamma = b/m = 11.0$ s$^{-1}$. $\\omega_1 = \\sqrt{\\omega_0^2 - \\gamma^2/4} = \\sqrt{40 - 30.25} = \\sqrt{9.75} = 3.12$ rad/s. The amplitude decays as $e^{-\\gamma t/2}$, so the $1/e$ time is $\\tau = 2/\\gamma = 2/11.0 = 0.182$ s." },
+        { label: "(d)", q: "If the seismometer mass is displaced 2.0 mm and released from rest, write the complete solution $x(t)$ using the damping from part (c). How many oscillations occur before the amplitude drops below 0.1 mm?", a: "With $x(0) = 2.0$ mm and $\\dot{x}(0) = 0$: $x(t) = 2.0\\,e^{-5.5t}\\left(\\cos(3.12t) + 1.76\\sin(3.12t)\\right)$ mm. The amplitude envelope decays as $\\sim 2.0\\,e^{-5.5t}$ mm. Setting $2.0\\,e^{-5.5t} = 0.1$: $t = \\ln(20)/5.5 = 0.54$ s. Number of cycles $= 0.54 \\times 3.12/(2\\pi) \\approx 0.27$. The system is so heavily damped that it settles in less than one full oscillation." }
+      ]
+    },
+    {
+      title: "Atomic Force Microscope Cantilever",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Atomic_force_microscope_tip.jpg/640px-Atomic_force_microscope_tip.jpg",
+      imageAlt: "Electron microscope image of an AFM cantilever tip used for nanoscale surface imaging",
+      context: "An atomic force microscope (AFM) uses a tiny silicon cantilever with a sharp tip to scan surfaces at the nanometer scale. The cantilever acts as a spring-mass system. A typical AFM cantilever has an effective mass of $m = 10^{-11}$ kg and spring constant $k = 1.0$ N/m.",
+      parts: [
+        { label: "(a)", q: "Calculate the resonant frequency of this cantilever in Hz. Why is such a high frequency advantageous for scanning?", a: "$\\omega_0 = \\sqrt{k/m} = \\sqrt{1.0/10^{-11}} \\approx 3.16 \\times 10^5$ rad/s. $f_0 \\approx 50.3$ kHz. A high resonant frequency means the cantilever responds to force changes much faster than the scanning speed, allowing rapid imaging." },
+        { label: "(b)", q: "The cantilever oscillates with an amplitude of 10 nm. What is its maximum speed and maximum acceleration? Compare the acceleration to $g$.", a: "$v_{\\max} = A\\omega_0 = (10^{-8})(3.16 \\times 10^5) = 3.16 \\times 10^{-3}$ m/s. $a_{\\max} = A\\omega_0^2 = (10^{-8})(10^{11}) = 10^3$ m/s$^2 \\approx 100g$." },
+        { label: "(c)", q: "In liquid environments, the cantilever has quality factor $Q = 5$. Find the damping coefficient $\\gamma$ and the damped frequency $\\omega_1$.", a: "$\\gamma = \\omega_0/Q = 3.16 \\times 10^5/5 = 6.32 \\times 10^4$ s$^{-1}$. $\\omega_1 = \\omega_0\\sqrt{1 - 1/(4Q^2)} \\approx 0.995\\omega_0 \\approx 3.14 \\times 10^5$ rad/s." },
+        { label: "(d)", q: "The thermal energy $\\frac{1}{2}k_B T$ drives random oscillations at room temperature ($T = 300$ K). Estimate the RMS thermal amplitude using $\\frac{1}{2}k\\langle x^2\\rangle = \\frac{1}{2}k_B T$.", a: "$x_{\\rm rms} = \\sqrt{k_B T/k} = \\sqrt{(1.38 \\times 10^{-23})(300)/1.0} = 6.4 \\times 10^{-11}$ m $= 0.064$ nm. This is smaller than typical atomic diameters ($\\sim 0.2$ nm), so thermal noise is small but not negligible for atomic-resolution imaging." }
+      ]
+    },
+    {
+      title: "Vehicle Suspension System",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Suspension_arm_%26_spring.jpg/640px-Suspension_arm_%26_spring.jpg",
+      imageAlt: "Automobile coil spring and shock absorber suspension assembly",
+      context: "A car's suspension must absorb road bumps while keeping the ride comfortable. Each wheel assembly can be modeled as a mass on a spring with a dashpot. For one corner of a 1600 kg sedan, the sprung mass is 400 kg and the suspension spring constant is $k = 20{,}000$ N/m.",
+      parts: [
+        { label: "(a)", q: "Find the natural oscillation frequency and period.", a: "$\\omega_0 = \\sqrt{20000/400} = 7.07$ rad/s. $f_0 = 1.13$ Hz, $T_0 = 0.89$ s. This matches the roughly 1 Hz bounce you feel when pushing down on a car fender." },
+        { label: "(b)", q: "Calculate the required shock absorber damping constant $b$ for damping ratio $\\zeta = 0.3$.", a: "$b = 2m\\omega_0\\zeta = 2(400)(7.07)(0.3) = 1700$ kg/s. Since $\\zeta < 1$, the system is underdamped." },
+        { label: "(c)", q: "The car hits a bump giving an initial velocity of $\\dot{x}(0) = 0.5$ m/s with $x(0) = 0$. Find the maximum compression.", a: "With $\\omega_1 = 6.74$ rad/s and $\\gamma/2 = 2.12$ s$^{-1}$: $x(t) = 0.0742\\,e^{-2.12t}\\sin(6.74t)$ m. Maximum at $t = 0.188$ s: $x_{\\max} \\approx 4.8$ cm." },
+        { label: "(d)", q: "How many oscillation cycles for the bounce amplitude to decay to 10% of its initial value?", a: "$e^{-\\zeta\\omega_0 t} = 0.1$ gives $t = 1.086$ s. Number of cycles $= t \\cdot f_1 = 1.086 \\times 1.073 = 1.16$. The amplitude drops to 10% in just over one oscillation." }
+      ]
+    }
+  ]
+},
+
+"driven-oscillators": {
+  readingQuiz: [
+    { q: "What is the difference between the transient and steady-state response of a driven oscillator?", a: "The transient response decays exponentially due to damping, while the steady-state response oscillates at the driving frequency and persists indefinitely." },
+    { q: "At what driving frequency does the amplitude reach its maximum?", a: "For a lightly damped system, amplitude resonance occurs at $\\omega_r = \\sqrt{\\omega_0^2 - \\gamma^2/2}$, close to $\\omega_0$ when damping is small." },
+    { q: "What is the phase lag between the driving force and displacement at resonance ($\\omega = \\omega_0$)?", a: "The phase lag is $\\pi/2$ (90 degrees); the displacement lags the driving force by a quarter cycle." },
+    { q: "What happens to the phase lag as the driving frequency sweeps from below to above $\\omega_0$?", a: "It increases from approximately $0$ through $\\pi/2$ at resonance to approximately $\\pi$ well above resonance." },
+    { q: "What does the quality factor $Q$ represent for a driven oscillator?", a: "$Q = \\omega_0/\\gamma$ characterizes the sharpness of the resonance peak; higher $Q$ means a narrower, taller resonance." },
+    { q: "At what frequency is the power absorbed from the driving force maximized?", a: "Power absorption is maximized exactly at $\\omega = \\omega_0$, regardless of damping level." },
+    { q: "What is mechanical impedance?", a: "The ratio of driving force amplitude to velocity amplitude, $Z = F_0/v_0$, analogous to electrical impedance." },
+    { q: "What is the FWHM of the power resonance curve in terms of $Q$?", a: "The FWHM is $\\Delta\\omega = \\omega_0/Q = \\gamma$." },
+    { q: "In steady state, where does all the energy input from the driving force go?", a: "All energy is dissipated by damping; the time-averaged stored energy remains constant." }
+  ],
+  shortAnswer: [
+    { q: "Derive the steady-state amplitude $A(\\omega)$ for $\\ddot{x} + \\gamma\\dot{x} + \\omega_0^2 x = (F_0/m)\\cos(\\omega t)$.", a: "$A(\\omega) = \\frac{F_0/m}{\\sqrt{(\\omega_0^2 - \\omega^2)^2 + \\gamma^2\\omega^2}}$." },
+    { q: "Show that the time-averaged power absorbed is $\\langle P \\rangle = \\frac{F_0^2 \\gamma \\omega^2}{2m\\left[(\\omega_0^2-\\omega^2)^2 + \\gamma^2\\omega^2\\right]}$.", a: "$\\langle P\\rangle = \\frac{1}{2}F_0 A\\omega\\sin\\delta$. Using $\\sin\\delta = \\gamma\\omega/\\sqrt{(\\omega_0^2-\\omega^2)^2+\\gamma^2\\omega^2}$ and the expression for $A$ gives the stated result." },
+    { q: "A tuning fork ($f_0 = 440$ Hz, $Q = 2000$) is driven at 441 Hz. What is the steady-state amplitude relative to the resonance amplitude?", a: "With $\\gamma = \\omega_0/Q = 1.382$ s$^{-1}$ and $|\\omega_0^2-\\omega^2| \\approx 2\\omega_0(2\\pi) = 5529$ rad$^2$/s$^2$: $A/A_{\\rm res} \\approx 3821/6721 \\approx 0.57$." },
+    { q: "Derive the phase angle $\\delta(\\omega)$ of the steady-state response.", a: "$\\delta = \\arctan\\!\\left(\\frac{\\gamma\\omega}{\\omega_0^2 - \\omega^2}\\right)$. For $\\omega < \\omega_0$, $\\delta < \\pi/2$; at $\\omega = \\omega_0$, $\\delta = \\pi/2$; for $\\omega > \\omega_0$, $\\delta > \\pi/2$." },
+    { q: "An oscillator with $Q = 50$ and $\\omega_0 = 100$ rad/s is driven from rest. Estimate how long the transient takes to become negligible.", a: "The decay time constant is $\\tau = 2/\\gamma = 2Q/\\omega_0 = 1$ s. After about $5\\tau = 5$ s, the transient is reduced by $e^{-5} \\approx 0.007$." },
+    { q: "What is the mechanical impedance of a damped harmonic oscillator? At what frequency is it purely real?", a: "$Z(\\omega) = b + i(m\\omega - k/\\omega)$. It is purely real at $\\omega = \\omega_0$, where $Z = b = m\\gamma$." }
+  ],
+  longProblems: [
+    {
+      title: "Taipei 101 Tuned Mass Damper",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Taipei_101_Tuned_Mass_Damper.png/480px-Taipei_101_Tuned_Mass_Damper.png",
+      imageAlt: "The 730-tonne tuned mass damper sphere suspended inside Taipei 101 skyscraper",
+      context: "Taipei 101 contains a 730-tonne steel sphere suspended from cables near the top. This tuned mass damper swings out of phase with wind- or earthquake-induced building oscillations, reducing sway by up to 40%. The building's fundamental sway period is about 7 seconds.",
+      parts: [
+        { label: "(a)", q: "Model the building as a driven oscillator with $M = 2 \\times 10^8$ kg, $K = 1.6 \\times 10^8$ N/m, $Q = 15$. Find $\\omega_0$, $\\gamma$, and the resonance sway amplitude for typhoon force $F_0 = 5 \\times 10^7$ N.", a: "$\\omega_0 = \\sqrt{0.8} = 0.894$ rad/s ($T = 7.03$ s). $\\gamma = 0.0596$ s$^{-1}$. $A_{\\rm res} = F_0/(M\\gamma\\omega_0) = 4.69$ m." },
+        { label: "(b)", q: "The TMD raises the effective damping to $Q \\approx 8$. Find the new resonance amplitude and percentage reduction.", a: "New $A_{\\rm res} = 2.50$ m. Reduction: $(4.69 - 2.50)/4.69 = 46.7\\%$." },
+        { label: "(c)", q: "During Typhoon Soudelor the TMD swung 1.0 m. What was the peak velocity and kinetic energy of the 730-tonne sphere?", a: "$v_{\\max} = 1.0 \\times 0.894 = 0.894$ m/s. $KE_{\\max} = \\frac{1}{2}(730{,}000)(0.894)^2 \\approx 290$ kJ." },
+        { label: "(d)", q: "Why must the TMD be tuned to the building's sway frequency? What if it were 20% too high?", a: "The TMD works by absorbing energy at the building's resonance frequency, with 90° phase lag providing effective damping. If 20% off-tune, the phase relationship shifts, reducing effective damping from ~40% sway reduction to perhaps 5-10%." }
+      ]
+    },
+    {
+      title: "Quartz Crystal Oscillator in a Watch",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Quartz_crystal_internal.jpg/640px-Quartz_crystal_internal.jpg",
+      imageAlt: "Inside view of a quartz crystal resonator showing the tuning-fork shaped quartz element",
+      context: "A quartz wristwatch uses a tuning-fork-shaped crystal vibrating at exactly 32,768 Hz. The crystal's extremely high $Q \\approx 10^5$ gives remarkable frequency selectivity, accurate to within seconds per month.",
+      parts: [
+        { label: "(a)", q: "Calculate $\\gamma$ and the FWHM bandwidth $\\Delta f$.", a: "$\\gamma = \\omega_0/Q = 2.059$ rad/s. $\\Delta f = f_0/Q = 0.328$ Hz." },
+        { label: "(b)", q: "How long does the transient last after power-on? How many cycles during the transient?", a: "$\\tau = 2/\\gamma = 0.971$ s. About $3\\tau \\approx 2.9$ s, during which $N \\approx 95{,}000$ cycles occur." },
+        { label: "(c)", q: "The frequency shifts with temperature: $\\Delta f/f_0 \\approx -0.04 \\times 10^{-6}(T - 25)^2$ per $°$C$^2$. How many seconds per day does it lose at $0°$C?", a: "$\\Delta f/f_0 = -25 \\times 10^{-6}$ (25 ppm slow). Loss: $25 \\times 10^{-6} \\times 86400 \\approx 2.2$ s/day." },
+        { label: "(d)", q: "If the drive frequency drifts to $\\omega = \\omega_0 + \\gamma/2$, by what factor does amplitude drop and what is the phase lag?", a: "Amplitude drops by $1/\\sqrt{2}$ (half-power point). Phase lag is $3\\pi/4$ (135°)." }
+      ]
+    },
+    {
+      title: "MRI Radiofrequency Excitation of Proton Spins",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/MRI_head_side.jpg/480px-MRI_head_side.jpg",
+      imageAlt: "MRI scan showing a sagittal cross-section of a human head",
+      context: "In MRI, hydrogen protons precess around the magnetic field $B_0$ at the Larmor frequency $f_L = \\gamma_p B_0/(2\\pi)$, where $\\gamma_p = 2.675 \\times 10^8$ rad/(s·T). An oscillating RF field drives these spins at resonance. A clinical scanner uses $B_0 = 3.0$ T.",
+      parts: [
+        { label: "(a)", q: "Calculate the Larmor frequency at 3.0 T. What part of the EM spectrum is this?", a: "$f_L = 127.7$ MHz, in the VHF radio band (similar to FM radio)." },
+        { label: "(b)", q: "Brain white matter has $T_2 = 80$ ms. Find the effective $Q$ and linewidth $\\Delta f$.", a: "$Q = 2\\pi f_L T_2 = 6.42 \\times 10^7$. $\\Delta f = 1/(\\pi T_2) = 3.98$ Hz." },
+        { label: "(c)", q: "If the field varies by 1 ppm across a voxel, what additional linewidth broadening occurs?", a: "$\\Delta f_{\\rm inhom} = f_L \\times 10^{-6} = 127.7$ Hz, about 30 times the natural linewidth." },
+        { label: "(d)", q: "With a gradient $G_x = 10$ mT/m, how far apart must two points be for their frequencies to differ by the natural linewidth?", a: "$\\Delta x = 2\\pi\\Delta f/(\\gamma_p G_x) = 9.4\\;\\mu$m, far finer than the typical 1 mm clinical resolution." }
+      ]
+    }
+  ]
+},
+
+"coupled-oscillators": {
+  readingQuiz: [
+    { q: "What is a normal mode of a coupled oscillator system?", a: "A pattern of motion in which all parts oscillate at the same frequency with fixed phase relationships." },
+    { q: "How many normal modes does a system of $N$ coupled oscillators have?", a: "Exactly $N$ normal modes." },
+    { q: "For two identical coupled masses, describe the symmetric and antisymmetric modes.", a: "Symmetric: both masses move in the same direction. Antisymmetric: they move in opposite directions." },
+    { q: "Which mode has higher frequency: symmetric or antisymmetric?", a: "Antisymmetric, because the coupling spring adds restoring force." },
+    { q: "What phenomenon occurs when one mass is displaced and released in a two-mass coupled system?", a: "Beats: energy transfers back and forth at $\\omega_{\\rm beat} = |\\omega_2 - \\omega_1|$." },
+    { q: "How is finding normal modes related to an eigenvalue problem?", a: "The equations of motion become $\\mathbf{K}\\vec{x} = \\omega^2 \\mathbf{M}\\vec{x}$; normal mode frequencies are eigenvalues and mode shapes are eigenvectors." },
+    { q: "Can any motion be expressed in terms of normal modes?", a: "Yes, any motion is a linear superposition of normal modes since they form a complete set." },
+    { q: "What happens to normal mode frequencies if the coupling spring is stiffened?", a: "The antisymmetric mode frequency increases; the symmetric mode frequency is unchanged." }
+  ],
+  shortAnswer: [
+    { q: "Two identical masses connected by three identical springs (both ends fixed). Find the normal mode frequencies.", a: "$\\omega_1 = \\sqrt{k/m}$ (symmetric) and $\\omega_2 = \\sqrt{3k/m}$ (antisymmetric)." },
+    { q: "Normal mode frequencies $\\omega_1 = 10$, $\\omega_2 = 12$ rad/s. One mass displaced and released. Find the beat frequency and period.", a: "$\\omega_{\\rm beat} = 2$ rad/s, $T_{\\rm beat} = \\pi$ s. Energy transfers completely every $T_{\\rm beat}/2 = 1.57$ s." },
+    { q: "Write the general solution for two identical coupled oscillators in terms of normal coordinates.", a: "$q_1 = (x_1+x_2)/2$ with $\\omega_1 = \\sqrt{k/m}$; $q_2 = (x_1-x_2)/2$ with $\\omega_2 = \\sqrt{(k+2k_c)/m}$. Then $x_{1,2}(t) = A_1\\cos(\\omega_1 t+\\phi_1) \\pm A_2\\cos(\\omega_2 t+\\phi_2)$." },
+    { q: "Why do three masses on a ring have a zero-frequency mode?", a: "All masses can translate together without stretching any springs; no restoring force means $\\omega = 0$." },
+    { q: "Find normal mode frequencies for two pendulums of length $L$ coupled by a spring $k_c$ at their bobs.", a: "$\\omega_1 = \\sqrt{g/L}$ (symmetric); $\\omega_2 = \\sqrt{g/L + 2k_c/m}$ (antisymmetric)." }
+  ],
+  longProblems: [
+    {
+      title: "CO$_2$ Molecular Vibrations",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Carbon_dioxide_3D_ball.png/640px-Carbon_dioxide_3D_ball.png",
+      imageAlt: "Ball-and-stick 3D model of carbon dioxide molecule",
+      context: "CO$_2$ is a linear triatomic molecule: O=C=O, with $m_C = 12$ u, $m_O = 16$ u, and C=O bond spring constant $k \\approx 1600$ N/m. Its vibrational modes cause infrared absorption, making it a greenhouse gas.",
+      parts: [
+        { label: "(a)", q: "Set up the equations of motion for longitudinal vibrations of the three atoms.", a: "$M\\ddot{x}_1 = -k(x_1-x_2)$, $m\\ddot{x}_2 = k(x_1-2x_2+x_3)$, $M\\ddot{x}_3 = -k(x_3-x_2)$." },
+        { label: "(b)", q: "Find the three normal mode frequencies and describe each mode.", a: "Translation: $\\omega = 0$ (all atoms move together). Symmetric stretch ($\\omega_s = \\sqrt{k/M}$): oxygens move apart, carbon stationary. Antisymmetric stretch ($\\omega_a = \\sqrt{k(m+2M)/(mM)}$): one bond stretches while the other compresses. Ratio $\\omega_a/\\omega_s = \\sqrt{(m+2M)/m} = \\sqrt{11/3} = 1.91$." },
+        { label: "(c)", q: "Measured frequencies: symmetric $\\bar{\\nu} = 1388$ cm$^{-1}$, antisymmetric $\\bar{\\nu} = 2349$ cm$^{-1}$. Compare the ratio with theory.", a: "Measured ratio $= 7.05/4.16 = 1.69$ vs theory $1.91$. The discrepancy arises from anharmonicity in real bonds." },
+        { label: "(d)", q: "Why is the symmetric stretch IR-inactive while the antisymmetric stretch is IR-active?", a: "In the symmetric stretch, the two bond dipoles change symmetrically and cancel, so the net dipole moment stays zero. In the antisymmetric stretch, one bond lengthens while the other shortens, creating an oscillating dipole that couples to IR radiation." }
+      ]
+    },
+    {
+      title: "Wilberforce Pendulum: Coupled Translation and Rotation",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Wilberforce_Pendulum.png/411px-Wilberforce_Pendulum.png",
+      imageAlt: "Diagram of a Wilberforce pendulum showing coupled vertical and torsional motion",
+      context: "A Wilberforce pendulum has a mass on a helical spring exhibiting coupling between vertical bouncing and twisting. When tuned so both frequencies match, energy transfers dramatically between modes.",
+      parts: [
+        { label: "(a)", q: "Write the coupled equations $m\\ddot{z} = -k_z z - \\epsilon\\theta$, $I\\ddot{\\theta} = -k_\\theta\\theta - \\epsilon z$ as a matrix eigenvalue problem.", a: "$\\omega^2\\begin{pmatrix}m & 0\\\\0 & I\\end{pmatrix}\\begin{pmatrix}Z\\\\\\Theta\\end{pmatrix} = \\begin{pmatrix}k_z & \\epsilon\\\\\\epsilon & k_\\theta\\end{pmatrix}\\begin{pmatrix}Z\\\\\\Theta\\end{pmatrix}$." },
+        { label: "(b)", q: "For the tuned case $k_z/m = k_\\theta/I = \\omega_0^2 = 100$ with $\\epsilon = 5 \\times 10^{-3}$ N/rad, $m = 0.5$ kg, $I = 10^{-4}$ kg·m$^2$, find the normal mode frequencies.", a: "$\\omega_{\\pm}^2 = 100 \\mp \\epsilon/\\sqrt{mI} = 100 \\mp 0.707$. $\\omega_+ = 9.965$ rad/s, $\\omega_- = 10.035$ rad/s." },
+        { label: "(c)", q: "Starting with pure vertical displacement, find the beat period.", a: "$\\Delta\\omega = 0.070$ rad/s. $T_{\\rm beat} = 2\\pi/0.070 = 89.8$ s. Energy transfers from vertical to torsional every ~45 s." },
+        { label: "(d)", q: "If slightly detuned ($k_z/m = 100$, $k_\\theta/I = 102$), does complete energy transfer still occur?", a: "No. With detuning, only about $\\epsilon^2/(mI\\delta^2+\\epsilon^2) = 1/3$ of the energy transfers. The beats are faster ($T_{\\rm beat} = 51.5$ s) but incomplete." }
+      ]
+    },
+    {
+      title: "Coupled Piano Strings and the Two-Stage Decay",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Inside_a_Steinway.JPG/640px-Inside_a_Steinway.JPG",
+      imageAlt: "Interior of a Steinway grand piano showing strings and hammers",
+      context: "Most piano notes have two or three strings tuned to the same pitch, coupled through the bridge. This coupling produces the piano's characteristic two-stage decay: a loud initial sound that fades quickly, followed by a quieter sustained tone.",
+      parts: [
+        { label: "(a)", q: "Two strings at 440 Hz are coupled with normal mode frequencies $f_1 = 439.5$ Hz and $f_2 = 440.5$ Hz. What is the beat frequency and how does it relate to the two-stage decay?", a: "$f_{\\rm beat} = 1.0$ Hz. The antisymmetric mode radiates quickly through the bridge (loud, fast decay). The symmetric mode radiates weakly (quiet, slow decay)." },
+        { label: "(b)", q: "Calculate the coupling constant $k_c$ if each string has effective mass $m = 3 \\times 10^{-3}$ kg.", a: "$k_c = m(\\omega_2^2-\\omega_1^2)/4 = (3 \\times 10^{-3})(34{,}719)/4 = 26.0$ N/m, about 0.1% of the string spring constant." },
+        { label: "(c)", q: "When strings are tuned to unison, what are the actual sounding frequencies with coupling?", a: "The average frequency is still 440 Hz (to excellent approximation). The 1 Hz splitting is below the ~3 Hz perception threshold for separate pitches." },
+        { label: "(d)", q: "With the sustain pedal down (all dampers lifted), why does the sound become richer?", a: "Strings whose natural frequencies match harmonics of the played note vibrate sympathetically. This network of coupled oscillators adds extra partials, enriching the timbre." }
+      ]
+    }
+  ]
+},
+
+"oscillators-to-waves": {
+  readingQuiz: [
+    { q: "What is a dispersion relation?", a: "$\\omega(k)$ gives angular frequency as a function of wavenumber, describing how different wavelengths propagate." },
+    { q: "What is the dispersion relation for a monatomic chain?", a: "$\\omega = 2\\sqrt{k/m}\\,|\\sin(ka/2)|$." },
+    { q: "What is the maximum frequency on a discrete chain, and what wavelength does it correspond to?", a: "$\\omega_{\\max} = 2\\sqrt{k/m}$, at $\\lambda_{\\min} = 2a$ where adjacent masses move oppositely." },
+    { q: "How does phase velocity behave in the long-wavelength limit?", a: "$v_p \\to a\\sqrt{k/m}$, a constant, so there is no dispersion." },
+    { q: "What is the continuum limit and when is it valid?", a: "Replacing the discrete chain with a continuous medium, valid when $\\lambda \\gg a$." },
+    { q: "Write the 1D wave equation and identify the wave speed.", a: "$\\partial^2 y/\\partial t^2 = v^2 \\partial^2 y/\\partial x^2$, with $v = a\\sqrt{k/m}$ or $v = \\sqrt{T/\\mu}$ for a string." },
+    { q: "What is the difference between phase velocity and group velocity?", a: "$v_p = \\omega/k$ is the speed of crests; $v_g = d\\omega/dk$ is the speed of the wave packet and energy." },
+    { q: "Is the discrete chain dispersive?", a: "Yes, $\\omega$ is not proportional to $k$ (except at long wavelengths), so different wavelengths travel at different speeds." },
+    { q: "What boundary condition leads to quantized wavenumbers?", a: "Fixed ends require $\\sin(kL) = 0$, giving $k_n = n\\pi/L$." }
+  ],
+  shortAnswer: [
+    { q: "Derive the dispersion relation by substituting $x_n = Ae^{i(kna-\\omega t)}$ into the equation of motion.", a: "$-m\\omega^2 = k(2\\cos(ka)-2)$, giving $\\omega^2 = \\frac{4k}{m}\\sin^2(ka/2)$." },
+    { q: "Show that the continuum limit yields the wave equation.", a: "Taylor expanding $x_{n\\pm 1}$: $x_{n+1}-2x_n+x_{n-1} = a^2\\partial^2 u/\\partial x^2$. The equation becomes $\\partial^2 u/\\partial t^2 = (ka^2/m)\\partial^2 u/\\partial x^2$." },
+    { q: "For a chain with $a = 3\\AA$, $m = 4 \\times 10^{-26}$ kg, $k = 20$ N/m: find $\\omega_{\\max}$, speed of sound, and $\\lambda_{\\min}$.", a: "$\\omega_{\\max} = 4.47 \\times 10^{13}$ rad/s. $v = 6710$ m/s. $\\lambda_{\\min} = 6\\AA$." },
+    { q: "Calculate time-averaged KE and PE per unit length for a traveling wave on a string.", a: "$\\langle KE\\rangle = \\langle PE\\rangle = \\frac{1}{4}\\mu\\omega^2 A^2$ per unit length (equipartition)." },
+    { q: "Find $v_g$ for the monatomic chain and show $v_g \\leq v_p$.", a: "$v_g = a\\sqrt{k/m}\\cos(ka/2)$. Since $\\tan\\theta \\geq \\theta$, we get $v_g/v_p = (ka/2)/\\tan(ka/2) \\leq 1$." }
+  ],
+  longProblems: [
+    {
+      title: "Seismic Waves Through Earth's Interior",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Earth_poster.svg/480px-Earth_poster.svg.png",
+      imageAlt: "Cross-section of Earth showing crust, mantle, outer core, and inner core",
+      context: "Seismic waves reveal Earth's layered structure. P-waves (longitudinal) travel through solids and liquids; S-waves (transverse) travel only through solids. In crustal rock: $v_P = 6.0$ km/s, $\\rho = 2700$ kg/m$^3$.",
+      parts: [
+        { label: "(a)", q: "Given $v_P = 6.0$ km/s and $v_S = 3.5$ km/s, find the bulk modulus $K$ and shear modulus $G$.", a: "$G = \\rho v_S^2 = 33.1$ GPa. $K = \\rho v_P^2 - 4G/3 = 53.1$ GPa." },
+        { label: "(b)", q: "Model the crust as blocks of size $a = 1$ km. At what frequency does the model deviate from continuum?", a: "When $\\lambda < 10a = 10$ km, i.e., $f > v/(10a) = 0.6$ Hz." },
+        { label: "(c)", q: "An earthquake is 1000 km away. How much sooner does the P-wave arrive?", a: "$\\Delta t = d(1/v_S - 1/v_P) = 119$ s $\\approx 2$ minutes. This is the basis of seismological distance measurement." },
+        { label: "(d)", q: "At the core-mantle boundary, $v_P$ drops from 13.7 to 8.1 km/s and $v_S$ drops to zero. What does $v_S = 0$ tell us? Find the P-wave refraction angle for 30° incidence.", a: "$v_S = 0$ means the outer core is liquid ($G = 0$). Snell's law: $\\sin\\theta_t = 8.1\\sin 30°/13.7 = 0.296$, giving $\\theta_t = 17.2°$." }
+      ]
+    },
+    {
+      title: "Diatomic Chain and Optical Phonons in Salt Crystals",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Sodium_chloride_crystal.jpg/640px-Sodium_chloride_crystal.jpg",
+      imageAlt: "A clear cubic sodium chloride crystal",
+      context: "In NaCl, alternating Na$^+$ ($m = 23$ u) and Cl$^-$ ($M = 35$ u) create a diatomic chain with acoustic and optical branches. The optical branch couples to infrared light, explaining why NaCl absorbs IR radiation.",
+      parts: [
+        { label: "(a)", q: "Derive the dispersion relation for the diatomic chain.", a: "Substituting traveling waves into the coupled equations gives $(2k-m\\omega^2)(2k-M\\omega^2) = 4k^2\\cos^2(ka/2)$, yielding two branches." },
+        { label: "(b)", q: "Find frequencies at $k = 0$ and $k = \\pi/a$ using $k = 20$ N/m.", a: "At $k=0$: acoustic $\\omega_A = 0$, optical $\\omega_O = \\sqrt{2k/\\mu} = 4.17 \\times 10^{13}$ rad/s. At $k = \\pi/a$: $\\omega_A = \\sqrt{2k/M}$, $\\omega_O = \\sqrt{2k/m}$. There is a frequency gap between branches." },
+        { label: "(c)", q: "Describe the optical mode at $k = 0$. Why is it IR-active?", a: "Adjacent Na$^+$ and Cl$^-$ ions move in opposite directions, creating an oscillating electric dipole that couples to EM radiation. The absorption occurs at $\\lambda \\approx 45\\;\\mu$m (far IR)." },
+        { label: "(d)", q: "Why is NaCl transparent to visible light but opaque in the far IR?", a: "Visible light ($f \\sim 5 \\times 10^{14}$ Hz) is far above phonon frequencies and doesn't couple. IR near the optical phonon frequency resonantly excites phonons and is absorbed." }
+      ]
+    },
+    {
+      title: "Gravity-Capillary Waves on Water",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Capillary_wave_%28ripple%29.jpg/640px-Capillary_wave_%28ripple%29.jpg",
+      imageAlt: "Capillary ripple waves on a water surface",
+      context: "Deep water waves have dispersion relation $\\omega^2 = gk + (\\sigma/\\rho)k^3$, combining gravity ($g = 9.8$ m/s$^2$) and surface tension ($\\sigma = 0.073$ N/m, $\\rho = 1000$ kg/m$^3$).",
+      parts: [
+        { label: "(a)", q: "Find the crossover wavelength where gravity and capillary terms are equal.", a: "$\\lambda_c = 2\\pi/k_c = 1.72$ cm. Phase velocity at crossover: $v_p = 0.231$ m/s (the minimum)." },
+        { label: "(b)", q: "Find phase and group velocities for $\\lambda = 100$ m (ocean swell) and $\\lambda = 3$ mm (ripples).", a: "Ocean swell: $v_p = 12.5$ m/s, $v_g = v_p/2 = 6.25$ m/s. Ripples: $v_p = 0.397$ m/s, $v_g = 3v_p/2 = 0.596$ m/s." },
+        { label: "(c)", q: "When a stone is thrown into a pond, why are long waves on the outside and capillary ripples on the inside?", a: "For gravity waves, $v_g$ increases with $\\lambda$, so long waves lead. For capillary waves, $v_g$ increases with $k$, so short waves also travel fast. The minimum group velocity at $\\lambda_c$ creates a trailing edge." },
+        { label: "(d)", q: "A tsunami ($\\lambda = 200$ km, ocean depth $h = 4$ km) obeys $v = \\sqrt{gh}$. Find its speed and explain why wave height grows near shore.", a: "$v = \\sqrt{9.8 \\times 4000} = 198$ m/s = 713 km/h. As $h$ decreases near shore, $v$ drops and energy conservation requires amplitude to grow: $A \\propto h^{-1/4}$." }
+      ]
+    }
+  ]
+},
+
+"fourier-series": {
+  readingQuiz: [
+    { q: "What does it mean for $\\sin(n\\pi x/L)$ and $\\sin(m\\pi x/L)$ to be orthogonal on $[0,L]$?", a: "Their inner product $\\int_0^L \\sin(n\\pi x/L)\\sin(m\\pi x/L)\\,dx = 0$ when $n \\neq m$." },
+    { q: "Write the formulas for Fourier coefficients $a_n$ and $b_n$.", a: "$a_n = \\frac{1}{L}\\int_{-L}^{L}f(x)\\cos(n\\pi x/L)\\,dx$, $b_n = \\frac{1}{L}\\int_{-L}^{L}f(x)\\sin(n\\pi x/L)\\,dx$." },
+    { q: "Why does the square wave Fourier series have only odd harmonics?", a: "A square wave has half-wave symmetry ($f(x+L) = -f(x)$), which zeroes all even harmonics." },
+    { q: "What is the Gibbs phenomenon?", a: "The persistent ~9% overshoot near discontinuities in Fourier partial sums, which narrows but never disappears as more terms are added." },
+    { q: "Does adding more terms eliminate the Gibbs overshoot?", a: "No, the overshoot narrows but its peak stays at about 9% of the jump." },
+    { q: "If $f(x)$ is even, which coefficients vanish?", a: "All $b_n$ vanish; only cosine terms remain." },
+    { q: "If $f(x)$ is odd, which coefficients vanish?", a: "All $a_n$ vanish; only sine terms remain." },
+    { q: "What does Parseval's theorem state?", a: "The average of $|f(x)|^2$ over one period equals the sum of the squares of the Fourier coefficients." },
+    { q: "How do the $b_n$ of a square wave depend on $n$?", a: "$b_n = 4/(n\\pi)$ for odd $n$, zero for even $n$." }
+  ],
+  shortAnswer: [
+    { q: "Find the Fourier series of $f(x) = x$ for $-L < x < L$ (period $2L$).", a: "Odd function: $a_n = 0$. $b_n = \\frac{2L}{n\\pi}(-1)^{n+1}$. $f(x) = \\frac{2L}{\\pi}\\sum_{n=1}^{\\infty}\\frac{(-1)^{n+1}}{n}\\sin(n\\pi x/L)$." },
+    { q: "Compute the Fourier series for the triangle wave $f(x) = 1 - |x|/L$.", a: "Even function: $a_0 = 1/2$. $a_n = 4/(n^2\\pi^2)$ for odd $n$, zero for even $n$. Only odd cosine harmonics, falling as $1/n^2$." },
+    { q: "Use Parseval's theorem on the square wave to derive $1 + 1/9 + 1/25 + \\cdots = \\pi^2/8$.", a: "Parseval gives $1 = \\sum_{n\\,\\rm odd}\\frac{8}{n^2\\pi^2}$, so $\\sum_{n\\,\\rm odd}1/n^2 = \\pi^2/8$." },
+    { q: "A function has $f(x) = \\sum 1/n^3 \\sin(nx)$. Is it continuous? Differentiable?", a: "Yes to both. $\\sum 1/n^3$ converges, giving uniform convergence and continuity. The derivative series $\\sum \\cos(nx)/n^2$ also converges uniformly, so $f$ is differentiable." },
+    { q: "Why do square wave coefficients decay as $1/n$ but triangle wave as $1/n^2$?", a: "Smoothness determines decay rate. Jump discontinuities give $1/n$; derivative discontinuities give $1/n^2$. Each additional degree of smoothness adds one power of $1/n$." },
+    { q: "Find the Fourier series for $f(x) = x^2$ on $[-\\pi,\\pi]$ and evaluate $\\sum 1/n^2$.", a: "$x^2 = \\pi^2/3 + 4\\sum (-1)^n \\cos(nx)/n^2$. Setting $x = \\pi$: $\\sum 1/n^2 = \\pi^2/6$ (the Basel problem)." }
+  ],
+  longProblems: [
+    {
+      title: "Fourier Analysis of Musical Timbres",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/GuitareClassique5.png/377px-GuitareClassique5.png",
+      imageAlt: "A classical acoustic guitar",
+      context: "Different instruments playing the same note sound distinct due to different harmonic content. When a guitar string is plucked at point $d$ from one end, the triangular initial shape determines which harmonics are excited.",
+      parts: [
+        { label: "(a)", q: "A string of length $L = 0.65$ m is plucked at $d = L/5$, height $h = 3$ mm. Write the initial displacement.", a: "$y(x,0) = (5h/L)x$ for $0 \\leq x \\leq L/5$; $y(x,0) = (5h/4L)(L-x)$ for $L/5 \\leq x \\leq L$." },
+        { label: "(b)", q: "Find the Fourier sine coefficients $B_n$. Which harmonics are missing?", a: "$B_n \\propto \\sin(n\\pi/5)/n^2$. Harmonics $n = 5, 10, 15, \\ldots$ vanish (they have nodes at the pluck point)." },
+        { label: "(c)", q: "Calculate relative amplitudes $B_n/B_1$ for $n = 1$ through $7$.", a: "$B_1 = 1$, $B_2 = 0.405$, $B_3 = 0.180$, $B_4 = 0.063$, $B_5 = 0$, $B_6 = -0.028$, $B_7 = -0.033$. Both even and odd harmonics present (unlike clarinet), with $1/n^2$ falloff." },
+        { label: "(d)", q: "If plucked at center ($d = L/2$), which harmonics survive?", a: "Only odd harmonics ($n = 1, 3, 5, \\ldots$). The sound is more hollow/woody, similar to clarinet tone." }
+      ]
+    },
+    {
+      title: "Square Waves in Digital Electronics",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Square_wave.svg/640px-Square_wave.svg.png",
+      imageAlt: "An ideal square wave signal",
+      context: "Digital circuits use square wave clocks. Real circuits have finite bandwidth, so understanding the Fourier content determines how much bandwidth is needed to preserve signal shape.",
+      parts: [
+        { label: "(a)", q: "A 1 GHz clock alternates 0-1 V. List the first five nonzero harmonic frequencies and amplitudes.", a: "Harmonics at $n$ GHz (odd $n$): 1 GHz (0.637 V), 3 GHz (0.212 V), 5 GHz (0.127 V), 7 GHz (0.091 V), 9 GHz (0.071 V)." },
+        { label: "(b)", q: "A trace has 5 GHz bandwidth. What does the received signal look like?", a: "Harmonics at 1 and 3 GHz pass fully; 5 GHz is at the 3 dB point. The signal has rounded transitions (~100 ps rise time) but recognizable shape." },
+        { label: "(c)", q: "What is the Gibbs overshoot voltage for $N = 101$ terms?", a: "About 9% of the 1 V jump = 0.09 V above the 1 V level, in a spike about 10 ps wide." },
+        { label: "(d)", q: "For a 50 ps rise time, what bandwidth is needed? How many harmonics?", a: "$BW = 0.35/t_r = 7.0$ GHz. Need harmonics through $n = 7$ (four nonzero terms)." }
+      ]
+    },
+    {
+      title: "Fourier Series and Heat Conduction",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Wrought_iron_bar.jpg/640px-Wrought_iron_bar.jpg",
+      imageAlt: "A metal iron bar for heat conduction",
+      context: "Fourier developed his series to solve the heat equation $\\partial T/\\partial t = \\alpha\\partial^2 T/\\partial x^2$. For a copper rod ($L = 1$ m, $\\alpha = 1.11 \\times 10^{-4}$ m$^2$/s) with ends at $0°$C, the solution is a Fourier sine series with exponentially decaying coefficients.",
+      parts: [
+        { label: "(a)", q: "Show the heat equation has solutions $T_n = B_n\\sin(n\\pi x/L)e^{-\\alpha n^2\\pi^2 t/L^2}$ and find the time constant $\\tau_n$.", a: "Separation of variables gives $\\tau_n = L^2/(\\alpha n^2\\pi^2)$. For copper: $\\tau_1 = 913$ s $\\approx 15$ min." },
+        { label: "(b)", q: "Rod initially at $100°$C, ends cooled to $0°$C. Find the Fourier coefficients.", a: "$B_n = 4T_0/(n\\pi)$ for odd $n$, zero for even $n$." },
+        { label: "(c)", q: "How long for the center to cool from $100°$C to $50°$C?", a: "Keeping only $n = 1$: $50 = (400/\\pi)e^{-t/\\tau_1}$, giving $t \\approx 854$ s $\\approx 14$ min." },
+        { label: "(d)", q: "After what time has the $n = 3$ mode decreased to 1% of its initial amplitude?", a: "$e^{-9t/\\tau_1} = 0.01$ gives $t \\approx 467$ s. At that time, $n = 1$ is still at 60%. Higher modes die out much faster, justifying single-term approximation." }
+      ]
+    }
+  ]
+},
+
 "waves": {
   readingQuiz: [
     { q: "What is the standard form of the one-dimensional wave equation?", a: "$$\\frac{\\partial^2 y}{\\partial t^2} = v^2 \\frac{\\partial^2 y}{\\partial x^2}$$" },
@@ -360,6 +658,599 @@ window.WAVES_TEST_PROBLEMS = {
         { label: "(c)", q: "Dispersion-shifted fiber has $D \\approx 0$ at 1550 nm. Explain in terms of group velocity what $D = 0$ means, and why it eliminates pulse broadening.", a: "$D = 0$ means $d^2 k/d\\omega^2 = 0$, which implies the group velocity $v_g = d\\omega/dk$ is independent of frequency (to first order). All spectral components of the pulse travel at the same group velocity, so the pulse does not broaden. The dispersion relation is approximately linear near this wavelength." },
         { label: "(d)", q: "An alternative is dispersion compensation: after 80 km of standard fiber ($D = +17$), add a length $L_c$ of compensating fiber with $D_c = -100$ ps/(nm$\\cdot$km). What length of compensating fiber is needed?", a: "Total dispersion must be zero: $D \\cdot L + D_c \\cdot L_c = 0$. $L_c = -DL/D_c = -(17)(80)/(-100) = 13.6$ km. Adding 13.6 km of compensating fiber exactly cancels the accumulated dispersion, restoring the pulse to its original width." },
         { label: "(e)", q: "At 40 Gbit/s, the bit period is 25 ps. Now what is the maximum transmission distance without compensation in standard fiber?", a: "$L_{\\max} = 25/(17 \\times 0.1) = 14.7$ km. Quadrupling the data rate reduces the reach by a factor of 4. This is why high-speed long-haul telecom systems require sophisticated dispersion management." }
+      ]
+    }
+  ]
+},
+
+"wave-phenomena": {
+  readingQuiz: [
+    { q: "What is the Doppler effect?", a: "The change in observed frequency of a wave when the source and observer are in relative motion." },
+    { q: "Does the Doppler shift depend on whether the source or observer is moving for sound?", a: "Yes — for sound the two cases give different formulas because the medium defines a preferred frame." },
+    { q: "What is a Mach cone?", a: "The conical wavefront produced when a source moves faster than the wave speed in the medium." },
+    { q: "How is the Mach cone half-angle related to the speeds?", a: "$\\sin\\theta = v/v_s$, where $v$ is wave speed and $v_s$ is source speed." },
+    { q: "What is the Mach number?", a: "The ratio of source speed to wave speed: $M = v_s/v$." },
+    { q: "What is Cherenkov radiation?", a: "EM radiation emitted when a charged particle travels through a medium faster than the phase velocity of light in that medium." },
+    { q: "What does the superposition principle state?", a: "When waves overlap, the resultant displacement is the sum of the individual displacements." },
+    { q: "What happens when many waves of slightly different frequencies are superposed?", a: "They form a wave packet whose envelope travels at the group velocity." },
+    { q: "Can two waves of different frequencies produce a stable interference pattern?", a: "No — stable interference requires coherent waves with the same frequency and constant phase relationship." }
+  ],
+  shortAnswer: [
+    { q: "An ambulance siren at $750$ Hz approaches at 30 m/s. What frequency do you hear? ($v = 343$ m/s)", a: "$f = 750 \\times 343/(343-30) = 750 \\times 343/313 \\approx 822$ Hz." },
+    { q: "A jet flies at Mach 2.0. What is the Mach cone half-angle?", a: "$\\sin\\theta = 1/M = 1/2$, so $\\theta = 30°$." },
+    { q: "Minimum speed for Cherenkov radiation in water ($n = 1.5$)?", a: "$v_{\\min} = c/n = 0.667c$." },
+    { q: "Two speakers at 1000 Hz in phase; observer is 3.00 m and 3.34 m from them. Constructive or destructive?", a: "$\\lambda = 0.343$ m. Path difference $= 0.34$ m $\\approx \\lambda$. Approximately constructive." },
+    { q: "Five identical waves with phase spacing $\\delta = 2\\pi/5$ are superposed. Resultant amplitude?", a: "The phasors form a closed pentagon (total phase $= 2\\pi$), so they sum to zero. Amplitude $= 0$." },
+    { q: "Write the general Doppler formula for source receding at $v_s$ and observer approaching at $v_o$.", a: "$f = f_0(v + v_o)/(v + v_s)$." }
+  ],
+  longProblems: [
+    {
+      title: "Sonic Boom from a Supersonic Aircraft",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/FA-18_Hornet_breaking_sound_barrier_%287_July_1999%29_-_filtered.jpg/1280px-FA-18_Hornet_breaking_sound_barrier_%287_July_1999%29_-_filtered.jpg",
+      imageAlt: "F/A-18 Hornet breaking the sound barrier with a visible vapor cone",
+      context: "When a supersonic aircraft exceeds Mach 1, it generates a Mach cone whose intersection with the ground produces the sonic boom.",
+      parts: [
+        { label: "(a)", q: "An F/A-18 at Mach 1.4, altitude 5000 m. Find the Mach cone half-angle.", a: "$\\sin\\theta = 1/1.4 = 0.714$, so $\\theta \\approx 45.6°$." },
+        { label: "(b)", q: "How far behind the aircraft does the cone hit the ground?", a: "$d = h/\\tan\\theta = 5000/\\tan(45.6°) \\approx 4890$ m." },
+        { label: "(c)", q: "How long after the aircraft passes overhead does the observer hear the boom?", a: "$t = d/v_s = 4890/480 \\approx 10.2$ s." },
+        { label: "(d)", q: "Compare with a Mach 3.0 aircraft at the same altitude.", a: "$\\theta \\approx 19.5°$, $d \\approx 14{,}100$ m, $t \\approx 13.7$ s. Narrower cone, boom arrives later." }
+      ]
+    },
+    {
+      title: "Cherenkov Radiation in a Nuclear Reactor",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Advanced_Test_Reactor.jpg/1024px-Advanced_Test_Reactor.jpg",
+      imageAlt: "Blue Cherenkov glow in the Advanced Test Reactor",
+      context: "The blue glow in water-cooled reactors is Cherenkov radiation from electrons traveling faster than light in water ($n \\approx 1.33$).",
+      parts: [
+        { label: "(a)", q: "What is the minimum electron speed for Cherenkov radiation in water?", a: "$v_{\\min} = c/n = 0.752c$." },
+        { label: "(b)", q: "What is the minimum kinetic energy in MeV? ($m_e c^2 = 0.511$ MeV)", a: "$\\gamma = 1.516$ at $v = 0.752c$. $K = (\\gamma-1)m_ec^2 = 0.264$ MeV." },
+        { label: "(c)", q: "For a 5.0 MeV electron, find the Cherenkov cone angle.", a: "$\\gamma = 10.78$, $\\beta = 0.9957$. $\\cos\\theta = 1/(n\\beta) = 0.7553$, $\\theta \\approx 40.9°$." },
+        { label: "(d)", q: "Why does Cherenkov radiation appear blue?", a: "The Frank-Tamm formula gives power $\\propto \\omega$, so higher frequencies (blue/violet) are radiated more intensely." }
+      ]
+    },
+    {
+      title: "Doppler Ultrasound in Medical Imaging",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CRL_Crown_rump_length_12_weeks_ecridge.jpg/1024px-CRL_Crown_rump_length_12_weeks_ecridge.jpg",
+      imageAlt: "Ultrasound image used in medical diagnostics",
+      context: "Doppler ultrasound measures blood flow by bouncing sound off moving red blood cells. The frequency shift reveals blood speed. Speed of sound in tissue: $v = 1540$ m/s.",
+      parts: [
+        { label: "(a)", q: "A 5.0 MHz transducer; blood flows toward it at 0.30 m/s. What frequency does the blood 'see'?", a: "$f_1 = f_0(v+v_b)/v = 5{,}000{,}975$ Hz." },
+        { label: "(b)", q: "The blood re-emits at $f_1$. What frequency reaches the transducer?", a: "$f_2 = f_1 v/(v-v_b) \\approx 5{,}001{,}950$ Hz." },
+        { label: "(c)", q: "Show that $\\Delta f \\approx 2v_b f_0/v$ for $v_b \\ll v$.", a: "$\\Delta f = 2(0.30)(5 \\times 10^6)/1540 \\approx 1950$ Hz, in the audible range." },
+        { label: "(d)", q: "With beam angle $\\phi = 60°$, how does $\\Delta f$ change?", a: "$\\Delta f = 2v_b\\cos\\phi \\cdot f_0/v \\approx 974$ Hz. Only the velocity component along the beam matters." }
+      ]
+    }
+  ]
+},
+
+"light": {
+  readingQuiz: [
+    { q: "Which Maxwell equation implies a changing $\\mathbf{B}$ produces $\\mathbf{E}$?", a: "Faraday's law: $\\nabla \\times \\mathbf{E} = -\\partial\\mathbf{B}/\\partial t$." },
+    { q: "What did Maxwell add to Ampère's law?", a: "The displacement current $\\mu_0\\epsilon_0\\partial\\mathbf{E}/\\partial t$." },
+    { q: "How is $c$ related to $\\mu_0$ and $\\epsilon_0$?", a: "$c = 1/\\sqrt{\\mu_0\\epsilon_0}$." },
+    { q: "What is the relationship between $E$ and $B$ in an EM wave?", a: "They are perpendicular to each other and to propagation, with $E = cB$." },
+    { q: "What is the Poynting vector?", a: "$\\mathbf{S} = \\frac{1}{\\mu_0}\\mathbf{E}\\times\\mathbf{B}$, giving energy flux direction and magnitude." },
+    { q: "What is radiation pressure on a perfectly absorbing surface?", a: "$P = I/c$." },
+    { q: "What is radiation pressure on a perfectly reflecting surface?", a: "$P = 2I/c$." },
+    { q: "What wavelength range is visible light?", a: "About 380 nm (violet) to 750 nm (red)." },
+    { q: "In which direction does an EM wave propagate relative to $\\mathbf{E}$ and $\\mathbf{B}$?", a: "In the direction of $\\mathbf{E}\\times\\mathbf{B}$." }
+  ],
+  shortAnswer: [
+    { q: "Derive the wave equation for $\\mathbf{E}$ from Maxwell's equations in free space.", a: "Take curl of Faraday's law, use $\\nabla\\cdot\\mathbf{E} = 0$ and Ampère-Maxwell: $\\nabla^2\\mathbf{E} = \\mu_0\\epsilon_0\\partial^2\\mathbf{E}/\\partial t^2$, wave speed $c = 1/\\sqrt{\\mu_0\\epsilon_0}$." },
+    { q: "A laser has intensity $I = 10^{12}$ W/m$^2$. Find $E_0$ and $B_0$.", a: "$E_0 = \\sqrt{2I/(c\\epsilon_0)} \\approx 2.74 \\times 10^7$ V/m. $B_0 = E_0/c \\approx 0.091$ T." },
+    { q: "Sunlight intensity is 1400 W/m$^2$. What radiation pressure on a perfect mirror?", a: "$P = 2I/c = 9.3 \\times 10^{-6}$ Pa, about $10^{-10}$ atmospheres." },
+    { q: "If $E_x = E_0\\sin(kz-\\omega t)$, what is $\\mathbf{B}$?", a: "$B_y = (E_0/c)\\sin(kz-\\omega t)$, so that $\\mathbf{E}\\times\\mathbf{B} \\propto \\hat{z}$." },
+    { q: "Energy in a 1 m$^3$ cube with $I = 500$ W/m$^2$ passing through?", a: "$u = I/c \\approx 1.67 \\times 10^{-6}$ J/m$^3$. Total $\\approx 1.7\\;\\mu$J." }
+  ],
+  longProblems: [
+    {
+      title: "Solar Sail Propulsion",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/IKAROS_solar_sail.jpg/1024px-IKAROS_solar_sail.jpg",
+      imageAlt: "JAXA's IKAROS solar sail deployed in space",
+      context: "IKAROS (2010) demonstrated solar sail propulsion using radiation pressure from sunlight. The sail area was $200$ m$^2$, spacecraft mass $315$ kg.",
+      parts: [
+        { label: "(a)", q: "At 1 AU ($I = 1361$ W/m$^2$), what is the radiation force on a perfectly reflecting 200 m$^2$ sail?", a: "$F = 2IA/c = 1.81$ mN." },
+        { label: "(b)", q: "What is the acceleration? Compare to solar gravity at 1 AU ($a_g = 5.93 \\times 10^{-3}$ m/s$^2$).", a: "$a = 5.75 \\times 10^{-6}$ m/s$^2 \\approx 0.1\\%$ of $a_g$. Small but continuous and fuel-free." },
+        { label: "(c)", q: "Find $E_0$ and $B_0$ in sunlight at 1 AU.", a: "$E_0 \\approx 1013$ V/m, $B_0 \\approx 3.38\\;\\mu$T." },
+        { label: "(d)", q: "How does the force change at Mercury's orbit (0.39 AU)?", a: "$F' = F/(0.39)^2 \\approx 11.9$ mN, about 6.6 times larger." }
+      ]
+    },
+    {
+      title: "Radio Transmitter EM Waves",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Blaw_Knox_Tower%2C_WFED.jpg/800px-Blaw_Knox_Tower%2C_WFED.jpg",
+      imageAlt: "Diamond-shaped radio transmission tower",
+      context: "An AM station broadcasts at 1000 kHz with 50 kW total radiated power, isotropically.",
+      parts: [
+        { label: "(a)", q: "What is the wavelength?", a: "$\\lambda = c/f = 300$ m." },
+        { label: "(b)", q: "Intensity at 10 km?", a: "$I = P/(4\\pi r^2) \\approx 3.98 \\times 10^{-5}$ W/m$^2$." },
+        { label: "(c)", q: "Find $E_0$ and $B_0$ at 10 km.", a: "$E_0 \\approx 0.173$ V/m, $B_0 \\approx 5.77 \\times 10^{-10}$ T." },
+        { label: "(d)", q: "Energy in a spherical shell of radius 10 km and thickness one wavelength?", a: "$U = (I/c) \\times 4\\pi r^2 \\Delta r \\approx 0.050$ J, consistent with $P \\times T$." }
+      ]
+    },
+    {
+      title: "Microwave Oven EM Fields",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Microwave_oven_%28interior%29.jpg/1024px-Microwave_oven_%28interior%29.jpg",
+      imageAlt: "Interior of a microwave oven",
+      context: "A microwave oven operates at $f = 2.45$ GHz delivering $P = 1000$ W to the cavity.",
+      parts: [
+        { label: "(a)", q: "What is $\\lambda$? Why are there hot and cold spots?", a: "$\\lambda = 12.2$ cm. Standing waves form with nodes/antinodes spaced by $\\sim 6$ cm, hence hot/cold spots and turntables." },
+        { label: "(b)", q: "Estimate $E_0$ inside the oven (cavity side $L = 0.30$ m).", a: "$I \\approx P/L^2 \\approx 1.11 \\times 10^4$ W/m$^2$. $E_0 \\approx 2890$ V/m." },
+        { label: "(c)", q: "Compare radiation pressure on food to atmospheric pressure.", a: "$P_{\\rm rad} = I/c \\approx 3.7 \\times 10^{-5}$ Pa, about $10^{-10}$ atm. Utterly negligible; microwaves heat via molecular oscillations." }
+      ]
+    }
+  ]
+},
+
+"polarization": {
+  readingQuiz: [
+    { q: "What is linearly polarized light?", a: "The $\\mathbf{E}$ vector oscillates along a single fixed direction." },
+    { q: "How is circular polarization different?", a: "The $\\mathbf{E}$ vector rotates in a circle at the wave frequency, with constant magnitude." },
+    { q: "State Malus's law.", a: "Through a polarizer at angle $\\theta$: $I = I_0\\cos^2\\theta$." },
+    { q: "What fraction of unpolarized light passes through an ideal polarizer?", a: "One half." },
+    { q: "What is a Jones vector?", a: "A two-component complex vector describing the amplitude and phase of the two $\\mathbf{E}$ components." },
+    { q: "What does a quarter-wave plate do to 45° linearly polarized light?", a: "Converts it to circularly polarized light." },
+    { q: "What does a half-wave plate do?", a: "Rotates the polarization plane by $2\\alpha$, where $\\alpha$ is the angle to the fast axis." },
+    { q: "What is Brewster's angle?", a: "The incidence angle where reflected light is fully polarized: $\\tan\\theta_B = n_2/n_1$." },
+    { q: "What is optical activity?", a: "Rotation of polarization plane by materials with different indices for left and right circular polarization." }
+  ],
+  shortAnswer: [
+    { q: "Unpolarized light through three polarizers: vertical, 30°, horizontal. Final intensity?", a: "$I_0/2 \\times \\cos^2 30° \\times \\cos^2 60° = I_0/2 \\times 3/4 \\times 1/4 = 3I_0/32$." },
+    { q: "Write Jones vectors for (i) $x$-polarized, (ii) 45° polarized, (iii) right-circular.", a: "(i) $(1,0)^T$, (ii) $(1,1)^T/\\sqrt{2}$, (iii) $(1,-i)^T/\\sqrt{2}$." },
+    { q: "Find Brewster's angle for glass ($n = 1.50$) in air.", a: "$\\theta_B = \\arctan(1.50) = 56.3°$. Refraction angle: $33.7°$." },
+    { q: "A half-wave plate's fast axis is at 20° from horizontal. Input: horizontal polarization. Output angle?", a: "Rotation by $2\\alpha = 40°$ from horizontal." },
+    { q: "Circularly polarized light through a linear polarizer. Transmitted fraction?", a: "$I_0/2$, linearly polarized along the transmission axis." },
+    { q: "A 1.0 mm quartz plate rotates polarization by 21.7°/mm. Add a 2.0 mm plate. Total rotation?", a: "$21.7° + 43.4° = 65.1°$ (optical rotation is additive)." }
+  ],
+  longProblems: [
+    {
+      title: "Polarization in 3D Cinema",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/RealD_3D_glasses.jpg/1024px-RealD_3D_glasses.jpg",
+      imageAlt: "RealD 3D cinema glasses",
+      context: "3D cinemas project two images with opposite circular polarizations. Passive glasses with circular polarizer filters transmit only one handedness per eye. This is preferred over linear polarization because head tilting doesn't cause cross-talk.",
+      parts: [
+        { label: "(a)", q: "Explain how a linear polarizer + QWP blocks one circular polarization handedness.", a: "The QWP converts one handedness (say RCP) to linear polarization aligned with the polarizer (passes), and the other (LCP) to the perpendicular direction (blocked)." },
+        { label: "(b)", q: "Show the Jones calculus for LCP through a QWP (fast axis along $x$) + 45° polarizer.", a: "LCP $= (1,i)^T/\\sqrt{2}$. After QWP: $(1,1)^T/\\sqrt{2}$ (45° linear). The 45° polarizer transmits fully." },
+        { label: "(c)", q: "Show the same for RCP.", a: "RCP $= (1,-i)^T/\\sqrt{2}$. After QWP: $(1,-1)^T/\\sqrt{2}$ ($-45°$ linear). The 45° polarizer gives zero output." },
+        { label: "(d)", q: "What happens with a 30° head tilt? Compare with linear polarization.", a: "Circular polarization: no effect (QWP+polarizer still works). Linear: 25% cross-talk ($\\sin^2 30°$), severely degrading the 3D effect." }
+      ]
+    },
+    {
+      title: "LCD Display Polarization",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/LCD_layers.svg/800px-LCD_layers.svg.png",
+      imageAlt: "Layers of a liquid crystal display",
+      context: "An LCD pixel has a backlight, rear polarizer, liquid crystal layer (rotates polarization), and front polarizer (crossed). No voltage: LC rotates by 90° (bright). Voltage applied: no rotation (dark).",
+      parts: [
+        { label: "(a)", q: "Explain why the pixel is bright in the OFF state.", a: "Vertically polarized light from rear polarizer is rotated 90° by LC to horizontal, then passes through horizontal front polarizer." },
+        { label: "(b)", q: "Why is it dark in the ON state?", a: "No rotation; vertical light hits horizontal polarizer. $I = I_0\\cos^2 90° = 0$." },
+        { label: "(c)", q: "For partial voltage (rotation $\\alpha < 90°$), find transmitted intensity.", a: "$I = (I_0/2)\\sin^2\\alpha$. At $\\alpha = 45°$: half brightness." },
+        { label: "(d)", q: "Why do LCDs look dark through polarized sunglasses at certain orientations?", a: "When the LCD's output polarization is perpendicular to the sunglasses' axis, Malus's law gives $\\cos^2 90° = 0$. Rotating 90° restores the image." }
+      ]
+    },
+    {
+      title: "Brewster Windows in Lasers",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/HeNe-en.svg/1024px-HeNe-en.svg.png",
+      imageAlt: "Diagram of a helium-neon laser with Brewster windows",
+      context: "HeNe laser tubes are sealed with Brewster-angle windows. The p-polarized component has zero reflection, while s-polarized light is partially reflected. After many round trips, the output is highly linearly polarized.",
+      parts: [
+        { label: "(a)", q: "Calculate Brewster's angle for glass ($n = 1.52$).", a: "$\\theta_B = \\arctan(1.52) = 56.7°$. Refraction angle: $33.3°$." },
+        { label: "(b)", q: "Calculate $R_s$ at Brewster's angle using the Fresnel equation.", a: "$r_s = (0.549-1.271)/(0.549+1.271) = -0.397$. $R_s = 0.158$ (15.8% reflected)." },
+        { label: "(c)", q: "After 4 surfaces per round trip, what fraction of s-polarized light survives?", a: "$(1-0.158)^4 = (0.842)^4 = 0.503$. Only 50% per round trip." },
+        { label: "(d)", q: "After 50 round trips, what is the s-to-p intensity ratio?", a: "$(0.503)^{50} \\approx 10^{-15}$. The output is essentially perfectly p-polarized." }
+      ]
+    }
+  ]
+},
+
+"refraction": {
+  readingQuiz: [
+    { q: "What is the index of refraction?", a: "$n = c/v$, the ratio of light speed in vacuum to in the material." },
+    { q: "State Snell's law.", a: "$n_1\\sin\\theta_1 = n_2\\sin\\theta_2$." },
+    { q: "How is Snell's law derived from waves?", a: "By requiring wavefront phase matching at the boundary." },
+    { q: "What is total internal reflection?", a: "All light is reflected when going from higher to lower $n$ and exceeding the critical angle." },
+    { q: "Critical angle formula?", a: "$\\sin\\theta_c = n_2/n_1$ (for $n_1 > n_2$)." },
+    { q: "What is Fermat's principle?", a: "Light follows the path of least (stationary) time." },
+    { q: "What is dispersion?", a: "Dependence of $n$ on wavelength, causing different colors to refract differently." },
+    { q: "Why does a prism separate white light?", a: "$n$ is larger for shorter wavelengths (violet bends more than red)." },
+    { q: "How do optical fibers guide light?", a: "Total internal reflection: core ($n_1$) > cladding ($n_2$)." }
+  ],
+  shortAnswer: [
+    { q: "Light from water ($n = 1.33$) into glass ($n = 1.50$) at $40°$. Find refraction angle.", a: "$\\sin\\theta_2 = 1.33\\sin 40°/1.50 = 0.570$. $\\theta_2 = 34.7°$." },
+    { q: "Critical angle for diamond-air ($n = 2.42$)?", a: "$\\theta_c = \\arcsin(1/2.42) = 24.4°$. Small angle explains diamond sparkle." },
+    { q: "Derive Snell's law from Fermat's principle.", a: "Minimize optical path $L = n_1\\sqrt{h_1^2+x^2} + n_2\\sqrt{h_2^2+(d-x)^2}$. Setting $dL/dx = 0$ gives $n_1\\sin\\theta_1 = n_2\\sin\\theta_2$." },
+    { q: "A prism ($n = 1.52$, apex $60°$) at minimum deviation. Find $\\delta_{\\min}$.", a: "$\\sin((60°+\\delta_{\\min})/2) = 1.52\\sin 30° = 0.76$. $\\delta_{\\min} = 39.0°$." },
+    { q: "Fiber with $n_1 = 1.48$, $n_2 = 1.46$. Maximum acceptance angle?", a: "NA $= \\sqrt{n_1^2 - n_2^2} = 0.242$. $\\theta_{\\max} = 14.0°$." },
+    { q: "Why does a pool appear shallower than it is?", a: "Apparent depth $= d/n \\approx 0.75d$. A 2 m pool looks 1.5 m deep." }
+  ],
+  longProblems: [
+    {
+      title: "Fiber Optic Communication",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Fibreoptic.jpg/1024px-Fibreoptic.jpg",
+      imageAlt: "Illuminated optical fiber bundle",
+      context: "Single-mode fiber: core $9\\;\\mu$m, $n_{\\rm core} = 1.4475$, $n_{\\rm clad} = 1.4440$, $\\lambda = 1550$ nm.",
+      parts: [
+        { label: "(a)", q: "Find critical angle and numerical aperture.", a: "$\\theta_c = 86.0°$. NA $= 0.1006$, acceptance angle $5.77°$." },
+        { label: "(b)", q: "Signal takes $4.83\\;\\mu$s per km. What is the group index?", a: "$n_g = c/v = 1.449$." },
+        { label: "(c)", q: "Attenuation 0.20 dB/km, launch 1.0 mW, detector $-30$ dBm. Max distance?", a: "Power budget 30 dB. Max distance $= 150$ km." },
+        { label: "(d)", q: "Dispersion 17 ps/(nm·km), linewidth 0.1 nm. Pulse broadening over 100 km?", a: "$\\Delta t = 17 \\times 0.1 \\times 100 = 170$ ps. Limits 10 Gb/s systems." }
+      ]
+    },
+    {
+      title: "Mirages and Atmospheric Refraction",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Inferior_mirage_of_the_sky_on_hot_road.jpg/1024px-Inferior_mirage_of_the_sky_on_hot_road.jpg",
+      imageAlt: "Inferior mirage on a hot road",
+      context: "Hot air near the road has lower density and lower $n$, causing light rays to curve upward, producing mirages that look like water.",
+      parts: [
+        { label: "(a)", q: "Calculate $n$ at 288 K and 340 K (near hot road). Standard: $n_{\\rm cool} = 1.000293$.", a: "Scaling with $1/T$: $n_{\\rm hot} \\approx 1.000248$. $\\Delta n \\approx 4.5 \\times 10^{-5}$." },
+        { label: "(b)", q: "Use Snell's law for stratified atmosphere to explain why rays curve upward near hot surface.", a: "$n(y)\\cos\\alpha(y) = $ const. As $n$ decreases downward, $\\cos\\alpha$ increases, $\\alpha$ decreases toward horizontal, then curves back up — like total internal reflection." },
+        { label: "(c)", q: "Estimate the critical viewing angle for mirage formation.", a: "$\\cos\\alpha_{\\rm cool} = n_{\\rm hot}/n_{\\rm cool} = 0.999955$, giving $\\alpha \\approx 0.54°$. Only very shallow angles produce mirages." },
+        { label: "(d)", q: "Why do mirages shimmer?", a: "Turbulent convection constantly shifts the temperature gradient, causing rapid fluctuations in light paths." }
+      ]
+    },
+    {
+      title: "Rainbow Formation by Raindrops",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Double-alaskan-rainbow.jpg/1024px-Double-alaskan-rainbow.jpg",
+      imageAlt: "Double rainbow over Alaska",
+      context: "Rainbows form by refraction, internal reflection, and dispersion in raindrops. Water: $n = 1.331$ (red) to $1.344$ (violet).",
+      parts: [
+        { label: "(a)", q: "Show the total deviation for the primary rainbow is $D = 2\\theta_i - 4\\theta_r + 180°$.", a: "Two refractions each deviate by $(\\theta_i-\\theta_r)$, one reflection deviates by $(180°-2\\theta_r)$. Sum: $2\\theta_i - 4\\theta_r + 180°$." },
+        { label: "(b)", q: "Find the minimum deviation angle (rainbow angle) for red light ($n = 1.331$).", a: "Setting $dD/d\\theta_i = 0$: $\\sin^2\\theta_i = (4-n^2)/3 = 0.743$, $\\theta_i = 59.6°$. $D = 137.2°$. Rainbow angle: $42.8°$." },
+        { label: "(c)", q: "Find rainbow angle for violet ($n = 1.344$). Angular width of rainbow?", a: "Violet: $D = 139.6°$, angle $40.4°$. Width: $42.8°-40.4° = 2.4°$. Red outside, violet inside." },
+        { label: "(d)", q: "For the secondary rainbow ($D = 2\\theta_i - 6\\theta_r + 360°$), find the angle for red and explain reversed colors.", a: "Red: $\\theta_i = 71.9°$, $D = 230.8°$, viewing angle $50.8°$. Since $D > 180°$, colors are reversed: violet outside, red inside. Alexander's dark band lies between primary (42.8°) and secondary (50.8°)." }
+      ]
+    }
+  ]
+},
+
+"scattering": {
+  readingQuiz: [
+    { q: "What is Rayleigh scattering?", a: "Scattering by particles much smaller than $\\lambda$, with intensity $\\propto \\omega^4$ ($1/\\lambda^4$)." },
+    { q: "Why is the sky blue?", a: "Shorter wavelengths are scattered much more strongly by the $\\omega^4$ dependence." },
+    { q: "Why are sunsets red?", a: "Blue light is scattered away over the long atmospheric path, leaving red/orange." },
+    { q: "What is Thomson scattering?", a: "Scattering by free charged particles in the classical limit." },
+    { q: "What radiation does an accelerating charge emit?", a: "EM waves, with power $\\propto$ acceleration squared (Larmor formula)." },
+    { q: "How does the radiation field fall off with distance?", a: "As $1/R$, so intensity falls as $1/R^2$." },
+    { q: "What is a scattering cross section?", a: "Effective area $\\sigma$ where $P_{\\rm scat} = \\sigma I_{\\rm inc}$." },
+    { q: "What is the Thomson cross section?", a: "$\\sigma_T = \\frac{8\\pi}{3}r_e^2 \\approx 6.65 \\times 10^{-29}$ m$^2$." },
+    { q: "Why does $\\sigma_{\\rm Rayleigh} \\propto \\omega^4$?", a: "The radiated power from an oscillating dipole is $\\propto \\omega^4 p_0^2$." }
+  ],
+  shortAnswer: [
+    { q: "Ratio of Rayleigh scattering for blue (450 nm) vs red (650 nm)?", a: "$(650/450)^4 = 4.35$. Blue scattered 4.4× more." },
+    { q: "Find time-averaged radiated power for electron with $a(t) = a_0\\cos(\\omega t)$.", a: "$\\langle P\\rangle = e^2 a_0^2/(12\\pi\\epsilon_0 c^3)$." },
+    { q: "Show no radiation is emitted along the acceleration direction.", a: "$E_{\\rm rad} \\propto \\sin\\theta$; at $\\theta = 0°$, $\\sin\\theta = 0$, so no radiation along the acceleration." },
+    { q: "Why do clouds appear white?", a: "Droplets ($\\sim 10\\;\\mu$m) are much larger than $\\lambda$; Mie scattering is wavelength-independent, so all colors scatter equally." },
+    { q: "Thomson cross section; beam $I = 10^{10}$ W/m$^2$ hits an electron. Scattered power?", a: "$P = \\sigma_T I = 6.65 \\times 10^{-19}$ W, about a few photons per second." }
+  ],
+  longProblems: [
+    {
+      title: "Why the Sky is Blue and Sunsets are Red",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Sunrise_over_the_sea.jpg/1280px-Sunrise_over_the_sea.jpg",
+      imageAlt: "Vivid red and orange sunrise over the ocean",
+      context: "Rayleigh scattering by N$_2$ and O$_2$ determines sky color. At 550 nm: $\\sigma \\approx 4.5 \\times 10^{-31}$ m$^2$, $N \\approx 2.55 \\times 10^{25}$ m$^{-3}$.",
+      parts: [
+        { label: "(a)", q: "Calculate the scattering mean free path $\\ell$ for green light.", a: "$\\ell = 1/(N\\sigma) \\approx 87$ km, about 10× the atmospheric scale height." },
+        { label: "(b)", q: "At sunset (path $\\sim 323$ km), what fraction of green light is transmitted?", a: "$e^{-323/87} = e^{-3.71} \\approx 2.4\\%$." },
+        { label: "(c)", q: "Calculate transmission for red (650 nm) and blue (450 nm) at sunset.", a: "Red: 15% transmitted. Blue: 0.025%. Red-to-blue ratio $\\approx 600$." },
+        { label: "(d)", q: "Why is the lunar sky black even during daytime?", a: "No atmosphere means no scattering. Only direct light reaches the eye." }
+      ]
+    },
+    {
+      title: "Thomson Scattering in the Solar Corona",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Solar_eclipse_1999_4_NR.jpg/1024px-Solar_eclipse_1999_4_NR.jpg",
+      imageAlt: "Solar corona during total eclipse",
+      context: "The corona's faint glow is sunlight Thomson-scattered by free electrons in the $\\sim 10^6$ K plasma. $\\sigma_T = 6.65 \\times 10^{-29}$ m$^2$.",
+      parts: [
+        { label: "(a)", q: "At $2R_\\odot$, $n_e = 10^{12}$ m$^{-3}$. Optical depth through $L = R_\\odot$?", a: "$\\tau = n_e\\sigma_T L \\approx 4.6 \\times 10^{-8}$. Extremely optically thin ($\\sim 10^{-6}$ of disk brightness)." },
+        { label: "(b)", q: "Why Thomson (not Rayleigh) scattering for coronal electrons?", a: "Electrons are free (corona is fully ionized), so the frequency-independent Thomson cross section applies." },
+        { label: "(c)", q: "Compare proton vs electron scattering.", a: "$\\sigma \\propto 1/m^2$: proton scattering is $(m_e/m_p)^2 \\approx 3 \\times 10^{-7}$ weaker. Negligible." },
+        { label: "(d)", q: "Why is scattered coronal light polarized at 90°?", a: "At 90°, only the $\\mathbf{E}$ component perpendicular to both incident and scattered directions radiates. The parallel component gives $\\sin 0° = 0$. Result: 100% polarized." }
+      ]
+    },
+    {
+      title: "Rayleigh Scattering in LED Phosphor Coatings",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/White_LED.jpg/1024px-White_LED.jpg",
+      imageAlt: "White LED showing blue chip and yellow phosphor",
+      context: "White LEDs combine a blue LED ($\\lambda = 460$ nm) with yellow phosphor. The phosphor particle size determines whether Rayleigh or Mie scattering dominates.",
+      parts: [
+        { label: "(a)", q: "Standard phosphor particles are $d \\approx 10\\;\\mu$m. Is Rayleigh scattering appropriate?", a: "$d/\\lambda \\approx 22$. Far outside Rayleigh regime ($d \\ll \\lambda$). Mie scattering applies; all colors scatter equally." },
+        { label: "(b)", q: "If 50 nm nanoparticles were used instead, how much more would blue scatter than yellow?", a: "$(580/460)^4 = 2.53$. Blue scattered 2.5× more, causing non-uniform color." },
+        { label: "(c)", q: "Calculate the Rayleigh cross section for a 25 nm radius YAG:Ce particle ($n_p = 1.84$) in silicone ($n_m = 1.41$) at 460 nm.", a: "$\\sigma \\approx 2.57 \\times 10^{-18}$ m$^2$." },
+        { label: "(d)", q: "Compare to geometric cross section. What is the scattering efficiency $Q$?", a: "$Q = \\sigma/\\pi a^2 \\approx 1.3 \\times 10^{-3}$. Only 0.13% efficient — Rayleigh scatterers are very weak." }
+      ]
+    }
+  ]
+},
+
+"color": {
+  readingQuiz: [
+    { q: "What are the three types of cone cells?", a: "S-cones (~420 nm, blue), M-cones (~530 nm, green), L-cones (~560 nm, red)." },
+    { q: "What is a metamer?", a: "Two physically different spectra that produce the same perceived color by stimulating cones identically." },
+    { q: "Why do three primaries suffice?", a: "Human vision is trichromatic — any color is determined by three cone responses, so three primaries can match them." },
+    { q: "Additive vs subtractive color mixing?", a: "Additive combines light (RGB, screens); subtractive combines absorbers (CMY, printing)." },
+    { q: "What do CIE chromaticity axes represent?", a: "$x = X/(X+Y+Z)$, $y = Y/(X+Y+Z)$, normalized tristimulus values." },
+    { q: "State Grassmann's first law.", a: "Color matching is linear — if two colors match, they remain matched when the same color is added to both." },
+    { q: "Why is the CIE boundary horseshoe-shaped?", a: "It traces monochromatic spectral colors; the smooth overlapping cone sensitivities create the curve." },
+    { q: "What color is red + green light?", a: "Yellow." }
+  ],
+  shortAnswer: [
+    { q: "Source 1 gives cone responses (0.8, 0.5, 0.1). Source 2 gives (0.8, 0.5, 0.2). Metamers?", a: "No — S-cone responses differ (0.1 vs 0.2). The second looks slightly more bluish." },
+    { q: "Colors A $(0.2, 0.3)$ and B $(0.5, 0.4)$ mixed equally on CIE diagram. Result?", a: "Midpoint: $(0.35, 0.35)$, near the white point." },
+    { q: "Why can't three real primaries reproduce all visible colors?", a: "The visible gamut is curved (horseshoe). A triangle inscribed in a curve can never cover it all." },
+    { q: "White light through cyan filter then yellow filter. Result?", a: "Cyan passes G,B. Yellow passes R,G. Overlap: green." },
+    { q: "Why does a yellow flower look black under pure blue light?", a: "The pigment absorbs blue (the only wavelength present), so nothing is reflected." },
+    { q: "RGB display primaries at R=$(0.64,0.33)$, G=$(0.30,0.60)$, B=$(0.15,0.06)$. What is the gamut?", a: "The triangle with those vertices on the CIE diagram. Cannot reach saturated cyans or deep purples." }
+  ],
+  longProblems: [
+    {
+      title: "Color Rendering on an OLED Display",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/OLED_TV_at_CES_2013_%288488268523%29.jpg/640px-OLED_TV_at_CES_2013_%288488268523%29.jpg",
+      imageAlt: "OLED television display showing vibrant colors",
+      context: "OLED TVs produce colors by combining RGB sub-pixels. The gamut is the triangle formed by the three primaries on the CIE diagram.",
+      parts: [
+        { label: "(a)", q: "Primaries R=$(0.68,0.32)$, G=$(0.27,0.69)$, B=$(0.14,0.05)$. Write equations for mixing fractions $r,g,b$ to produce target $(0.33,0.33)$.", a: "$0.33 = 0.68r + 0.27g + 0.14b$; $0.33 = 0.32r + 0.69g + 0.05b$; $r+g+b = 1$." },
+        { label: "(b)", q: "Solve the system.", a: "$(r,g,b) \\approx (0.27, 0.32, 0.41)$." },
+        { label: "(c)", q: "Can the display reproduce deep orange at $(0.55, 0.40)$?", a: "Solving: $(r,g,b) \\approx (0.70, 0.25, 0.05)$. All positive, so yes — inside the gamut." },
+        { label: "(d)", q: "Why might two viewers perceive the same display differently?", a: "Observer metamerism: individual cone sensitivities vary due to genetics and age. Narrow-band OLED emitters amplify these differences." }
+      ]
+    },
+    {
+      title: "Atmospheric Color and Rayleigh Scattering",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Sunset_over_the_sea.jpg/640px-Sunset_over_the_sea.jpg",
+      imageAlt: "Sunset showing transition from blue sky to red-orange",
+      context: "Sky color results from Rayleigh scattering ($\\propto \\lambda^{-4}$). At sunset, the longer path removes blue, leaving red.",
+      parts: [
+        { label: "(a)", q: "Calculate scattering ratio for blue (450 nm) vs red (650 nm).", a: "$(650/450)^4 = 4.35$. Blue scattered about 4.4× more intensely." },
+        { label: "(b)", q: "If blue optical depth at zenith is $\\tau_b = 0.25$, find blue and red transmission.", a: "Blue: $e^{-0.25} = 77.9\\%$. Red: $\\tau_r = 0.25 \\times (450/650)^4 = 0.057$, transmission $94.4\\%$." },
+        { label: "(c)", q: "At sunset (12× more atmosphere), calculate transmissions.", a: "Blue: $e^{-3.0} = 5\\%$. Red: $e^{-0.69} = 50\\%$. Explains the red color." },
+        { label: "(d)", q: "CIE values of zenith sky: $X=18, Y=22, Z=55$. Confirm it's blue.", a: "$(x,y) = (0.189, 0.232)$. Low $x$, moderate-low $y$, large $z = 0.579$: blue." }
+      ]
+    },
+    {
+      title: "Subtractive Color Mixing in Inkjet Printing",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Circle-icons-printer.svg/640px-Circle-icons-printer.svg.png",
+      imageAlt: "Printer icon representing inkjet printing",
+      context: "Inkjet printers use CMY(K) inks. Each ink absorbs certain wavelengths from white light; overlapping inks determine the reflected color.",
+      parts: [
+        { label: "(a)", q: "Cyan ink (passes G,B) over yellow ink (passes R,G). What color?", a: "Only green passes both. Result: green." },
+        { label: "(b)", q: "Cyan at 60%, magenta at 40% with random halftone overlap. Find area fractions.", a: "Overlap (blue): 24%. Cyan only: 36%. Magenta only: 16%. White: 24%." },
+        { label: "(c)", q: "Why add black (K) ink instead of mixing CMY for black?", a: "Real CMY gives muddy brown, not true black. K also saves ink, speeds drying, and gives sharper text." },
+        { label: "(d)", q: "Printed patch: $X=22, Y=25, Z=8$. Find chromaticity and approximate hue.", a: "$(x,y) = (0.40, 0.455)$. Yellow-green region." }
+      ]
+    }
+  ]
+},
+
+"antennas": {
+  readingQuiz: [
+    { q: "What is the radiation pattern of an oscillating dipole?", a: "$\\sin^2\\theta$ intensity: maximum perpendicular to the axis, zero along it." },
+    { q: "What is the array factor?", a: "The factor in the total pattern due to the spatial arrangement and phasing of multiple elements." },
+    { q: "When does the principal maximum occur for N equally spaced sources?", a: "When $d\\sin\\theta = m\\lambda$ (path difference = whole wavelength)." },
+    { q: "What is a phased array?", a: "An array where element phases are electronically adjusted to steer the beam." },
+    { q: "How does increasing N affect beamwidth?", a: "Beamwidth decreases as $\\sim 1/N$." },
+    { q: "What spacing avoids grating lobes for broadside?", a: "$d < \\lambda$." },
+    { q: "What determines broadside vs endfire radiation?", a: "Zero phase shift gives broadside; progressive shift $\\delta = -kd$ gives endfire." }
+  ],
+  shortAnswer: [
+    { q: "Two elements, $d = \\lambda/2$, in phase. Find constructive and destructive angles.", a: "Constructive at $\\theta = 90°$ (broadside). Destructive at $\\theta = 0°, 180°$ (endfire)." },
+    { q: "4-element array, $d = \\lambda/2$, phase shift $\\delta = \\pi/4$. Beam direction?", a: "$\\cos\\theta = -1/4$, so $\\theta \\approx 104.5°$ (14.5° past broadside)." },
+    { q: "N = 8 elements. How many secondary maxima between principal maxima?", a: "$N-2 = 6$ secondary maxima." },
+    { q: "Half-wave dipole (gain 1.64) as element in 10-element broadside array. Total gain?", a: "$G = 1.64 \\times 10 = 16.4$ ($12.15$ dBi)." },
+    { q: "What happens if $d > \\lambda$?", a: "Grating lobes appear — extra principal maxima that waste power." }
+  ],
+  longProblems: [
+    {
+      title: "5G mmWave Phased Array",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/5G_NR_logo.png/640px-5G_NR_logo.png",
+      imageAlt: "5G New Radio logo",
+      context: "5G at 28 GHz uses phased arrays to steer narrow beams. Small wavelength allows compact arrays.",
+      parts: [
+        { label: "(a)", q: "At 28 GHz, find $\\lambda$ and element spacing at $d = \\lambda/2$.", a: "$\\lambda = 10.71$ mm. $d = 5.36$ mm." },
+        { label: "(b)", q: "N = 16 elements broadside. HPBW?", a: "$\\text{HPBW} \\approx 0.886\\lambda/(Nd) = 6.35°$." },
+        { label: "(c)", q: "Phase shift to steer to $\\theta = 60°$ from array axis?", a: "$\\delta = -\\pi\\cos 60° = -\\pi/2 = -90°$." },
+        { label: "(d)", q: "How does beamwidth change when steered 30° from broadside?", a: "Broadens by $1/\\cos 30° = 1.155$. New HPBW: $7.33°$." },
+        { label: "(e)", q: "Max spacing to avoid grating lobes when steering to 60° from broadside?", a: "$d \\leq \\lambda/(1+\\sin 60°) = 0.536\\lambda = 5.74$ mm. The $\\lambda/2$ design satisfies this." }
+      ]
+    },
+    {
+      title: "VLA Radio Telescope Array",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/USA.NM.VeryLargeArray.02.jpg/640px-USA.NM.VeryLargeArray.02.jpg",
+      imageAlt: "The Very Large Array radio telescope",
+      context: "The VLA has 27 dishes with max baseline 36 km, operating 1-50 GHz.",
+      parts: [
+        { label: "(a)", q: "Resolution at 1.4 GHz ($\\lambda = 21$ cm)?", a: "$\\theta \\approx \\lambda/B = 0.214/36000 = 5.94\\;\\mu$rad $= 1.23''$." },
+        { label: "(b)", q: "Min frequency to resolve 0.5 arcsecond sources?", a: "$f \\geq c/(0.5'' \\times B) \\approx 3.4$ GHz." },
+        { label: "(c)", q: "Time for a source to drift through one fringe at 1.4 GHz, $B = 1$ km?", a: "Fringe spacing $= \\lambda/B$. Drift time $= (\\lambda/B)/\\omega_E \\approx 2.94$ s." },
+        { label: "(d)", q: "How many unique baselines with 27 antennas? Why does this help?", a: "$\\binom{27}{2} = 351$ baselines. More baselines = better Fourier sampling = better images." }
+      ]
+    },
+    {
+      title: "Yagi-Uda Television Antenna",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Yagi_TV_antenna_1954.jpg/640px-Yagi_TV_antenna_1954.jpg",
+      imageAlt: "Yagi-Uda TV antenna on a roof",
+      context: "Uses parasitic elements (reflector + directors) with a driven element to create a directional beam.",
+      parts: [
+        { label: "(a)", q: "At $f = 175$ MHz, find $\\lambda$ and driven element length.", a: "$\\lambda = 1.714$ m. Half-wave dipole: $\\lambda/2 = 86$ cm." },
+        { label: "(b)", q: "Reflector, director, and director spacing dimensions?", a: "Reflector: 90 cm. Director: 81 cm. Spacing: 51 cm." },
+        { label: "(c)", q: "Why does the reflector reflect and directors guide forward?", a: "Longer reflector has inductive reactance (current lags), combining with $\\lambda/4$ spacing to reinforce forward. Shorter directors have capacitive reactance (current leads), channeling energy forward." },
+        { label: "(d)", q: "Estimate gain of an 8-element Yagi.", a: "About 10 dBd (12 dBi), gain factor $\\approx 16$, beamwidth $\\sim 40°-50°$." }
+      ]
+    }
+  ]
+},
+
+"diffraction": {
+  readingQuiz: [
+    { q: "Condition for first minimum in single-slit diffraction?", a: "$a\\sin\\theta = \\lambda$." },
+    { q: "Fraunhofer vs Fresnel diffraction?", a: "Fraunhofer: far field (plane waves). Fresnel: near field (curved wavefronts)." },
+    { q: "Resolving power of a grating with $N$ slits?", a: "$R = mN$." },
+    { q: "What is the Rayleigh criterion?", a: "Two sources are just resolved when one's central max falls on the other's first min." },
+    { q: "How does N-slit pattern differ from single slit?", a: "Sharp principal maxima modulated by single-slit envelope, with $N-2$ secondary maxima between." },
+    { q: "What is an Airy disk?", a: "Central bright spot of circular aperture diffraction; angular radius $\\theta = 1.22\\lambda/D$." },
+    { q: "How does central maximum width depend on slit width?", a: "Inversely: $\\Delta\\theta = 2\\lambda/a$. Narrower slit = wider pattern." },
+    { q: "What determines principal maxima positions in a grating?", a: "$d\\sin\\theta = m\\lambda$." },
+    { q: "Why is a grating much sharper than a double slit?", a: "More slits = narrower peaks (width $\\propto 1/N$)." }
+  ],
+  shortAnswer: [
+    { q: "Single slit $a = 20\\;\\mu$m, $\\lambda = 550$ nm. First two minima and central width.", a: "$\\theta_1 = 1.58°$, $\\theta_2 = 3.15°$. Central width $2\\theta_1 = 3.15°$." },
+    { q: "Grating with 500 lines/mm. First three orders for $\\lambda = 600$ nm. Max order?", a: "$d = 2\\;\\mu$m. $\\theta_1 = 17.5°$, $\\theta_2 = 36.9°$, $\\theta_3 = 64.2°$. Max order $= 3$." },
+    { q: "Telescope $D = 10$ cm. Min angular resolution at 550 nm?", a: "$\\theta_{\\min} = 1.22\\lambda/D = 6.71\\;\\mu$rad $= 1.38''$." },
+    { q: "Grating with 10,000 slits, 2nd order near 500 nm. Min $\\Delta\\lambda$?", a: "$R = 20{,}000$. $\\Delta\\lambda_{\\min} = 500/20000 = 0.025$ nm." },
+    { q: "Derive single-slit intensity $I(\\theta) = I_0(\\sin\\beta/\\beta)^2$.", a: "Integrate amplitudes across slit with phase differences: $E \\propto a\\sin\\beta/\\beta$ where $\\beta = \\pi a\\sin\\theta/\\lambda$." },
+    { q: "Central maximum is 4 cm wide on screen 2 m away, $\\lambda = 633$ nm. Slit width?", a: "$a = \\lambda/\\sin\\theta = 633 \\times 10^{-9}/0.01 = 63.3\\;\\mu$m." }
+  ],
+  longProblems: [
+    {
+      title: "X-ray Diffraction and Crystal Structure",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/X-ray_diffraction_pattern_3clpro.jpg/640px-X-ray_diffraction_pattern_3clpro.jpg",
+      imageAlt: "X-ray diffraction pattern from a protein crystal",
+      context: "X-ray crystallography uses diffraction from atomic planes to determine molecular structure. Crystal acts as a 3D grating with angstrom-scale spacing.",
+      parts: [
+        { label: "(a)", q: "NaCl ($d = 2.82$ Å) with Cu K$\\alpha$ ($\\lambda = 1.54$ Å). First-order Bragg angle?", a: "$\\sin\\theta = \\lambda/(2d) = 0.273$. $\\theta = 15.85°$." },
+        { label: "(b)", q: "Maximum observable order?", a: "$m_{\\max} = \\lfloor 2d/\\lambda \\rfloor = 3$." },
+        { label: "(c)", q: "With $N = 10^4$ planes, find resolving power and min $\\Delta d$.", a: "$R = mN = 10^4$. $\\Delta d = d/R = 2.82 \\times 10^{-4}$ Å." },
+        { label: "(d)", q: "Why X-rays not visible light? Could electrons work? At what voltage?", a: "Visible $\\lambda \\gg$ atomic spacing. Electrons work: for $\\lambda = 1.54$ Å, $E = h^2/(2m_e\\lambda^2) \\approx 64$ eV." }
+      ]
+    },
+    {
+      title: "Resolving Binary Stars with Hubble",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA-HS201427a-HubbleUltraDeepField2014-20140603.jpg/640px-NASA-HS201427a-HubbleUltraDeepField2014-20140603.jpg",
+      imageAlt: "Hubble Ultra Deep Field image",
+      context: "HST has a 2.4 m primary mirror, diffraction-limited above the atmosphere.",
+      parts: [
+        { label: "(a)", q: "Diffraction-limited resolution at $\\lambda = 500$ nm.", a: "$\\theta_{\\min} = 1.22 \\times 500 \\times 10^{-9}/2.4 = 0.0524'' \\approx 0.05''$." },
+        { label: "(b)", q: "Min separation for binary stars at 50 pc.", a: "$s = \\theta \\times D_{\\star} \\approx 2.62$ AU." },
+        { label: "(c)", q: "Resolution at 1.6 $\\mu$m? Why observe IR anyway?", a: "$3.2\\times$ worse ($0.16''$). IR sees through dust and detects high-redshift objects." },
+        { label: "(d)", q: "What fraction of light falls within the Airy disk?", a: "About 84% of total energy." }
+      ]
+    },
+    {
+      title: "Spectroscopy with a Diffraction Grating",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Fraunhofer_lines.svg/640px-Fraunhofer_lines.svg.png",
+      imageAlt: "Solar Fraunhofer absorption lines",
+      context: "Astronomical spectrographs use large gratings to reveal absorption lines, measuring stellar composition, temperature, and radial velocity.",
+      parts: [
+        { label: "(a)", q: "Grating: 600 lines/mm, 10 cm wide. Find $N$, $d$, and resolving power in 2nd order.", a: "$N = 60{,}000$. $d = 1.667\\;\\mu$m. $R = 120{,}000$. Resolves $\\Delta\\lambda = 0.0042$ nm at 500 nm." },
+        { label: "(b)", q: "Can it resolve the Na D doublet (589.0, 589.6 nm) in first order?", a: "Need $R = 982$. First order gives $R = 60{,}000 \\gg 982$. Easily resolved." },
+        { label: "(c)", q: "At what angle is Na D in 2nd order? Is 3rd order visible?", a: "$\\sin\\theta = 2(589)/(1667) = 0.707$, $\\theta = 45°$. 3rd order: $\\sin\\theta = 1.06 > 1$. Not visible." },
+        { label: "(d)", q: "An iron line at 527.04 nm is measured at 527.09 nm. Star's radial velocity?", a: "$v = c \\times 0.05/527.04 = 28.5$ km/s, receding." }
+      ]
+    }
+  ]
+},
+
+"quantum-mechanics": {
+  readingQuiz: [
+    { q: "What is the de Broglie wavelength?", a: "$\\lambda = h/p$." },
+    { q: "What condition leads to energy quantization in a box?", a: "Boundary conditions (wavefunction = 0 at walls) restrict solutions to standing waves with discrete wavelengths." },
+    { q: "Energy levels of a particle in a box?", a: "$E_n = n^2\\pi^2\\hbar^2/(2mL^2)$." },
+    { q: "What is probability density?", a: "$|\\psi(x)|^2$, the probability per unit length of finding the particle at $x$." },
+    { q: "State the uncertainty principle.", a: "$\\Delta x \\cdot \\Delta p \\geq \\hbar/2$." },
+    { q: "What is quantum tunneling?", a: "Nonzero probability of passing through a barrier that would be classically forbidden." },
+    { q: "Why is $n = 0$ not allowed?", a: "$\\psi = 0$ everywhere; the particle doesn't exist. Minimum is $n = 1$ (zero-point energy)." },
+    { q: "How does energy level spacing change with $n$?", a: "Spacing grows linearly with $n$: $E_{n+1}-E_n = (2n+1)\\pi^2\\hbar^2/(2mL^2)$." },
+    { q: "What is zero-point energy?", a: "Minimum energy $E_1 > 0$, required by the uncertainty principle for any confined particle." }
+  ],
+  shortAnswer: [
+    { q: "De Broglie wavelength of (a) electron at $10^6$ m/s, (b) baseball (0.15 kg) at 40 m/s.", a: "(a) $0.727$ nm — comparable to atoms, diffraction observable. (b) $1.1 \\times 10^{-34}$ m — completely unobservable." },
+    { q: "Electron in box $L = 0.5$ nm. Find $E_1$, $E_2$, $E_3$ in eV.", a: "$E_1 = 1.50$ eV, $E_2 = 6.02$ eV, $E_3 = 13.5$ eV." },
+    { q: "Where are the nodes and probability maxima for $n = 2$?", a: "Nodes at $x = 0, L/2, L$. Probability maxima at $x = L/4$ and $3L/4$." },
+    { q: "Use uncertainty principle to estimate min KE of electron in $\\Delta x = 1$ Å.", a: "$\\Delta p \\geq \\hbar/(2\\Delta x)$. $E \\sim (\\Delta p)^2/(2m_e) \\approx 0.95$ eV." },
+    { q: "Tunneling through barrier $V_0 = 5$ eV, width 0.2 nm, particle energy 4 eV. Probability?", a: "$\\kappa = 5.12 \\times 10^9$ m$^{-1}$. $T \\approx e^{-2\\kappa w} = e^{-2.05} \\approx 13\\%$." }
+  ],
+  longProblems: [
+    {
+      title: "Quantum Dots for Display Technology",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Quantum_Dots_with_emission_maxima_in_a_702-702nm_702702702702nm_702nm_range.jpg/640px-Quantum_Dots_with_emission_maxima_in_a_702-702nm_702702702702nm_702nm_range.jpg",
+      imageAlt: "Quantum dot solutions glowing in different colors under UV light",
+      context: "Quantum dots are semiconductor nanocrystals where electron confinement creates size-tunable energy levels. Smaller dots emit bluer light — enabling ultra-wide-gamut QLED displays.",
+      parts: [
+        { label: "(a)", q: "Cubic QD, $L = 6$ nm, $m^* = 0.1m_e$. Ground state energy?", a: "$E_{1,1,1} = 3\\pi^2\\hbar^2/(2m^*L^2) = 0.314$ eV." },
+        { label: "(b)", q: "First excited state energy and degeneracy? Transition wavelength?", a: "$E_{2,1,1} = 0.628$ eV (3-fold degenerate). $\\Delta E = 0.314$ eV, $\\lambda = 3949$ nm (mid-IR)." },
+        { label: "(c)", q: "With bulk bandgap $E_g = 1.75$ eV and hole mass $m_h^* = 0.4m_e$, find emission wavelength for $L = 6$ nm and $L = 4$ nm.", a: "6 nm: $E_{\\rm tot} = 2.14$ eV, $\\lambda = 579$ nm (yellow). 4 nm: $E_{\\rm tot} = 2.63$ eV, $\\lambda = 471$ nm (blue)." },
+        { label: "(d)", q: "Use uncertainty principle to explain why smaller dots emit bluer.", a: "Smaller $L$ means larger $\\Delta p$, higher KE ($\\propto 1/L^2$), larger transition energy, shorter wavelength." }
+      ]
+    },
+    {
+      title: "Scanning Tunneling Microscope",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Atomic_resolution_Au100.JPG/640px-Atomic_resolution_Au100.JPG",
+      imageAlt: "STM image of gold atoms on Au(100)",
+      context: "The STM exploits tunneling current's exponential sensitivity to gap width ($I \\propto e^{-2\\kappa d}$) for atomic-resolution imaging.",
+      parts: [
+        { label: "(a)", q: "Gold work function $\\phi = 5.1$ eV. Calculate $\\kappa$.", a: "$\\kappa = \\sqrt{2m_e\\phi}/\\hbar = 11.57$ nm$^{-1}$." },
+        { label: "(b)", q: "At $d = 0.8$ nm, find tunneling factor. How does current change for 0.1 nm gap increase?", a: "$e^{-18.51} \\approx 9 \\times 10^{-9}$. A 0.1 nm increase reduces current by factor $\\sim 10$." },
+        { label: "(c)", q: "Atomic corrugations of 0.02 nm. Percentage change in current?", a: "$e^{0.463} = 1.59$. A 37% decrease — easily measurable." },
+        { label: "(d)", q: "Why does STM only work on conductors?", a: "Tunneling current requires conducting sample. Insulators can't support electron flow. AFM was developed to image non-conductors using force instead of current." }
+      ]
+    },
+    {
+      title: "Alpha Decay as Quantum Tunneling",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Alpha_Decay.svg/640px-Alpha_Decay.svg.png",
+      imageAlt: "Alpha particle tunneling through Coulomb barrier",
+      context: "Alpha decay was among the first phenomena explained by tunneling. The alpha particle inside the nucleus lacks the energy to classically overcome the Coulomb barrier, but tunnels through with exponentially small probability.",
+      parts: [
+        { label: "(a)", q: "For $^{238}$U: alpha KE = 4.27 MeV, daughter $Z = 90$. Calculate Coulomb barrier height at nuclear surface ($R = 7.4$ fm).", a: "$V_0 = kZze^2/R \\approx 35$ MeV, far above the alpha energy." },
+        { label: "(b)", q: "Find the classical turning point and barrier width.", a: "$r_2 = V_0 R/E = 60.7$ fm. Width $= r_2 - R = 53.3$ fm." },
+        { label: "(c)", q: "Estimate the tunneling exponent $G$ and probability.", a: "With $V_{\\rm avg} \\approx V_0/3$: $G \\approx 127$. $T \\approx e^{-127} \\approx 10^{-55}$." },
+        { label: "(d)", q: "Estimate collision rate and half-life. Compare to known $4.5 \\times 10^9$ yr.", a: "Collision rate $\\sim 10^{21}$ s$^{-1}$. Crude $t_{1/2} \\sim 10^{26}$ yr (too long — proper WKB gives $\\sim 10^9$ yr). Tiny changes in $G$ produce huge half-life changes (Geiger-Nuttall law)." }
+      ]
+    }
+  ]
+},
+
+"doppler-effect": {
+  readingQuiz: [
+    { q: "What is the Doppler effect?", a: "The change in observed frequency when source and observer are in relative motion." },
+    { q: "Source approaching at $v_s$. Observed frequency?", a: "$f' = fv/(v-v_s)$ (increases)." },
+    { q: "Observer approaching at $v_o$. Observed frequency?", a: "$f' = f(v+v_o)/v$ (increases)." },
+    { q: "Same shift for moving source vs moving observer?", a: "No for sound (medium defines preferred frame). Yes for light (only relative motion matters)." },
+    { q: "Relativistic Doppler for source receding?", a: "$f' = f\\sqrt{(1-\\beta)/(1+\\beta)}$." },
+    { q: "What is cosmological redshift?", a: "Wavelength stretching from universe expansion: $z = \\Delta\\lambda/\\lambda_0$." },
+    { q: "How does Doppler radar work?", a: "Measures frequency shift of reflected signal to determine target speed." },
+    { q: "What does Doppler ultrasound measure?", a: "Blood flow velocity from frequency shift of ultrasound reflected by red blood cells." }
+  ],
+  shortAnswer: [
+    { q: "Fire truck siren at 750 Hz, speed 30 m/s. Frequency approaching and receding?", a: "Approaching: $750 \\times 343/313 = 822$ Hz. Receding: $750 \\times 343/373 = 690$ Hz." },
+    { q: "Derive the general Doppler formula for both source and observer moving.", a: "$f' = f(v+v_o)/(v-v_s)$, with appropriate sign conventions." },
+    { q: "Galaxy at $z = 0.1$. Recession velocity (non-relativistic and relativistic)?", a: "Non-rel: $v = 0.1c = 30{,}000$ km/s. Rel: $\\beta = 0.095$, $v = 28{,}500$ km/s. ~5% difference." },
+    { q: "Police radar at 10.5 GHz, $\\Delta f = 1850$ Hz. Car speed?", a: "$v = c\\Delta f/(2f) = 26.4$ m/s $= 95$ km/h." },
+    { q: "5 MHz ultrasound, blood at 0.5 m/s, beam angle 60°. Doppler shift?", a: "$\\Delta f = 2fv_b\\cos\\theta/v_{\\rm sound} = 1623$ Hz (audible)." },
+    { q: "CMB emitted at ~3000 K, now at 2.725 K. Redshift?", a: "$z = T_{\\rm emit}/T_{\\rm obs} - 1 \\approx 1100$." }
+  ],
+  longProblems: [
+    {
+      title: "Exoplanet Detection via Radial Velocity",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Doppler_Shift_vs_Time.png/640px-Doppler_Shift_vs_Time.png",
+      imageAlt: "Periodic Doppler velocity variations of a star indicating an orbiting exoplanet",
+      context: "The radial velocity method detects exoplanets by measuring tiny Doppler shifts in stellar spectra. Modern spectrographs detect variations as small as 1 m/s.",
+      parts: [
+        { label: "(a)", q: "Sun-like star orbited by Jupiter ($M_p = 1.9 \\times 10^{27}$ kg) at 5.2 AU. Star's wobble velocity?", a: "$v_p = 13.1$ km/s. $v_\\star = M_p v_p/M_\\star = 12.4$ m/s." },
+        { label: "(b)", q: "Max Doppler shift of Na D line (589 nm)?", a: "$\\Delta\\lambda = \\lambda v_\\star/c = 0.024$ pm. Requires resolving power $R \\sim 2.4 \\times 10^7$." },
+        { label: "(c)", q: "Hot Jupiter at 0.05 AU instead. Wobble velocity and orbital period?", a: "$v_\\star = 127$ m/s. $P = 4.07$ days. Much easier to detect." },
+        { label: "(d)", q: "51 Peg b: $K = 55.9$ m/s, $P = 4.23$ days. Minimum planet mass?", a: "$M_p\\sin i \\approx 0.45 M_J$ from Kepler's law and $K = v_\\star \\sin i$." }
+      ]
+    },
+    {
+      title: "Doppler Ultrasound in Cardiovascular Medicine",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Doppler_ultrasound_of_mitral_valve.jpg/640px-Doppler_ultrasound_of_mitral_valve.jpg",
+      imageAlt: "Doppler ultrasound of blood flow through the mitral valve",
+      context: "Doppler ultrasound measures blood flow velocities non-invasively, essential for diagnosing cardiovascular conditions. $v_{\\rm sound} = 1540$ m/s in tissue.",
+      parts: [
+        { label: "(a)", q: "Cardiac probe at 3.5 MHz, aortic blood at 1.2 m/s, beam angle 45°. Find $\\Delta f$.", a: "$\\Delta f = 2 \\times 3.5 \\times 10^6 \\times 1.2 \\times \\cos 45°/1540 = 3856$ Hz (audible)." },
+        { label: "(b)", q: "Aortic stenosis increases $\\Delta f$ to 12.8 kHz. Blood velocity?", a: "$v_b = 4.0$ m/s, more than tripled." },
+        { label: "(c)", q: "Using modified Bernoulli ($\\Delta P = 4v^2$ mmHg), estimate pressure gradient.", a: "$\\Delta P = 63.4$ mmHg. Severe aortic stenosis (>40 mmHg threshold)." },
+        { label: "(d)", q: "Why is beam angle critical? What happens near 90°?", a: "$\\cos 90° = 0$: no shift detected. Above 60°, small angle errors cause large velocity errors ($\\delta v/v = \\tan\\theta \\cdot \\delta\\theta$)." },
+        { label: "(e)", q: "Pulsed Doppler Nyquist limit: $v_{\\max} = v \\cdot \\text{PRF}/(4f_0\\cos\\theta)$. For PRF = 8 kHz?", a: "$v_{\\max} = 1.24$ m/s. Stenotic flow (4 m/s) causes aliasing. Solutions: increase PRF, lower $f$, use continuous-wave Doppler." }
+      ]
+    },
+    {
+      title: "Measuring Universe Expansion with Supernovae",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Hubble_deep_field_image.jpg/640px-Hubble_deep_field_image.jpg",
+      imageAlt: "Hubble Deep Field showing distant galaxies",
+      context: "Cosmological redshift from Type Ia supernovae revealed the accelerating expansion of the universe (2011 Nobel Prize). Hubble's law: $v = H_0 d$.",
+      parts: [
+        { label: "(a)", q: "Galaxy with H$\\alpha$ at 696.3 nm instead of 656.3 nm. Find $z$ and velocity.", a: "$z = 0.061$. Non-rel: $v = 18{,}300$ km/s. Rel: $v = 17{,}700$ km/s." },
+        { label: "(b)", q: "Distance using $H_0 = 70$ km/s/Mpc?", a: "$d = 261$ Mpc $\\approx 850$ million light-years." },
+        { label: "(c)", q: "Supernova at $z = 0.5$. Wavelength ratio? Time dilation of 20-day light curve?", a: "All wavelengths stretched by $1.5$. Light curve appears to last $30$ days." },
+        { label: "(d)", q: "Most distant galaxy at $z \\approx 13$. Scale factor? Age of universe when light was emitted?", a: "$a = 1/14 = 0.071$ (7.1% of current size). $t \\approx 13.8/(14)^{3/2} \\approx 263$ Myr after the Big Bang." }
       ]
     }
   ]
