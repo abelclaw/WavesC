@@ -20786,7 +20786,8 @@ function initRelativisticDopplerRedshift() {
   if (!setup) return;
   const { ctx, W, H } = setup;
 
-  // beta: -0.95 (approaching) to +0.95 (receding), 0 = at rest
+  // beta range: ±0.03c ≈ ±9000 km/s — realistic for fast-moving galaxies
+  var betaMax = 0.03;
   let beta = 0.0;
   let dragging = false;
   let time = 0;
@@ -20820,7 +20821,7 @@ function initRelativisticDopplerRedshift() {
   function getMouseBeta(mx) {
     var t = (mx - sliderX) / sliderW; // 0..1
     // Right = approaching (negative beta), left = receding (positive beta)
-    return Math.max(-0.95, Math.min(0.95, -((t - 0.5) * 1.9)));
+    return Math.max(-betaMax, Math.min(betaMax, -((t - 0.5) * 2 * betaMax)));
   }
 
   canvas.addEventListener('mousedown', function(e) {
@@ -21002,12 +21003,13 @@ function initRelativisticDopplerRedshift() {
     drawStar(starX, starY, 10, sColor, sGlow);
 
     // Velocity arrow from star toward/away from Earth
-    var arrowLen = 15 + absBeta * 80;
+    var betaFrac = absBeta / betaMax; // 0..1
+    var arrowLen = 15 + betaFrac * 80;
     var arrowStartX = starX + 16;
     if (beta < 0) {
       // Approaching: arrow points right (towards Earth)
       var arrowEndX = arrowStartX + arrowLen;
-      var arrowColor = 'rgba(100,160,255,' + (0.4 + absBeta * 0.6).toFixed(2) + ')';
+      var arrowColor = 'rgba(100,160,255,' + (0.4 + betaFrac * 0.6).toFixed(2) + ')';
       ctx.strokeStyle = arrowColor; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(arrowStartX, starY); ctx.lineTo(arrowEndX, starY); ctx.stroke();
       ctx.fillStyle = arrowColor;
@@ -21015,7 +21017,7 @@ function initRelativisticDopplerRedshift() {
     } else if (beta > 0) {
       // Receding: arrow points left (away from Earth)
       var arrowEndX2 = arrowStartX - arrowLen - 16;
-      var arrowColor2 = 'rgba(255,120,100,' + (0.4 + absBeta * 0.6).toFixed(2) + ')';
+      var arrowColor2 = 'rgba(255,120,100,' + (0.4 + betaFrac * 0.6).toFixed(2) + ')';
       ctx.strokeStyle = arrowColor2; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(starX - 16, starY); ctx.lineTo(arrowEndX2, starY); ctx.stroke();
       ctx.fillStyle = arrowColor2;
@@ -21032,22 +21034,24 @@ function initRelativisticDopplerRedshift() {
     ctx.beginPath(); ctx.moveTo(sliderX + sliderW / 2, slY - 4); ctx.lineTo(sliderX + sliderW / 2, slY + 4); ctx.stroke();
     // Gradient track coloring: left=red(receding), right=blue(approaching)
     for (var px = 0; px < sliderW; px++) {
-      var tb = ((px / sliderW) - 0.5) * 1.9;
-      if (tb < 0) ctx.fillStyle = 'rgba(255,120,100,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
-      else ctx.fillStyle = 'rgba(100,160,255,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
+      var tb = ((px / sliderW) - 0.5) * 2 * betaMax;
+      var tAlpha = (Math.abs(tb) / betaMax * 0.3).toFixed(2);
+      if (tb < 0) ctx.fillStyle = 'rgba(255,120,100,' + tAlpha + ')';
+      else ctx.fillStyle = 'rgba(100,160,255,' + tAlpha + ')';
       ctx.fillRect(sliderX + px, slY - 2, 1, 4);
     }
     // Handle: negative beta (approaching) on right, positive (receding) on left
-    var handleX = sliderX + (-beta / 1.9 + 0.5) * sliderW;
+    var handleX = sliderX + (-beta / (2 * betaMax) + 0.5) * sliderW;
     ctx.beginPath(); ctx.arc(handleX, slY, 6, 0, Math.PI * 2);
-    ctx.fillStyle = beta < -0.02 ? '#4a90d9' : (beta > 0.02 ? '#d94a4a' : '#0f766e');
+    ctx.fillStyle = beta < -0.001 ? '#4a90d9' : (beta > 0.001 ? '#d94a4a' : '#0f766e');
     ctx.fill();
     ctx.strokeStyle = '#a0b0c0'; ctx.lineWidth = 1; ctx.stroke();
     // Velocity readout + labels
     var velLabel = beta === 0 ? 'at rest' : (beta < 0 ? 'approaching' : 'receding');
     var velColor = beta < 0 ? '#7cb3ff' : (beta > 0 ? '#ff9080' : '#8090a0');
     ctx.fillStyle = velColor; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    ctx.fillText(velLabel + '  v/c = ' + Math.abs(beta).toFixed(2), starX, slY + 14);
+    var vKms = Math.round(Math.abs(beta) * 3e5);
+    ctx.fillText(velLabel + '   v = ' + vKms.toLocaleString() + ' km/s', starX, slY + 14);
     ctx.fillStyle = '#506878'; ctx.font = '8px system-ui';
     ctx.fillText('\u2190 red', sliderX + 14, slY - 8);
     ctx.textAlign = 'center';
