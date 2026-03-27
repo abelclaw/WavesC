@@ -17992,9 +17992,9 @@ function initInterferometerResolution() {
     }
   }
 
-  // --- VLA-style dish drawing ---
+  // --- VLA-style dish: tilted parabola on pedestal via yoke mount ---
   function drawVLADish(x, gy, s) {
-    // Concrete pedestal
+    // Tapered concrete pedestal
     ctx.fillStyle = '#8a8f94';
     ctx.beginPath();
     ctx.moveTo(x - 2.5 * s, gy);
@@ -18004,45 +18004,54 @@ function initInterferometerResolution() {
     ctx.closePath();
     ctx.fill();
 
-    // Elevation bearing / yoke
+    // Semicircular yoke mount on top of pedestal
     ctx.fillStyle = '#6b7075';
-    ctx.fillRect(x - 2.5 * s, gy - 8 * s, 5 * s, 2.5 * s);
-
-    // Parabolic dish (concave up, facing sky)
     ctx.beginPath();
-    ctx.moveTo(x - 8 * s, gy - 14 * s);
-    ctx.quadraticCurveTo(x, gy - 8.5 * s, x + 8 * s, gy - 14 * s);
-    // Rim thickness
-    ctx.lineTo(x + 8 * s, gy - 15.5 * s);
-    ctx.quadraticCurveTo(x, gy - 10 * s, x - 8 * s, gy - 15.5 * s);
-    ctx.closePath();
-    ctx.fillStyle = '#d4d8dc';
+    ctx.arc(x, gy - 6 * s, 2.2 * s, Math.PI, 0);
     ctx.fill();
-    ctx.strokeStyle = '#9ca3ab';
+
+    // Tilted dish: rotate around the mount pivot
+    ctx.save();
+    ctx.translate(x, gy - 7.5 * s);
+    ctx.rotate(-0.5); // tilt ~29° so dish faces the sky
+
+    var r = 7.5 * s; // dish half-width
+
+    // Dish body (parabolic cross-section with rim thickness)
+    ctx.beginPath();
+    ctx.moveTo(-r, 0);
+    ctx.quadraticCurveTo(0, r * 0.4, r, 0);
+    ctx.lineTo(r * 0.92, -1.3 * s);
+    ctx.quadraticCurveTo(0, r * 0.4 - 1.3 * s, -r * 0.92, -1.3 * s);
+    ctx.closePath();
+    ctx.fillStyle = '#d0d5da';
+    ctx.fill();
+    ctx.strokeStyle = '#a0a5aa';
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
-    // Dish interior shading (subtle concave look)
+    // Concave interior highlight
     ctx.beginPath();
-    ctx.moveTo(x - 6 * s, gy - 14 * s);
-    ctx.quadraticCurveTo(x, gy - 10.5 * s, x + 6 * s, gy - 14 * s);
-    ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-    ctx.lineWidth = 2 * s;
+    ctx.moveTo(-r * 0.5, -0.2 * s);
+    ctx.quadraticCurveTo(0, r * 0.2, r * 0.5, -0.2 * s);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1 * s;
     ctx.stroke();
 
-    // Subreflector support struts (four legs)
-    ctx.strokeStyle = '#6b7075';
+    // Subreflector struts
+    var fd = r * 0.85;
+    ctx.strokeStyle = '#5a5f64';
     ctx.lineWidth = 0.6;
     ctx.beginPath();
-    ctx.moveTo(x - 6 * s, gy - 14.5 * s); ctx.lineTo(x, gy - 21 * s);
-    ctx.moveTo(x + 6 * s, gy - 14.5 * s); ctx.lineTo(x, gy - 21 * s);
-    ctx.moveTo(x - 2 * s, gy - 14 * s);   ctx.lineTo(x, gy - 21 * s);
-    ctx.moveTo(x + 2 * s, gy - 14 * s);   ctx.lineTo(x, gy - 21 * s);
+    ctx.moveTo(-r * 0.6, -0.3 * s); ctx.lineTo(0, fd);
+    ctx.moveTo(r * 0.6, -0.3 * s);  ctx.lineTo(0, fd);
     ctx.stroke();
 
     // Subreflector
     ctx.fillStyle = '#4a5055';
-    ctx.beginPath(); ctx.arc(x, gy - 21 * s, 1.2 * s, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, fd, 1.1 * s, 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
   }
 
   // --- Ground with N VLA dishes (below observed image only) ---
@@ -18062,7 +18071,7 @@ function initInterferometerResolution() {
     var span = Math.max(20, baseline / 200 * (colW - 24));
     var midX = colL + colW / 2;
     var startX = midX - span / 2;
-    var s = nAnt > 14 ? 1.0 : (nAnt > 8 ? 1.3 : 1.8);
+    var s = nAnt > 18 ? 0.8 : (nAnt > 10 ? 1.1 : (nAnt > 5 ? 1.5 : 2.0));
 
     for (var i = 0; i < nAnt; i++) {
       var dx = nAnt > 1 ? startX + i * span / (nAnt - 1) : midX;
