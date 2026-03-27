@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-      onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false},{left: '\\\\(', right: '\\\\)', display: false},{left: '\\\\[', right: '\\\\]', display: true}], throwOnError: false});"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   </head>
   <body>
     <button id="sidebar-toggle" class="sidebar-toggle" aria-controls="atlas-sidebar" aria-expanded="false">Open Sidebar</button>
@@ -76,6 +75,8 @@
         </section>
 
         <section id="learn-mode-container" class="learn-mode-container" hidden></section>
+
+        <section id="discovery-mode-container" class="discovery-mode-container" hidden></section>
 
         <section class="panel roadmap-panel" id="roadmap-section">
           <div class="section-heading">
@@ -283,6 +284,7 @@
     <script src="./lecture-content-12-16.js" defer></script>
     <script src="./lecture-content-17-21.js" defer></script>
     <script src="./interactives.js" defer></script>
+    <script src="./discovery-content.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>

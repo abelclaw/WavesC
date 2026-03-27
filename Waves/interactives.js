@@ -217,10 +217,58 @@ if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D
 }
 
 // =========================================================================
+// ANIMATION LIFECYCLE — pause off-screen, cancel on navigation
+// =========================================================================
+const _wAnimations = [];           // { id, canvas, tickFn }
+let _wVisibilityObserver = null;
+const _wVisibleSet = new WeakSet();
+
+function _wEnsureObserver() {
+  if (_wVisibilityObserver) return;
+  _wVisibilityObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        _wVisibleSet.add(entry.target);
+      } else {
+        _wVisibleSet.delete(entry.target);
+      }
+    }
+  }, { rootMargin: '200px' });
+}
+
+// Drop-in replacement for requestAnimationFrame(tick).
+// When the canvas is off-screen, polls at 1fps instead of 60fps.
+function wAnimFrame(canvas, fn) {
+  if (!canvas.isConnected) return;
+  if (_wVisibleSet.has(canvas)) {
+    requestAnimationFrame(fn);
+  } else {
+    setTimeout(() => { if (canvas.isConnected) fn(); }, 1000);
+  }
+}
+
+// Register a canvas for visibility tracking (call once per init function)
+function wTrackCanvas(canvas) {
+  _wEnsureObserver();
+  _wVisibilityObserver.observe(canvas);
+  // start visible so first frame draws immediately
+  _wVisibleSet.add(canvas);
+}
+
+// Cancel all tracked animations (called before re-init on navigation)
+function wCancelAllAnimations() {
+  if (_wVisibilityObserver) {
+    _wVisibilityObserver.disconnect();
+    _wVisibilityObserver = null;
+  }
+}
+
+// =========================================================================
 // LECTURE 1 INTERACTIVE SCENES
 // =========================================================================
 
 function initSceneInteractives() {
+  wCancelAllAnimations();
   // Lecture 1
   initSHMSpring();
   initSHMOscillator();
@@ -370,6 +418,7 @@ function wSetupCanvas(canvas) {
   canvas.style.height = h + 'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
+  wTrackCanvas(canvas);
   return { ctx, W: w, H: h };
 }
 
@@ -481,7 +530,7 @@ function initSHMSpring() {
     if (trail.length > maxTrail) trail.shift();
 
     draw(k, m, omega0);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function drawSpring(ctx, x1, y1, x2, y2, coils) {
@@ -674,7 +723,7 @@ function initSHMOscillator() {
     document.getElementById('osc-phi-val')?.replaceChildren(document.createTextNode(phi.toFixed(2)));
 
     draw(A, omega, phi);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(A, omega, phi) {
@@ -860,7 +909,7 @@ function initDampedOscillator() {
     }
 
     draw(gamma, m, omega0);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(gamma, m, omega0) {
@@ -1119,7 +1168,7 @@ function initDampingRegimes() {
       }
     }
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -1469,7 +1518,7 @@ function initEulerCircle() {
       t += 0.02;
     }
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -1567,7 +1616,7 @@ function initDrivenOscillator() {
     if (trail.length > maxTrail) trail.shift();
 
     draw(wd, w0, gamma, x, force);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(wd, w0, gamma, x, force) {
@@ -1971,7 +2020,7 @@ function initTransientDecay() {
       if (t > tMax) t = 0;
     }
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -2242,7 +2291,7 @@ function initPhaseLag() {
     const phase = -Math.atan2(B, A);
 
     draw(wd, A, B, amp, phase);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(wd, A, B, amp, phase) {
@@ -2538,7 +2587,7 @@ function initPowerAbsorption() {
     histIdx++;
 
     draw(wd, gamma, A, B, pAb, pEl);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(wd, gamma, A, B, pAb, pEl) {
@@ -3010,7 +3059,7 @@ function initCoupledOscillators() {
     if (trail1.length > maxTrail) { trail1.shift(); trail2.shift(); }
 
     draw(kappaRatio);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(kappaRatio) {
@@ -3270,7 +3319,7 @@ function initNormalModes() {
     ctx.fillStyle = WCOLORS.text; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'left';
     ctx.fillText('κ/k = ' + kappaRatio.toFixed(2), 10, H - 2);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -3459,7 +3508,7 @@ function initBeats() {
     ctx.fillStyle = WCOLORS.red; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center';
     fillTextSub(ctx, 'ν_{beat} = |ν_a − ν_s| = ' + nuBeat.toFixed(2) + ' Hz', W / 2, H - 6);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -3679,7 +3728,7 @@ function initEigenvalueSolver() {
     if (!canvas.isConnected) return;
     t += 0.04;
     draw();
-    requestAnimationFrame(animate);
+    wAnimFrame(canvas, animate);
   }
 
   mixSlider?.addEventListener('input', () => { t = 0; });
@@ -3852,7 +3901,7 @@ function initTwoMassNormalModes() {
     fillTextSub(ctx, 'ω_s = ' + omegaS.toFixed(2), 10, H - 5);
     fillTextSub(ctx, 'ω_a = ' + omegaA.toFixed(2), 120, H - 5);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -3985,7 +4034,7 @@ function initThreeMassNormalModes() {
       ctx.fillText(m.label + '  ω = ' + m.omega.toFixed(2), sysL, pTop + 12);
     }
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -4223,7 +4272,7 @@ function initNMassChain() {
     ctx.fillStyle = WCOLORS.teal; ctx.font = '11px system-ui, sans-serif';
     ctx.fillText('\u03C9 = 2\u03C9\u2080 sin(' + modeNum + '\u03C0/2\u00b7' + (N + 1) + ') = ' + omegaP.toFixed(3) + ' \u03C9\u2080', 10, 33);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -4817,7 +4866,7 @@ function initPluckedString() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui, sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('mode n', (histL + histR) / 2, histB + 22);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -5111,7 +5160,7 @@ function initContinuumLimit() {
     ctx.fillStyle = WCOLORS.teal; ctx.fillText('discrete', dR - 80, botT + 12);
     ctx.fillStyle = WCOLORS.amber; ctx.fillText('linear', dR - 80, botT + 24);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   nSlider?.addEventListener('input', () => {});
@@ -5294,7 +5343,7 @@ function initTravelingVsStanding() {
       ctx.setLineDash([]);
     }
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   kSlider?.addEventListener('input', () => {});
@@ -5493,7 +5542,7 @@ function initStringTransverseWave() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
     ctx.fillText('T = ' + T.toFixed(1) + ' N    \u03BC = ' + mu.toFixed(1) + ' g/m', anchorR, H - 8);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -5626,7 +5675,7 @@ function initSoundWaveLongitudinal() {
     ctx.textAlign = 'right';
     ctx.fillText('Compression (bright)  \u2022  Rarefaction (dim)', W - 10, H - 10);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -5819,7 +5868,7 @@ function initBoundaryConditionsDemo() {
     ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF node', stringL, H - 8);
     ctx.fillStyle = WCOLORS.amber; ctx.fillText('\u2502 antinode', stringL + 55, H - 8);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   modeSlider?.addEventListener('input', () => {});
@@ -5950,7 +5999,7 @@ function initStandingWaveModes() {
       }
     }
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -6222,7 +6271,7 @@ function initHelmholtzResonator() {
     ctx.fillStyle = WCOLORS.amber; ctx.font = 'bold 14px system-ui';
     ctx.fillText('= ' + fRes.toFixed(1) + ' Hz', W / 2, H - 6);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   aSlider?.addEventListener('input', () => {});
@@ -6378,7 +6427,7 @@ function initBeatsDemo() {
       ctx.fillText('envelope', plotR - 5, botY - ampBig - 3);
     }
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   dfSlider?.addEventListener('input', () => {});
@@ -6566,7 +6615,7 @@ function initConsonanceDissonance() {
     ctx.fillStyle = '#16a34a'; ctx.fillText('\u25CF aligned', specL + 150, specTop + 6);
     ctx.fillStyle = WCOLORS.red; ctx.fillText('\u25CF near-beat', specL + 195, specTop + 6);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   ratioSlider?.addEventListener('input', () => {});
@@ -7244,7 +7293,7 @@ function initWaveTransportEnergy() {
     t += 0.03;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -7357,7 +7406,7 @@ function initTransverseLongitudinalDemo() {
     t += 0.04;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -7660,7 +7709,7 @@ function initEmPlaneWave() {
     t += 0.03;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function drawArrow(x1, y1, x2, y2, color, lw) {
@@ -8252,7 +8301,7 @@ function initPhononPolarizations() {
     t += 0.03;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -8531,7 +8580,7 @@ function initPolarization() {
     t += 0.03;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   // Returns E and B transverse components for a given phase
@@ -8800,7 +8849,7 @@ function initMalusLaw() {
     t += 0.04;
     wClear(ctx, W, H);
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function drawPolaroidDisc(cx, cyy, r, axisAngleRad, label, highlight) {
@@ -9191,7 +9240,7 @@ function init3DMovieGlasses() {
       document.createTextNode(Math.round(sep) + ' px')
     );
     draw(sep);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(sep) {
@@ -10030,7 +10079,7 @@ function initThinFilmInterference() {
       }
     }
 
-    requestAnimationFrame(draw);
+    wAnimFrame(canvas, draw);
   }
 
   draw();
@@ -12729,7 +12778,7 @@ function initStringJunction() {
     }
 
     if (pulseCenter > stringR + sigma * 3) t = 0;
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -12846,7 +12895,7 @@ function initMassCollisionImpedance() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('Maximum transfer at m\u2082/m\u2081 = 1 (impedance matched)', W / 2, barY + barH + 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -12974,7 +13023,7 @@ function initComplexImpedance() {
     const force = Math.cos(omega * t);
 
     draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, phase, Zm, Zk, x, force);
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw(omega, m, gamma, k, omega0, reZ, imZ, absZ, phase, Zm, Zk, x, force) {
@@ -13506,7 +13555,7 @@ function initWaveEnergyString() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText('For a traveling wave: KE = PE everywhere (equal partition)', plotL + plotW / 2, enB + 14);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -13878,7 +13927,7 @@ function initDecibelScale() {
       ratio.toExponential(0) + '\u00D7 more intense', boxX + 8, boxY + 28);
     ctx.fillText('than the threshold of hearing.', boxX + 8, boxY + 40);
 
-    requestAnimationFrame(draw);
+    wAnimFrame(canvas, draw);
   }
 
   // Find nearest source to an x position on the bar
@@ -14077,7 +14126,7 @@ function initPlaneWave3d() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
     ctx.fillText('Wavefronts are perpendicular to k', W / 2, H - 8);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -14184,7 +14233,7 @@ function initInterferenceDemo() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
     ctx.fillText('Screen', screenX + 15, screenT - 5);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -14410,7 +14459,7 @@ function initAmplitudeModulation() {
       lastTime = now;
     }
     draw();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   function draw() {
@@ -14652,7 +14701,7 @@ function initAmplitudeModulation() {
 
   sigmaSlider?.addEventListener('input', draw);
   fcSlider?.addEventListener('input', draw);
-  requestAnimationFrame(tick);
+  wAnimFrame(canvas, tick);
 }
 
 // =========================================================================
@@ -14894,11 +14943,12 @@ function initDispersionRelations() {
   }
 
   function animate() {
+    if (!canvas.isConnected) return;
     t += 0.04;
     if (t > 25) t = 0;
     drawCurve();
     drawWave();
-    requestAnimationFrame(animate);
+    wAnimFrame(canvas, animate);
   }
 
   function onInput() {
@@ -15083,7 +15133,7 @@ function initPhaseVelocityDemo() {
     ctx.fillText('Deep water: \u03C9 = \u221A(gk)  \u2192  vp = \u221A(g/k),  vg = \u00BD vp', W / 2, H - 10);
     ctx.fillText('Crests (red) overtake the envelope (amber) because vp > vg', W / 2, H - 25);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -15248,7 +15298,7 @@ function initGroupVelocityDemo() {
     // Reset
     if (vg * t > xRange * 1.2) t = 0;
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -15395,7 +15445,7 @@ function initWavepacketDispersion() {
     // Reset
     if (c * t > xRange * 1.3) t = 0;
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -17542,7 +17592,7 @@ function initMonopoleRadiationPattern() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Radiation Pattern', 10, 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -17666,7 +17716,7 @@ function initTwoSourceInterference() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Two-Source Interference', 10, 12);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -18296,7 +18346,7 @@ function initHuygensPrincipleDemo() {
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '10px system-ui';
     ctx.fillText('Each point in the slit acts as a new source', W * 0.45, 16);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -18526,7 +18576,7 @@ function initDiffractionGratingPattern() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Diffraction Grating', 10, 16);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -18794,7 +18844,7 @@ function initSingleSlitDiffraction() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Single Slit Diffraction \u2014 Photon Buildup', 10, 16);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -19155,7 +19205,7 @@ function initFourierOpticsDemo() {
       ctx.fillText(tabs[i], tx + tabW / 2, tabY + 15);
     }
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -19343,7 +19393,7 @@ function initPhotoelectricEffectDemo() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Photoelectric Effect', 10, 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -19848,7 +19898,7 @@ function initDoubleSlitPhotonBuildup() {
     drawExpectedDistribution();
     drawScreen(); drawFlashes(); drawHistogram();
     drawFlyingElectrons(); drawLabels(); drawControls();
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -20299,7 +20349,7 @@ function initQuantumWavepacketDispersion() {
     ctx.fillText('narrow', sliderX, sliderY - 8);
     ctx.fillText('wide', sliderX + sliderW, sliderY - 8);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -20423,7 +20473,7 @@ function initDopplerMovingSource() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Doppler: Moving Source', 10, 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -20656,7 +20706,7 @@ function initDopplerAngle() {
     ctx.beginPath(); ctx.arc(sourceX, dotY, 5, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1; ctx.stroke();
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -20773,7 +20823,7 @@ function initSonicBoomMachCone() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Mach Cone', 10, 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -21098,7 +21148,7 @@ function initRelativisticDopplerRedshift() {
     ctx.fillStyle = '#607080'; ctx.font = '11px system-ui'; ctx.textAlign = 'center';
     ctx.fillText("\u03BB' = \u03BB\u2080 \u221A((1+\u03B2)/(1\u2212\u03B2))     \u03B2 = v/c", W / 2, H * 0.96);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -21271,7 +21321,7 @@ function initDopplerSpectroscopyExoplanet() {
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
     ctx.fillText('Doppler Spectroscopy: Exoplanet Detection', 10, 18);
 
-    requestAnimationFrame(tick);
+    wAnimFrame(canvas, tick);
   }
 
   tick();
@@ -21484,7 +21534,7 @@ function initShearWaveSolidLiquid() {
       if (t > loopTime) t = 0;
     }
 
-    requestAnimationFrame(draw);
+    wAnimFrame(canvas, draw);
   }
 
   draw();
@@ -21812,7 +21862,7 @@ function initSeismicEarthCore() {
       if (t > maxT + 60) t = 0;
     }
 
-    requestAnimationFrame(draw);
+    wAnimFrame(canvas, draw);
   }
 
   draw();

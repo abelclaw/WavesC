@@ -4645,6 +4645,85 @@ function renderLearnMode(chapter) {
   setTimeout(initSceneInteractives, 0);
 }
 
+const discoveryState = { stepIndex: 0 };
+
+function renderDiscoveryMode(chapter) {
+  const container = document.getElementById("discovery-mode-container");
+  if (!container) return;
+
+  const steps = (typeof discoverySteps !== "undefined" && discoverySteps[chapter.slug]) || [];
+  if (!steps.length) {
+    container.innerHTML = `<div class="discovery-empty panel"><p>Discovery content coming soon for this chapter.</p></div>`;
+    return;
+  }
+
+  discoveryState.stepIndex = Math.min(discoveryState.stepIndex, steps.length - 1);
+  const idx = discoveryState.stepIndex;
+  const step = steps[idx];
+  const interactiveId = step.interactive || chapter.scene;
+
+  container.innerHTML = `
+    <div class="discovery-header panel">
+      <div>
+        <p class="mini-label">Guided Discovery</p>
+        <h3>${chapter.title}</h3>
+      </div>
+      <p class="discovery-progress-text">Step ${idx + 1} of ${steps.length}</p>
+    </div>
+    <div class="discovery-interactive panel">
+      <div class="scene">${sceneMarkup(interactiveId)}</div>
+    </div>
+    <div class="discovery-step panel">
+      <div class="discovery-question">
+        <p class="mini-label">Think about this</p>
+        <h4>${step.question}</h4>
+      </div>
+      <details class="discovery-try">
+        <summary>Try it</summary>
+        <p>${step.tryThis}</p>
+      </details>
+      <details class="discovery-reveal">
+        <summary>Reveal why</summary>
+        <div class="discovery-reveal-body">
+          <p>${step.reveal}</p>
+        </div>
+      </details>
+    </div>
+    <div class="discovery-nav">
+      <button class="nav-button discovery-prev" ${idx === 0 ? "disabled" : ""}>Previous</button>
+      <div class="discovery-dots">
+        ${steps.map((_, i) => `<button class="discovery-dot ${i === idx ? "active" : ""} ${i < idx ? "visited" : ""}" data-step="${i}" aria-label="Step ${i + 1}"></button>`).join("")}
+      </div>
+      <button class="nav-button discovery-next" ${idx === steps.length - 1 ? "disabled" : ""}>Next</button>
+    </div>
+  `;
+
+  setTimeout(initSceneInteractives, 0);
+
+  container.querySelector(".discovery-prev")?.addEventListener("click", () => {
+    if (discoveryState.stepIndex > 0) {
+      discoveryState.stepIndex--;
+      renderDiscoveryMode(chapter);
+      container.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+  container.querySelector(".discovery-next")?.addEventListener("click", () => {
+    if (discoveryState.stepIndex < steps.length - 1) {
+      discoveryState.stepIndex++;
+      renderDiscoveryMode(chapter);
+      container.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+  container.querySelectorAll(".discovery-dot").forEach((dot) => {
+    dot.addEventListener("click", () => {
+      discoveryState.stepIndex = parseInt(dot.dataset.step, 10);
+      renderDiscoveryMode(chapter);
+    });
+  });
+
+  setTimeout(renderMath, 0);
+}
+
 function applyModeVisibility() {
   const learnContainer = document.getElementById("learn-mode-container");
   const studyGuideSections = [
@@ -4977,7 +5056,8 @@ function attachEvents() {
 
 function renderMath() {
   if (typeof renderMathInElement === "function") {
-    renderMathInElement(document.body, {
+    const target = document.querySelector('.main-panel') || document.body;
+    renderMathInElement(target, {
       delimiters: [
         { left: "$$", right: "$$", display: true },
         { left: "$", right: "$", display: false },
