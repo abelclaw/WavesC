@@ -2066,8 +2066,6 @@ const chapterPitfalls = document.getElementById("chapter-pitfalls");
 const labTitle = document.getElementById("lab-title");
 const labCaption = document.getElementById("lab-caption");
 const scene = document.getElementById("scene");
-const assistantQuickActions = document.getElementById("assistant-quick-actions");
-const assistantAnswer = document.getElementById("assistant-answer");
 const termCloud = document.getElementById("term-cloud");
 const termToggle = document.getElementById("term-toggle");
 const termDetail = document.getElementById("term-detail");
@@ -2087,8 +2085,6 @@ const sidebarOverlay = document.getElementById("sidebar-overlay");
 const prevChapter = document.getElementById("prev-chapter");
 const nextChapter = document.getElementById("next-chapter");
 const tooltip = document.getElementById("tooltip");
-const studyQuestion = document.getElementById("study-question");
-const askButton = document.getElementById("ask-button");
 const chapterCoreIdea = document.getElementById("chapter-core-idea");
 const chapterWatchout = document.getElementById("chapter-watchout");
 const roadmapIntuition = document.getElementById("roadmap-intuition");
@@ -2424,28 +2420,6 @@ function renderMastery(chapter) {
     .join("");
 }
 
-function renderQuickActions(chapter) {
-
-  assistantQuickActions.innerHTML = [
-    ["intuition", "Intuition"],
-    ["formal", "Formal"],
-    ["quiz", "Quiz"]
-  ]
-    .map(
-      ([key, label]) => `
-        <button class="quick-action" data-answer="${key}">
-          ${label}
-        </button>
-      `
-    )
-    .join("");
-
-  assistantAnswer.innerHTML = `
-    <h4>${chapter.title} through the ${state.mode} lens</h4>
-    <p>${chapter.quickActions[state.mode === "exam" ? "quiz" : "intuition"]}</p>
-    <p><strong>Try this:</strong> ${chapter.prompts[0]}</p>
-  `;
-}
 
 function renderTerms(chapter) {
   const entries = Object.entries(chapter.terms);
@@ -4370,56 +4344,6 @@ function renderScene(chapter) {
   setTimeout(initSceneInteractives, 0);
 }
 
-function answerQuestion(chapter, rawQuestion) {
-  const question = rawQuestion.trim().toLowerCase();
-
-  if (!question) {
-    return {
-      title: `Ask ${chapter.title}`,
-      body: `Try a prompt like "${chapter.prompts[0]}" or click one of the quick actions to switch explanation depth.`
-    };
-  }
-
-  const matchedTerm = Object.entries(chapter.terms).find(([key]) => {
-    const normalized = key.replace(/[_-]/g, " ");
-    return question.includes(key) || question.includes(normalized);
-  });
-
-  if (matchedTerm) {
-    const [key, value] = matchedTerm;
-    return {
-      title: key.replace(/[_-]/g, " "),
-      body: `${value.long} In this chapter, that idea matters because ${chapter.quickActions.intuition.toLowerCase()}`
-    };
-  }
-
-  if (question.includes("derive") || question.includes("proof") || question.includes("math")) {
-    return {
-      title: `Math view on ${chapter.title}`,
-      body: `${chapter.quickActions.formal} Open the derivation card below to walk the steps in sequence.`
-    };
-  }
-
-  if (question.includes("confus") || question.includes("mistake") || question.includes("trap")) {
-    return {
-      title: "Common trap",
-      body: `${chapter.pitfalls[0]} Watch how the chapter keeps the microscopic and macroscopic levels conceptually separate.`
-    };
-  }
-
-  if (question.includes("quiz") || question.includes("check")) {
-    return {
-      title: "Quick checkpoint",
-      body: `${chapter.quickActions.quiz} Follow-up: ${chapter.prompts[1]}`
-    };
-  }
-
-  return {
-    title: `Chapter guide: ${chapter.title}`,
-    body: `${chapter.quickActions.intuition} If you want a more formal route, ask about the math, derivation, or a specific glossary term.`
-  };
-}
-
 function getMathLesson(lessonId) {
   return mathLessons.find((lesson) => lesson.id === lessonId) || null;
 }
@@ -4951,13 +4875,6 @@ function applyModeVisibility() {
   if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
   if (state.mode === "exam" && testContainer) testContainer.hidden = false;
 
-  // Show coach (layered explanation) and glossary (terms) only in test mode
-  if (state.mode === "exam") {
-    const coachSection = document.getElementById("coach-section");
-    const glossarySection = document.getElementById("glossary-section");
-    if (coachSection) coachSection.closest(".detail-grid").hidden = false;
-    if (glossarySection) glossarySection.closest(".detail-grid").hidden = false;
-  }
 }
 
 function renderChapter() {
@@ -4978,7 +4895,6 @@ function renderChapter() {
   }
   renderRoadmap(chapter);
   renderSectionGuide(chapter);
-  renderQuickActions(chapter);
   renderTerms(chapter);
   renderDerivations(chapter);
   renderQuizzes(chapter);
@@ -5104,19 +5020,6 @@ function attachEvents() {
       renderTerms(chapters[state.chapterIndex]);
     }
 
-    const answerButton = event.target.closest("[data-answer]");
-    if (answerButton) {
-      const chapter = chapters[state.chapterIndex];
-      const answerKey = answerButton.dataset.answer;
-      assistantAnswer.innerHTML = `
-        <h4>${answerButton.textContent.trim()} view</h4>
-        <p>${chapter.quickActions[answerKey]}</p>
-        <p><strong>Prompt:</strong> ${chapter.prompts[0]}</p>
-      `;
-      document.querySelectorAll(".quick-action").forEach((node) => node.classList.remove("active"));
-      answerButton.classList.add("active");
-    }
-
     const sourceAnchorButton = event.target.closest("[data-source-anchor]");
     if (sourceAnchorButton) {
       const chapter = chapters[state.chapterIndex];
@@ -5146,18 +5049,6 @@ function attachEvents() {
   document.body.addEventListener("mouseout", (event) => {
     if (event.target.closest("[data-term]")) {
       hideTooltip();
-    }
-  });
-
-  askButton.addEventListener("click", () => {
-    const chapter = chapters[state.chapterIndex];
-    const answer = answerQuestion(chapter, studyQuestion.value);
-    assistantAnswer.innerHTML = `<h4>${answer.title}</h4><p>${answer.body}</p>`;
-  });
-
-  studyQuestion.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      askButton.click();
     }
   });
 
