@@ -27,7 +27,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Seismometer as a Damped Harmonic Oscillator",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Kinemetrics_seismograph.jpg/640px-Kinemetrics_seismograph.jpg",
+      image: "testimages/Kinemetrics_seismograph.jpg",
       imageAlt: "A USGS broadband seismometer instrument used to detect ground motion",
       context: "A seismometer works by suspending a mass on a spring inside a housing attached to the ground. When an earthquake shakes the ground, the housing moves but the mass tends to stay still due to inertia. The relative displacement between mass and housing is recorded. A typical broadband seismometer has a 1.0 kg proof mass, a restoring spring constant of $k = 40$ N/m, and a damping coefficient chosen to optimize transient response.",
       parts: [
@@ -39,7 +39,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Atomic Force Microscope Cantilever",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Aatomj%C3%B5umikroskoobi_otsik.jpg/640px-Aatomj%C3%B5umikroskoobi_otsik.jpg",
+      image: "testimages/Aatomjõumikroskoobi_otsik.jpg",
       imageAlt: "Electron microscope image of an AFM cantilever tip used for nanoscale surface imaging",
       context: "An atomic force microscope (AFM) uses a tiny silicon cantilever with a sharp tip to scan surfaces at the nanometer scale. The cantilever acts as a spring-mass system. A typical AFM cantilever has an effective mass of $m = 10^{-11}$ kg and spring constant $k = 1.0$ N/m.",
       parts: [
@@ -51,7 +51,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Vehicle Suspension System",
-      image: "https://upload.wikimedia.org/wikipedia/commons/3/38/The_spring_and_shock_absorber_hook-up_on_the_rear_wheel_of_the_1938_Buick_chassis.jpg",
+      image: "testimages/The_spring_and_shock_absorber_hook-up_on_the_rear_wheel_of_the_1938_Buick_chassis.jpg",
       imageAlt: "Automobile coil spring and shock absorber suspension assembly",
       context: "A car's suspension must absorb road bumps while keeping the ride comfortable. Each wheel assembly can be modeled as a mass on a spring with a dashpot. For one corner of a 1600 kg sedan, the sprung mass is 400 kg and the suspension spring constant is $k = 20{,}000$ N/m.",
       parts: [
@@ -87,7 +87,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Taipei 101 Tuned Mass Damper",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Taipei_101_Tuned_Mass_Damper_2010.jpg/640px-Taipei_101_Tuned_Mass_Damper_2010.jpg",
+      image: "testimages/Taipei_101_Tuned_Mass_Damper_2010.jpg",
       imageAlt: "The 730-tonne tuned mass damper sphere suspended inside Taipei 101 skyscraper",
       context: "Taipei 101 contains a 730-tonne steel sphere suspended from cables near the top. This tuned mass damper swings out of phase with wind- or earthquake-induced building oscillations, reducing sway by up to 40%. The building's fundamental sway period is about 7 seconds.",
       parts: [
@@ -99,7 +99,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Quartz Crystal Oscillator in a Watch",
-      image: "https://upload.wikimedia.org/wikipedia/commons/8/8f/Crystal_oscillator_internals.JPG",
+      image: "testimages/Crystal_oscillator_internals.JPG",
       imageAlt: "Inside view of a quartz crystal resonator showing the tuning-fork shaped quartz element",
       context: "A quartz wristwatch uses a tuning-fork-shaped crystal vibrating at exactly 32,768 Hz. The crystal's extremely high $Q \\approx 10^5$ gives remarkable frequency selectivity, accurate to within seconds per month.",
       parts: [
@@ -111,7 +111,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "MRI Radiofrequency Excitation of Proton Spins",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/MRI_head_side.jpg/480px-MRI_head_side.jpg",
+      image: "testimages/MRI_head_side.jpg",
       imageAlt: "MRI scan showing a sagittal cross-section of a human head",
       context: "In MRI, hydrogen protons precess around the magnetic field $B_0$ at the Larmor frequency $f_L = \\gamma_p B_0/(2\\pi)$, where $\\gamma_p = 2.675 \\times 10^8$ rad/(s·T). An oscillating RF field drives these spins at resonance. A clinical scanner uses $B_0 = 3.0$ T.",
       parts: [
@@ -145,7 +145,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "CO$_2$ Molecular Vibrations",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Carbon_dioxide_3D_ball.png/640px-Carbon_dioxide_3D_ball.png",
+      image: "testimages/Carbon_dioxide_3D_ball.png",
       imageAlt: "Ball-and-stick 3D model of carbon dioxide molecule",
       context: "CO$_2$ is a linear triatomic molecule: O=C=O, with $m_C = 12$ u, $m_O = 16$ u, and C=O bond spring constant $k \\approx 1600$ N/m. Its vibrational modes cause infrared absorption, making it a greenhouse gas.",
       parts: [
@@ -157,7 +157,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Wilberforce Pendulum: Coupled Translation and Rotation",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Wilberforce_Pendulum.jpg/640px-The_Wilberforce_Pendulum.jpg",
+      image: "testimages/The_Wilberforce_Pendulum.jpg",
       imageAlt: "Diagram of a Wilberforce pendulum showing coupled vertical and torsional motion",
       context: "A Wilberforce pendulum has a mass on a helical spring exhibiting coupling between vertical bouncing and twisting. When tuned so both frequencies match, energy transfers dramatically between modes.",
       parts: [
@@ -169,7 +169,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Coupled Piano Strings and the Two-Stage Decay",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Steinway_grand_piano_interior.JPG/640px-Steinway_grand_piano_interior.JPG",
+      image: "testimages/Steinway_grand_piano_interior.JPG",
       imageAlt: "Interior of a Steinway grand piano showing strings and hammers",
       context: "Most piano notes have two or three strings tuned to the same pitch, coupled through the bridge. This coupling produces the piano's characteristic two-stage decay: a loud initial sound that fades quickly, followed by a quieter sustained tone.",
       parts: [
@@ -204,7 +204,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Seismic Waves Through Earth's Interior",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Earth_poster.svg/480px-Earth_poster.svg.png",
+      image: "testimages/Earth_poster.svg.png",
       imageAlt: "Cross-section of Earth showing crust, mantle, outer core, and inner core",
       context: "Seismic waves reveal Earth's layered structure. P-waves (longitudinal) travel through solids and liquids; S-waves (transverse) travel only through solids. In crustal rock: $v_P = 6.0$ km/s, $\\rho = 2700$ kg/m$^3$.",
       parts: [
@@ -216,7 +216,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Diatomic Chain and Optical Phonons in Salt Crystals",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Sodium_chloride_crystal.jpg/640px-Sodium_chloride_crystal.jpg",
+      image: "testimages/Sodium_chloride_crystal.jpg",
       imageAlt: "A clear cubic sodium chloride crystal",
       context: "In NaCl, alternating Na$^+$ ($m = 23$ u) and Cl$^-$ ($M = 35$ u) create a diatomic chain with acoustic and optical branches. The optical branch couples to infrared light, explaining why NaCl absorbs IR radiation.",
       parts: [
@@ -228,7 +228,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Gravity-Capillary Waves on Water",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2006-01-14_Surface_waves.jpg/640px-2006-01-14_Surface_waves.jpg",
+      image: "testimages/2006-01-14_Surface_waves.jpg",
       imageAlt: "Capillary ripple waves on a water surface",
       context: "Deep water waves have dispersion relation $\\omega^2 = gk + (\\sigma/\\rho)k^3$, combining gravity ($g = 9.8$ m/s$^2$) and surface tension ($\\sigma = 0.073$ N/m, $\\rho = 1000$ kg/m$^3$).",
       parts: [
@@ -264,7 +264,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Fourier Analysis of Musical Timbres",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Guitar_May_2009-1.jpg/640px-Guitar_May_2009-1.jpg",
+      image: "testimages/Guitar_May_2009-1.jpg",
       imageAlt: "A classical acoustic guitar",
       context: "Different instruments playing the same note sound distinct due to different harmonic content. When a guitar string is plucked at point $d$ from one end, the triangular initial shape determines which harmonics are excited.",
       parts: [
@@ -276,7 +276,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Square Waves in Digital Electronics",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Square_wave.svg/640px-Square_wave.svg.png",
+      image: "testimages/Square_wave.svg.png",
       imageAlt: "An ideal square wave signal",
       context: "Digital circuits use square wave clocks. Real circuits have finite bandwidth, so understanding the Fourier content determines how much bandwidth is needed to preserve signal shape.",
       parts: [
@@ -288,7 +288,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Fourier Series and Heat Conduction",
-      image: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Wortley_Top_Forge_-_wrought_iron_forging_-_geograph.org.uk_-_6444359.jpg",
+      image: "testimages/Wortley_Top_Forge_-_wrought_iron_forging_-_geograph.org.uk_-_6444359.jpg",
       imageAlt: "A metal iron bar for heat conduction",
       context: "Fourier developed his series to solve the heat equation $\\partial T/\\partial t = \\alpha\\partial^2 T/\\partial x^2$. For a copper rod ($L = 1$ m, $\\alpha = 1.11 \\times 10^{-4}$ m$^2$/s) with ends at $0°$C, the solution is a Fourier sine series with exponentially decaying coefficients.",
       parts: [
@@ -325,7 +325,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Standing Waves on a Guitar String",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Guitar_May_2009-1.jpg/640px-Guitar_May_2009-1.jpg",
+      image: "testimages/Guitar_May_2009-1.jpg",
       imageAlt: "Classical guitar showing the vibrating strings between the nut and the bridge",
       context: "A classical guitar's high E string has a vibrating length of $L = 0.650$ m between the nut and the saddle. The string has a linear mass density $\\mu = 0.43 \\times 10^{-3}$ kg/m and is tuned to a fundamental frequency of $f_1 = 329.6$ Hz (E4).",
       parts: [
@@ -337,7 +337,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Seismic Waves Through the Earth",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Kinemetrics_seismograph.jpg/640px-Kinemetrics_seismograph.jpg",
+      image: "testimages/Kinemetrics_seismograph.jpg",
       imageAlt: "A seismograph recording seismic waves from an earthquake",
       context: "During an earthquake, both P-waves (longitudinal, compressional) and S-waves (transverse, shear) propagate through the Earth's crust. Near the surface, typical P-wave speed is $v_P = 6.0$ km/s and S-wave speed is $v_S = 3.5$ km/s. A seismometer records both arrivals.",
       parts: [
@@ -349,7 +349,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Vibrations of a Submarine Hull",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/US_Navy_040730-N-1234E-002_PCU_Virginia_%28SSN_774%29_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg/640px-US_Navy_040730-N-1234E-002_PCU_Virginia_%28SSN_774%29_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg",
+      image: "testimages/US_Navy_040730-N-1234E-002_PCU_Virginia_(SSN_774)_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg",
       imageAlt: "Virginia-class submarine surfacing, showing the cylindrical hull",
       context: "A submarine hull can be modeled as a long cylindrical shell. For structural analysis, engineers study transverse vibrations of steel plates that form the hull. Consider a rectangular steel plate (a section of the hull) of length $L = 4.0$ m, welded at both ends (fixed boundary conditions). The plate has thickness $h = 3.0$ cm and steel density $\\rho = 7800$ kg/m$^3$. The effective wave speed for bending waves at a particular frequency is $v = 520$ m/s.",
       parts: [
@@ -385,7 +385,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Harmonics of an Organ Pipe",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Pipe_organ_in_Wolvendaal_Church_%28Colombo%29.jpg/640px-Pipe_organ_in_Wolvendaal_Church_%28Colombo%29.jpg",
+      image: "testimages/Pipe_organ_in_Wolvendaal_Church_(Colombo).jpg",
       imageAlt: "Pipe organ at Trinity Church, New York City, showing ranks of open and closed pipes",
       context: "A pipe organ produces sound using standing waves in air columns. Open pipes (open at both ends) and stopped pipes (closed at one end) have different overtone structures. The speed of sound in the warm air inside the organ is $v = 350$ m/s.",
       parts: [
@@ -398,7 +398,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Tuning a Piano: Beats and Temperament",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Bosendorfer_185.JPG/300px-Bosendorfer_185.JPG",
+      image: "testimages/Bosendorfer_185.JPG",
       imageAlt: "Interior of a Bosendorfer grand piano showing the strings and hammers",
       context: "Piano tuners use the phenomenon of beats to tune strings. When two notes are nearly in tune, beats are heard as a slow wavering in loudness. The tuner adjusts the string tension until the beats vanish (for unisons) or reach a specific rate (for tempered intervals). A piano tuner is working on a Bosendorfer grand.",
       parts: [
@@ -410,7 +410,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "The Physics of a Didgeridoo",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Didgeridoo_street_player-2.jpg/640px-Didgeridoo_street_player-2.jpg",
+      image: "testimages/Didgeridoo_street_player-2.jpg",
       imageAlt: "An Australian didgeridoo, a long wooden pipe played with vibrating lips",
       context: "The didgeridoo is an Australian Aboriginal wind instrument made from a eucalyptus trunk hollowed by termites. It behaves approximately as a cylindrical pipe open at the far (bell) end and nearly closed at the mouthpiece end (sealed by the player's lips). A typical instrument is about 1.3 m long. Take $v = 343$ m/s.",
       parts: [
@@ -446,7 +446,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "MRI and the Fourier Transform",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/MRI_head_side.jpg/220px-MRI_head_side.jpg",
+      image: "testimages/MRI_head_side.jpg",
       imageAlt: "Sagittal MRI scan of a human head showing brain structures",
       context: "Magnetic Resonance Imaging (MRI) reconstructs images by applying the Fourier transform to measured signals. In MRI, hydrogen nuclei precess at the Larmor frequency $\\omega = \\gamma B$, where $\\gamma = 2.68 \\times 10^8$ rad/s/T is the gyromagnetic ratio and $B$ is the magnetic field. A gradient field $B(x) = B_0 + Gx$ encodes spatial position as frequency.",
       parts: [
@@ -458,7 +458,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Bandwidth of a Fiber-Optic Communication Pulse",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Fibreoptic.jpg/300px-Fibreoptic.jpg",
+      image: "testimages/Fibreoptic.jpg",
       imageAlt: "Illuminated ends of fiber optic cables glowing with colored light",
       context: "In fiber-optic communication, data is transmitted as short light pulses. Each pulse is approximately Gaussian in time: $E(t) = E_0 e^{-t^2/(2\\sigma_t^2)}\\cos(\\omega_0 t)$, where $\\omega_0$ is the optical carrier frequency. The system operates at a wavelength of $\\lambda_0 = 1550$ nm and the pulse duration is $\\sigma_t = 25$ ps (picoseconds).",
       parts: [
@@ -470,7 +470,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Radio Astronomy and Signal Processing",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Parkes_Radio_Telescope_09.jpg/300px-Parkes_Radio_Telescope_09.jpg",
+      image: "testimages/Parkes_Radio_Telescope_09.jpg",
       imageAlt: "The Parkes radio telescope in Australia, a large dish antenna pointed at the sky",
       context: "Radio telescopes receive weak signals from astronomical sources. The detected signal is processed using Fourier transforms to extract spectral information. The Parkes 64-m radio telescope observes the 21-cm hydrogen line at a rest frequency of $f_0 = 1420.405$ MHz.",
       parts: [
@@ -506,7 +506,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Ultrasound Imaging of the Human Body",
-      image: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Ultrasound_Scan_ND_060.jpg",
+      image: "testimages/Ultrasound_Scan_ND_060.jpg",
       imageAlt: "Ultrasound image of a human fetus in the womb",
       context: "Medical ultrasound imaging relies on reflections at tissue boundaries. Sound waves are partially reflected wherever the acoustic impedance changes. Acoustic impedance is $Z = \\rho v$, where $\\rho$ is density and $v$ is the speed of sound. Typical values: soft tissue $Z_t = 1.63 \\times 10^6$ kg/(m$^2$s), bone $Z_b = 7.8 \\times 10^6$ kg/(m$^2$s), air $Z_a = 430$ kg/(m$^2$s).",
       parts: [
@@ -518,7 +518,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Seismic Reflection Surveying for Oil Exploration",
-      image: "https://upload.wikimedia.org/wikipedia/commons/5/56/Seismic_Reflection_Principal.png",
+      image: "testimages/Seismic_Reflection_Principal.png",
       imageAlt: "Diagram showing seismic reflection survey with a source, reflected waves, and geophones at the surface",
       context: "In seismic reflection surveying, controlled explosions or vibrator trucks generate seismic waves that reflect off underground rock layers. The reflected signals reveal subsurface geology and can locate oil-bearing formations. The acoustic impedance of rock is $Z = \\rho v$. Consider three horizontal layers: sandstone ($\\rho_1 = 2200$ kg/m$^3$, $v_1 = 3300$ m/s), shale ($\\rho_2 = 2500$ kg/m$^3$, $v_2 = 2800$ m/s), and limestone ($\\rho_3 = 2700$ kg/m$^3$, $v_3 = 5500$ m/s).",
       parts: [
@@ -530,7 +530,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Anti-Reflective Coatings on Camera Lenses",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Reflective_and_anti-reflective_lens.jpg/640px-Reflective_and_anti-reflective_lens.jpg",
+      image: "testimages/Reflective_and_anti-reflective_lens.jpg",
       imageAlt: "A camera lens showing the characteristic purple/green tint of anti-reflective multi-coating",
       context: "Camera lenses use thin-film anti-reflective (AR) coatings to minimize reflections at glass surfaces. The principle is identical to impedance matching: a quarter-wave layer of intermediate impedance produces a reflected wave that destructively interferes with the initial reflection. For light, the 'impedance' is related to the refractive index: $Z \\propto 1/n$. The reflection coefficient at normal incidence is $r = (n_1 - n_2)/(n_1 + n_2)$.",
       parts: [
@@ -565,7 +565,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Power Transmission in an Electrical Power Line",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Overhead_power_line.jpg/300px-Overhead_power_line.jpg",
+      image: "testimages/Overhead_power_line.jpg",
       imageAlt: "High-voltage overhead power transmission lines stretching across a landscape",
       context: "Electrical transmission lines carry electromagnetic waves that obey wave equations analogous to those for mechanical waves. A transmission line has characteristic impedance $Z_0 = \\sqrt{L/C}$, where $L$ and $C$ are inductance and capacitance per unit length. A typical high-voltage line has $Z_0 = 300 \\;\\Omega$. When a transmission line is terminated by a load impedance $Z_L$, the reflection coefficient is $r = (Z_L - Z_0)/(Z_L + Z_0)$.",
       parts: [
@@ -577,7 +577,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Acoustic Power of a Concert Loudspeaker",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Wall_of_Sound_%28QuadFest%29.jpg/640px-Wall_of_Sound_%28QuadFest%29.jpg",
+      image: "testimages/Wall_of_Sound_(QuadFest).jpg",
       imageAlt: "Large loudspeaker array at an outdoor concert venue",
       context: "A concert sound system produces acoustic waves that carry energy from the speakers to the audience. The threshold of hearing is $I_0 = 10^{-12}$ W/m$^2$ and the threshold of pain is about $1$ W/m$^2$. Sound intensity level in decibels is $\\beta = 10\\log_{10}(I/I_0)$. A large concert speaker system emits 1000 W of acoustic power.",
       parts: [
@@ -589,7 +589,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Energy Transport by Ocean Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Waves_at_La_Corniche.jpg/640px-Waves_at_La_Corniche.jpg",
+      image: "testimages/Waves_at_La_Corniche.jpg",
       imageAlt: "Large ocean waves approaching a shoreline, showing the power of the surf",
       context: "Ocean surface waves carry enormous energy across the sea. The power per unit length of wavefront for deep-water ocean waves is $P/L = \\frac{1}{32\\pi}\\rho g^2 A^2 T_{\\text{period}}$, where $\\rho = 1025$ kg/m$^3$ is seawater density, $g = 9.81$ m/s$^2$, $A$ is the wave amplitude (half the crest-to-trough height), and $T_{\\text{period}}$ is the wave period.",
       parts: [
@@ -625,7 +625,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Dispersion of Tsunami Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Tsunami_with_Boussinesq_and_Shallow_water_equations.gif",
+      image: "testimages/Tsunami_with_Boussinesq_and_Shallow_water_equations.gif",
       imageAlt: "Diagram showing the propagation of a tsunami wave across the ocean",
       context: "Tsunamis are ocean waves generated by undersea earthquakes. In the open ocean (depth $d \\approx 4000$ m), their wavelength ($\\lambda \\sim 200$ km) is much larger than the depth, so they behave as shallow-water waves with dispersion relation $\\omega = k\\sqrt{gd}$. Near shore, the depth decreases and more complex dispersion applies. The full deep/shallow water dispersion relation is $\\omega^2 = gk\\tanh(kd)$.",
       parts: [
@@ -637,7 +637,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Wavepacket Spreading of an Electron",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Double-slit_experiment_results_Tanamura_2.jpg/220px-Double-slit_experiment_results_Tanamura_2.jpg",
+      image: "testimages/Double-slit_experiment_results_Tanamura_2.jpg",
       imageAlt: "Build-up of an electron diffraction pattern from individual electron detections in a double-slit experiment",
       context: "In quantum mechanics, a free electron is described by a wavepacket. The de Broglie relation gives $p = \\hbar k$ and the energy-momentum relation $E = p^2/(2m)$ gives the dispersion relation $\\omega = \\hbar k^2/(2m)$. This quadratic dispersion causes wavepackets to spread over time. Consider an electron with central momentum corresponding to a kinetic energy of 100 eV.",
       parts: [
@@ -649,7 +649,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Dispersion in Optical Fibers and Data Transmission",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Optical-fibre-junction-box.jpg/300px-Optical-fibre-junction-box.jpg",
+      image: "testimages/Optical-fibre-junction-box.jpg",
       imageAlt: "Inside of an optical fiber junction box showing bundled fiber optic cables",
       context: "In optical fibers, dispersion limits the data rate over long distances because light pulses broaden as they travel. The group velocity dispersion (GVD) parameter is $D = -(2\\pi c/\\lambda^2)(d^2 k/d\\omega^2)$, measured in ps/(nm$\\cdot$km). For standard single-mode fiber at $\\lambda = 1550$ nm, $D \\approx 17$ ps/(nm$\\cdot$km). A telecom laser emits pulses with spectral width $\\Delta\\lambda = 0.1$ nm.",
       parts: [
@@ -686,7 +686,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Sonic Boom from a Supersonic Aircraft",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/FA-18_Hornet_breaking_sound_barrier_%287_July_1999%29_-_filtered.jpg/1280px-FA-18_Hornet_breaking_sound_barrier_%287_July_1999%29_-_filtered.jpg",
+      image: "testimages/FA-18_Hornet_breaking_sound_barrier_(7_July_1999)_-_filtered.jpg",
       imageAlt: "F/A-18 Hornet breaking the sound barrier with a visible vapor cone",
       context: "When a supersonic aircraft exceeds Mach 1, it generates a Mach cone whose intersection with the ground produces the sonic boom.",
       parts: [
@@ -698,7 +698,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Cherenkov Radiation in a Nuclear Reactor",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Advanced_Test_Reactor.jpg/1024px-Advanced_Test_Reactor.jpg",
+      image: "testimages/Advanced_Test_Reactor.jpg",
       imageAlt: "Blue Cherenkov glow in the Advanced Test Reactor",
       context: "The blue glow in water-cooled reactors is Cherenkov radiation from electrons traveling faster than light in water ($n \\approx 1.33$).",
       parts: [
@@ -710,7 +710,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Doppler Ultrasound in Medical Imaging",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/CRL_Crown_rump_length_12_weeks_ecografia_Dr._Wolfgang_Moroder.jpg/640px-CRL_Crown_rump_length_12_weeks_ecografia_Dr._Wolfgang_Moroder.jpg",
+      image: "testimages/CRL_Crown_rump_length_12_weeks_ecografia_Dr._Wolfgang_Moroder.jpg",
       imageAlt: "Ultrasound image used in medical diagnostics",
       context: "Doppler ultrasound measures blood flow by bouncing sound off moving red blood cells. The frequency shift reveals blood speed. Speed of sound in tissue: $v = 1540$ m/s.",
       parts: [
@@ -745,7 +745,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Solar Sail Propulsion",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/IKAROS_solar_sail.jpg/1024px-IKAROS_solar_sail.jpg",
+      image: "testimages/IKAROS_solar_sail.jpg",
       imageAlt: "JAXA's IKAROS solar sail deployed in space",
       context: "IKAROS (2010) demonstrated solar sail propulsion using radiation pressure from sunlight. The sail area was $200$ m$^2$, spacecraft mass $315$ kg.",
       parts: [
@@ -757,7 +757,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Radio Transmitter EM Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/e/e5/WLW-AM_RadioTower.PNG",
+      image: "testimages/WLW-AM_RadioTower.PNG",
       imageAlt: "Diamond-shaped radio transmission tower",
       context: "An AM station broadcasts at 1000 kHz with 50 kW total radiated power, isotropically.",
       parts: [
@@ -769,7 +769,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Microwave Oven EM Fields",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Microwave_oven_%28interior%29.jpg/1024px-Microwave_oven_%28interior%29.jpg",
+      image: "testimages/Microwave_oven_(interior).jpg",
       imageAlt: "Interior of a microwave oven",
       context: "A microwave oven operates at $f = 2.45$ GHz delivering $P = 1000$ W to the cavity.",
       parts: [
@@ -804,7 +804,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Polarization in 3D Cinema",
-      image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/RealD_glasses.jpg",
+      image: "testimages/RealD_glasses.jpg",
       imageAlt: "RealD 3D cinema glasses",
       context: "3D cinemas project two images with opposite circular polarizations. Passive glasses with circular polarizer filters transmit only one handedness per eye. This is preferred over linear polarization because head tilting doesn't cause cross-talk.",
       parts: [
@@ -816,7 +816,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "LCD Display Polarization",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/LCD_layers.svg/800px-LCD_layers.svg.png",
+      image: "testimages/LCD_layers.svg.png",
       imageAlt: "Layers of a liquid crystal display",
       context: "An LCD pixel has a backlight, rear polarizer, liquid crystal layer (rotates polarization), and front polarizer (crossed). No voltage: LC rotates by 90° (bright). Voltage applied: no rotation (dark).",
       parts: [
@@ -828,7 +828,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Brewster Windows in Lasers",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Laser_h%C3%A9lium-n%C3%A9on.png/640px-Laser_h%C3%A9lium-n%C3%A9on.png",
+      image: "testimages/Laser_hélium-néon.png",
       imageAlt: "Diagram of a helium-neon laser with Brewster windows",
       context: "HeNe laser tubes are sealed with Brewster-angle windows. The p-polarized component has zero reflection, while s-polarized light is partially reflected. After many round trips, the output is highly linearly polarized.",
       parts: [
@@ -864,7 +864,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Fiber Optic Communication",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Fibreoptic.jpg/1024px-Fibreoptic.jpg",
+      image: "testimages/Fibreoptic.jpg",
       imageAlt: "Illuminated optical fiber bundle",
       context: "Single-mode fiber: core $9\\;\\mu$m, $n_{\\rm core} = 1.4475$, $n_{\\rm clad} = 1.4440$, $\\lambda = 1550$ nm.",
       parts: [
@@ -876,7 +876,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Mirages and Atmospheric Refraction",
-      image: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Mirage_over_a_hot_road.jpg",
+      image: "testimages/Mirage_over_a_hot_road.jpg",
       imageAlt: "Inferior mirage on a hot road",
       context: "Hot air near the road has lower density and lower $n$, causing light rays to curve upward, producing mirages that look like water.",
       parts: [
@@ -888,7 +888,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Rainbow Formation by Raindrops",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Double-alaskan-rainbow.jpg/1024px-Double-alaskan-rainbow.jpg",
+      image: "testimages/Double-alaskan-rainbow.jpg",
       imageAlt: "Double rainbow over Alaska",
       context: "Rainbows form by refraction, internal reflection, and dispersion in raindrops. Water: $n = 1.331$ (red) to $1.344$ (violet).",
       parts: [
@@ -923,7 +923,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Why the Sky is Blue and Sunsets are Red",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Sunrise_over_the_sea.jpg/1280px-Sunrise_over_the_sea.jpg",
+      image: "testimages/Sunrise_over_the_sea.jpg",
       imageAlt: "Vivid red and orange sunrise over the ocean",
       context: "Rayleigh scattering by N$_2$ and O$_2$ determines sky color. At 550 nm: $\\sigma \\approx 4.5 \\times 10^{-31}$ m$^2$, $N \\approx 2.55 \\times 10^{25}$ m$^{-3}$.",
       parts: [
@@ -935,7 +935,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Thomson Scattering in the Solar Corona",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Solar_eclipse_1999_4_NR.jpg/1024px-Solar_eclipse_1999_4_NR.jpg",
+      image: "testimages/Solar_eclipse_1999_4_NR.jpg",
       imageAlt: "Solar corona during total eclipse",
       context: "The corona's faint glow is sunlight Thomson-scattered by free electrons in the $\\sim 10^6$ K plasma. $\\sigma_T = 6.65 \\times 10^{-29}$ m$^2$.",
       parts: [
@@ -947,7 +947,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Rayleigh Scattering in LED Phosphor Coatings",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/White_LED.jpg/1024px-White_LED.jpg",
+      image: "testimages/White_LED.jpg",
       imageAlt: "White LED showing blue chip and yellow phosphor",
       context: "White LEDs combine a blue LED ($\\lambda = 460$ nm) with yellow phosphor. The phosphor particle size determines whether Rayleigh or Mie scattering dominates.",
       parts: [
@@ -982,7 +982,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Color Rendering on an OLED Display",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Samsung_Transparent_OLED_Display_%2824182257080%29.jpg/640px-Samsung_Transparent_OLED_Display_%2824182257080%29.jpg",
+      image: "testimages/Samsung_Transparent_OLED_Display_(24182257080).jpg",
       imageAlt: "OLED television display showing vibrant colors",
       context: "OLED TVs produce colors by combining RGB sub-pixels. The gamut is the triangle formed by the three primaries on the CIE diagram.",
       parts: [
@@ -994,7 +994,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Atmospheric Color and Rayleigh Scattering",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Sunset_over_the_sea.jpg/640px-Sunset_over_the_sea.jpg",
+      image: "testimages/Sunset_over_the_sea.jpg",
       imageAlt: "Sunset showing transition from blue sky to red-orange",
       context: "Sky color results from Rayleigh scattering ($\\propto \\lambda^{-4}$). At sunset, the longer path removes blue, leaving red.",
       parts: [
@@ -1006,7 +1006,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Subtractive Color Mixing in Inkjet Printing",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Subtractive_color_mixing.jpg/640px-Subtractive_color_mixing.jpg",
+      image: "testimages/Subtractive_color_mixing.jpg",
       imageAlt: "Printer icon representing inkjet printing",
       context: "Inkjet printers use CMY(K) inks. Each ink absorbs certain wavelengths from white light; overlapping inks determine the reflected color.",
       parts: [
@@ -1039,7 +1039,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "5G mmWave Phased Array",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Cellular_5G_Equipment_-_Cell_Tower_Antennas.jpg/640px-Cellular_5G_Equipment_-_Cell_Tower_Antennas.jpg",
+      image: "testimages/Cellular_5G_Equipment_-_Cell_Tower_Antennas.jpg",
       imageAlt: "5G New Radio logo",
       context: "5G at 28 GHz uses phased arrays to steer narrow beams. Small wavelength allows compact arrays.",
       parts: [
@@ -1052,7 +1052,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "VLA Radio Telescope Array",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/USA.NM.VeryLargeArray.02.jpg/640px-USA.NM.VeryLargeArray.02.jpg",
+      image: "testimages/USA.NM.VeryLargeArray.02.jpg",
       imageAlt: "The Very Large Array radio telescope",
       context: "The VLA has 27 dishes with max baseline 36 km, operating 1-50 GHz.",
       parts: [
@@ -1064,7 +1064,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Yagi-Uda Television Antenna",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Antenna_Shapes_%285971977677%29.jpg/640px-Antenna_Shapes_%285971977677%29.jpg",
+      image: "testimages/Antenna_Shapes_(5971977677).jpg",
       imageAlt: "Yagi-Uda TV antenna on a roof",
       context: "Uses parasitic elements (reflector + directors) with a driven element to create a directional beam.",
       parts: [
@@ -1100,7 +1100,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "X-ray Diffraction and Crystal Structure",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/X-ray_diffraction_pattern_3clpro.jpg/640px-X-ray_diffraction_pattern_3clpro.jpg",
+      image: "testimages/X-ray_diffraction_pattern_3clpro.jpg",
       imageAlt: "X-ray diffraction pattern from a protein crystal",
       context: "X-ray crystallography uses diffraction from atomic planes to determine molecular structure. Crystal acts as a 3D grating with angstrom-scale spacing.",
       parts: [
@@ -1112,7 +1112,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Resolving Binary Stars with Hubble",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Hubble_ultra_deep_field_high_rez_edit1.jpg/640px-Hubble_ultra_deep_field_high_rez_edit1.jpg",
+      image: "testimages/Hubble_ultra_deep_field_high_rez_edit1.jpg",
       imageAlt: "Hubble Ultra Deep Field image",
       context: "HST has a 2.4 m primary mirror, diffraction-limited above the atmosphere.",
       parts: [
@@ -1124,7 +1124,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Spectroscopy with a Diffraction Grating",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Fraunhofer_lines.svg/640px-Fraunhofer_lines.svg.png",
+      image: "testimages/Fraunhofer_lines.svg.png",
       imageAlt: "Solar Fraunhofer absorption lines",
       context: "Astronomical spectrographs use large gratings to reveal absorption lines, measuring stellar composition, temperature, and radial velocity.",
       parts: [
@@ -1159,7 +1159,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Quantum Dots for Display Technology",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/EFluor_Nanocrystal_Vials.jpg/640px-EFluor_Nanocrystal_Vials.jpg",
+      image: "testimages/EFluor_Nanocrystal_Vials.jpg",
       imageAlt: "Quantum dot solutions glowing in different colors under UV light",
       context: "Quantum dots are semiconductor nanocrystals where electron confinement creates size-tunable energy levels. Smaller dots emit bluer light — enabling ultra-wide-gamut QLED displays.",
       parts: [
@@ -1171,7 +1171,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Scanning Tunneling Microscope",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Atomic_resolution_Au100.JPG/640px-Atomic_resolution_Au100.JPG",
+      image: "testimages/Atomic_resolution_Au100.JPG",
       imageAlt: "STM image of gold atoms on Au(100)",
       context: "The STM exploits tunneling current's exponential sensitivity to gap width ($I \\propto e^{-2\\kappa d}$) for atomic-resolution imaging.",
       parts: [
@@ -1183,7 +1183,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Alpha Decay as Quantum Tunneling",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Alpha_Decay.svg/640px-Alpha_Decay.svg.png",
+      image: "testimages/Alpha_Decay.svg.png",
       imageAlt: "Alpha particle tunneling through Coulomb barrier",
       context: "Alpha decay was among the first phenomena explained by tunneling. The alpha particle inside the nucleus lacks the energy to classically overcome the Coulomb barrier, but tunnels through with exponentially small probability.",
       parts: [
@@ -1218,7 +1218,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Exoplanet Detection via Radial Velocity",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Doppler_Shift_vs_Time.png/640px-Doppler_Shift_vs_Time.png",
+      image: "testimages/Doppler_Shift_vs_Time.png",
       imageAlt: "Periodic Doppler velocity variations of a star indicating an orbiting exoplanet",
       context: "The radial velocity method detects exoplanets by measuring tiny Doppler shifts in stellar spectra. Modern spectrographs detect variations as small as 1 m/s.",
       parts: [
@@ -1230,7 +1230,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Doppler Ultrasound in Cardiovascular Medicine",
-      image: "https://upload.wikimedia.org/wikipedia/commons/4/41/Doppler_mitral_valve.gif",
+      image: "testimages/Doppler_mitral_valve.gif",
       imageAlt: "Doppler ultrasound of blood flow through the mitral valve",
       context: "Doppler ultrasound measures blood flow velocities non-invasively, essential for diagnosing cardiovascular conditions. $v_{\\rm sound} = 1540$ m/s in tissue.",
       parts: [
@@ -1243,7 +1243,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Measuring Universe Expansion with Supernovae",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Hubble_ultra_deep_field_high_rez_edit1.jpg/640px-Hubble_ultra_deep_field_high_rez_edit1.jpg",
+      image: "testimages/Hubble_ultra_deep_field_high_rez_edit1.jpg",
       imageAlt: "Hubble Deep Field showing distant galaxies",
       context: "Cosmological redshift from Type Ia supernovae revealed the accelerating expansion of the universe (2011 Nobel Prize). Hubble's law: $v = H_0 d$.",
       parts: [
