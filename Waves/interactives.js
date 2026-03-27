@@ -17883,13 +17883,13 @@ function initInterferometerResolution() {
   }
 
   // --- Array beam: sin²(Nβ) / (N² sin²(β)) with Gaussian envelope ---
+  // baseline = spacing d between adjacent antennas (in wavelengths)
+  // Total baseline D = d*(N-1). Resolution improves with both d and N.
   function beam(theta) {
     if (nAnt <= 1) {
-      // Single dish: broad Gaussian (no interferometric resolution)
       return Math.exp(-theta * theta / (2 * 0.15 * 0.15));
     }
-    var spacing = baseline / (nAnt - 1);
-    var beta = Math.PI * spacing * theta;
+    var beta = Math.PI * baseline * theta; // baseline IS the spacing
     var af;
     if (Math.abs(beta) < 1e-8) {
       af = 1;
@@ -17898,14 +17898,15 @@ function initInterferometerResolution() {
       if (Math.abs(s1) < 1e-10) { af = 1; }
       else { var sN = Math.sin(nAnt * beta); af = (sN * sN) / (nAnt * nAnt * s1 * s1); }
     }
-    var envSig = Math.max(3 / baseline, 0.08);
+    var envSig = Math.max(2 / baseline, 0.08);
     return af * Math.exp(-theta * theta / (2 * envSig * envSig));
   }
 
   // --- Main draw ---
   function draw() {
     wClear(ctx, W, H);
-    var resAngle = 0.5 / baseline;
+    var totalD = nAnt > 1 ? baseline * (nAnt - 1) : 1;
+    var resAngle = 0.5 / totalD;
     var resolved = nAnt >= 2 && starSep > resAngle * 1.22;
 
     ctx.fillStyle = WCOLORS.text; ctx.font = 'bold 12px system-ui'; ctx.textAlign = 'left';
@@ -17923,7 +17924,7 @@ function initInterferometerResolution() {
   // --- Pixel-rendered observed image using array beam ---
   function drawObservedImage() {
     // FOV based on beam width only (not star sep) so θ slider moves stars visibly
-    var beamW = nAnt <= 1 ? 0.15 : Math.max(3 / baseline, 0.08);
+    var beamW = nAnt <= 1 ? 0.15 : Math.max(2 / baseline, 0.08);
     var fov = Math.min(Math.max(beamW * 6, 0.3), 2.0);
     var scale = colW / fov;
     var img = imgBufCtx.createImageData(colW, imgH);
@@ -18072,15 +18073,15 @@ function initInterferometerResolution() {
       ctx.beginPath(); ctx.moveTo(x, groundY + 1); ctx.lineTo(x - 2, groundY + 4); ctx.stroke();
     }
 
-    // Dish array
+    // Dish array — span based on total baseline D = d*(N-1)
     var midX = colL + colW / 2;
     var s = nAnt > 18 ? 0.8 : (nAnt > 10 ? 1.1 : (nAnt > 5 ? 1.5 : 2.0));
-    var dishWidth = 15 * s; // approximate width of one dish
-    // Span: at baseline=0 dishes are side-by-side, at baseline=200 they fill the column
+    var dishWidth = 15 * s;
+    var totalD = nAnt > 1 ? baseline * (nAnt - 1) : 0;
     var minSpan = nAnt > 1 ? dishWidth * 1.1 : 0;
     var maxSpan = colW - 20;
-    var t2 = Math.log(Math.max(2, baseline)) / Math.log(200);
-    var span = nAnt > 1 ? minSpan + t2 * (maxSpan - minSpan) : 0;
+    var tSpan = totalD > 1 ? Math.log(totalD) / Math.log(5200) : 0;
+    var span = nAnt > 1 ? minSpan + tSpan * (maxSpan - minSpan) : 0;
     var startX = midX - span / 2;
 
     for (var i = 0; i < nAnt; i++) {
@@ -18088,8 +18089,8 @@ function initInterferometerResolution() {
       drawVLADish(dx, groundY, s);
     }
 
-    // Baseline arrow
-    if (span > 24) {
+    // Total baseline arrow
+    if (nAnt > 1 && span > 24) {
       var arrowY = groundY + 8;
       var lx = startX, rx = startX + span;
       ctx.strokeStyle = WCOLORS.amber; ctx.lineWidth = 1;
@@ -18098,14 +18099,15 @@ function initInterferometerResolution() {
       ctx.beginPath(); ctx.moveTo(lx + 4, arrowY); ctx.lineTo(lx + 8, arrowY - 2.5); ctx.lineTo(lx + 8, arrowY + 2.5); ctx.fill();
       ctx.beginPath(); ctx.moveTo(rx - 4, arrowY); ctx.lineTo(rx - 8, arrowY - 2.5); ctx.lineTo(rx - 8, arrowY + 2.5); ctx.fill();
       ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-      fillTextSub(ctx, 'd = ' + baseline + '\u03BB', midX, arrowY + 12);
+      fillTextSub(ctx, 'D = ' + totalD + '\u03BB', midX, arrowY + 12);
     }
   }
 
   // --- 1D intensity profile (right column) ---
   function drawProfile() {
     var pL = pltL, pT = pltT, pW = pltW, pH = pltH;
-    var resAngle = 0.5 / baseline;
+    var totalD = nAnt > 1 ? baseline * (nAnt - 1) : 1;
+    var resAngle = 0.5 / totalD;
 
     ctx.strokeStyle = WCOLORS.axis; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(pL, pT + pH); ctx.lineTo(pL + pW, pT + pH); ctx.stroke();
@@ -18141,7 +18143,8 @@ function initInterferometerResolution() {
 
   // --- Three sliders (right column, below profile) ---
   function drawSliders() {
-    var resAngle = 0.5 / baseline;
+    var totalD = nAnt > 1 ? baseline * (nAnt - 1) : 1;
+    var resAngle = 0.5 / totalD;
 
     var t1 = (starSep - 0.005) / 0.195;
     drawSlider(slX, sl1Y, slW, t1, WCOLORS.amber);
@@ -18151,7 +18154,7 @@ function initInterferometerResolution() {
     var t2 = Math.log(baseline) / Math.log(200);
     drawSlider(slX, sl2Y, slW, t2, WCOLORS.teal);
     ctx.fillStyle = WCOLORS.text; ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-    fillTextSub(ctx, 'd/\u03BB = ' + baseline, slX + slW + 10, sl2Y + 4);
+    fillTextSub(ctx, 'd/\u03BB = ' + baseline + ' (spacing)', slX + slW + 10, sl2Y + 4);
 
     var t3 = (nAnt - 1) / 26;
     drawSlider(slX, sl3Y, slW, t3, WCOLORS.blue);
@@ -18160,7 +18163,7 @@ function initInterferometerResolution() {
 
     ctx.fillStyle = WCOLORS.textDim; ctx.font = '9px system-ui';
     if (nAnt >= 2) {
-      fillTextSub(ctx, '\u03B8_{res} = \u03BB/2d = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0', slX, sl3Y + 18);
+      fillTextSub(ctx, '\u03B8_{res} = \u03BB/2D = ' + (resAngle * 180 / Math.PI).toFixed(2) + '\u00B0  (D = ' + totalD + '\u03BB)', slX, sl3Y + 18);
     } else {
       ctx.fillText('Single dish \u2014 no angular resolution', slX, sl3Y + 18);
     }
