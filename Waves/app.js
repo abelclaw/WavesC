@@ -4885,12 +4885,27 @@ function renderChapter() {
   }
   applyFocusTarget(chapter);
 
-  // Clear inactive mode containers so their canvases don't steal IDs
-  // from the active mode's canvases via getElementById
-  const learnC = document.getElementById("learn-mode-container");
-  const discoveryC = document.getElementById("discovery-mode-container");
-  if (state.mode !== "learn" && learnC) learnC.innerHTML = "";
-  if (state.mode !== "intuition" && discoveryC) discoveryC.innerHTML = "";
+  // Clear ALL other mode containers so their canvases don't create
+  // duplicate IDs that confuse getElementById in initSceneInteractives
+  const modeContainerIds = [
+    "learn-mode-container",
+    "discovery-mode-container",
+    "math-tab-container",
+    "test-tab-container",
+    "scene"
+  ];
+  const activeContainerId = ({
+    learn: "learn-mode-container",
+    intuition: "discovery-mode-container",
+    math: "math-tab-container",
+    exam: "test-tab-container"
+  })[state.mode];
+  for (const cid of modeContainerIds) {
+    if (cid !== activeContainerId) {
+      const el = document.getElementById(cid);
+      if (el) el.innerHTML = "";
+    }
+  }
 
   if (state.mode === "learn") {
     renderLearnMode(chapter);
