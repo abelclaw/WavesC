@@ -4603,13 +4603,6 @@ function renderLearnMode(chapter) {
 
   learnContainer.innerHTML = `
     <div class="learn-mode-inner">
-      <div class="chapter-header">
-        <div>
-          <p class="chapter-kicker">Chapter ${chapter.number}</p>
-          <h3>${chapter.title}</h3>
-        </div>
-        <a class="pdf-link" href="${chapter.pdf}" target="_blank" rel="noreferrer">Open chapter PDF</a>
-      </div>
       ${tocHtml}
       ${prereqsHtml}
       <div class="lecture-sections">
@@ -4645,10 +4638,6 @@ function renderDiscoveryMode(chapter) {
 
   container.innerHTML = `
     <div class="discovery-header panel">
-      <div>
-        <p class="mini-label">Guided Discovery</p>
-        <h3>${chapter.title}</h3>
-      </div>
       <p class="discovery-progress-text">Step ${idx + 1} of ${steps.length}</p>
     </div>
     <div class="discovery-interactive panel">

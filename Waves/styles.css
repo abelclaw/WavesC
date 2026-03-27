@@ -402,20 +402,23 @@ a {
   border: none;
   border-bottom: 2px solid transparent;
   background: none;
-  color: rgba(248, 240, 228, 0.5);
+  color: var(--ink);
+  opacity: 0.55;
   cursor: pointer;
   font-family: var(--display);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: color 160ms ease, border-color 160ms ease;
+  transition: opacity 160ms ease, border-color 160ms ease;
 }
 
 .chapter-tab:hover {
-  color: rgba(248, 240, 228, 0.8);
+  opacity: 0.85;
 }
 
 .chapter-tab.active {
+  opacity: 1;
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
