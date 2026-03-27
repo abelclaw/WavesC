@@ -1,7 +1,6 @@
 const modes = [
   { id: "learn", label: "Learn" },
   { id: "intuition", label: "Lab" },
-  { id: "math", label: "Math" },
   { id: "exam", label: "Test" }
 ];
 
@@ -2029,7 +2028,6 @@ const sourceData = window.WAVES_SOURCE_DATA || {};
 const chapterNav = document.getElementById("chapter-nav");
 const chapterCount = document.getElementById("chapter-count");
 const chapterTabs = document.getElementById("chapter-tabs");
-const mathTabContainer = document.getElementById("math-tab-container");
 const searchQuery = document.getElementById("search-query");
 const searchResults = document.getElementById("search-results");
 const heroTitle = document.getElementById("hero-title");
@@ -2422,7 +2420,7 @@ function renderQuickActions(chapter) {
 
   assistantAnswer.innerHTML = `
     <h4>${chapter.title} through the ${state.mode} lens</h4>
-    <p>${chapter.quickActions[state.mode === "math" ? "formal" : state.mode === "exam" ? "quiz" : "intuition"]}</p>
+    <p>${chapter.quickActions[state.mode === "exam" ? "quiz" : "intuition"]}</p>
     <p><strong>Try this:</strong> ${chapter.prompts[0]}</p>
   `;
 }
@@ -4846,7 +4844,6 @@ function applyModeVisibility() {
   // Hide all exclusive containers
   if (learnContainer) learnContainer.hidden = true;
   if (discoveryContainer) discoveryContainer.hidden = true;
-  if (mathTabContainer) mathTabContainer.hidden = true;
   if (testContainer) testContainer.hidden = true;
 
   // Hide the default study-guide content (but chapter header + tabs stay visible)
@@ -4860,7 +4857,6 @@ function applyModeVisibility() {
   // Show the right container
   if (state.mode === "learn" && learnContainer) learnContainer.hidden = false;
   if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
-  if (state.mode === "math" && mathTabContainer) mathTabContainer.hidden = false;
   if (state.mode === "exam" && testContainer) testContainer.hidden = false;
 }
 
@@ -4900,14 +4896,12 @@ function renderChapter() {
   const modeContainerIds = [
     "learn-mode-container",
     "discovery-mode-container",
-    "math-tab-container",
     "test-tab-container",
     "scene"
   ];
   const activeContainerId = ({
     learn: "learn-mode-container",
     intuition: "discovery-mode-container",
-    math: "math-tab-container",
     exam: "test-tab-container"
   })[state.mode];
   for (const cid of modeContainerIds) {
@@ -4923,9 +4917,6 @@ function renderChapter() {
   if (state.mode === "intuition") {
     discoveryState.stepIndex = 0;
     renderDiscoveryMode(chapter);
-  }
-  if (state.mode === "math") {
-    renderMathTab(chapter);
   }
   if (state.mode === "exam") {
     renderTestTab(chapter);
