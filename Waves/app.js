@@ -4859,6 +4859,14 @@ function applyModeVisibility() {
   if (state.mode === "learn" && learnContainer) learnContainer.hidden = false;
   if (state.mode === "intuition" && discoveryContainer) discoveryContainer.hidden = false;
   if (state.mode === "exam" && testContainer) testContainer.hidden = false;
+
+  // Show coach (layered explanation) and glossary (terms) only in test mode
+  if (state.mode === "exam") {
+    const coachSection = document.getElementById("coach-section");
+    const glossarySection = document.getElementById("glossary-section");
+    if (coachSection) coachSection.closest(".detail-grid").hidden = false;
+    if (glossarySection) glossarySection.closest(".detail-grid").hidden = false;
+  }
 }
 
 function renderChapter() {
