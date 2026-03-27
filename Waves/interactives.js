@@ -20770,7 +20770,8 @@ function initRelativisticDopplerRedshift() {
 
   function getMouseBeta(mx) {
     var t = (mx - sliderX) / sliderW; // 0..1
-    return Math.max(-0.95, Math.min(0.95, (t - 0.5) * 1.9));
+    // Right = approaching (negative beta), left = receding (positive beta)
+    return Math.max(-0.95, Math.min(0.95, -((t - 0.5) * 1.9)));
   }
 
   canvas.addEventListener('mousedown', function(e) {
@@ -20980,15 +20981,15 @@ function initRelativisticDopplerRedshift() {
     // Center tick (v=0)
     ctx.strokeStyle = '#607080'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(sliderX + sliderW / 2, slY - 4); ctx.lineTo(sliderX + sliderW / 2, slY + 4); ctx.stroke();
-    // Gradient track coloring
+    // Gradient track coloring: left=red(receding), right=blue(approaching)
     for (var px = 0; px < sliderW; px++) {
       var tb = ((px / sliderW) - 0.5) * 1.9;
-      if (tb < 0) ctx.fillStyle = 'rgba(100,160,255,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
-      else ctx.fillStyle = 'rgba(255,120,100,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
+      if (tb < 0) ctx.fillStyle = 'rgba(255,120,100,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
+      else ctx.fillStyle = 'rgba(100,160,255,' + (Math.abs(tb) * 0.3).toFixed(2) + ')';
       ctx.fillRect(sliderX + px, slY - 2, 1, 4);
     }
-    // Handle
-    var handleX = sliderX + (beta / 1.9 + 0.5) * sliderW;
+    // Handle: negative beta (approaching) on right, positive (receding) on left
+    var handleX = sliderX + (-beta / 1.9 + 0.5) * sliderW;
     ctx.beginPath(); ctx.arc(handleX, slY, 6, 0, Math.PI * 2);
     ctx.fillStyle = beta < -0.02 ? '#4a90d9' : (beta > 0.02 ? '#d94a4a' : '#0f766e');
     ctx.fill();
@@ -20999,9 +21000,9 @@ function initRelativisticDopplerRedshift() {
     ctx.fillStyle = velColor; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     ctx.fillText(velLabel + '  v/c = ' + Math.abs(beta).toFixed(2), starX, slY + 14);
     ctx.fillStyle = '#506878'; ctx.font = '8px system-ui';
-    ctx.fillText('\u2190 blue', sliderX + 14, slY - 8);
+    ctx.fillText('\u2190 red', sliderX + 14, slY - 8);
     ctx.textAlign = 'center';
-    ctx.fillText('red \u2192', sliderX + sliderW - 14, slY - 8);
+    ctx.fillText('blue \u2192', sliderX + sliderW - 14, slY - 8);
 
     // --- Spectra ---
     var specW = W * 0.75, specX = (W - specW) / 2 + 16;
