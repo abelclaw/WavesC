@@ -4829,15 +4829,12 @@ function renderTestTab(chapter) {
             ${prob.parts.map((part) => `
               <div class="long-problem-part">
                 <p class="long-problem-part-q"><strong>${part.label}</strong> ${part.q}</p>
-                <details class="long-problem-part-a">
-                  <summary>Show answer</summary>
-                  <p>${part.a}</p>
-                </details>
               </div>
             `).join("")}
           </div>
         </details>
       `).join("")}
+      <button class="view-solutions-link" data-solutions-slug="${chapter.slug}">View Solutions</button>
     </div>` : ""}
     <div class="test-tab-section">
       <p class="mini-label">Mastery Checklist</p>
@@ -4866,7 +4863,54 @@ function renderTestTab(chapter) {
     });
   });
 
+  // Wire up View Solutions button
+  const solBtn = testContainer.querySelector("[data-solutions-slug]");
+  if (solBtn) {
+    solBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to view the solutions? Try solving the problems first.")) {
+        openSolutionsOverlay(solBtn.dataset.solutionsSlug);
+      }
+    });
+  }
+
   setTimeout(renderMath, 0);
+}
+
+function openSolutionsOverlay(slug) {
+  const overlay = document.getElementById("answers-overlay");
+  const problems = window.WAVES_TEST_PROBLEMS?.[slug]?.longProblems || [];
+  if (!problems.length) return;
+
+  overlay.hidden = false;
+  overlay.innerHTML = `
+    <div class="answers-panel">
+      <div class="answers-header">
+        <p class="mini-label">Solutions</p>
+        <button class="math-lesson-close action-button" data-close-answers>Back to problems</button>
+      </div>
+      <div class="answers-body">
+        ${problems.map((prob, i) => `
+          <div class="answers-problem">
+            <h3>${i + 1}. ${prob.title}</h3>
+            ${prob.parts.map((part) => `
+              <div class="answers-part">
+                <p class="answers-part-q"><strong>${part.label}</strong> ${part.q}</p>
+                <div class="answers-part-a"><p>${part.a}</p></div>
+              </div>
+            `).join("")}
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  overlay.scrollTop = 0;
+  setTimeout(renderMath, 0);
+}
+
+function closeSolutionsOverlay() {
+  const overlay = document.getElementById("answers-overlay");
+  overlay.hidden = true;
+  overlay.innerHTML = "";
 }
 
 function applyModeVisibility() {
@@ -5183,6 +5227,11 @@ function attachEvents() {
     const closeMathButton = event.target.closest("[data-close-math-lesson]");
     if (closeMathButton) {
       closeMathLesson();
+      return;
+    }
+    const closeAnswersButton = event.target.closest("[data-close-answers]");
+    if (closeAnswersButton) {
+      closeSolutionsOverlay();
       return;
     }
   });

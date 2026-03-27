@@ -645,6 +645,99 @@ a {
   color: var(--ink);
 }
 
+.view-solutions-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 10px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-solutions-link:hover {
+  background: var(--accent);
+  color: var(--paper-strong);
+}
+
+.answers-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(18, 35, 37, 0.52);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.answers-overlay[hidden] {
+  display: none;
+}
+
+.answers-panel {
+  width: min(90vw, 780px);
+  margin: 24px auto;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: var(--paper-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.answers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.answers-problem {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.answers-problem:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.answers-problem h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+}
+
+.answers-part {
+  margin-bottom: 16px;
+}
+
+.answers-part-q {
+  margin: 0 0 6px 0;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.answers-part-a {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--paper);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+  line-height: 1.7;
+}
+
+.answers-part-a p {
+  margin: 0;
+}
+
 .test-mastery {
   display: flex;
   flex-direction: column;
