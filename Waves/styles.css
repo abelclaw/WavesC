@@ -4710,3 +4710,174 @@ a {
   line-height: 1.4;
   margin-top: 2px;
 }
+
+/* ── Discovery mode (Intuition → Guided Discovery) ── */
+
+.discovery-mode-container {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.discovery-mode-container[hidden] {
+  display: none;
+}
+
+.discovery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+.discovery-header h3 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.discovery-progress-text {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.discovery-interactive {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.discovery-interactive .scene {
+  min-height: 200px;
+}
+
+.discovery-step {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: 0;
+}
+
+.discovery-question {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.discovery-question h4 {
+  margin: 6px 0 0;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.discovery-try,
+.discovery-reveal {
+  border-bottom: 1px solid var(--line);
+}
+.discovery-try:last-child,
+.discovery-reveal:last-child {
+  border-bottom: none;
+}
+
+.discovery-try summary,
+.discovery-reveal summary {
+  padding: 14px 0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--accent);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.discovery-try summary::-webkit-details-marker,
+.discovery-reveal summary::-webkit-details-marker {
+  display: none;
+}
+.discovery-try summary::before {
+  content: "▶";
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+.discovery-try[open] summary::before {
+  transform: rotate(90deg);
+}
+.discovery-reveal summary::before {
+  content: "◆";
+  font-size: 9px;
+  color: var(--accent-2);
+  transition: transform 0.2s;
+}
+.discovery-reveal[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.discovery-try summary {
+  color: var(--accent);
+}
+.discovery-reveal summary {
+  color: var(--accent-2);
+}
+
+.discovery-try p,
+.discovery-reveal-body p {
+  padding: 0 0 16px;
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.discovery-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.discovery-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.discovery-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.discovery-dot.visited {
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 0.4;
+}
+.discovery-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  opacity: 1;
+  transform: scale(1.25);
+}
+.discovery-dot:hover:not(.active) {
+  border-color: var(--accent);
+}
+
+.discovery-prev,
+.discovery-next {
+  font-size: 13px;
+  min-width: 90px;
+}
+
+.discovery-empty {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--muted);
+  padding: 48px 26px;
+}

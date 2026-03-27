@@ -7,9 +7,9 @@ const modes = [
   },
   {
     id: "intuition",
-    label: "Intuition",
-    hero: "Everything oscillates. When oscillators talk, waves emerge.",
-    subtitle: "Read for physical meaning first, then open the formal machinery only when you want it."
+    label: "Discover",
+    hero: "Predict, experiment, understand.",
+    subtitle: "Build intuition by playing with the simulations. Each step poses a question, lets you explore, then reveals the physics."
   },
   {
     id: "math",
@@ -4726,6 +4726,7 @@ function renderDiscoveryMode(chapter) {
 
 function applyModeVisibility() {
   const learnContainer = document.getElementById("learn-mode-container");
+  const discoveryContainer = document.getElementById("discovery-mode-container");
   const studyGuideSections = [
     document.getElementById("roadmap-section"),
     document.getElementById("overview-section"),
@@ -4738,8 +4739,11 @@ function applyModeVisibility() {
 
   const heroSection = document.querySelector(".hero");
 
-  if (state.mode === "learn") {
-    if (learnContainer) learnContainer.hidden = false;
+  const isExclusive = state.mode === "learn" || state.mode === "intuition";
+
+  if (isExclusive) {
+    if (learnContainer) learnContainer.hidden = state.mode !== "learn";
+    if (discoveryContainer) discoveryContainer.hidden = state.mode !== "intuition";
     if (heroSection) heroSection.hidden = true;
     studyGuideSections.forEach((el) => { if (el) el.hidden = true; });
     detailGrids.forEach((el) => { if (el) el.hidden = true; });
@@ -4747,6 +4751,7 @@ function applyModeVisibility() {
     if (quizSection) quizSection.hidden = true;
   } else {
     if (learnContainer) learnContainer.hidden = true;
+    if (discoveryContainer) discoveryContainer.hidden = true;
     if (heroSection) heroSection.hidden = false;
     studyGuideSections.forEach((el) => { if (el) el.hidden = false; });
     detailGrids.forEach((el) => { if (el) el.hidden = false; });
@@ -4807,6 +4812,10 @@ function renderChapter() {
 
   if (state.mode === "learn") {
     renderLearnMode(chapter);
+  }
+  if (state.mode === "intuition") {
+    discoveryState.stepIndex = 0;
+    renderDiscoveryMode(chapter);
   }
   applyModeVisibility();
 
