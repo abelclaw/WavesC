@@ -27,7 +27,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Seismometer as a Damped Harmonic Oscillator",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Seismometer_-_USGS_Photo.jpg/640px-Seismometer_-_USGS_Photo.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Kinemetrics_seismograph.jpg/640px-Kinemetrics_seismograph.jpg",
       imageAlt: "A USGS broadband seismometer instrument used to detect ground motion",
       context: "A seismometer works by suspending a mass on a spring inside a housing attached to the ground. When an earthquake shakes the ground, the housing moves but the mass tends to stay still due to inertia. The relative displacement between mass and housing is recorded. A typical broadband seismometer has a 1.0 kg proof mass, a restoring spring constant of $k = 40$ N/m, and a damping coefficient chosen to optimize transient response.",
       parts: [
@@ -39,7 +39,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Atomic Force Microscope Cantilever",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Atomic_force_microscope_tip.jpg/640px-Atomic_force_microscope_tip.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Aatomj%C3%B5umikroskoobi_otsik.jpg/640px-Aatomj%C3%B5umikroskoobi_otsik.jpg",
       imageAlt: "Electron microscope image of an AFM cantilever tip used for nanoscale surface imaging",
       context: "An atomic force microscope (AFM) uses a tiny silicon cantilever with a sharp tip to scan surfaces at the nanometer scale. The cantilever acts as a spring-mass system. A typical AFM cantilever has an effective mass of $m = 10^{-11}$ kg and spring constant $k = 1.0$ N/m.",
       parts: [
@@ -51,7 +51,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Vehicle Suspension System",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Suspension_arm_%26_spring.jpg/640px-Suspension_arm_%26_spring.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/3/38/The_spring_and_shock_absorber_hook-up_on_the_rear_wheel_of_the_1938_Buick_chassis.jpg",
       imageAlt: "Automobile coil spring and shock absorber suspension assembly",
       context: "A car's suspension must absorb road bumps while keeping the ride comfortable. Each wheel assembly can be modeled as a mass on a spring with a dashpot. For one corner of a 1600 kg sedan, the sprung mass is 400 kg and the suspension spring constant is $k = 20{,}000$ N/m.",
       parts: [
@@ -87,7 +87,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Taipei 101 Tuned Mass Damper",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Taipei_101_Tuned_Mass_Damper.png/480px-Taipei_101_Tuned_Mass_Damper.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Taipei_101_Tuned_Mass_Damper_2010.jpg/640px-Taipei_101_Tuned_Mass_Damper_2010.jpg",
       imageAlt: "The 730-tonne tuned mass damper sphere suspended inside Taipei 101 skyscraper",
       context: "Taipei 101 contains a 730-tonne steel sphere suspended from cables near the top. This tuned mass damper swings out of phase with wind- or earthquake-induced building oscillations, reducing sway by up to 40%. The building's fundamental sway period is about 7 seconds.",
       parts: [
@@ -99,7 +99,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Quartz Crystal Oscillator in a Watch",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Quartz_crystal_internal.jpg/640px-Quartz_crystal_internal.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/8/8f/Crystal_oscillator_internals.JPG",
       imageAlt: "Inside view of a quartz crystal resonator showing the tuning-fork shaped quartz element",
       context: "A quartz wristwatch uses a tuning-fork-shaped crystal vibrating at exactly 32,768 Hz. The crystal's extremely high $Q \\approx 10^5$ gives remarkable frequency selectivity, accurate to within seconds per month.",
       parts: [
@@ -157,7 +157,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Wilberforce Pendulum: Coupled Translation and Rotation",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Wilberforce_Pendulum.png/411px-Wilberforce_Pendulum.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Wilberforce_Pendulum.jpg/640px-The_Wilberforce_Pendulum.jpg",
       imageAlt: "Diagram of a Wilberforce pendulum showing coupled vertical and torsional motion",
       context: "A Wilberforce pendulum has a mass on a helical spring exhibiting coupling between vertical bouncing and twisting. When tuned so both frequencies match, energy transfers dramatically between modes.",
       parts: [
@@ -169,7 +169,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Coupled Piano Strings and the Two-Stage Decay",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Inside_a_Steinway.JPG/640px-Inside_a_Steinway.JPG",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Steinway_grand_piano_interior.JPG/640px-Steinway_grand_piano_interior.JPG",
       imageAlt: "Interior of a Steinway grand piano showing strings and hammers",
       context: "Most piano notes have two or three strings tuned to the same pitch, coupled through the bridge. This coupling produces the piano's characteristic two-stage decay: a loud initial sound that fades quickly, followed by a quieter sustained tone.",
       parts: [
@@ -228,7 +228,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Gravity-Capillary Waves on Water",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Capillary_wave_%28ripple%29.jpg/640px-Capillary_wave_%28ripple%29.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/2006-01-14_Surface_waves.jpg/640px-2006-01-14_Surface_waves.jpg",
       imageAlt: "Capillary ripple waves on a water surface",
       context: "Deep water waves have dispersion relation $\\omega^2 = gk + (\\sigma/\\rho)k^3$, combining gravity ($g = 9.8$ m/s$^2$) and surface tension ($\\sigma = 0.073$ N/m, $\\rho = 1000$ kg/m$^3$).",
       parts: [
@@ -264,7 +264,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Fourier Analysis of Musical Timbres",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/GuitareClassique5.png/377px-GuitareClassique5.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Guitar_May_2009-1.jpg/640px-Guitar_May_2009-1.jpg",
       imageAlt: "A classical acoustic guitar",
       context: "Different instruments playing the same note sound distinct due to different harmonic content. When a guitar string is plucked at point $d$ from one end, the triangular initial shape determines which harmonics are excited.",
       parts: [
@@ -288,7 +288,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Fourier Series and Heat Conduction",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Wrought_iron_bar.jpg/640px-Wrought_iron_bar.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Wortley_Top_Forge_-_wrought_iron_forging_-_geograph.org.uk_-_6444359.jpg",
       imageAlt: "A metal iron bar for heat conduction",
       context: "Fourier developed his series to solve the heat equation $\\partial T/\\partial t = \\alpha\\partial^2 T/\\partial x^2$. For a copper rod ($L = 1$ m, $\\alpha = 1.11 \\times 10^{-4}$ m$^2$/s) with ends at $0°$C, the solution is a Fourier sine series with exponentially decaying coefficients.",
       parts: [
@@ -325,7 +325,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Standing Waves on a Guitar String",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/GuitareClassique5.png/220px-GuitareClassique5.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Guitar_May_2009-1.jpg/640px-Guitar_May_2009-1.jpg",
       imageAlt: "Classical guitar showing the vibrating strings between the nut and the bridge",
       context: "A classical guitar's high E string has a vibrating length of $L = 0.650$ m between the nut and the saddle. The string has a linear mass density $\\mu = 0.43 \\times 10^{-3}$ kg/m and is tuned to a fundamental frequency of $f_1 = 329.6$ Hz (E4).",
       parts: [
@@ -337,7 +337,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Seismic Waves Through the Earth",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Seismograph.jpg/300px-Seismograph.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Kinemetrics_seismograph.jpg/640px-Kinemetrics_seismograph.jpg",
       imageAlt: "A seismograph recording seismic waves from an earthquake",
       context: "During an earthquake, both P-waves (longitudinal, compressional) and S-waves (transverse, shear) propagate through the Earth's crust. Near the surface, typical P-wave speed is $v_P = 6.0$ km/s and S-wave speed is $v_S = 3.5$ km/s. A seismometer records both arrivals.",
       parts: [
@@ -349,7 +349,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Vibrations of a Submarine Hull",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/USS_Virginia_%28SSN-774%29.jpg/300px-USS_Virginia_%28SSN-774%29.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/US_Navy_040730-N-1234E-002_PCU_Virginia_%28SSN_774%29_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg/640px-US_Navy_040730-N-1234E-002_PCU_Virginia_%28SSN_774%29_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg",
       imageAlt: "Virginia-class submarine surfacing, showing the cylindrical hull",
       context: "A submarine hull can be modeled as a long cylindrical shell. For structural analysis, engineers study transverse vibrations of steel plates that form the hull. Consider a rectangular steel plate (a section of the hull) of length $L = 4.0$ m, welded at both ends (fixed boundary conditions). The plate has thickness $h = 3.0$ cm and steel density $\\rho = 7800$ kg/m$^3$. The effective wave speed for bending waves at a particular frequency is $v = 520$ m/s.",
       parts: [
@@ -385,7 +385,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Harmonics of an Organ Pipe",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Pipe_organ_Trinity_Church_NYC.jpg/220px-Pipe_organ_Trinity_Church_NYC.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Pipe_organ_in_Wolvendaal_Church_%28Colombo%29.jpg/640px-Pipe_organ_in_Wolvendaal_Church_%28Colombo%29.jpg",
       imageAlt: "Pipe organ at Trinity Church, New York City, showing ranks of open and closed pipes",
       context: "A pipe organ produces sound using standing waves in air columns. Open pipes (open at both ends) and stopped pipes (closed at one end) have different overtone structures. The speed of sound in the warm air inside the organ is $v = 350$ m/s.",
       parts: [
@@ -410,7 +410,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "The Physics of a Didgeridoo",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Didgeridoo_%28Imagicity_1070%29.jpg/300px-Didgeridoo_%28Imagicity_1070%29.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Didgeridoo_street_player-2.jpg/640px-Didgeridoo_street_player-2.jpg",
       imageAlt: "An Australian didgeridoo, a long wooden pipe played with vibrating lips",
       context: "The didgeridoo is an Australian Aboriginal wind instrument made from a eucalyptus trunk hollowed by termites. It behaves approximately as a cylindrical pipe open at the far (bell) end and nearly closed at the mouthpiece end (sealed by the player's lips). A typical instrument is about 1.3 m long. Take $v = 343$ m/s.",
       parts: [
@@ -506,7 +506,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Ultrasound Imaging of the Human Body",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Ultrasound_of_human_fetus%2C_danger_danger.jpg/300px-Ultrasound_of_human_fetus%2C_danger_danger.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Ultrasound_Scan_ND_060.jpg",
       imageAlt: "Ultrasound image of a human fetus in the womb",
       context: "Medical ultrasound imaging relies on reflections at tissue boundaries. Sound waves are partially reflected wherever the acoustic impedance changes. Acoustic impedance is $Z = \\rho v$, where $\\rho$ is density and $v$ is the speed of sound. Typical values: soft tissue $Z_t = 1.63 \\times 10^6$ kg/(m$^2$s), bone $Z_b = 7.8 \\times 10^6$ kg/(m$^2$s), air $Z_a = 430$ kg/(m$^2$s).",
       parts: [
@@ -518,7 +518,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Seismic Reflection Surveying for Oil Exploration",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Seismic_Reflection_Schematic.png/350px-Seismic_Reflection_Schematic.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/5/56/Seismic_Reflection_Principal.png",
       imageAlt: "Diagram showing seismic reflection survey with a source, reflected waves, and geophones at the surface",
       context: "In seismic reflection surveying, controlled explosions or vibrator trucks generate seismic waves that reflect off underground rock layers. The reflected signals reveal subsurface geology and can locate oil-bearing formations. The acoustic impedance of rock is $Z = \\rho v$. Consider three horizontal layers: sandstone ($\\rho_1 = 2200$ kg/m$^3$, $v_1 = 3300$ m/s), shale ($\\rho_2 = 2500$ kg/m$^3$, $v_2 = 2800$ m/s), and limestone ($\\rho_3 = 2700$ kg/m$^3$, $v_3 = 5500$ m/s).",
       parts: [
@@ -530,7 +530,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Anti-Reflective Coatings on Camera Lenses",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Multicoated_lens.jpg/300px-Multicoated_lens.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Reflective_and_anti-reflective_lens.jpg/640px-Reflective_and_anti-reflective_lens.jpg",
       imageAlt: "A camera lens showing the characteristic purple/green tint of anti-reflective multi-coating",
       context: "Camera lenses use thin-film anti-reflective (AR) coatings to minimize reflections at glass surfaces. The principle is identical to impedance matching: a quarter-wave layer of intermediate impedance produces a reflected wave that destructively interferes with the initial reflection. For light, the 'impedance' is related to the refractive index: $Z \\propto 1/n$. The reflection coefficient at normal incidence is $r = (n_1 - n_2)/(n_1 + n_2)$.",
       parts: [
@@ -577,7 +577,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Acoustic Power of a Concert Loudspeaker",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Loudspeaker_at_a_concert.jpg/300px-Loudspeaker_at_a_concert.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Wall_of_Sound_%28QuadFest%29.jpg/640px-Wall_of_Sound_%28QuadFest%29.jpg",
       imageAlt: "Large loudspeaker array at an outdoor concert venue",
       context: "A concert sound system produces acoustic waves that carry energy from the speakers to the audience. The threshold of hearing is $I_0 = 10^{-12}$ W/m$^2$ and the threshold of pain is about $1$ W/m$^2$. Sound intensity level in decibels is $\\beta = 10\\log_{10}(I/I_0)$. A large concert speaker system emits 1000 W of acoustic power.",
       parts: [
@@ -589,7 +589,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Energy Transport by Ocean Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Waves_in_pacridge.jpg/300px-Waves_in_pacridge.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Waves_at_La_Corniche.jpg/640px-Waves_at_La_Corniche.jpg",
       imageAlt: "Large ocean waves approaching a shoreline, showing the power of the surf",
       context: "Ocean surface waves carry enormous energy across the sea. The power per unit length of wavefront for deep-water ocean waves is $P/L = \\frac{1}{32\\pi}\\rho g^2 A^2 T_{\\text{period}}$, where $\\rho = 1025$ kg/m$^3$ is seawater density, $g = 9.81$ m/s$^2$, $A$ is the wave amplitude (half the crest-to-trough height), and $T_{\\text{period}}$ is the wave period.",
       parts: [
@@ -625,7 +625,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Dispersion of Tsunami Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/US_Army_diagram_of_tsunami.jpg/300px-US_Army_diagram_of_tsunami.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/b/b4/Tsunami_with_Boussinesq_and_Shallow_water_equations.gif",
       imageAlt: "Diagram showing the propagation of a tsunami wave across the ocean",
       context: "Tsunamis are ocean waves generated by undersea earthquakes. In the open ocean (depth $d \\approx 4000$ m), their wavelength ($\\lambda \\sim 200$ km) is much larger than the depth, so they behave as shallow-water waves with dispersion relation $\\omega = k\\sqrt{gd}$. Near shore, the depth decreases and more complex dispersion applies. The full deep/shallow water dispersion relation is $\\omega^2 = gk\\tanh(kd)$.",
       parts: [
@@ -710,7 +710,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Doppler Ultrasound in Medical Imaging",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CRL_Crown_rump_length_12_weeks_ecridge.jpg/1024px-CRL_Crown_rump_length_12_weeks_ecridge.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/CRL_Crown_rump_length_12_weeks_ecografia_Dr._Wolfgang_Moroder.jpg/640px-CRL_Crown_rump_length_12_weeks_ecografia_Dr._Wolfgang_Moroder.jpg",
       imageAlt: "Ultrasound image used in medical diagnostics",
       context: "Doppler ultrasound measures blood flow by bouncing sound off moving red blood cells. The frequency shift reveals blood speed. Speed of sound in tissue: $v = 1540$ m/s.",
       parts: [
@@ -757,7 +757,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Radio Transmitter EM Waves",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Blaw_Knox_Tower%2C_WFED.jpg/800px-Blaw_Knox_Tower%2C_WFED.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/e/e5/WLW-AM_RadioTower.PNG",
       imageAlt: "Diamond-shaped radio transmission tower",
       context: "An AM station broadcasts at 1000 kHz with 50 kW total radiated power, isotropically.",
       parts: [
@@ -804,7 +804,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Polarization in 3D Cinema",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/RealD_3D_glasses.jpg/1024px-RealD_3D_glasses.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/RealD_glasses.jpg",
       imageAlt: "RealD 3D cinema glasses",
       context: "3D cinemas project two images with opposite circular polarizations. Passive glasses with circular polarizer filters transmit only one handedness per eye. This is preferred over linear polarization because head tilting doesn't cause cross-talk.",
       parts: [
@@ -828,7 +828,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Brewster Windows in Lasers",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/HeNe-en.svg/1024px-HeNe-en.svg.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Laser_h%C3%A9lium-n%C3%A9on.png/640px-Laser_h%C3%A9lium-n%C3%A9on.png",
       imageAlt: "Diagram of a helium-neon laser with Brewster windows",
       context: "HeNe laser tubes are sealed with Brewster-angle windows. The p-polarized component has zero reflection, while s-polarized light is partially reflected. After many round trips, the output is highly linearly polarized.",
       parts: [
@@ -876,7 +876,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Mirages and Atmospheric Refraction",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Inferior_mirage_of_the_sky_on_hot_road.jpg/1024px-Inferior_mirage_of_the_sky_on_hot_road.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Mirage_over_a_hot_road.jpg",
       imageAlt: "Inferior mirage on a hot road",
       context: "Hot air near the road has lower density and lower $n$, causing light rays to curve upward, producing mirages that look like water.",
       parts: [
@@ -982,7 +982,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Color Rendering on an OLED Display",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/OLED_TV_at_CES_2013_%288488268523%29.jpg/640px-OLED_TV_at_CES_2013_%288488268523%29.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Samsung_Transparent_OLED_Display_%2824182257080%29.jpg/640px-Samsung_Transparent_OLED_Display_%2824182257080%29.jpg",
       imageAlt: "OLED television display showing vibrant colors",
       context: "OLED TVs produce colors by combining RGB sub-pixels. The gamut is the triangle formed by the three primaries on the CIE diagram.",
       parts: [
@@ -1006,7 +1006,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Subtractive Color Mixing in Inkjet Printing",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Circle-icons-printer.svg/640px-Circle-icons-printer.svg.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Subtractive_color_mixing.jpg/640px-Subtractive_color_mixing.jpg",
       imageAlt: "Printer icon representing inkjet printing",
       context: "Inkjet printers use CMY(K) inks. Each ink absorbs certain wavelengths from white light; overlapping inks determine the reflected color.",
       parts: [
@@ -1039,7 +1039,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "5G mmWave Phased Array",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/5G_NR_logo.png/640px-5G_NR_logo.png",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Cellular_5G_Equipment_-_Cell_Tower_Antennas.jpg/640px-Cellular_5G_Equipment_-_Cell_Tower_Antennas.jpg",
       imageAlt: "5G New Radio logo",
       context: "5G at 28 GHz uses phased arrays to steer narrow beams. Small wavelength allows compact arrays.",
       parts: [
@@ -1064,7 +1064,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Yagi-Uda Television Antenna",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Yagi_TV_antenna_1954.jpg/640px-Yagi_TV_antenna_1954.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Antenna_Shapes_%285971977677%29.jpg/640px-Antenna_Shapes_%285971977677%29.jpg",
       imageAlt: "Yagi-Uda TV antenna on a roof",
       context: "Uses parasitic elements (reflector + directors) with a driven element to create a directional beam.",
       parts: [
@@ -1112,7 +1112,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Resolving Binary Stars with Hubble",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/NASA-HS201427a-HubbleUltraDeepField2014-20140603.jpg/640px-NASA-HS201427a-HubbleUltraDeepField2014-20140603.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Hubble_ultra_deep_field_high_rez_edit1.jpg/640px-Hubble_ultra_deep_field_high_rez_edit1.jpg",
       imageAlt: "Hubble Ultra Deep Field image",
       context: "HST has a 2.4 m primary mirror, diffraction-limited above the atmosphere.",
       parts: [
@@ -1159,7 +1159,7 @@ window.WAVES_TEST_PROBLEMS = {
   longProblems: [
     {
       title: "Quantum Dots for Display Technology",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Quantum_Dots_with_emission_maxima_in_a_702-702nm_702702702702nm_702nm_range.jpg/640px-Quantum_Dots_with_emission_maxima_in_a_702-702nm_702702702702nm_702nm_range.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/EFluor_Nanocrystal_Vials.jpg/640px-EFluor_Nanocrystal_Vials.jpg",
       imageAlt: "Quantum dot solutions glowing in different colors under UV light",
       context: "Quantum dots are semiconductor nanocrystals where electron confinement creates size-tunable energy levels. Smaller dots emit bluer light — enabling ultra-wide-gamut QLED displays.",
       parts: [
@@ -1230,7 +1230,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Doppler Ultrasound in Cardiovascular Medicine",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Doppler_ultrasound_of_mitral_valve.jpg/640px-Doppler_ultrasound_of_mitral_valve.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/4/41/Doppler_mitral_valve.gif",
       imageAlt: "Doppler ultrasound of blood flow through the mitral valve",
       context: "Doppler ultrasound measures blood flow velocities non-invasively, essential for diagnosing cardiovascular conditions. $v_{\\rm sound} = 1540$ m/s in tissue.",
       parts: [
@@ -1243,7 +1243,7 @@ window.WAVES_TEST_PROBLEMS = {
     },
     {
       title: "Measuring Universe Expansion with Supernovae",
-      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Hubble_deep_field_image.jpg/640px-Hubble_deep_field_image.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Hubble_ultra_deep_field_high_rez_edit1.jpg/640px-Hubble_ultra_deep_field_high_rez_edit1.jpg",
       imageAlt: "Hubble Deep Field showing distant galaxies",
       context: "Cosmological redshift from Type Ia supernovae revealed the accelerating expansion of the universe (2011 Nobel Prize). Hubble's law: $v = H_0 d$.",
       parts: [
