@@ -18585,11 +18585,11 @@ function initSingleSlitDiffraction() {
 
   // Layout constants
   const lambda = 18;
-  const slitX = W * 0.22;
-  const screenX = W * 0.42;
-  const screenW = W * 0.30;
-  const histX = W * 0.75;
-  const histW = W - histX - 10;
+  const slitX = W * 0.14;
+  const screenX = W * 0.22;
+  const screenW = W * 0.28;
+  const histX = W * 0.54;
+  const histW = W - histX - 15;
   const areaTop = 24;
   const areaBot = H - 28;
   const areaH = areaBot - areaTop;
