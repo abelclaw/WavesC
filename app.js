@@ -2022,9 +2022,9 @@ const chapterTeachingNotes = {
 
 function chapterIndexFromHash() {
   const hash = location.hash.replace(/^#/, "");
-  if (!hash) return 0;
+  if (!hash) return -1;
   const idx = chapters.findIndex((ch) => ch.slug === hash);
-  return idx >= 0 ? idx : 0;
+  return idx >= 0 ? idx : -1;
 }
 
 const state = {
@@ -2036,6 +2036,7 @@ const state = {
 };
 
 function navigateToChapter(index) {
+  hideLanding();
   state.chapterIndex = index;
   state.focusTarget = null;
   state.showAllTerms = false;
@@ -2167,6 +2168,63 @@ function renderNav() {
       `
     )
     .join("");
+}
+
+const landingChapters = document.getElementById("landing-chapters");
+const landingGrid = document.getElementById("landing-grid");
+
+function renderLanding() {
+  const heroSection = document.querySelector(".hero");
+  if (heroSection) heroSection.hidden = false;
+  if (landingChapters) landingChapters.hidden = false;
+
+  landingGrid.innerHTML = chapters
+    .map(
+      (chapter, index) => `
+        <button class="landing-card" data-index="${index}">
+          <span class="landing-card-number">Chapter ${chapter.number}</span>
+          <span class="landing-card-title">${chapter.title}</span>
+          <span class="landing-card-caption">${chapter.conceptCaption}</span>
+        </button>
+      `
+    )
+    .join("");
+
+  landingGrid.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-index]");
+    if (!card) return;
+    navigateToChapter(Number(card.dataset.index));
+  });
+
+  // Hide all chapter-specific sections
+  const chapterSections = [
+    "roadmap-section", "overview-section", "section-guide-section",
+    "mastery-section", "derivations-section", "quiz-section"
+  ];
+  chapterSections.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = true;
+  });
+  document.querySelectorAll(".detail-grid").forEach((el) => { el.hidden = true; });
+  document.querySelector(".footer-nav").hidden = true;
+}
+
+function hideLanding() {
+  const heroSection = document.querySelector(".hero");
+  if (heroSection) heroSection.hidden = true;
+  if (landingChapters) landingChapters.hidden = true;
+
+  // Restore chapter sections visibility (renderChapter/applyModeVisibility will manage them)
+  const chapterSections = [
+    "roadmap-section", "overview-section", "section-guide-section",
+    "mastery-section", "derivations-section", "quiz-section"
+  ];
+  chapterSections.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = false;
+  });
+  document.querySelectorAll(".detail-grid").forEach((el) => { el.hidden = false; });
+  document.querySelector(".footer-nav").hidden = false;
 }
 
 function termButton(key, label) {
@@ -5125,6 +5183,17 @@ function attachEvents() {
     closeSidebarDrawer();
   });
 
+  document.querySelector(".brand-block").addEventListener("click", () => {
+    state.chapterIndex = -1;
+    state.focusTarget = null;
+    state.showAllTerms = false;
+    history.pushState(null, "", location.pathname);
+    renderNav();
+    renderLanding();
+    closeSidebarDrawer();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       const overlay = document.getElementById("math-lesson-overlay");
@@ -5170,7 +5239,12 @@ function attachEvents() {
       state.focusTarget = null;
       state.showAllTerms = false;
       renderNav();
-      renderChapter();
+      if (idx === -1) {
+        renderLanding();
+      } else {
+        hideLanding();
+        renderChapter();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
@@ -5213,11 +5287,12 @@ function renderMath() {
 syncSidebarDrawer();
 renderModes();
 renderNav();
-renderChapter();
+if (state.chapterIndex === -1) {
+  renderLanding();
+} else {
+  renderChapter();
+}
 renderMath();
 attachEvents();
-if (!location.hash) {
-  history.replaceState(null, "", "#" + chapters[state.chapterIndex].slug);
-}
 setTimeout(scrollToHashInteractive, 500);
 window.addEventListener("hashchange", scrollToHashInteractive);
