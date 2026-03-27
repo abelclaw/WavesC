@@ -4800,9 +4800,9 @@ function renderTestTab(chapter) {
     ${readingQuiz.length ? `
     <div class="test-tab-section">
       <p class="mini-label">Reading Quiz</p>
-      ${readingQuiz.map((item) => `
+      ${readingQuiz.map((item, i) => `
         <details class="test-problem">
-          <summary>${item.q}</summary>
+          <summary><span class="test-problem-num">${i + 1}.</span> ${item.q}</summary>
           <div class="test-problem-hint"><p>${item.a}</p></div>
         </details>
       `).join("")}
@@ -4810,9 +4810,9 @@ function renderTestTab(chapter) {
     ${shortAnswer.length ? `
     <div class="test-tab-section">
       <p class="mini-label">Short Answer</p>
-      ${shortAnswer.map((item) => `
+      ${shortAnswer.map((item, i) => `
         <details class="test-problem">
-          <summary>${item.q}</summary>
+          <summary><span class="test-problem-num">${i + 1}.</span> ${item.q}</summary>
           <div class="test-problem-hint"><p>${item.a}</p></div>
         </details>
       `).join("")}
@@ -4820,9 +4820,9 @@ function renderTestTab(chapter) {
     ${longProblems.length ? `
     <div class="test-tab-section">
       <p class="mini-label">Problems</p>
-      ${longProblems.map((prob) => `
+      ${longProblems.map((prob, i) => `
         <details class="long-problem">
-          <summary class="long-problem-header">${prob.title}</summary>
+          <summary class="long-problem-header"><span class="test-problem-num">${i + 1}.</span> ${prob.title}</summary>
           <div class="long-problem-body">
             ${prob.image ? `<img class="long-problem-image" src="${prob.image}" alt="${prob.imageAlt || ""}" loading="lazy" onerror="this.style.display='none'">` : ""}
             <p class="long-problem-context">${prob.context}</p>

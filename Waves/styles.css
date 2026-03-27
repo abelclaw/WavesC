@@ -506,6 +506,12 @@ a {
   margin-bottom: 0;
 }
 
+.test-problem-num {
+  font-weight: 700;
+  color: var(--ink-dim);
+  margin-right: 4px;
+}
+
 .test-problem {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
