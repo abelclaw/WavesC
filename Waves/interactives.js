@@ -18770,8 +18770,8 @@ function initFourierOpticsDemo() {
   let drawing = false, lastDX = -1, lastDY = -1;
   let draggingSlider = false;
 
-  // Layout
-  const topY = 30, botY = H - 40;
+  // Layout — leave room for: main area, slider row, tab row
+  const topY = 28, botY = H - 68;
   const areaH = botY - topY;
   const midY = (topY + botY) / 2;
 
@@ -18790,7 +18790,7 @@ function initFourierOpticsDemo() {
   const scCtx = scBuf.getContext('2d');
 
   // Slider
-  const sliderX = 12, sliderW = W * 0.35, sliderY = botY + 14;
+  const sliderX = 12, sliderW = W * 0.35, sliderY = botY + 16;
 
   // Tabs
   var tabs = ['Square', 'Gaussian', 'Draw'];
