@@ -316,6 +316,7 @@ const chapters = [
     derivations: [
       {
         title: "Hooke's law from Taylor expansion",
+        afterHeading: "Interactive 2: Simple Harmonic Motion",
         teaser: "Expand any potential about its minimum and keep the leading term.",
         steps: [
           "Write the potential energy $V(x)$ and note that at equilibrium $x=0$, $V'(0) = 0$ by definition.",
@@ -326,6 +327,7 @@ const chapters = [
       },
       {
         title: "Solving the damped oscillator",
+        afterHeading: "Interactive 4: Underdamping, Overdamping, and Critical Damping",
         teaser: "Guess an exponential $x = Ae^{\\alpha t}$ and find the two roots.",
         steps: [
           "Substitute $x = Ae^{\\alpha t}$ into $\\ddot{x} + \\gamma\\dot{x} + \\omega_0^2 x = 0$.",
@@ -402,6 +404,7 @@ const chapters = [
     derivations: [
       {
         title: "Steady-state solution for a driven oscillator",
+        afterHeading: "Interactive 1: Solving the Driven Oscillator",
         teaser: "Use a complex exponential ansatz to turn the ODE into algebra.",
         steps: [
           "Write the driving force as $\\text{Re}(\\frac{F_0}{m}e^{-i\\omega_d t})$ and guess $z(t) = z_0 e^{-i\\omega_d t}$.",
@@ -474,6 +477,7 @@ const chapters = [
     derivations: [
       {
         title: "Normal modes of two coupled masses",
+        afterHeading: "Interactive 2: Normal Modes",
         teaser: "Write coupled equations, guess oscillatory solutions, and find the eigenfrequencies.",
         steps: [
           "Write equations of motion: $m\\ddot{x}_1 = -(k + \\kappa)x_1 + \\kappa x_2$ and $m\\ddot{x}_2 = \\kappa x_1 - (k + \\kappa)x_2$.",
@@ -546,6 +550,7 @@ const chapters = [
     derivations: [
       {
         title: "From N masses to the wave equation",
+        afterHeading: "Interactive 5: Continuum Limit: From Oscillators to the Wave Equation",
         teaser: "Start with the discrete equations, guess sinusoidal modes, and take the continuum limit.",
         steps: [
           "Write $m\\ddot{x}_n = k(x_{n-1} - 2x_n + x_{n+1})$ for each interior mass.",
@@ -618,6 +623,7 @@ const chapters = [
     derivations: [
       {
         title: "Deriving the Fourier coefficients",
+        afterHeading: "Verifying the Fourier Coefficients: Orthogonality",
         teaser: "Multiply by a basis function and integrate, using orthogonality to isolate each coefficient.",
         steps: [
           "Start with $f(x) = a_0/2 + \\sum [a_n\\cos(2\\pi nx/L) + b_n\\sin(2\\pi nx/L)]$.",
@@ -690,6 +696,7 @@ const chapters = [
     derivations: [
       {
         title: "Wave equation from a vibrating string",
+        afterHeading: "Interactive 1: Transverse Oscillations on a String",
         teaser: "Apply Newton's second law to a small segment of string and keep the leading-order term.",
         steps: [
           "Consider a small segment of string of length $\\Delta x$ under tension $T$ with displacement $A(x,t)$.",
@@ -762,6 +769,7 @@ const chapters = [
     derivations: [
       {
         title: "Why the perfect fifth sounds consonant",
+        afterHeading: "Interactive 3: Building Consonant Intervals",
         teaser: "Compare the harmonic series of two notes with a 3:2 frequency ratio.",
         steps: [
           "Let the fundamental be $f_0$ with harmonics $f_0, 2f_0, 3f_0, 4f_0, \\ldots$",
@@ -834,6 +842,7 @@ const chapters = [
     derivations: [
       {
         title: "From Fourier series to Fourier transform",
+        afterHeading: "Interactive 3: Fourier Transforms",
         teaser: "Take the period L to infinity and watch discrete sums become integrals.",
         steps: [
           "Start with the exponential Fourier series: $f(x) = \\sum c_n\\,e^{ik_n x}$, where $k_n = 2\\pi n/L$.",
@@ -906,6 +915,7 @@ const chapters = [
     derivations: [
       {
         title: "Reflection and transmission coefficients from boundary conditions",
+        afterHeading: "Reflection and Transmission",
         teaser: "Match continuity of displacement and force at the junction to solve for the ratios.",
         steps: [
           "At $x = 0$, the string is continuous: $A_I(0,t) + A_R(0,t) = A_T(0,t)$, giving $A_I + A_R = A_T$.",
@@ -978,6 +988,7 @@ const chapters = [
     derivations: [
       {
         title: "Energy conservation at a boundary",
+        afterHeading: "Interactive 2: Power",
         teaser: "Check that incident power equals reflected plus transmitted power using the impedance coefficients.",
         steps: [
           "Write $P_I = Z_1 A_I^2\\omega^2/2$, $P_R = Z_1 A_R^2\\omega^2/2$, $P_T = Z_2 A_T^2\\omega^2/2$.",
@@ -1050,6 +1061,7 @@ const chapters = [
     derivations: [
       {
         title: "Group velocity from the dispersion relation",
+        afterHeading: "Interactive 5: Time Evolution of Signals: Group Velocity",
         teaser: "Expand omega(k) near the carrier frequency and identify the envelope speed.",
         steps: [
           "Write a wavepacket as $\\int \\tilde{f}(k)\\,e^{i(kx - \\omega(k)t)}\\,dk$, peaked near $k_0$.",
@@ -1122,6 +1134,7 @@ const chapters = [
     derivations: [
       {
         title: "The Mach cone geometry",
+        afterHeading: "The Equation for Waves",
         teaser: "Track wavefronts emitted by a supersonic source and find the cone angle.",
         steps: [
           "A source at speed $v_s$ emits a wavefront which expands as a sphere of radius $v_w t$ after time $t$.",
@@ -1194,6 +1207,7 @@ const chapters = [
     derivations: [
       {
         title: "Deriving the EM wave equation from Maxwell's equations",
+        afterHeading: "Wave Equation from Maxwell's Equations",
         teaser: "Take the curl of Faraday's law and substitute Ampere's law.",
         steps: [
           "Start with $\\nabla \\times \\vec{E} = -\\partial\\vec{B}/\\partial t$ and $\\nabla \\times \\vec{B} = \\mu_0\\epsilon_0\\,\\partial\\vec{E}/\\partial t$ (in vacuum).",
@@ -1266,6 +1280,7 @@ const chapters = [
     derivations: [
       {
         title: "Circular polarization from phase-shifted components",
+        afterHeading: "Circular Polarization",
         teaser: "Set $E_x$ and $E_y$ equal in magnitude with a $\\pi/2$ phase difference.",
         steps: [
           "Write $\\vec{E}_0 = (E_0,\\, iE_0,\\, 0)$, so that $\\vec{E} = (E_0\\cos(kz - \\omega t),\\, -E_0\\sin(kz - \\omega t),\\, 0)$.",
@@ -1338,6 +1353,7 @@ const chapters = [
     derivations: [
       {
         title: "Snell's law from wavefront matching",
+        afterHeading: "Interactive 1: Refraction",
         teaser: "Require that the phase of the wave be continuous along the boundary between two media.",
         steps: [
           "A plane wave hits a flat boundary. The wavefronts in medium 1 make angle $\\theta_1$ with the boundary.",
@@ -1410,6 +1426,7 @@ const chapters = [
     derivations: [
       {
         title: "Why the radiation field falls as $1/R$",
+        afterHeading: "Larmor Formula",
         teaser: "Use Purcell's argument about field-line kinks from a suddenly accelerated charge.",
         steps: [
           "A charge suddenly accelerates. The news travels outward at speed c, creating a shell.",
@@ -1482,6 +1499,7 @@ const chapters = [
     derivations: [
       {
         title: "Why three primaries suffice (Grassmann's laws)",
+        afterHeading: "Interactive 1: Combining Color",
         teaser: "The linearity of color matching means any color can be represented as a weighted sum of three primaries.",
         steps: [
           "Color matching is empirically linear: if A matches B and C matches D, then A + C matches B + D (Grassmann's law).",
@@ -1554,6 +1572,7 @@ const chapters = [
     derivations: [
       {
         title: "Radiation pattern from N equally spaced sources",
+        afterHeading: "Interactive 3: Phased Arrays",
         teaser: "Sum the contributions from N sources with progressive phase shifts.",
         steps: [
           "Each source contributes $E_j = E_0 e^{ij\\Delta}$ where $\\Delta = kd\\sin(\\theta) + \\delta_0$ is the phase difference between adjacent sources.",
@@ -1626,6 +1645,7 @@ const chapters = [
     derivations: [
       {
         title: "Diffraction grating pattern from N slits",
+        afterHeading: "Interactive 2: Multiple Hole Diffraction",
         teaser: "Apply the N-source antenna result from the previous chapter to N slits.",
         steps: [
           "Each slit acts as a Huygens source. For $N$ slits spaced by $d$, the phase difference between adjacent slits for angle $\\theta$ is $\\Delta = 2\\pi d\\sin(\\theta)/\\lambda$.",
@@ -1698,6 +1718,7 @@ const chapters = [
     derivations: [
       {
         title: "Energy quantization in a box from standing waves",
+        afterHeading: "The Schrodinger Equation",
         teaser: "Apply boundary conditions to the Schrodinger equation and get discrete energy levels.",
         steps: [
           "For a particle in a box of width $L$ with infinite walls, the wavefunction must vanish at $x = 0$ and $x = L$.",
@@ -1770,6 +1791,7 @@ const chapters = [
     derivations: [
       {
         title: "Doppler shift for a moving source",
+        afterHeading: "Interactive 1: Moving Sources",
         teaser: "Track the spacing between successive wavefronts emitted by a moving source.",
         steps: [
           "A source emits wavefronts separated by period $T$. In time $T$, the source moves $v_s T$.",
