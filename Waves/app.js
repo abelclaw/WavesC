@@ -4824,7 +4824,7 @@ function renderTestTab(chapter) {
         <details class="long-problem">
           <summary class="long-problem-header"><span class="test-problem-num">${i + 1}.</span> ${prob.title}</summary>
           <div class="long-problem-body">
-            ${prob.image ? `<img class="long-problem-image" src="${prob.image}" alt="${prob.imageAlt || ""}" loading="lazy" onerror="this.style.display='none'">` : ""}
+            ${prob.image ? `<img class="long-problem-image" src="${prob.image}" alt="${prob.imageAlt || ""}" loading="lazy" referrerpolicy="no-referrer" crossorigin="anonymous" onerror="this.alt='[Image could not be loaded]';this.style.opacity='0.3'">` : ""}
             <p class="long-problem-context">${prob.context}</p>
             ${prob.parts.map((part) => `
               <div class="long-problem-part">
