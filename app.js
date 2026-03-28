@@ -4481,7 +4481,7 @@ function renderMathLesson(lessonId) {
       </div>
     </div>
   `;
-  setTimeout(renderMath, 0);
+  setTimeout(() => renderMath(overlay), 0);
   setTimeout(initSceneInteractives, 0);
 }
 
@@ -4918,7 +4918,7 @@ function openSolutionsOverlay(slug) {
     </div>
   `;
   overlay.scrollTop = 0;
-  setTimeout(renderMath, 0);
+  setTimeout(() => renderMath(overlay), 0);
 }
 
 function closeSolutionsOverlay() {
@@ -5269,9 +5269,9 @@ function attachEvents() {
   });
 })();
 
-function renderMath() {
+function renderMath(root) {
   if (typeof renderMathInElement === "function") {
-    const target = document.querySelector('.main-panel') || document.body;
+    const target = root || document.querySelector('.main-panel') || document.body;
     renderMathInElement(target, {
       delimiters: [
         { left: "$$", right: "$$", display: true },
