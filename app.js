@@ -4622,8 +4622,8 @@ function renderLearnMode(chapter) {
       ${summaryHtml}
     </div>
   `;
-  setTimeout(initSceneInteractives, 0);
-  setTimeout(linkifyInteractiveTitles, 0);
+  initSceneInteractives();
+  linkifyInteractiveTitles();
 }
 
 function linkifyInteractiveTitles() {
@@ -4715,7 +4715,7 @@ function renderDiscoveryMode(chapter) {
       }
     });
   }
-  setTimeout(initSceneInteractives, 0);
+  initSceneInteractives();
 
   // Lab selector buttons
   container.querySelectorAll(".discovery-lab-btn").forEach((btn) => {
@@ -4742,7 +4742,7 @@ function renderDiscoveryMode(chapter) {
     });
   });
 
-  setTimeout(renderMath, 0);
+  renderMath();
 }
 
 function renderMathTab(chapter) {
@@ -4887,7 +4887,7 @@ function renderTestTab(chapter) {
     });
   }
 
-  setTimeout(renderMath, 0);
+  renderMath();
 }
 
 function openSolutionsOverlay(slug) {
@@ -4918,7 +4918,7 @@ function openSolutionsOverlay(slug) {
     </div>
   `;
   overlay.scrollTop = 0;
-  setTimeout(() => renderMath(overlay), 0);
+  renderMath(overlay);
 }
 
 function closeSolutionsOverlay() {
@@ -4980,9 +4980,6 @@ function renderChapter() {
   renderBullets(chapterPitfalls, chapter.pitfalls);
   labTitle.textContent = chapter.conceptTitle;
   labCaption.textContent = chapter.conceptCaption;
-  if (state.mode !== "intuition") {
-    renderScene(chapter);
-  }
   renderRoadmap(chapter);
   renderSectionGuide(chapter);
   renderTerms(chapter);
@@ -5032,7 +5029,7 @@ function renderChapter() {
 
   prevChapter.disabled = state.chapterIndex === 0;
   nextChapter.disabled = state.chapterIndex === chapters.length - 1;
-  setTimeout(renderMath, 0);
+  renderMath();
 }
 
 function showTooltip(target, text) {
